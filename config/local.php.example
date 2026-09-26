@@ -1,0 +1,39 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Local environment overrides.
+ *
+ * Copy this file to `config/local.php` and adjust for your machine.
+ * `config/local.php` is gitignored and never committed.
+ */
+
+return [
+    'database' => [
+        'host'     => '127.0.0.1',
+        'port'     => 3306,
+        'database' => 'anaya_commerce',
+        'username' => 'root',
+        'password' => '',
+        'charset'  => 'utf8mb4',
+        'collation'=> 'utf8mb4_unicode_ci',
+    ],
+
+    'app' => [
+        'env'      => 'local',
+        'debug'    => true,
+        'url'      => 'http://localhost:8081',
+        'timezone' => 'Africa/Nairobi',
+    ],
+
+    'mail' => [
+        // Laragon ships Mailpit on 1025/8025
+        'host'       => '127.0.0.1',
+        'port'       => 1025,
+        'username'   => null,
+        'password'   => null,
+        'encryption' => null,
+        'from_email' => 'no-reply@anayaglobal.test',
+        'from_name'  => 'Anaya Global',
+    ],
+];

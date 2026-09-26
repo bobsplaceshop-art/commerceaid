@@ -1,0 +1,22 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * CLI environment configuration.
+ *
+ * Copy to `config/cli.php` for local CLI use. Unlike the web app
+ * (which uses a limited DB user), CLI tools run with elevated
+ * credentials - they own migrations and seeders.
+ */
+
+return [
+    'database' => [
+        'host'     => '127.0.0.1',
+        'port'     => 3306,
+        'database' => 'anaya_commerce',
+        'username' => 'root',
+        'password' => '',
+        'charset'  => 'utf8mb4',
+        'collation'=> 'utf8mb4_unicode_ci',
+    ],
+];

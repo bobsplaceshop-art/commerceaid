@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+namespace CorporateAid\Core;
+
+use Closure;
+use RuntimeException;
+
+/**
+ * Minimal dependency injection container.
+ * Stores services so they are built once and reused.
+ */
+final class Container
+{
+    /** @var array<string, Closure> */
+    private array $bindings = [];
+
+    /** @var array<string, mixed> */
+    private array $instances = [];
+
+    /** @var array<string, bool> */
+    private array $singletons = [];
+
+    /**
+     * Register a factory. If $singleton is true, the factory runs once
+     * and the result is cached.
+     */
+    public function bind(string $id, Closure $factory, bool $singleton = false): void
+    {
+        $this->bindings[$id] = $factory;
+        if ($singleton) {
+            $this->singletons[$id] = true;
+        }
+    }
+
+    public function singleton(string $id, Closure $factory): void
+    {
+        $this->bind($id, $factory, true);
+    }
+
+    /**
+     * Register an already-built value.
+     */
+    public function instance(string $id, mixed $value): void
+    {
+        $this->instances[$id] = $value;
+    }
+
+    public function has(string $id): bool
+    {
+        return isset($this->instances[$id]) || isset($this->bindings[$id]);
+    }
+
+    /**
+     * Resolve a service. If it was bound as a singleton, cache it.
+     */
+    public function get(string $id): mixed
+    {
+        if (isset($this->instances[$id])) {
+            return $this->instances[$id];
+        }
+
+        if (!isset($this->bindings[$id])) {
+            throw new RuntimeException("Container: nothing bound for '{$id}'.");
+        }
+
+        $value = ($this->bindings[$id])($this);
+
+        if (isset($this->singletons[$id])) {
+            $this->instances[$id] = $value;
+        }
+
+        return $value;
+    }
+}

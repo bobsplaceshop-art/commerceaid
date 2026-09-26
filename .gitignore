@@ -1,0 +1,132 @@
+# =====================================================================
+# Anaya Global Commerce Platform - .gitignore
+# =====================================================================
+#
+# Rules are grouped by category. Every rule has a comment explaining
+# what it protects and why it must not be committed.
+#
+# Two kinds of things are ignored:
+#   1. Secrets - files containing credentials or per-machine config
+#   2. Generated files - files that are created by tooling and would
+#      cause noise or drift if committed (logs, caches, dependencies)
+#
+# Nothing that is source code, config examples, docs, or migrations
+# is ignored. If you are unsure whether to ignore something, do not
+# add it here - investigate first.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------------------
+# Composer-managed. Every dev runs `composer install` to regenerate.
+# The composer.lock file is committed separately below (line item later).
+/vendor/
+
+# ---------------------------------------------------------------------
+# Per-machine config (contains credentials)
+# ---------------------------------------------------------------------
+# These override config/*.php with real DB creds, mail creds, etc.
+# The .example versions are committed as templates.
+/config/local.php
+/config/cli.php
+
+# ---------------------------------------------------------------------
+# Environment files (defensive)
+# ---------------------------------------------------------------------
+# No .env in use today, but the pattern is common in PHP projects and
+# it would contain secrets. Ignore defensively so a future .env never
+# gets committed by accident.
+.env
+.env.*
+!.env.example
+
+# ---------------------------------------------------------------------
+# Runtime storage
+# ---------------------------------------------------------------------
+# Everything under storage/ is runtime-generated. The directory tree
+# itself is preserved via .gitkeep files.
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+/storage/cache/*
+!/storage/cache/.gitkeep
+/storage/tmp/*
+!/storage/tmp/.gitkeep
+/storage/backups/*
+!/storage/backups/.gitkeep
+/storage/config/*
+!/storage/config/.gitkeep
+
+# ---------------------------------------------------------------------
+# Per-tenant theme overrides
+# ---------------------------------------------------------------------
+# If a tenant ever customises a theme locally, the overrides live
+# in a .local subdirectory and should not be committed.
+/themes/commerce/*/.local/
+
+# ---------------------------------------------------------------------
+# IDE / editor
+# ---------------------------------------------------------------------
+.idea/
+.vscode/
+*.sublime-*
+*.swp
+*.swo
+*~
+
+# ---------------------------------------------------------------------
+# OS cruft
+# ---------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------------------------------------------------------------------
+# Composer lock is committed (app, not library)
+# ---------------------------------------------------------------------
+# Kept intentionally. Do not uncomment the line below.
+# /composer.lock
+
+# ---------------------------------------------------------------------
+# Logs and dumps
+# ---------------------------------------------------------------------
+*.log
+*.sql.gz
+*.tar.gz
+*.zip
+
+# ---------------------------------------------------------------------
+# Scratch files (our own convention)
+# ---------------------------------------------------------------------
+# Temporary diagnostic and smoke test scripts we create during
+# development. They are never committed. Naming convention uses a
+# leading underscore so they are visually distinct from real files.
+_diag_*.php
+_smoke_*.php
+
+# wget logs from shell curl/wget experiments
+wget-log*
+
+# ---------------------------------------------------------------------
+# Tooling caches (defensive)
+# ---------------------------------------------------------------------
+# These appear if we ever adopt php-cs-fixer, phpstan, psalm, or
+# phpunit. None are in use today, but the rules cost nothing.
+/.php-cs-fixer.cache
+/.phpstan.cache
+/.psalm.cache
+/.phpunit.result.cache
+/build/
+/dist/
+
+# ---------------------------------------------------------------------
+# Node (defensive - never used in this project)
+# ---------------------------------------------------------------------
+# The platform has a hard "no Node.js" rule. These rules are present
+# so that if anyone ever accidentally runs npm/yarn/pnpm in the
+# project root, the resulting artifacts never get committed.
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

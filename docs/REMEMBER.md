@@ -1,0 +1,1096 @@
+# REMEMBER — Session Handoff Document
+
+**Project:** Anaya Global Commerce Platform
+**Path (Windows):** C:\projects\commerceaid
+**Path (WSL):** /mnt/c/projects/commerceaid
+**Document date:** 2026-09-26
+**Current status:** Stage 006F (Product Variations) is functionally complete; awaiting final test pass + stage documentation.
+
+---
+
+## 1. What This Project Is
+
+A white-labelled, multi-tenant, standalone e-commerce platform built as a single
+product for multiple clients. First deployment is branded for Anaya Global. The
+same codebase will be resold to other customers with only configuration changes.
+
+The platform is:
+
+- PHP 8.2+ / MySQL 8 / Apache (shared cPanel hosting compatible)
+- Custom minimal MVC framework (no Laravel/Symfony)
+- Bootstrap 5 via CDN + vanilla JS (no Node.js, no build step)
+- Multi-tenant from day one (shared DB, store_id column)
+- Fully white-labelled (every customer-visible string is configuration)
+
+Suite context: This is a module in the Corporate Aid Solutions suite. Sibling
+product is Recruit Aid (an ATS at C:\projects\recruitaid). Naming conventions
+are locked in docs/NAMING-CONVENTION.md. Architecture contract is in
+docs/ARCHITECTURE.md. Build sequence is in docs/ROADMAP.md.
+
+Corporate Connect (the suite's integration layer) is deferred to a future
+stage. It is NOT part of this build.
+
+---
+
+## 2. Current Environment
+
+| Tool | Value |
+|---|---|
+| OS | Windows 11 |
+| WSL | Ubuntu (file ops, heredocs, greps) |
+| Laragon | 2026 v8.7.0 |
+| Apache | Port 8081 (vhost 00-commerce-aid.conf) |
+| PHP | 8.3.33 (Laragon Terminal only, NOT in WSL) |
+| MySQL | 8.4.3 (port 3306) |
+| Composer | 2.10.3 |
+| Mailpit | 1025 / 8025 |
+| Node.js | NOT INSTALLED (and never will be - by design) |
+
+- URL: http://localhost:8081
+- Admin URL: http://localhost:8081/commerce/ca-admin
+- Login: admin@anayaglobal.test / ChangeMe!2026
+- Database: anaya_commerce
+
+### Environment Rules (Locked)
+
+1. WSL is for authoring (heredocs, greps, file ops, find). WSL has PHP but not
+   MySQL. Never emit mysql commands from WSL.
+2. Laragon Terminal is for all PHP execution (php -l, composer, migrations,
+   seeders, smoke tests). Also has MySQL CLI.
+3. HeidiSQL is for schema inspection and ad-hoc SQL queries.
+4. Browser DevTools (F12) is for JS debugging, service worker checks, network
+   inspection.
+5. After every app/ change: reload Apache. OPcache caches stale PHP.
+6. After every new class file: composer dump-autoload -o.
+7. After every heredoc write: verify with ls + head. Multiple silent failures
+   happened. Never assume a write landed.
+8. After every Python patch: grep the changed line. php -l alone doesn't catch
+   all textual corruption.
+
+### Command Emission Format
+
+Header column names the tool, raw command below it, nothing prepended inside
+the code block:
+
+    WSL:      ls -la /mnt/c/projects/commerceaid/
+    Laragon:  php -l C:\projects\commerceaid\app\Core\App.php
+    HeidiSQL: SELECT * FROM commerce_products;
+
+Never prepend [WSL] inside the code block - it breaks copy-paste.
+
+---
+
+## 3. Architecture - Locked
+
+Three layers, strictly one-way:
+
+    Commerce\*   (product code - controllers, services, repositories)
+        depends on
+    Platform\*   (shared infra - auth, RBAC, settings, files, notifications)
+        depends on
+    Core\*       (framework - HTTP, DB, view, router)
+
+Rules:
+
+- Core knows nothing about Platform or Commerce
+- Platform knows nothing about Commerce
+- Commerce may use both
+- Never the reverse
+
+Core\App is a pure bootstrapper. Zero product knowledge. Product registration
+goes through CommerceServiceProvider (via App::PRODUCT_PROVIDERS array).
+
+---
+
+## 4. Completed Stages
+
+| # | Stage | Status |
+|---|---|---|
+| 001 | Project initialization & foundation | Done |
+| 002 | Framework import & Recruit cleanup | Done |
+| 003 | Database schema (core + commerce) | Done |
+| 004 | Foundation rewrite & first login | Done |
+| 005 | Admin shell & setup hub | Done |
+| 006A | Catalog migrations | Done |
+| 006B | Catalog models & repositories | Done |
+| 006C | Categories admin CRUD | Done |
+| 006D | Brands admin CRUD | Done |
+| 006E | Products list & editor | Done |
+| 006F | Product variations | Done (pending final test) |
+| 006G | Inventory overview | Next |
+| 007 | B2B & customer groups | Planned |
+| 008 | Storefront & search | Planned |
+| 009 | Forms & submissions | Planned |
+| 010 | Payments & shipping (deep) | Planned |
+| 011 | Advanced commerce | Planned |
+| 012 | Theme engine & page builder | Planned |
+
+Stage docs live in docs/stages/*.md. Index: docs/stages/README.md.
+
+---
+
+## 5. Database Schema - Summary
+
+47 core tables (core_*) + 20 commerce tables (commerce_*).
+
+### Core (inherited from Recruit Aid, unchanged)
+
+core_users, core_roles, core_permissions, core_role_permissions,
+core_user_roles, core_user_permissions, core_password_resets,
+core_audit_logs, core_activities, core_notifications,
+core_notification_rules, core_system_settings, core_files,
+core_entity_files, core_custom_fields, core_custom_field_values,
+core_sequence_counters, core_rate_limits, core_migrations,
+core_modules, core_module_licenses, core_module_state,
+core_integrations, core_integration_logs, core_scheduled_tasks,
+core_scheduled_task_runs, core_health_checks, core_updates_available,
+core_updates_history, core_update_manifest, core_currencies,
+core_notes, core_feature_flags, core_webhooks,
+core_webhook_deliveries, core_email_templates, core_data_requests,
+core_consent_log, core_login_history, core_workflow_definitions,
+core_workflow_states, core_workflow_transitions, plus a few more.
+
+Core tables got store_id columns added via migration 0101:
+core_audit_logs, core_activities, core_notification_rules,
+core_sequence_counters.
+
+### Commerce Tables
+
+Store:
+- commerce_stores
+- commerce_store_domains
+- commerce_store_users
+- commerce_store_currencies
+
+Catalog:
+- commerce_products
+- commerce_product_variants
+- commerce_product_images
+- commerce_product_videos
+- commerce_product_tags
+- commerce_product_tag_links
+- commerce_categories
+- commerce_product_categories
+- commerce_brands
+- commerce_attribute_definitions
+- commerce_attribute_values
+- commerce_product_attribute_values
+- commerce_variant_attribute_values
+- commerce_category_attributes
+
+Inventory:
+- commerce_inventory
+- commerce_inventory_movements
+
+### Key Schema Rules
+
+- Every tenant-scoped table has store_id NOT NULL FK to commerce_stores
+- Attribute definitions are store-independent (global vocabulary)
+- commerce_inventory.variant_id = 0 sentinel for simple products
+- commerce_inventory.available is a STORED GENERATED column
+  (quantity - reserved)
+- commerce_inventory_movements is append-only (never delete)
+- FKs to core_* tables use INT UNSIGNED (matches inherited schema)
+- FKs to commerce_* tables use BIGINT UNSIGNED
+- SKU and slug are unique per store (composite keys)
+
+---
+
+## 6. Key Files and Their Roles
+
+### Core framework (app/Core/)
+
+- App.php - Bootstrapper. Registers Core + Platform, delegates to providers.
+- Container.php - DI container.
+- Router.php - Route registration + dispatch. {param} syntax.
+- Request.php - Wraps superglobals. query(), input(), path(), header().
+- Response.php - html(), json(), redirect(), noContent().
+- Session.php - Session wrapper. get, set, flash, getFlash, flashOldInput,
+  old, clearOldInput.
+- Csrf.php - CSRF token. token(), verify(), rotate().
+- Auth.php - attempt(), login(), logout(), user(), check(), can().
+- Database.php - PDO wrapper. select, selectOne, scalar, execute, insert,
+  beginTransaction, commit, rollBack.
+- View.php - Renders views from resources/views/. Dot-notation.
+- Config.php - Config accessor.
+- Http/Kernel.php - Middleware registry + onion pipeline.
+
+### Platform (app/Platform/)
+
+Models: User, File, EntityFile, Notification, CustomField, CustomFieldValue.
+
+Repositories: UserRepository, RoleRepository, CustomFieldRepository,
+FileRepository, EntityFileRepository, NotificationRepository,
+PasswordResetRepository, RateLimitRepository.
+
+Services: SystemSettingService, NotificationService, NotificationRuleService,
+FileService, CustomFieldService.
+
+Support: Logger, Hasher, EmailService, RateLimiter, ActivityLogger,
+AuditLogger, CodeGenerator.
+
+Middleware: Auth, Guest, CSRF, Permission, RateLimit, AuditLogger.
+
+CustomFields engine with 12 input types. Deletion engine with confirmation
+phrases.
+
+### Commerce (app/Commerce/)
+
+Context:
+- Context/StoreContext.php - resolved store per request
+- Exceptions/StoreContextMissingException.php
+
+Controllers:
+- Controllers/AuthController.php - admin login/logout
+- Controllers/AccountController.php - theme preference AJAX
+- Controllers/Pwa/ManifestController.php - PWA manifest
+- Controllers/Admin/AdminController.php - base class with render()
+- Controllers/Admin/DashboardController.php
+- Controllers/Admin/SetupController.php - setup hub with tabs
+- Controllers/Admin/CategoryController.php
+- Controllers/Admin/BrandController.php
+- Controllers/Admin/ProductController.php - includes variant methods
+- Controllers/Admin/AttributeController.php
+
+Middleware:
+- Middleware/StoreResolutionMiddleware.php
+- Middleware/SetupGateMiddleware.php
+
+Models:
+- Category, Brand, Product, ProductVariant, Inventory, InventoryMovement
+
+Repositories:
+- CommerceRepository.php - base, enforces store_id
+- StoreRepository, CategoryRepository, BrandRepository, ProductRepository,
+  ProductVariantRepository, InventoryRepository, AttributeRepository,
+  CategoryAttributeRepository
+
+Services:
+- StoreService, CatalogService
+
+Support:
+- Support/Validator.php - shared validation helper
+
+Provider:
+- CommerceServiceProvider.php - all bindings for Commerce
+
+### Routes (routes/)
+
+- auth.php - /login, /logout, /account/theme
+- web.php - empty placeholder
+- commerce.php - everything else (storefront placeholders, admin, setup,
+  catalog, variants)
+
+### Views (resources/views/)
+
+Layouts: layouts/app.php (admin shell), layouts/auth.php (login).
+
+Partials: partials/sidebar.php (grouped, collapsible, localStorage
+persistence), partials/topbar.php, partials/user-dropdown.php,
+partials/theme-dropdown.php.
+
+Storefront/admin: admin/dashboard.php, admin/setup/* (8 tabs),
+admin/categories/*, admin/brands/*, admin/products/* (5 tabs + variants
+page), admin/attributes/*.
+
+Assets: public/assets/css/app.css (design system, inherited),
+public/assets/css/setup.css (our additions).
+
+---
+
+## 7. Design Patterns - Locked
+
+### Model Pattern (DTO)
+
+Every model is a final class with public typed properties. Every property
+MUST have a default value - empty declarations crash on access.
+
+    final class Foo {
+        public int $id = 0;
+        public string $name = '';
+        public ?string $description = null;
+
+        public static function fromRow(array $row): self { ... }
+    }
+
+CRITICAL: This was a bug class we hit. Every typed property gets a default.
+
+### Repository Pattern
+
+Repositories extend CommerceRepository. Every query filters by storeId().
+Find methods return ?Model; list methods return array<Model>. Includes
+create, update, archive, restore, softDelete.
+
+### Controller Pattern
+
+Controllers extend AdminController. Use render() to render inside the admin
+shell. On validation failure, flash errors and old input:
+
+    $session->flash('foo_errors', $errors);
+    $session->flashOldInput($data);
+
+On GET (showCreate and showEdit), read them:
+
+    'errors' => $session->getFlash('foo_errors', []),
+    'old'    => $_SESSION['_old'] ?? [],
+
+Never forget this - it was a bug on Brands and Categories.
+
+### Validation
+
+All field validation goes through CorporateAid\Commerce\Support\Validator:
+- required, maxLength, minLength
+- url (strict http/https + dotted host + filter_var)
+- email, inArray, timezone (IANA list), hexColor, countryCode, slug
+- positiveInt, nonNegativeNumber
+
+### Sticky Action Bar Pattern
+
+Every admin edit page ends with a fixed action bar:
+
+    <div class="ra-sticky-actions">
+        <div class="ra-sticky-actions-inner">
+            <a href="..." class="ra-btn ra-btn-outline">Cancel</a>
+            <button type="submit" form="ra-foo-main-form" class="ra-btn ra-btn-primary">
+                Save changes
+            </button>
+        </div>
+    </div>
+    <div class="ra-sticky-spacer"></div>
+
+Uses HTML5 form="" attribute to submit from outside the form element.
+Positioned fixed at viewport bottom. The sticky-spacer prevents content
+from hiding behind it.
+
+### Sidebar Navigation
+
+Grouped, collapsible, persisted to localStorage['ra-nav-groups']. Server
+default: active group expanded.
+
+### Theme System
+
+- core_users.theme_preference ENUM ('dark', 'light', 'system')
+- Pre-paint script resolves localStorage then server value
+- AJAX POST /account/theme persists
+- Default is 'system' (respects OS)
+
+---
+
+## 8. Product Variations - The Feature We Just Finished
+
+### What It Does
+
+A variable product has one or more variations - concrete sellable units
+defined by combinations of attribute values. E.g. a T-Shirt with Color
+(Red, Blue) x Size (S, M, L) = 6 variations.
+
+### The Rules (Locked)
+
+1. Attributes are global vocabulary (Color, Size, Material)
+2. Categories declare which attributes are relevant via
+   commerce_category_attributes mapping
+3. Product inherits attributes from its categories
+4. Only is_variant_axis = 1 attributes generate variations
+5. Informational attributes (Care Instructions, Country of Origin) are
+   mapped to categories for filtering but don't generate variations
+6. Variations auto-generate when a variable product's variations page is
+   loaded and no variations exist yet
+7. Drift detection warns when category attributes change after variations
+   exist
+8. Regenerate wipes existing variations and rebuilds (with type-delete
+   confirmation)
+9. Archive not delete individual variations (they'd regenerate)
+10. Incomplete axes (mapped but no values) block generation with a clear
+    warning
+
+### The Flow
+
+1. Admin creates attributes (Color, Size) with is_variant_axis = 1
+2. Admin adds values to each attribute
+3. Admin creates a category (e.g. T-Shirts) and maps attributes to it
+4. Admin creates a variable product and assigns it to that category
+5. Admin clicks Manage Variations in the product sidebar
+6. Variations auto-generate from the category's variant axes
+7. Admin edits SKU/price/stock per variation
+8. Admin clicks Save all variations
+
+### The Variation Page Features
+
+- Attribute summary (Color, Size) with link to edit categories
+- Search by SKU or attribute value (400ms debounce)
+- Group filter chips for the first axis (Red (6), Blue (6))
+- Bulk actions (Enable, Disable, Set price) for checked rows
+- Pagination (25 rows/page)
+- Sticky action bar with Save
+- Regenerate button when drift is detected
+- Type-delete confirmation for regenerate
+
+### File Locations
+
+- Controller: app/Commerce/Controllers/Admin/ProductController.php
+  (methods: variants, regenerateVariants; helpers: categoryVariantAxes,
+  expectedCombinations, detectDrift, autoGenerate)
+- Repository: app/Commerce/Repositories/ProductVariantRepository.php
+- Category mapping repo: app/Commerce/Repositories/CategoryAttributeRepository.php
+- View: resources/views/admin/products/variants.php
+- Sidebar button: resources/views/admin/products/_sidebar.php
+
+---
+
+## 9. Known Issues and Deferred Work
+
+### Currently Being Tested
+
+Product variations page - just built, awaiting final verification of search
++ bulk actions + pagination behavior.
+
+### Deliberately Deferred
+
+- Image upload for products/variants (needs media library integration)
+- Rich text editor for descriptions (plain textarea for now)
+- Product tags UI (repository support exists, no admin UI)
+- Discounts / promotions (Stage 011)
+- Payment providers (Stage 008)
+- Shipping zones (Stage 007)
+- Tax classes (Stage 009)
+- Storefront theme engine (Stage 010)
+- Forms builder (Stage 009 in revised roadmap)
+
+### Small Known Issues
+
+- Topbar Search (coming soon) input is disabled - no global search yet
+- Settings gear in topbar links to /commerce/ca-admin/settings which 404s
+- products/_delete-modal.php is a placeholder - variations are archived not
+  deleted, so it's rarely used
+
+---
+
+## 10. Recurring Bug Patterns and How to Handle Them
+
+Each pattern below shows the symptom, the guardrail we adopted to catch or
+prevent it, and the exact command or workflow to run when you suspect it.
+
+### Pattern 1 - Silent Python Patch Failures
+
+What breaks: str.replace() and re.sub() fail silently when whitespace does
+not match. The patch appears to run but nothing changes. We hit this 6+ times.
+
+How to handle it:
+
+1. Before patching, always grep the exact target string to confirm it exists
+   verbatim: grep -n "target text" path/to/file.php
+2. After patching, always grep the result to confirm the change landed:
+   grep -n "new text" path/to/file.php
+3. If the pattern is fragile (multi-line, whitespace-sensitive), do not
+   patch. Rewrite the whole file with a heredoc instead.
+
+Never trust "the patch ran without error" as proof the change landed.
+
+### Pattern 2 - Typed Property Without Default
+
+What breaks: PHP 8 throws "Typed property X must not be accessed before
+initialization" when a controller creates a fresh model instance and a
+property was never assigned.
+
+How to handle it:
+
+1. Every typed property in every model MUST have a default value:
+   - Nullable types: = null
+   - Non-nullable string: = ''
+   - Non-nullable int: = 0
+   - Non-nullable float: = 0.0
+   - Non-nullable bool: = false
+   - Non-nullable array: = []
+2. When adding a new model, always set defaults at declaration, never rely
+   on the controller to set every property.
+3. Verify with grep: search for bare property declarations with no default.
+
+### Pattern 3 - Nested Forms
+
+What breaks: HTML disallows form inside form. Browsers silently ignore the
+inner form and submit the outer form's action instead. We hit this with the
+variant generator inside the product editor.
+
+How to handle it:
+
+1. Never nest a form inside another form.
+2. If a tab or card needs its own form, either:
+   - Move it to a separate page (Model A approach - what we did for variants)
+   - Render the inner forms outside the outer form element, and associate
+     their buttons with the form via the HTML5 form attribute
+3. The sticky action bar pattern uses the form attribute for exactly this
+   reason.
+
+### Pattern 4 - php -l Does Not Catch Everything
+
+What breaks: php -l parses but does not compile. Textual corruption like a
+missing quote can pass lint. We hit this with a missing single quote in
+array access which parsed cleanly but broke at runtime.
+
+How to handle it:
+
+1. After every Python patch that modifies PHP code, grep the changed lines
+   and read them by eye.
+2. Verify the file loads by hitting a URL that uses it, not just by linting.
+3. When a patch touches string literals, always grep for the resulting
+   string in context.
+
+### Pattern 5 - Sticky Positioning Inside overflow:auto
+
+What breaks: position: sticky does not work reliably inside a parent that
+has overflow: auto or overflow: hidden. The sticky element renders but never
+sticks. We hit this with the action bar on edit pages.
+
+How to handle it:
+
+1. For elements that must stay pinned to the viewport, use position: fixed
+   instead of position: sticky.
+2. When using position: fixed, offset the element to account for the shell:
+   left: var(--ra-sidebar-w, 260px); right: 0; bottom: 0;
+3. Add a spacer element after the fixed bar so content does not hide behind
+   it.
+4. Test by scrolling the page - the bar should stay visible at the bottom
+   through the whole scroll.
+
+### Pattern 6 - Composer classmap-authoritative
+
+What breaks: If composer.json has classmap-authoritative: true, Composer
+ignores PSR-4 rules at runtime. New classes added since the last dump-autoload
+are invisible and produce "Class not found" errors even though the files
+exist on disk. We hit this when first adding Commerce classes.
+
+How to handle it:
+
+1. During development, composer.json must have
+   classmap-authoritative: false.
+2. After adding ANY new class file, always run:
+   composer dump-autoload -o
+3. When deploying to production, flip classmap-authoritative back to true
+   for the performance gain, but only after running dump-autoload.
+4. Verify with a one-line php command that checks class_exists for the
+   new class. Expected: true.
+
+### Pattern 7 - Route Order
+
+What breaks: Routes are matched in registration order. A wildcard route
+registered before a specific one swallows the specific route. Example:
+/products/{id} registered before /products/create means /products/create
+gets captured as id="create".
+
+How to handle it:
+
+1. Always register specific routes before wildcards in routes/commerce.php.
+2. Group by specificity: create/new/edit endpoints first, then {id}/edit,
+   then {id} alone.
+3. When adding a new route, check that no earlier route could match it by
+   prefix.
+4. Verify by hitting the URL in the browser after every route change - do
+   not trust the code to look right.
+
+### Pattern 8 - Apache OPcache Serving Stale PHP
+
+What breaks: Edit a PHP file, reload the browser, see old behavior. The log
+shows no error but the code path is clearly outdated. We hit this repeatedly
+in early stages and spent hours debugging code that had already been fixed.
+
+How to handle it:
+
+1. After editing any file under app/, always reload Apache. Laragon menu
+   -> Apache -> Reload (or Restart).
+2. If behavior still looks stale after reload, restart Apache fully.
+3. When in doubt, check the actual file content via WSL cat before assuming
+   the browser is wrong.
+
+### Pattern 9 - Foreign Key Type Mismatch
+
+What breaks: Migration fails with "Referencing column X and referenced
+column Y in foreign key constraint Z are incompatible." We hit this when
+adding FKs from commerce tables to core_files.
+
+How to handle it:
+
+1. Before writing a migration that adds an FK, check the parent column type
+   with DESCRIBE.
+2. Match types exactly:
+   - FKs to core_* tables use INT UNSIGNED (matches inherited schema)
+   - FKs to commerce_* tables use BIGINT UNSIGNED
+3. If you inherit a schema with mixed types, follow the parent - never
+   assume.
+4. Grep for existing FKs in database/migrations/ before adding new ones.
+
+### Pattern 10 - Deleting Records That Other Records Reference
+
+What breaks: Trying to delete a category, attribute, or brand that is
+referenced by products. The DB refuses with a foreign key constraint error,
+or worse, cascades to data you did not intend to delete.
+
+How to handle it:
+
+1. Before any delete action, check usage:
+   - Use a repository method like productCount(), usageCount(), or
+     descendantIds() to count dependents
+   - Show the admin a modal with the counts and a "type X to confirm"
+     phrase
+2. Prefer archive over delete. The DB keeps the record for audit; the UI
+   hides it from active listings.
+3. If the user must delete, use soft delete (deleted_at timestamp). The
+   record can be recovered; nothing cascades.
+
+### Pattern 11 - UI Showing Save in the Wrong Place
+
+What breaks: Save buttons rendering mid-page, or not appearing at all.
+We hit this on category edit (save in the middle) and attribute edit
+(save missing entirely after a file rewrite).
+
+How to handle it:
+
+1. Every admin edit page uses the sticky action bar pattern (Section 7).
+2. When rewriting any edit page, verify the sticky bar is present with
+   grep ra-sticky-actions across resources/views/admin/*/edit.php
+3. Verify the form id is set and the button references it via the form
+   attribute.
+4. Test in browser: scroll down, the bar should stay at the bottom.
+
+### Pattern 12 - Validation Not Surfacing
+
+What breaks: User submits invalid data. Form clears silently. No error
+messages shown. We hit this on Brands and Categories.
+
+How to handle it:
+
+1. Every controller method that renders a form must read validation state:
+   - showCreate() reads the foo_errors flash
+   - showCreate() reads the old input from session
+   - Both are passed to the view
+2. Every store/update method must write validation state before redirecting:
+   - Flash the error array
+   - Flash the old input
+3. The view uses the err() and val() helpers to render error messages
+   and preserve input.
+4. Test by submitting a blank form - errors should appear under each
+   invalid field, and valid fields should keep their old values.
+
+---
+
+## 11. Immediate Next Steps
+
+1. Test the product variations page end to end:
+   - Search narrows results (400ms debounce)
+   - Group chips filter by first axis
+   - Bulk actions work (Enable, Disable, Set price)
+   - Pagination preserves filters
+   - Save persists edits
+   - Regenerate wipes and rebuilds
+2. Write the 006F stage doc at docs/stages/006f_product-variations.md
+3. Update docs/stages/README.md index
+4. Move to Stage 006G (Inventory overview) or Stage 007 (B2B)
+
+### What Stage 006G Will Cover (Inventory Overview)
+
+- Dashboard tiles for low-stock and out-of-stock counts
+- Movement history view with filters (by product, type, date range)
+- Bulk stock adjustment form
+- Uses everything already built (InventoryRepository)
+
+### What Stage 007 Will Cover (B2B)
+
+- Customer groups (retail, wholesale, VIP)
+- Price lists per group
+- Purchase orders and approval workflows
+- Quote management
+- B2B-specific checkout
+
+---
+
+## 12. Files Referenced in This Document
+
+- docs/ARCHITECTURE.md - layered architecture contract
+- docs/NAMING-CONVENTION.md - suite-wide naming rules
+- docs/ROADMAP.md - canonical build sequence
+- docs/stages/README.md - stage log index
+- docs/stages/001_* through 006e_* - individual stage docs
+- docs/CHANGELOG.md - chronological history (Recruit Aid heritage)
+- config/local.php - environment-specific (gitignored)
+- config/cli.php - CLI credentials (gitignored)
+- composer.json - PSR-4 mappings + dependencies
+
+---
+
+## 13. Quick Sanity Checks
+
+If something feels broken, run these three checks in order.
+
+First, rebuild Composer's autoloader and lint the bootstrapper (Laragon
+Terminal):
+
+    cd C:\projects\commerceaid
+    composer dump-autoload -o
+    php -l app\Core\App.php
+
+Second, check the file tree and error log (WSL):
+
+    ls -la /mnt/c/projects/commerceaid/app/Commerce/
+    tail -40 /mnt/c/projects/commerceaid/storage/logs/app.log
+
+Third, hit the admin URL in the browser:
+
+    http://localhost:8081/commerce/ca-admin
+
+If the admin shell loads, the framework is healthy. If it 500s, check the
+log tail. If specific routes 404, check that routes/commerce.php has the
+route registered.
+
+---
+
+End of REMEMBER.md
+
+---
+
+## 9. Known Issues and Deferred Work
+
+### Currently Being Tested
+
+Product variations page - just built, awaiting final verification of
+search + bulk actions + pagination behavior.
+
+### Deliberately Deferred
+
+- Image upload for products/variants (needs media library integration)
+- Rich text editor for descriptions (plain textarea for now)
+- Product tags UI (repository support exists, no admin UI)
+- Discounts / promotions (Stage 011)
+- Payment providers (Stage 008)
+- Shipping zones (Stage 007)
+- Tax classes (Stage 009)
+- Storefront theme engine (Stage 010)
+- Forms builder (Stage 009 in revised roadmap)
+
+### Small Known Issues
+
+- Topbar Search (coming soon) input is disabled - no global search yet
+- Settings gear in topbar links to /commerce/ca-admin/settings which 404s
+- products/_delete-modal.php is a placeholder - variations are archived
+  not deleted, so it is rarely used
+
+---
+
+## 10. Recurring Bug Patterns to Watch For
+
+### Silent Python Patch Failures
+
+str.replace() and re.sub() silently fail when whitespace does not match.
+ALWAYS grep the result after a patch. We have hit this 6+ times.
+
+### Typed Property Without Default
+
+    public ?int $logoFileId;          // CRASHES on access
+    public ?int $logoFileId = null;   // OK
+
+Every model property must have a default. Fixed across all six catalog
+models.
+
+### Nested Forms
+
+HTML disallows form inside form. Browsers silently submit the outer form
+instead of the inner one. This is why the variant tab was moved out of
+the product editor (Model A).
+
+### php -l Does Not Catch Everything
+
+php -l parses but does not compile. Textual corruption like a missing
+quote can pass lint. Grep after patch.
+
+### Sticky Positioning Inside overflow:auto
+
+position: sticky does not work reliably inside a parent with
+overflow: auto. Use position: fixed with proper offsets instead.
+
+### Composer classmap-authoritative
+
+composer.json has classmap-authoritative: false during development. If
+flipped to true, new classes are invisible until dump-autoload runs.
+Always run composer dump-autoload -o after adding a class.
+
+### Route Order
+
+Routes are matched in registration order. Specific routes must come
+before wildcards: /products/create must precede /products/{id}.
+
+---
+
+## 17. Permanent Fixes Applied
+
+### Pattern 15 - snake_case / camelCase mismatch in views
+
+**Problem:** Views called $val('manage_stock') and $valBool('is_b2b'),
+but model properties were camelCase ($manageStock, $isB2b). The
+toggles showed wrong state because the read silently returned the
+default. We patched this three times before deciding it needed a
+permanent solution.
+
+**Solution:** app/Commerce/Support/EditView.php
+
+Provides two static methods:
+
+    EditView::valClosure($old, $item)
+    EditView::valBoolClosure($old, $item)
+
+Both return closures that:
+
+1. Check old input first (by snake_case key)
+2. Fall back to model property, translating snake_case to camelCase
+3. Fall back to the default
+
+**Every admin edit view** now uses these helpers instead of inline
+closures:
+
+    $val     = \CorporateAid\Commerce\Support\EditView::valClosure($old ?? [], $product ?? null);
+    $valBool = \CorporateAid\Commerce\Support\EditView::valBoolClosure($old ?? [], $product ?? null);
+
+**Rule going forward:** never define $val or $valBool inline again.
+Always use EditView. This eliminates the entire class of bug where
+the field name in a view doesn't match the model property name.
+
+### Pattern 16 - Tab content below the fold on page load
+
+**Problem:** Loading a URL like /products/3/edit?tab=inventory
+highlighted the Inventory tab but didn't scroll to it. The active
+content was below the viewport, forcing the admin to scroll
+manually.
+
+**Solution:** Small JS block in the multi-tab page:
+
+    function scrollToActiveTab() {
+        var hash = window.location.hash;
+        var params = new URLSearchParams(window.location.search);
+        var tabParam = params.get('tab');
+        var targetId = hash.startsWith('#tab-') ? hash : (tabParam ? '#tab-' + tabParam : '');
+        if (!targetId) return;
+
+        var nav = document.querySelector('.ra-product-tabs');
+        if (nav) nav.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+
+    window.addEventListener('load', scrollToActiveTab);
+
+**Rule going forward:** any page with Bootstrap tabs that can be
+reached via ?tab=xxx must include scroll-to-active-tab behavior on
+load.
+
+---
+
+## 18. Additional Patterns (Discovered Stage 007A-007B)
+
+### Pattern 17 - FKs to core_* tables use INT UNSIGNED
+
+**Problem:** Migrations declared `BIGINT UNSIGNED` on columns that
+FK'd to `core_users.id`, `core_files.id`, and other `core_*` PKs.
+MySQL rejected with "Referencing column X and referenced column Y
+in foreign key constraint Z are incompatible."
+
+**Rule:** All `core_*` tables use `INT UNSIGNED` PKs. Any FK from
+a `commerce_*` table to a `core_*` table must also be
+`INT UNSIGNED`. FKs to other `commerce_*` tables use
+`BIGINT UNSIGNED`.
+
+**Prevention:** Before writing any migration with a new FK, run
+`DESCRIBE {parent_table};` and match the type exactly.
+
+**Where we hit it:** migrations 0200, 0205.
+
+### Pattern 18 - Partial migration application
+
+**Problem:** A migration with multiple CREATE TABLE statements
+failed in the middle (on a FK type mismatch). MySQL DDL
+auto-commits, so the earlier tables were created. When the
+migration was corrected and re-run, `CREATE TABLE IF NOT EXISTS`
+skipped those tables — so corrections to their shape never
+applied.
+
+**Detection:** After any failed migration, verify the state of
+every table it created (DESCRIBE each one). Do not assume that a
+successful re-run leaves everything correct.
+
+**Prevention:** Put each CREATE TABLE in its own migration file,
+or put risky statements (FKs, ALTERs) at the end. If a migration
+does partially apply, add a follow-up migration that ALTERs the
+wrong tables rather than editing the original.
+
+**Where we hit it:** migration 0205 left `commerce_customers`
+with `approved_by BIGINT UNSIGNED`. Fixed by migrations 0206 and
+0207 (ALTER the type, then ADD the FK).
+
+### Pattern 19 - Pre-flight inventory before touching closed code
+
+**Problem:** Repeatedly, edits to "closed" deliverables broke
+neighbouring features because we did not check what depended on
+them.
+
+**Rule:** Before any message that modifies existing files, produce
+a pre-flight table:
+
+- Files touched
+- Reference audit (grep for usages)
+- Impact assessment (what could break)
+- Rollback plan (how to undo)
+
+Only then write code. This is enforced for any change to:
+
+- `CommerceServiceProvider.php`
+- Anything under `app/Core/`
+- Anything under `app/Platform/`
+- Any file that other modules import
+
+**Where we hit it:** Every time we patched `App.php`,
+`NotificationRuleService.php`, `CommerceServiceProvider.php`,
+`_tab_inventory.php`, `customer_groups/edit.php`, and others.
+
+### Pattern 20 - One file per message during critical work
+
+**Problem:** A message that created two model files and one
+repository file was silently lost — the heredocs never ran.
+Hours of debugging followed. The root cause was heredoc batching
+limits: messages containing too many large heredocs can lose
+parts silently.
+
+**Rule:** When creating or modifying files that a closed
+deliverable depends on, split the work into **one file per
+message**. Each message: write, verify with `ls` + `head` +
+`php -l`, report. Next message only after confirmation.
+
+**Detection:** After every file write, `ls -la` the file and
+`php -l` it. If the file doesn't exist or lint fails, stop and
+re-send that single file. Do not proceed to the next file.
+
+**Cost:** More round trips. **Benefit:** No more silent failures.
+
+**Where we hit it:** M2 of Stage 007B (Customer model +
+CustomerRepository + provider binding in one message). The whole
+message was lost.
+
+### Pattern 21 - StoreContext is required for any repository read/write
+
+**Problem:** A smoke test called `CustomerRepository::countPending()`
+from the CLI and got "No store has been resolved for this request."
+
+**Rule:** `CommerceRepository::storeId()` throws
+`StoreContextMissingException` if no store is resolved. In web
+requests, `StoreResolutionMiddleware` populates it before any
+controller runs. In CLI scripts (cron jobs, seeders, smoke
+tests), you must set it manually:
+
+    $container->get(StoreContext::class)->set($storeId, $storeSlug, 'cli');
+
+Otherwise any repository query throws.
+
+**Why this is correct:** It prevents accidental cross-store
+queries. A repository method that reads the DB without a store
+context has no way to know which store's data to return — it
+would either fail with a SQL error or, worse, return data from
+the wrong store. The exception is the defense-in-depth layer
+that guarantees tenant isolation.
+
+**Where we hit it:** M2-4 smoke test of Stage 007B.
+
+### Pattern 22 - Prefix-match active state breaks on strict-prefix routes
+
+**Problem:** The sidebar's `$isActive()` closure in
+`resources/views/partials/sidebar.php` uses prefix matching to
+highlight the current nav item. This works for most items:
+
+- `/commerce/ca-admin/products` highlights Products
+- `/commerce/ca-admin/products/123` also highlights Products (prefix)
+- `/commerce/ca-admin/categories` highlights Categories
+
+But `/commerce/ca-admin` (Dashboard) is a **strict prefix** of
+every other admin route. So on `/commerce/ca-admin/products`,
+the closure returned `is-active` for BOTH Products AND Dashboard.
+On `/commerce/ca-admin/customer-approvals`, it returned
+`is-active` for BOTH Customer Approvals AND Dashboard.
+
+The extra active class was latent from Stage 005 — the browser
+silently applied `is-active` to two elements. It became visible
+in Stage 007B M3-6i when we added scroll-to-active: the sidebar
+scroll searched for `.ra-nav-item.is-active` and found Dashboard
+first (it renders before every other group), so it scrolled to
+top. The active page (Customer Approvals) stayed off-screen.
+
+**Detection:** Run this in the browser console on any admin page:
+
+    document.querySelectorAll('.ra-nav-item.is-active').length
+
+Expected: **1** (or 0 for pages not represented in the nav).
+
+If it returns 2 or more, a strict-prefix route is matching. Look
+at which hrefs are active:
+
+    document.querySelectorAll('.ra-nav-item.is-active').forEach(function(el) {
+        console.log(el.getAttribute('href'), el.textContent.trim());
+    });
+
+**Rule:** Any active-state check that uses prefix matching must
+special-case routes that are strict prefixes of their siblings.
+In this codebase, `/commerce/ca-admin` is the only such route
+today. The exact-match list lives explicitly in `$isActive`:
+
+    if ($href === '/commerce/ca-admin') {
+        return $cur === $href ? 'is-active' : '';
+    }
+
+If a future route is added that becomes a strict prefix of its
+siblings, it needs the same treatment. The list stays explicit
+with comments — not inferred by a clever rule that misses edge
+cases.
+
+**Why not a general "always require exact match" rule:** Prefix
+matching is correct for detail routes. `/products/123/edit` should
+highlight the Products list item. Requiring exact match everywhere
+would break that. The special case is scoped to the one route that
+needs it.
+
+**Prevention checklist when adding a nav item:**
+
+1. Ask: is this href a strict prefix of any sibling item's href?
+2. If yes, add an exact-match case to `$isActive`.
+3. After adding, verify with the browser console query above.
+4. Any page showing more than one active item is a bug.
+
+**Where we hit it:** Stage 007B M3-6i. The symptom was "sidebar
+scrolls to top on reload, active item not visible". The root cause
+was "two items marked active, scroll picks the first one".
+
+**Related:**
+- Baseline item 21 in `docs/baseline/02-assumptions.md`
+- Sidebar rewrite in Stage 007B M3-6i
+
+---
+
+## 19. Documents to Read First When Joining
+
+If you are new to this project and need to get up to speed
+quickly, read in this order:
+
+1. `docs/ARCHITECTURE.md` - the layered design contract
+2. `docs/NAMING-CONVENTION.md` - every name in the codebase
+3. `docs/ROADMAP.md` - the build sequence
+4. `docs/RESPONSIVENESS.md` - mandatory responsive directive
+5. This document (REMEMBER.md) - current state and patterns
+6. `docs/stages/*.md` - what shipped and why
+7. `docs/STATUS.md` - current state at a glance
+
+Then to run locally:
+
+    cd C:\projects\commerceaid
+    composer install
+    cp config/local.php.example config/local.php
+    cp config/cli.php.example config/cli.php
+    (edit both with your DB credentials)
+    php bin/migrate.php
+    php bin/seed.php
+    http://localhost:8081
+
+Login with admin@anayaglobal.test / ChangeMe!2026.
+
+---
+
+End of REMEMBER.md patterns section.

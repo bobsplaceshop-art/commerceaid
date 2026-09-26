@@ -1,0 +1,151 @@
+<?php
+/**
+ * Admin dashboard content.
+ *
+ * @var array $inventoryHealth  ['low_stock' => int, 'out_of_stock' => int, 'units_on_hand' => int]
+ */
+$inventoryHealth = $inventoryHealth ?? ['low_stock' => 0, 'out_of_stock' => 0, 'units_on_hand' => 0];
+?>
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-1">Dashboard</h1>
+        <p class="muted mb-0">Welcome back.</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="ra-tile">
+            <div class="ra-tile-label">Products</div>
+            <div class="ra-tile-value">0</div>
+            <div class="ra-tile-hint">Catalog is empty</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ra-tile">
+            <div class="ra-tile-label">Orders</div>
+            <div class="ra-tile-value">0</div>
+            <div class="ra-tile-hint">No orders yet</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ra-tile">
+            <div class="ra-tile-label">Customers</div>
+            <div class="ra-tile-value">0</div>
+            <div class="ra-tile-hint">No customers yet</div>
+        </div>
+    </div>
+</div>
+
+<!-- Inventory health -->
+<div class="ra-card mb-4">
+    <div class="ra-card-header d-flex align-items-center justify-content-between">
+        <h2 class="h6 mb-0">Inventory health</h2>
+        <a href="/commerce/ca-admin/inventory" class="ra-btn ra-btn-outline ra-btn-sm">
+            Manage inventory
+        </a>
+    </div>
+    <div class="ra-card-body">
+        <div class="ra-health-grid">
+            <a href="/commerce/ca-admin/inventory?status=low_stock" class="ra-health-tile">
+                <div class="ra-health-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="ra-health-body">
+                    <div class="ra-health-label">Low stock</div>
+                    <div class="ra-health-value" style="color:#f59e0b;"><?= (int) $inventoryHealth['low_stock'] ?></div>
+                </div>
+            </a>
+            <a href="/commerce/ca-admin/inventory?status=out_of_stock" class="ra-health-tile">
+                <div class="ra-health-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                    <i class="bi bi-x-octagon"></i>
+                </div>
+                <div class="ra-health-body">
+                    <div class="ra-health-label">Out of stock</div>
+                    <div class="ra-health-value" style="color:#ef4444;"><?= (int) $inventoryHealth['out_of_stock'] ?></div>
+                </div>
+            </a>
+            <div class="ra-health-tile is-static">
+                <div class="ra-health-icon" style="background: rgba(148, 163, 184, 0.15); color: var(--ra-muted,#94a3b8);">
+                    <i class="bi bi-boxes"></i>
+                </div>
+                <div class="ra-health-body">
+                    <div class="ra-health-label">Units on hand</div>
+                    <div class="ra-health-value"><?= number_format((int) $inventoryHealth['units_on_hand']) ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="ra-card">
+    <div class="ra-card-header">
+        <h2 class="h6 mb-0">Getting started</h2>
+    </div>
+    <div class="ra-card-body">
+        <p class="mb-3">Complete business setup to unlock the catalog, orders, and customers areas.</p>
+        <a href="/commerce/ca-admin/setup" class="ra-btn ra-btn-primary">
+            <i class="bi bi-sliders me-1"></i> Go to setup
+        </a>
+    </div>
+</div>
+
+<style>
+.ra-health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+.ra-health-tile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--ra-hover, rgba(148, 163, 184, 0.06));
+    border: 1px solid var(--ra-border, rgba(148, 163, 184, 0.12));
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color .12s, border-color .12s, transform .12s;
+}
+.ra-health-tile:not(.is-static):hover {
+    background: var(--ra-active, rgba(37, 99, 235, 0.08));
+    border-color: var(--ra-accent, #2563eb);
+    text-decoration: none;
+    color: inherit;
+}
+.ra-health-tile.is-static {
+    cursor: default;
+}
+.ra-health-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+.ra-health-body {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    min-width: 0;
+}
+.ra-health-label {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--ra-muted, #94a3b8);
+    font-weight: 600;
+}
+.ra-health-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--ra-fg, #0f172a);
+    line-height: 1;
+}
+.ra-btn-sm { padding: .35rem .65rem; font-size: .82rem; }
+</style>
