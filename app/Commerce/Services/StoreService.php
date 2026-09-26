@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace CorporateAid\Commerce\Services;
 
+use CorporateAid\Commerce\Models\Store;
 use CorporateAid\Commerce\Repositories\StoreRepository;
 
 /**
@@ -10,10 +11,17 @@ use CorporateAid\Commerce\Repositories\StoreRepository;
  *
  * Wraps StoreRepository with validation, defaults, lifecycle rules,
  * and the mandatory-setup check that gates the admin dashboard.
+ *
+ * Read methods return Store models. Write methods accept plain
+ * arrays (whitelisted by updateStore to prevent mass-assignment).
  */
 final class StoreService
 {
-    /** Mandatory fields - admin sees a persistent banner until these are all set. */
+    /**
+     * Mandatory fields - admin sees a persistent banner until these
+     * are all set. Field names are database column names; the Store
+     * model's isEmpty() method translates them to properties.
+     */
     public const MANDATORY_FIELDS = [
         'name',
         'slug',
@@ -28,31 +36,27 @@ final class StoreService
 
     // ---------- Resolution ----------
 
-    /** @return array<string,mixed>|null */
-    public function resolveByHostname(string $hostname): ?array
+    public function resolveByHostname(string $hostname): ?Store
     {
         return $this->stores->findByHostname($hostname);
     }
 
-    /** @return array<string,mixed>|null */
-    public function resolveBySlug(string $slug): ?array
+    public function resolveBySlug(string $slug): ?Store
     {
         return $this->stores->findBySlug($slug);
     }
 
-    /** @return array<string,mixed>|null */
-    public function resolveById(int $id): ?array
+    public function resolveById(int $id): ?Store
     {
         return $this->stores->findById($id);
     }
 
-    /** @return array<string,mixed>|null */
-    public function defaultStore(): ?array
+    public function defaultStore(): ?Store
     {
         return $this->stores->findDefault();
     }
 
-    /** @return array<int, array<string,mixed>> */
+    /** @return array<int, Store> */
     public function allActive(): array
     {
         return $this->stores->allActive();
@@ -75,7 +79,7 @@ final class StoreService
 
         $missing = [];
         foreach (self::MANDATORY_FIELDS as $field) {
-            if (empty($store[$field])) {
+            if ($store->isEmpty($field)) {
                 $missing[] = $field;
             }
         }
@@ -123,7 +127,7 @@ final class StoreService
             'slug'                  => $slug,
             'name'                  => $name,
             'legal_name'            => $input['legal_name']   ?? null,
-            'default_currency_id'   => null, // backfilled once a currency row exists
+            'default_currency_id'   => null,
             'locale'                => $input['locale']       ?? 'en_KE',
             'timezone'              => $input['timezone']     ?? 'Africa/Nairobi',
             'country_code'          => $country,

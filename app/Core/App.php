@@ -297,7 +297,7 @@ final class App
         $router = $this->router;
 
         // Files loaded in order. Missing files are silently skipped.
-        $routeFiles = ['auth', 'web', 'commerce'];
+        $routeFiles = ['auth', 'web', 'storefront', 'commerce'];
 
         foreach ($routeFiles as $name) {
             $path = $this->basePath . '/routes/' . $name . '.php';

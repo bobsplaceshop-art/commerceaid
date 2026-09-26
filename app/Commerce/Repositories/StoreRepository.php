@@ -4,11 +4,15 @@ declare(strict_types=1);
 namespace CorporateAid\Commerce\Repositories;
 
 use CorporateAid\Core\Database;
+use CorporateAid\Commerce\Models\Store;
 
 /**
  * Store lookup. Unlike other Commerce repositories, this one CANNOT
  * extend CommerceRepository - that base requires a store_id to already
  * be resolved, and this is the class that finds it.
+ *
+ * Read methods return Store models. Write methods accept plain
+ * arrays (mass-assignment is guarded by StoreService::updateStore).
  *
  * Reads from `commerce_stores` and `commerce_store_domains`.
  * Writes use raw SQL via Database::insert() and Database::execute().
@@ -19,13 +23,16 @@ final class StoreRepository
     {
     }
 
-    /** @return array<string,mixed>|null */
-    public function findByHostname(string $hostname): ?array
+    // =================================================================
+    // Reads
+    // =================================================================
+
+    public function findByHostname(string $hostname): ?Store
     {
         $hostname = strtolower(trim($hostname));
         if ($hostname === '') return null;
 
-        return $this->db->selectOne(
+        $row = $this->db->selectOne(
             "SELECT s.*
                FROM `commerce_stores` s
                JOIN `commerce_store_domains` d ON d.`store_id` = s.`id`
@@ -35,36 +42,40 @@ final class StoreRepository
               LIMIT 1",
             [$hostname]
         );
+
+        return $row ? Store::fromRow($row) : null;
     }
 
-    /** @return array<string,mixed>|null */
-    public function findBySlug(string $slug): ?array
+    public function findBySlug(string $slug): ?Store
     {
         $slug = strtolower(trim($slug));
         if ($slug === '') return null;
 
-        return $this->db->selectOne(
+        $row = $this->db->selectOne(
             "SELECT * FROM `commerce_stores`
               WHERE `slug` = ? AND `status` = 'active'
               LIMIT 1",
             [$slug]
         );
+
+        return $row ? Store::fromRow($row) : null;
     }
 
-    /** @return array<string,mixed>|null */
-    public function findById(int $id): ?array
+    public function findById(int $id): ?Store
     {
-        return $this->db->selectOne(
+        $row = $this->db->selectOne(
             "SELECT * FROM `commerce_stores` WHERE `id` = ? LIMIT 1",
             [$id]
         );
+
+        return $row ? Store::fromRow($row) : null;
     }
 
     /**
      * The single active store, if exactly one exists.
-     * @return array<string,mixed>|null
+     * Returns null when zero or more than one active store is present.
      */
-    public function findDefault(): ?array
+    public function findDefault(): ?Store
     {
         $rows = $this->db->select(
             "SELECT * FROM `commerce_stores`
@@ -72,19 +83,34 @@ final class StoreRepository
               ORDER BY `id` ASC
               LIMIT 2"
         );
-        return count($rows) === 1 ? $rows[0] : null;
+
+        if (count($rows) !== 1) {
+            return null;
+        }
+
+        return Store::fromRow($rows[0]);
     }
 
-    /** @return array<int, array<string,mixed>> */
+    /** @return array<int, Store> */
     public function allActive(): array
     {
-        return $this->db->select(
-            "SELECT `id`, `slug`, `name`, `theme_slug`
-               FROM `commerce_stores`
+        $rows = $this->db->select(
+            "SELECT * FROM `commerce_stores`
               WHERE `status` = 'active'
               ORDER BY `name` ASC"
         );
+
+        return array_map(fn ($r) => Store::fromRow($r), $rows);
     }
+
+    // =================================================================
+    // Writes
+    //
+    // These accept plain arrays and return ints. The read side
+    // returns Store models. Write side stays array-based because
+    // callers pass partial column sets (mass-assignment). Modeling
+    // that as a DTO would require a separate write DTO.
+    // =================================================================
 
     /** Insert a store. Returns the new id. */
     public function create(array $data): int
@@ -103,7 +129,7 @@ final class StoreRepository
         return $this->db->insert($sql, $params);
     }
 
-    /** Update a store row. */
+    /** Update a store row. Returns affected row count. */
     public function update(int $id, array $data): int
     {
         if ($data === []) return 0;
@@ -137,7 +163,13 @@ final class StoreRepository
         );
     }
 
-    /** @return array<int, array<string,mixed>> */
+    /**
+     * Return raw domain rows for a store.
+     * Domains are not modeled as DTOs - they carry few columns and
+     * are always consumed as a list in the admin UI.
+     *
+     * @return array<int, array<string,mixed>>
+     */
     public function domainsFor(int $storeId): array
     {
         return $this->db->select(
