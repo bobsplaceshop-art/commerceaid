@@ -339,6 +339,53 @@ Before every commit, ask:
 
 ---
 
+## Commit Environment
+
+Commits are made from WSL, not from Laragon Terminal or Git for
+Windows directly.
+
+Why: the pre-commit hook is a POSIX shell script. WSL has a native
+POSIX shell and a native PHP 8.3.33 build. Laragon Terminal uses
+cmd.exe, which cannot run shell scripts directly, and Git for
+Windows has known quirks with non-default hooks paths. Fighting
+those quirks adds no value.
+
+The roles are:
+
+| Environment | Role |
+|---|---|
+| WSL | Authoring, commits, linting, static analysis |
+| Laragon | Web server, MySQL, migrations, seeders |
+
+The pipeline (lint + hook) runs in WSL. The application runs in
+Laragon. These are distinct concerns.
+
+### Commit flow
+
+    cd /mnt/c/projects/commerceaid
+    git add -A
+    git commit -m "..."
+    git push backup main
+    git push backup --tags
+
+The hook fires on `git commit` and runs `php bin/lint.php`. WSL's
+PHP 8.3.33 (built from source, installed at /usr/local/bin/php)
+executes the linter. If any file fails to parse, the commit is
+blocked.
+
+### What if I accidentally commit from Laragon
+
+The hook may or may not run, depending on the Windows git version
+and configuration. If it doesn't run, no lint check happens. This
+is a degraded mode, not a failure. Push to backup afterwards from
+WSL as you normally would.
+
+### What if I want to commit from macOS or Linux
+
+The hook is portable. It resolves the PHP binary via `command -v
+php` first. Any POSIX environment with PHP on PATH will run the
+hook correctly.
+
 ## The Pre-Commit Checklist
 
 Before merging a feature branch into main:
