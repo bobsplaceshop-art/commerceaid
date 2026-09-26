@@ -357,6 +357,93 @@ Any failure on the list is a stop sign. Fix, re-verify, then merge.
 
 ---
 
+## Backup
+
+A bare repo mirror lives at:
+
+    C:\Users\Admin\Documents\RepoBackup\commerceaid.git
+    /mnt/c/Users/Admin/Documents/RepoBackup/commerceaid.git
+
+It is registered as the `backup` remote in the primary repo. Google
+Drive Desktop syncs that folder to the cloud, giving geographic
+redundancy without a paid service or a GitHub account.
+
+### Why bare
+
+A bare repo has no working tree - just the git object store, refs,
+and history. You cannot edit files in it, only push to and clone
+from it. That is exactly what a backup wants to be.
+
+### Why not sync the primary folder directly to Drive
+
+Two reasons:
+
+1. **Mid-commit sync corruption.** Git writes to `.git/` in
+   multiple steps. Drive Desktop might upload intermediate states
+   out of order and leave the repo corrupt on restore.
+2. **Vendor bloat.** The `vendor/` directory is ~400 files of
+   third-party code. Drive would sync every one of them,
+   wasting bandwidth and cloud quota.
+
+A bare repo avoids both. Git pushes are atomic at the ref level,
+and the bare repo contains only what git needs.
+
+### Sync workflow
+
+After every commit you want to preserve:
+
+    git push backup main
+    git push backup --tags
+
+Or configure a push mirror so one command pushes both:
+
+    git config remote.backup.push "refs/heads/main:refs/heads/main"
+    git config --add remote.backup.push "refs/tags/*:refs/tags/*"
+    git push backup
+
+Once pushed, Drive Desktop syncs the bare repo to the cloud in
+the background. No further action.
+
+### Restore procedure
+
+If the primary machine is lost:
+
+1. Sign into Google Drive on a new machine.
+2. Download or mount the `RepoBackup/commerceaid.git` folder.
+3. `git clone <path-to-commerceaid.git> commerceaid`
+4. `cd commerceaid`
+5. `cp config/local.php.example config/local.php` (edit DB creds)
+6. `cp config/cli.php.example config/cli.php` (edit CLI creds)
+7. `composer install`
+8. `php bin/migrate.php`
+9. `php bin/seed.php`
+
+Full project restored, all history intact.
+
+### Verification
+
+Check the backup has what you expect:
+
+    git -C "/mnt/c/Users/Admin/Documents/RepoBackup/commerceaid.git" log --oneline -5
+    git -C "/mnt/c/Users/Admin/Documents/RepoBackup/commerceaid.git" tag -l
+    git -C "/mnt/c/Users/Admin/Documents/RepoBackup/commerceaid.git" branch -a
+
+Compare against the primary:
+
+    git -C /mnt/c/projects/commerceaid log --oneline -5
+    git -C /mnt/c/projects/commerceaid tag -l
+
+If they match, the backup is current. If they don't, push.
+
+### Not a remote in the git sense
+
+The `backup` remote is a local filesystem path. There is no HTTP
+endpoint, no SSH, no authentication. It works because the folder
+is on this machine and Drive Desktop handles off-machine sync.
+This is intentional. A hosted remote (GitHub, GitLab, Bitbucket)
+can be added later alongside `backup` if the project gains
+collaborators.
+
 ## What This Document Does Not Cover
 
 - **CI/CD pipelines.** No automated test running yet. When tests
