@@ -62,6 +62,8 @@ None. Stage 007B closed 2026-09-26.
 
 ### Stage 008 - Storefront & Search
 
+**Detailed plan:** see `docs/stages/008_storefront-plan.md`
+
 **Goal:** Public-facing storefront. Product pages, category
 browsing, search, filters, cart, checkout, customer account.
 
