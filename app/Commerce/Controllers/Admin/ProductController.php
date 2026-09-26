@@ -6,6 +6,7 @@ namespace CorporateAid\Commerce\Controllers\Admin;
 use CorporateAid\Core\Auth;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
+use CorporateAid\Core\Database;
 use CorporateAid\Core\Session;
 use CorporateAid\Commerce\Models\Product;
 use CorporateAid\Commerce\Repositories\BrandRepository;

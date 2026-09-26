@@ -19,15 +19,30 @@
         "phpmailer/phpmailer": "^6.9",
         "dompdf/dompdf": "^3.0"
     },
+    "require-dev": {
+        "phpstan/phpstan": "^2.2"
+    },
     "autoload": {
         "psr-4": {
-            "CorporateAid\\Core\\":       "app/Core/",
-            "CorporateAid\\Platform\\":   "app/Platform/",
-            "CorporateAid\\Commerce\\":   "app/Commerce/",
-            "CorporateAid\\Helpers\\":    "app/Helpers/"
+            "CorporateAid\\Core\\": "app/Core/",
+            "CorporateAid\\Platform\\": "app/Platform/",
+            "CorporateAid\\Commerce\\": "app/Commerce/",
+            "CorporateAid\\Helpers\\": "app/Helpers/"
         },
         "files": [
             "app/Helpers/functions.php"
+        ]
+    },
+    "scripts": {
+        "lint": "php bin/lint.php",
+        "analyse": "phpstan analyse --memory-limit=512M",
+        "check": [
+            "@lint",
+            "@analyse"
+        ],
+        "hook:install": "php bin/install-hooks.php",
+        "hook:uninstall": [
+            "git config --unset core.hooksPath || true"
         ]
     },
     "config": {

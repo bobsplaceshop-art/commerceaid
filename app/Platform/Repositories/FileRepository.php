@@ -52,7 +52,7 @@ final class FileRepository
         string $sha256,
         ?int $uploadedBy
     ): int {
-        $this->db->execute(
+        return $this->db->insert(
             "INSERT INTO `core_files`
                 (`uuid`, `original_name`, `stored_name`, `storage_path`,
                  `mime_type`, `extension`, `size_bytes`, `sha256_hash`, `uploaded_by`)
@@ -62,7 +62,6 @@ final class FileRepository
                 $mimeType, $extension, $sizeBytes, $sha256, $uploadedBy,
             ]
         );
-        return (int) $this->db->lastInsertId();
     }
 
     /**

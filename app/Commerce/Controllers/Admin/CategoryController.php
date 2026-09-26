@@ -396,7 +396,7 @@ final class CategoryController extends AdminController
             }
 
             $out[] = [
-                'id'    => $id,
+                'id'    => (int) $id,
                 'name'  => str_repeat('— ', $depth) . $category->name,
                 'depth' => $depth,
             ];

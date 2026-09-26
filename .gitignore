@@ -130,3 +130,10 @@ node_modules/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# ---------------------------------------------------------------------
+# Generated git hooks (machine-specific, installed via composer hook:install)
+# ---------------------------------------------------------------------
+.githooks/pre-commit
+.githooks/pre-push
+.githooks/post-checkout

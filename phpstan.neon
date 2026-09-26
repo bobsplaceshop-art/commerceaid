@@ -1,0 +1,87 @@
+# =====================================================================
+# PHPStan configuration
+# =====================================================================
+#
+# Static analysis config for the Anaya Global commerce platform.
+#
+# Level 5 catches:
+#   - Type errors (wrong types passed to functions/methods)
+#   - Undefined variables and methods
+#   - Unknown classes (missing imports, typos)
+#   - Wrong number of arguments to a method
+#   - Unreachable code
+#   - Dead properties
+#
+# Not yet enabled (higher levels catch more but demand more
+# annotations):
+#   - Level 6+: mixed types must be explicitly handled
+#   - Level 7+: null propagation analysis
+#   - Level 8-9: strict generics, full type completeness
+#
+# When to bump: after the codebase has 50+ unit tests and every
+# method has explicit return types. Until then, level 5 is the
+# sweet spot between signal and noise.
+# =====================================================================
+
+parameters:
+    level: 5
+    paths:
+        - app
+        - routes
+    tmpDir: storage/cache/phpstan
+
+    # -----------------------------------------------------------------
+    # Ignored errors - benign patterns accepted by policy.
+    #
+    # Every entry has a reason above it. If the reason stops being
+    # true, remove the entry and fix the code. If a NEW kind of
+    # benign error appears, add a new identifier here with a reason.
+    #
+    # These are identifier-based (not line-based), so they survive
+    # refactoring. A file moving or a line shifting does not break
+    # the ignore.
+    #
+    # Important: PHPStan reports "Ignored error pattern X was not
+    # matched in reported errors" as a failure when an ignore does
+    # not match anything. So every entry here MUST correspond to at
+    # least one real finding. When we fix the last occurrence of a
+    # pattern, we remove its entry too.
+    # -----------------------------------------------------------------
+    ignoreErrors:
+        # Nullsafe operators (?->) and null coalescing (??) on values
+        # PHPStan has proven are never null. The extra safety is a
+        # stylistic choice, not a bug. Simplifying requires reading
+        # 15+ files to confirm each case, and the runtime cost is
+        # zero. Accepted.
+        -
+            identifier: nullsafe.neverNull
+        -
+            identifier: nullCoalesce.expr
+        -
+            identifier: nullCoalesce.offset
+
+        # Properties that are written (via constructor promotion)
+        # but never read in the class body. Usually constructor-
+        # injected dependencies reserved for future use. Harmless at
+        # runtime. Accepted until the property is either used or
+        # removed in a dedicated cleanup pass.
+        -
+            identifier: property.onlyWritten
+
+        # Return types wider than necessary. PHPStan proves the
+        # function never returns a particular type, but the
+        # declaration includes it. Harmless. Accepted.
+        -
+            identifier: return.unusedType
+
+        # array_values() called on a value that is already a list.
+        # PHPStan is right that the call has no effect. Removing it
+        # would reduce clarity (the call documents intent: "I expect
+        # a list"). Accepted.
+        -
+            identifier: arrayValues.list
+
+        # Defensive checks against values PHPStan proves cannot
+        # occur. Kept for defense-in-depth. Accepted.
+        -
+            identifier: identical.alwaysFalse
