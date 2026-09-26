@@ -1,0 +1,575 @@
+/* =====================================================================
+ * Anaya Global - Storefront stylesheet
+ * =====================================================================
+ *
+ * The public-facing design system. Distinct from the admin styles
+ * (app.css / setup.css). Mobile-first, light, product-focused.
+ *
+ * Scope for 008A:
+ *   - Layout containers
+ *   - Header and nav
+ *   - Footer
+ *   - Hero section
+ *   - Buttons
+ *   - Empty states
+ *   - Flash alerts
+ *
+ * Out of scope (deferred to later sub-stages):
+ *   - Product cards (008B)
+ *   - Cart table (008D)
+ *   - Checkout forms (008E)
+ *   - Account pages (008C)
+ *
+ * Palette: light mode only. No data-theme switching. Stage 012
+ * (theme engine) will replace these custom properties with
+ * per-store values.
+ * ===================================================================== */
+
+:root {
+    /* Palette - warm neutral, distinct from admin's cool blue-gray */
+    --sf-bg:            #ffffff;
+    --sf-bg-soft:       #f8f7f4;
+    --sf-bg-muted:      #f1efea;
+
+    --sf-fg:            #1c1a16;
+    --sf-fg-soft:       #57534e;
+    --sf-fg-muted:      #8b857e;
+
+    --sf-border:        #e7e5e4;
+    --sf-border-strong: #d6d3d1;
+
+    --sf-accent:        #b45309;   /* warm amber */
+    --sf-accent-hover:  #92400e;
+    --sf-accent-fg:     #ffffff;
+
+    --sf-danger:        #b91c1c;
+    --sf-danger-soft:   #fee2e2;
+    --sf-success:       #15803d;
+    --sf-success-soft:  #dcfce7;
+
+    /* Layout */
+    --sf-container-w:   1200px;
+    --sf-radius:        10px;
+    --sf-radius-sm:     6px;
+
+    /* Typography */
+    --sf-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+}
+
+/* =====================================================================
+ * Reset-adjacent base styles
+ * ===================================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body.sf-body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--sf-font);
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--sf-fg);
+    background: var(--sf-bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* =====================================================================
+ * Layout container
+ * ===================================================================== */
+
+.sf-container {
+    width: 100%;
+    max-width: var(--sf-container-w);
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+    .sf-container {
+        padding: 0 1.5rem;
+    }
+}
+
+.sf-main {
+    min-height: 60vh;
+    padding: 0 0 4rem;
+}
+
+/* =====================================================================
+ * Header
+ * ===================================================================== */
+
+.sf-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--sf-bg);
+    border-bottom: 1px solid var(--sf-border);
+}
+
+.sf-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: .85rem 0;
+    flex-wrap: wrap;
+}
+
+.sf-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    text-decoration: none;
+    color: var(--sf-fg);
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: -.01em;
+}
+
+.sf-brand-mark {
+    display: inline-block;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #f59e0b, #b45309);
+}
+
+.sf-nav-toggle {
+    display: none;
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--sf-border);
+    border-radius: var(--sf-radius-sm);
+    padding: .35rem .55rem;
+    font-size: 1.1rem;
+    color: var(--sf-fg);
+    cursor: pointer;
+}
+
+.sf-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.sf-nav-link {
+    text-decoration: none;
+    color: var(--sf-fg-soft);
+    font-weight: 500;
+    font-size: .95rem;
+    transition: color .15s;
+}
+
+.sf-nav-link:hover {
+    color: var(--sf-accent);
+}
+
+.sf-nav-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.sf-search {
+    position: relative;
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .sf-search {
+        display: block;
+    }
+}
+
+.sf-search-icon {
+    position: absolute;
+    left: .6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--sf-fg-muted);
+    font-size: .85rem;
+    pointer-events: none;
+}
+
+.sf-search-input {
+    width: 200px;
+    padding: .45rem .6rem .45rem 1.9rem;
+    border: 1px solid var(--sf-border);
+    border-radius: var(--sf-radius-sm);
+    font-size: .9rem;
+    background: var(--sf-bg-soft);
+    color: var(--sf-fg);
+}
+
+.sf-search-input:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.sf-icon-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--sf-radius-sm);
+    color: var(--sf-fg-soft);
+    text-decoration: none;
+    font-size: 1.05rem;
+    transition: background .15s, color .15s;
+}
+
+.sf-icon-btn:hover {
+    background: var(--sf-bg-soft);
+    color: var(--sf-fg);
+}
+
+.sf-cart-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: var(--sf-accent);
+    color: var(--sf-accent-fg);
+    font-size: .68rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Mobile nav */
+@media (max-width: 767px) {
+    .sf-nav-toggle {
+        display: inline-flex;
+    }
+
+    .sf-nav-links {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .5rem;
+        padding: .75rem 0 .25rem;
+        border-top: 1px solid var(--sf-border);
+        margin-top: .5rem;
+    }
+
+    .sf-nav-links.is-open {
+        display: flex;
+    }
+
+    .sf-nav-link {
+        font-size: 1rem;
+        padding: .25rem 0;
+    }
+}
+
+/* =====================================================================
+ * Flash alerts
+ * ===================================================================== */
+
+.sf-flash-wrap {
+    padding: 1rem 0 0;
+}
+
+.sf-alert {
+    padding: .75rem 1rem;
+    border-radius: var(--sf-radius-sm);
+    font-size: .92rem;
+    margin-bottom: .5rem;
+    border: 1px solid transparent;
+}
+
+.sf-alert-success {
+    background: var(--sf-success-soft);
+    color: var(--sf-success);
+    border-color: rgba(21, 128, 61, .2);
+}
+
+.sf-alert-error {
+    background: var(--sf-danger-soft);
+    color: var(--sf-danger);
+    border-color: rgba(185, 28, 28, .2);
+}
+
+/* =====================================================================
+ * Hero
+ * ===================================================================== */
+
+.sf-hero {
+    padding: 3rem 0 2.5rem;
+    background: var(--sf-bg-soft);
+    border-bottom: 1px solid var(--sf-border);
+    margin-bottom: 2.5rem;
+}
+
+@media (min-width: 768px) {
+    .sf-hero {
+        padding: 4.5rem 0 3.5rem;
+    }
+}
+
+.sf-hero-title {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    margin: 0 0 .75rem;
+    color: var(--sf-fg);
+}
+
+@media (min-width: 768px) {
+    .sf-hero-title {
+        font-size: 2.75rem;
+    }
+}
+
+.sf-hero-subtitle {
+    font-size: 1.05rem;
+    color: var(--sf-fg-soft);
+    margin: 0 0 1.5rem;
+    max-width: 520px;
+}
+
+.sf-hero-actions {
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+}
+
+/* =====================================================================
+ * Sections
+ * ===================================================================== */
+
+.sf-section {
+    padding: 2rem 0;
+}
+
+.sf-section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+}
+
+.sf-section-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -.015em;
+    color: var(--sf-fg);
+}
+
+.sf-section-link {
+    color: var(--sf-accent);
+    text-decoration: none;
+    font-size: .9rem;
+    font-weight: 500;
+}
+
+.sf-section-link:hover {
+    text-decoration: underline;
+}
+
+/* =====================================================================
+ * Buttons
+ * ===================================================================== */
+
+.sf-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: .6rem 1.15rem;
+    border-radius: var(--sf-radius-sm);
+    font-size: .95rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+    line-height: 1.2;
+}
+
+.sf-btn-primary {
+    background: var(--sf-accent);
+    color: var(--sf-accent-fg);
+}
+
+.sf-btn-primary:hover {
+    background: var(--sf-accent-hover);
+    color: var(--sf-accent-fg);
+}
+
+.sf-btn-outline {
+    background: transparent;
+    border-color: var(--sf-border-strong);
+    color: var(--sf-fg);
+}
+
+.sf-btn-outline:hover {
+    border-color: var(--sf-fg);
+    color: var(--sf-fg);
+}
+
+/* =====================================================================
+ * Empty states
+ * ===================================================================== */
+
+.sf-empty {
+    padding: 3rem 1rem;
+    text-align: center;
+    background: var(--sf-bg-soft);
+    border: 1px dashed var(--sf-border-strong);
+    border-radius: var(--sf-radius);
+}
+
+.sf-empty i {
+    font-size: 2rem;
+    color: var(--sf-fg-muted);
+    display: block;
+    margin-bottom: .75rem;
+}
+
+.sf-empty-text {
+    color: var(--sf-fg-soft);
+    font-size: .95rem;
+    margin: 0;
+}
+
+/* =====================================================================
+ * Footer
+ * ===================================================================== */
+
+.sf-footer {
+    margin-top: 4rem;
+    padding: 3rem 0 1.5rem;
+    background: var(--sf-bg-soft);
+    border-top: 1px solid var(--sf-border);
+    font-size: .92rem;
+}
+
+.sf-footer-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+@media (min-width: 640px) and (max-width: 899px) {
+    .sf-footer-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .sf-footer-col:first-child {
+        grid-column: 1 / -1;
+        margin-bottom: 1rem;
+    }
+}
+
+@media (min-width: 900px) {
+    .sf-footer-grid {
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+    }
+}
+
+.sf-footer-brand {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: .5rem;
+    color: var(--sf-fg);
+}
+
+.sf-footer-text {
+    color: var(--sf-fg-soft);
+    margin: 0;
+    max-width: 320px;
+    line-height: 1.55;
+}
+
+.sf-footer-heading {
+    font-size: .82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--sf-fg-muted);
+    margin: 0 0 .75rem;
+}
+
+.sf-footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sf-footer-links li {
+    margin-bottom: .4rem;
+}
+
+.sf-footer-link {
+    color: var(--sf-fg-soft);
+    text-decoration: none;
+    transition: color .15s;
+}
+
+.sf-footer-link:hover {
+    color: var(--sf-accent);
+}
+
+.sf-footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: .5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--sf-border);
+    color: var(--sf-fg-muted);
+    font-size: .85rem;
+}
+
+/* =====================================================================
+ * Footer column + bottom-line spans
+ * =====================================================================
+ *
+ * The footer grid handles column layout. The .sf-footer-col wrapper
+ * is a semantic hook for future theming (Stage 012). For now it
+ * keeps columns from overflowing on narrow containers.
+ *
+ * .sf-footer-copy and .sf-footer-meta are inline spans inside the
+ * bottom line. They inherit typography from .sf-footer-bottom.
+ * Explicit rules here keep the class contract complete and give
+ * them a hook for later customization.
+ * ===================================================================== */
+
+.sf-footer-col {
+    min-width: 0;
+}
+
+.sf-footer-copy {
+    display: inline;
+}
+
+.sf-footer-meta {
+    display: inline;
+    opacity: .7;
+}
+
+@media (max-width: 639px) {
+    .sf-footer-meta {
+        display: block;
+        margin-top: .25rem;
+    }
+}

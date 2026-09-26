@@ -6,6 +6,7 @@ namespace CorporateAid\Commerce\Middleware;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 use CorporateAid\Commerce\Context\StoreContext;
+use CorporateAid\Commerce\Models\Store;
 use CorporateAid\Commerce\Services\StoreService;
 
 /**
@@ -45,8 +46,8 @@ final class StoreResolutionMiddleware
 
         if ($store !== null) {
             $this->context->set(
-                (int) $store['id'],
-                (string) $store['slug'],
+                $store->id,
+                $store->slug,
                 $this->lastSource
             );
         }
@@ -54,8 +55,7 @@ final class StoreResolutionMiddleware
         return $next($request);
     }
 
-    /** @return array<string,mixed>|null */
-    private function resolveFromSession(): ?array
+    private function resolveFromSession(): ?Store
     {
         if (PHP_SAPI === 'cli' || session_status() !== PHP_SESSION_ACTIVE) {
             return null;
@@ -71,8 +71,7 @@ final class StoreResolutionMiddleware
         return $store;
     }
 
-    /** @return array<string,mixed>|null */
-    private function resolveFromDomain(Request $request): ?array
+    private function resolveFromDomain(Request $request): ?Store
     {
         $host = strtolower((string) ($request->header('Host') ?? ($_SERVER['HTTP_HOST'] ?? '')));
         if (($pos = strpos($host, ':')) !== false) {
@@ -89,8 +88,7 @@ final class StoreResolutionMiddleware
         return $store;
     }
 
-    /** @return array<string,mixed>|null */
-    private function resolveFromPath(Request $request): ?array
+    private function resolveFromPath(Request $request): ?Store
     {
         $path = (string) ($request->path() ?? '');
         if (!preg_match('#^/s/([a-z0-9][a-z0-9-]{1,78}[a-z0-9])(?:/|$)#', $path, $m)) {
@@ -103,8 +101,7 @@ final class StoreResolutionMiddleware
         return $store;
     }
 
-    /** @return array<string,mixed>|null */
-    private function resolveFromDefault(): ?array
+    private function resolveFromDefault(): ?Store
     {
         $store = $this->stores->defaultStore();
         if ($store !== null) {

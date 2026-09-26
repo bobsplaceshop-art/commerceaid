@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
 
-use CorporateAid\Core\Request;
-use CorporateAid\Core\Response;
 use CorporateAid\Core\Router;
 use CorporateAid\Commerce\Controllers\Pwa\ManifestController;
 use CorporateAid\Commerce\Controllers\Admin\DashboardController;
@@ -15,56 +13,9 @@ use CorporateAid\Commerce\Controllers\Admin\CustomerApprovalController;
 /** @var Router $router */
 
 // =====================================================================
-// PWA
+// PWA - manifest
 // =====================================================================
 $router->get('/manifest.json', [ManifestController::class, '__invoke']);
-
-$router->get('/offline', function (Request $req, array $params): Response {
-    return Response::html(
-        '<!doctype html><html><head><meta charset="utf-8">'
-        . '<title>Offline - Anaya Global</title>'
-        . '<meta name="viewport" content="width=device-width,initial-scale=1">'
-        . '<style>body{font-family:system-ui;padding:4rem;max-width:520px;'
-        . 'margin:0 auto;color:#0f172a;text-align:center}h1{margin:0 0 .5rem}'
-        . 'p{color:#475569;line-height:1.6}</style></head><body>'
-        . '<h1>You are offline</h1>'
-        . '<p>Reconnect to continue shopping.</p>'
-        . '</body></html>'
-    );
-});
-
-// =====================================================================
-// Storefront (placeholder - Phase 8 expands this)
-// =====================================================================
-$router->get('/', function (Request $req, array $params): Response {
-    return Response::html(
-        '<!doctype html><html><head><meta charset="utf-8">'
-        . '<title>Anaya Global</title>'
-        . '<meta name="viewport" content="width=device-width,initial-scale=1">'
-        . '<style>'
-        . 'body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;'
-        . 'background:#f4f6fb;color:#0f172a;padding:4rem 1rem;margin:0}'
-        . '.wrap{max-width:720px;margin:0 auto}'
-        . 'h1{font-size:2.25rem;margin:0 0 .5rem;letter-spacing:-.02em}'
-        . '.tag{color:#64748b;font-size:1.05rem;margin:0 0 2rem}'
-        . 'a{color:#2563eb;text-decoration:none;font-weight:500}'
-        . 'a:hover{text-decoration:underline}'
-        . '.card{background:#fff;border:1px solid #e5e9f2;border-radius:14px;'
-        . 'padding:1.5rem 1.75rem;margin:1rem 0;box-shadow:0 1px 2px rgba(15,23,42,.04)}'
-        . '</style></head><body><div class="wrap">'
-        . '<h1>Anaya Global</h1>'
-        . '<p class="tag">Commerce platform - storefront is booting up.</p>'
-        . '<div class="card">'
-        . '<p><strong>Health check</strong></p>'
-        . '<p><a href="/manifest.json">Manifest</a> &middot; '
-        . '<a href="/login">Admin login</a> &middot; '
-        . '<a href="/commerce/ca-admin">Admin panel</a></p>'
-        . '</div>'
-        . '<p style="color:#94a3b8;font-size:.85rem;margin-top:2rem">'
-        . 'If you can read this, the framework is running.</p>'
-        . '</div></body></html>'
-    );
-});
 
 // =====================================================================
 // Admin - dashboard
