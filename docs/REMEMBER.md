@@ -1040,6 +1040,72 @@ would have been caught by this rule:
 
 ---
 
+### Pattern 25 - PHPStan level 8 is the baseline
+
+**Context:** On 2026-09-27 the codebase moved from PHPStan
+level 5 to level 8 in three passes. The progression:
+
+  Level 6: 242 annotations, zero bugs found (pure
+           documentation).
+  Level 7: 23 fixes, five real bugs found (false-return
+           guards on PDO, session_name, glob, file, fopen).
+  Level 8: 1 fix, one real bug found (post-commit null row).
+
+Six runtime bugs caught total. Level 6 was cost. Levels 7 and
+8 paid for the whole effort.
+
+**Rule:** the project is frozen at level 8. Every future commit
+must pass:
+
+    php vendor/bin/phpstan analyse --memory-limit=512M
+
+Zero errors, zero baseline, zero stale ignores. Any error at
+level 8 in new code is a real finding, not a documentation gap.
+The annotation pass is done; the discipline is now write-time.
+
+**Annotation conventions (recap from Pattern 24):**
+
+    Route params:           array<string,string>
+    PDO-bound params:       array<int|string,mixed>
+    Controller render data: array<string,mixed>
+    Filter builders:        array{0:string,1:array<int,mixed>}
+    Model fromRow rows:     array<string,mixed>
+    Logger context:         array<string,mixed>
+    Constraints / options:  array<string,mixed>
+
+**Why not levels 9-10:** levels 9-10 require exhaustive
+handling of `mixed` at every boundary. Every `json_decode`,
+every `$_POST` access, every database row needs narrowing.
+On a 132-file codebase that is thousands of annotation points.
+The DEV community consensus is that levels 9-10 produce
+diminishing returns outside libraries and highly stable code.
+The right call is level 8.
+
+**What levels 7 and 8 caught that levels 0-6 missed:**
+
+  - PDO::query() / prepare() can return false. Two call
+    sites in Migrator assumed PDOStatement. If the query
+    failed, code called fetchAll() on false and fataled.
+  - session_name() returns string|false. destroy() passed
+    it to setcookie() unguarded.
+  - glob() and file() return list<string>|false. Iterating
+    or mapping on false would fatal.
+  - fopen() returns resource|false. Four subsequent stream
+    functions assumed resource.
+  - json_encode() returns string|false. Three call sites
+    passed it to string-typed receivers without guard.
+  - A repository re-fetched a row after commit and passed
+    the possibly-null result to a strictly-typed hydrator.
+
+Each of these would only manifest when the failure branch
+was actually hit. Levels 5 and 6 do not check them. Level 7
+and 8 do.
+
+**See also:** docs/DEBUGGING.md for the annotation rules and
+docs/baseline for the codebase conventions.
+
+---
+
 ## 19. Documents to Read First When Joining
 
 If you are new to this project and need to get up to speed

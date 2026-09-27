@@ -138,7 +138,7 @@ Test data in dev:
 ### Tooling
 
 - `composer lint` — PHP syntax check across app/ + routes/
-- `composer analyse` — PHPStan level 5 (currently zero errors)
+- `composer analyse` — PHPStan level 8 (zero errors, no baseline)
 - `composer check` — both
 - Pre-commit hook runs `bin/lint.php` before every commit
 - `bin/verify-file.php` — per-file post-write verification

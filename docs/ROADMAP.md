@@ -41,8 +41,11 @@ Also completed outside the staged sequence:
 
   - Git initialization (2026-09-26)
   - Backup remote + Google Drive Desktop sync (2026-09-26)
-  - Static analysis tooling: PHPStan at level 5, syntax linter,
-    pre-commit hook (2026-09-27)
+  - Static analysis tooling: syntax linter, pre-commit hook
+    (2026-09-27)
+  - PHPStan level 8 pass: 266 errors resolved across three
+    passes (levels 6, 7, 8), six real runtime bugs caught,
+    zero errors remaining, no baseline (2026-09-27)
   - docs/BASELINE.md + 16 section files documenting verified
     codebase conventions
 
