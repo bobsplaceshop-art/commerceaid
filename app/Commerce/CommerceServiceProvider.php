@@ -24,6 +24,7 @@ use CorporateAid\Commerce\Repositories\ProductVariantRepository;
 use CorporateAid\Commerce\Repositories\AttributeRepository;
 use CorporateAid\Commerce\Repositories\CategoryAttributeRepository;
 use CorporateAid\Commerce\Services\CatalogService;
+use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\StoreService;
 
 /**
@@ -93,6 +94,17 @@ final class CommerceServiceProvider
         $c->singleton(StoreService::class,
             fn() => new StoreService($c->get(StoreRepository::class)));
 
+        // ---------- Services: customer auth ----------
+        //
+        // Uses the customer session, not the admin session. The
+        // 'customer_session' binding is registered at the end of this
+        // method (see below).
+        $c->singleton(CustomerAuthService::class,
+            fn() => new CustomerAuthService(
+                $c->get(CustomerRepository::class),
+                $c->get('customer_session')
+            ));
+
         // ---------- Services: catalog ----------
         $c->singleton(CatalogService::class,
             fn() => new CatalogService(
@@ -143,6 +155,34 @@ final class CommerceServiceProvider
                 $c->get(StoreContext::class),
                 $c->get(Session::class)
             ));
+
+        // ---------------------------------------------------------------
+        // Customer session - separate cookie from the admin session.
+        //
+        // The admin session (bound to Session::class in App.php) uses
+        // the cookie named in config/app.php -> session.name (default
+        // 'ca_session'). Customer-side code resolves 'customer_session'
+        // instead, which is the SAME Session class with the SAME config
+        // except for one thing: the cookie name.
+        //
+        // Two cookies, one user, zero state cross-contamination. A
+        // shopper logged into the storefront and an admin logged into
+        // the dashboard can be the same browser, same tab, no
+        // collision.
+        //
+        // Resolved by name (string key 'customer_session'), not by
+        // class. Admin code that resolves Session::class keeps getting
+        // the admin session. Customer code resolves 'customer_session'
+        // explicitly. No implicit swap, no risk of one leaking into
+        // the other.
+        //
+        // See docs/stages/008c_customer-auth-plan.md.
+        // ---------------------------------------------------------------
+        $c->singleton('customer_session', function () use ($c) {
+            $config = (array) $c->get('config')->get('app.session', []);
+            $config['name'] = 'ca_customer_session';
+            return new Session($config);
+        });
     }
 
     /**

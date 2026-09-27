@@ -54,8 +54,9 @@ final class Kernel
         'audit'      => AuditLoggerMiddleware::class,
 
         // Commerce
-        'store'      => \CorporateAid\Commerce\Middleware\StoreResolutionMiddleware::class,
-        'setup.gate' => \CorporateAid\Commerce\Middleware\SetupGateMiddleware::class,
+        'store'         => \CorporateAid\Commerce\Middleware\StoreResolutionMiddleware::class,
+        'setup.gate'    => \CorporateAid\Commerce\Middleware\SetupGateMiddleware::class,
+        'customer.auth' => \CorporateAid\Commerce\Middleware\CustomerAuthMiddleware::class,
     ];
 
     public function __construct(Container $container)

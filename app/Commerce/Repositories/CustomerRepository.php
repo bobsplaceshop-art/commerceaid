@@ -511,4 +511,125 @@ final class CustomerRepository extends CommerceRepository
 
         return [implode(' AND ', $where), $params];
     }
+
+    // =================================================================
+    // Authentication support (Stage 008C)
+    // =================================================================
+    //
+    // These methods are used by CustomerAuthService and the storefront
+    // auth flows. They follow the same tenant-scoping rule as every
+    // other method in this repository: storeId() is part of the WHERE
+    // clause on every read. Writes that are keyed by customer id do
+    // not need the store guard because the customer row already
+    // belongs to a store (the id is only reachable through a
+    // store-scoped read).
+
+    /**
+     * Set a new password hash for the given customer.
+     *
+     * Used by the reset-password flow after the token has been
+     * verified. The hash is expected to come from Hasher::hash().
+     */
+    public function setPassword(int $customerId, string $passwordHash): void
+    {
+        $this->db->execute(
+            "UPDATE `commerce_customers`
+                SET `password_hash` = ?
+              WHERE `id` = ? AND `store_id` = ?",
+            [$passwordHash, $customerId, $this->storeId()]
+        );
+    }
+
+    /**
+     * Record a successful login by stamping last_login_at to NOW().
+     */
+    public function updateLastLogin(int $customerId): void
+    {
+        $this->db->execute(
+            "UPDATE `commerce_customers`
+                SET `last_login_at` = NOW()
+              WHERE `id` = ? AND `store_id` = ?",
+            [$customerId, $this->storeId()]
+        );
+    }
+
+    /**
+     * Store a password-reset token.
+     *
+     * The caller generates a random token, hashes it with SHA-256,
+     * and passes the hex hash here. The raw token never touches the
+     * database - it only goes into the reset link the user receives.
+     * A database dump cannot be used to forge a reset.
+     *
+     * Returns the new row id.
+     */
+    public function createPasswordReset(int $customerId, string $tokenHash, string $expiresAt): int
+    {
+        return (int) $this->db->insert(
+            "INSERT INTO `commerce_customer_password_resets`
+                (`customer_id`, `token_hash`, `expires_at`)
+             VALUES (?, ?, ?)",
+            [$customerId, $tokenHash, $expiresAt]
+        );
+    }
+
+    /**
+     * Look up an active (unused, unexpired) password-reset row by
+     * its token hash. Returns null if no matching row exists, if the
+     * row has already been used, or if it has expired.
+     *
+     * @return array{id:int, customer_id:int, expires_at:string}|null
+     */
+    public function findActivePasswordReset(string $tokenHash): ?array
+    {
+        $row = $this->db->selectOne(
+            "SELECT `id`, `customer_id`, `expires_at`
+               FROM `commerce_customer_password_resets`
+              WHERE `token_hash` = ?
+                AND `used_at` IS NULL
+                AND `expires_at` > NOW()
+              LIMIT 1",
+            [$tokenHash]
+        );
+
+        if ($row === null) {
+            return null;
+        }
+
+        return [
+            'id'          => (int) $row['id'],
+            'customer_id' => (int) $row['customer_id'],
+            'expires_at'  => (string) $row['expires_at'],
+        ];
+    }
+
+    /**
+     * Mark a password-reset token as consumed. Called after the
+     * customer has successfully set a new password. A token cannot
+     * be reused.
+     */
+    public function consumePasswordReset(int $resetId): void
+    {
+        $this->db->execute(
+            "UPDATE `commerce_customer_password_resets`
+                SET `used_at` = NOW()
+              WHERE `id` = ? AND `used_at` IS NULL",
+            [$resetId]
+        );
+    }
+
+    /**
+     * Invalidate any outstanding reset tokens for a customer.
+     * Called when a new reset is requested so that only the most
+     * recent link works, and on password change so old links die.
+     */
+    public function invalidatePasswordResets(int $customerId): void
+    {
+        $this->db->execute(
+            "UPDATE `commerce_customer_password_resets`
+                SET `used_at` = NOW()
+              WHERE `customer_id` = ? AND `used_at` IS NULL",
+            [$customerId]
+        );
+    }
 }
