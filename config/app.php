@@ -35,6 +35,12 @@ return [
         'max'     => 100,
     ],
 
+    // Password reset token lifetime, in minutes. Applied by the
+    // customer auth flow. Local dev may raise this while iterating
+    // (set a value in config/local.php to override). Production
+    // keeps the default.
+    'customer_password_reset_ttl_minutes' => 60,
+
     'uploads' => [
         'max_size_mb'      => 8,
         'allowed_docs'     => ['pdf','doc','docx','odt','rtf','txt'],

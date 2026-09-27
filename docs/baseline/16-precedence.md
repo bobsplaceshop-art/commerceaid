@@ -67,6 +67,70 @@ baseline and reality is a future incident waiting to happen.
 Explicit rule-changing is progress. Documented changes become part
 of the baseline for the next person.
 
+## Time Discipline
+
+Every timestamp stored in the database is written by MySQL
+(`NOW()`, `DATE_ADD()`). Every comparison of stored timestamps
+happens in MySQL. PHP never computes a timestamp that MySQL
+will later compare.
+
+Why: PHP and MySQL have independent clocks. They can drift
+because of timezone configuration, DST transitions, container
+vs host time, or a server move. A PHP-computed `expires_at`
+compared against a MySQL `NOW()` will silently fail on any
+drift. The failure mode is quiet - the write looks correct,
+the read looks correct, but the comparison is wrong.
+
+The rule:
+
+    DO     - Let MySQL write timestamps: NOW(), DATE_ADD(),
+             DATE_SUB(), TIMESTAMPDIFF()
+    DO     - Compare stored timestamps in SQL: WHERE
+             expires_at > NOW()
+    DO     - Read timestamps into PHP and format them for
+             display
+    DON'T  - Compute a date in PHP (date(), time() + N) and
+             store it in a column that MySQL will later compare
+    DON'T  - Convert a MySQL timestamp to a PHP timestamp, do
+             arithmetic, convert back, and store
+
+Exceptions:
+
+  - Session idle timeout: sessions are file-based, so PHP
+    time() is PHP-against-PHP. Correct as-is.
+  - Pure display formatting: a date read from the DB can be
+    formatted by PHP for a view. That is a read, not a
+    comparison.
+  - Log file timestamps: those are PHP's log lines, not
+    database rows. PHP's clock is authoritative for its own
+    files.
+
+Where this was violated:
+
+  - commerce_customer_password_resets.expires_at was computed
+    in PHP at insert time and compared against MySQL NOW()
+    at read time. In a dev environment where PHP was UTC and
+    MySQL was Africa/Nairobi, every token appeared expired
+    the moment it was created. Fixed by making MySQL compute
+    the expiry: DATE_ADD(NOW(), INTERVAL N MINUTE).
+
+Where this is done correctly:
+
+  - RateLimiter (Platform\Support): INSERT with DATE_ADD,
+    SELECT with TIMESTAMPDIFF, DELETE WHERE reset_at < NOW().
+    All three use MySQL's clock.
+  - Every created_at, updated_at, used_at, last_login_at,
+    approved_at, rejected_at column: DEFAULT
+    CURRENT_TIMESTAMP or explicit NOW() in the INSERT or
+    UPDATE.
+
+Relationship to precedence: this is a rule about code, like
+the cascade check. It does not override source code. When code
+and this rule disagree, the code is examined and either the
+code or the rule is corrected - never silently diverged.
+
+---
+
 ## Cascade Check Before Every Patch
 
 Before writing any patch that modifies an existing file, run the

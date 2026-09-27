@@ -345,9 +345,14 @@ final class AuthController extends StorefrontController
             // used to forge a reset.
             $rawToken  = Hasher::randomToken(32);
             $tokenHash = hash('sha256', $rawToken);
-            $expiresAt = date('Y-m-d H:i:s', time() + 3600); // 60 minutes
 
-            $repo->createPasswordReset($customer->id, $tokenHash, $expiresAt);
+            // TTL is read from config. MySQL computes the actual
+            // expires_at value via DATE_ADD(NOW(), INTERVAL N MINUTE)
+            // so PHP and the DB never disagree about what "now" is.
+            // Local dev may raise this while iterating on the reset
+            // flow; production stays at 60.
+            $ttlMinutes = (int) config('app.customer_password_reset_ttl_minutes', 60);
+            $repo->createPasswordReset($customer->id, $tokenHash, $ttlMinutes);
 
             $resetUrl = '/account/reset-password?token=' . $rawToken;
 
@@ -355,8 +360,19 @@ final class AuthController extends StorefrontController
                 'customer_id' => $customer->id,
                 'email'       => $customer->email,
                 'reset_url'   => $resetUrl,
-                'expires_at'  => $expiresAt,
+                'ttl_minutes' => $ttlMinutes,
             ]);
+
+            // Plain-text companion line for easy copy-paste during
+            // dev. No JSON wrapper, no trailing punctuation. Grep
+            // for RESET-LINK-FOR-COPY to find the exact URL:
+            //
+            //   grep "RESET-LINK-FOR-COPY" storage/logs/app.log | tail -1
+            //
+            // The URL is everything after the last space on the
+            // line. When real email sending lands, this line goes
+            // away.
+            Logger::info('RESET-LINK-FOR-COPY ' . $resetUrl);
         }
 
         $session->clearOldInput();

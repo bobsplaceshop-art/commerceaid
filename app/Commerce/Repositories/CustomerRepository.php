@@ -561,15 +561,25 @@ final class CustomerRepository extends CommerceRepository
      * database - it only goes into the reset link the user receives.
      * A database dump cannot be used to forge a reset.
      *
+     * The expiry is computed by MySQL: DATE_ADD(NOW(), INTERVAL
+     * $ttlMinutes MINUTE). PHP never generates the timestamp. This
+     * eliminates any possibility of a PHP/MySQL timezone mismatch
+     * silently invalidating every token the moment it is created.
+     *
      * Returns the new row id.
      */
-    public function createPasswordReset(int $customerId, string $tokenHash, string $expiresAt): int
+    public function createPasswordReset(int $customerId, string $tokenHash, int $ttlMinutes = 60): int
     {
+        // expires_at is computed by MySQL, not PHP. The same
+        // process that writes the timestamp (INSERT ... NOW())
+        // also reads it (findActivePasswordReset ... NOW()). No
+        // timezone coordination required between PHP and the
+        // database. See docs/BASELINE.md - "Time discipline".
         return (int) $this->db->insert(
             "INSERT INTO `commerce_customer_password_resets`
                 (`customer_id`, `token_hash`, `expires_at`)
-             VALUES (?, ?, ?)",
-            [$customerId, $tokenHash, $expiresAt]
+             VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE))",
+            [$customerId, $tokenHash, $ttlMinutes]
         );
     }
 
