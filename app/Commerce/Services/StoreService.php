@@ -123,8 +123,20 @@ final class StoreService
             throw new \InvalidArgumentException('Country code must be ISO 3166-1 alpha-2 (2 letters).');
         }
 
+        // Site type determines which admin navigation groups
+        // are visible and which defaults are applied. Defaults to
+        // 'ecommerce' when not supplied. See SiteTypeRegistry for
+        // the list of valid keys.
+        $siteType = (string) ($input['site_type'] ?? 'ecommerce');
+        if (!preg_match('/^[a-z][a-z0-9-]{0,48}$/', $siteType)) {
+            throw new \InvalidArgumentException(
+                'Site type must be a lowercase kebab-case key.'
+            );
+        }
+
         $storeId = $this->stores->create([
             'slug'                  => $slug,
+            'site_type'             => $siteType,
             'name'                  => $name,
             'legal_name'            => $input['legal_name']   ?? null,
             'default_currency_id'   => null,
@@ -156,7 +168,8 @@ final class StoreService
     public function updateStore(int $storeId, array $data): void
     {
         $allowed = [
-            'name', 'legal_name', 'slug', 'locale', 'timezone', 'country_code',
+            'name', 'legal_name', 'slug', 'site_type',
+            'locale', 'timezone', 'country_code',
             'date_format', 'number_format',
             'weight_unit', 'dimension_unit',
             'theme_slug', 'order_prefix', 'invoice_prefix',

@@ -27,6 +27,7 @@ final class Store
 {
     public int $id = 0;
     public string $slug = '';
+    public string $siteType = 'ecommerce';
     public string $name = '';
     public ?string $legalName = null;
     public ?int $defaultCurrencyId = null;
@@ -70,6 +71,7 @@ final class Store
         $s = new self();
         $s->id                           = (int) $row['id'];
         $s->slug                         = (string) $row['slug'];
+        $s->siteType                     = (string) ($row['site_type'] ?? 'ecommerce');
         $s->name                         = (string) $row['name'];
         $s->legalName                    = $row['legal_name'] ?? null;
         $s->defaultCurrencyId            = isset($row['default_currency_id']) ? (int) $row['default_currency_id'] : null;
@@ -114,6 +116,18 @@ final class Store
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    /**
+     * Is this store an e-commerce site type?
+     *
+     * Convenience for code that needs to branch on site type.
+     * Additional helpers (isProperty(), isWebsite(), etc.) are
+     * added as new site types ship.
+     */
+    public function isEcommerce(): bool
+    {
+        return $this->siteType === 'ecommerce';
     }
 
     public function isSuspended(): bool
