@@ -223,6 +223,16 @@ final class InventoryRepository extends CommerceRepository
             "SELECT * FROM `commerce_inventory_movements` WHERE `id` = ?",
             [$movementId]
         );
+        if ($row === null) {
+            // The insert and commit both succeeded above, so the row
+            // must exist. If it doesn't, something is very wrong -
+            // a concurrent delete, a partial rollback, or schema
+            // corruption. Fail loudly rather than return a broken
+            // movement record.
+            throw new \RuntimeException(
+                'Inventory movement ' . $movementId . ' disappeared after commit.'
+            );
+        }
         return InventoryMovement::fromRow($row);
     }
 
