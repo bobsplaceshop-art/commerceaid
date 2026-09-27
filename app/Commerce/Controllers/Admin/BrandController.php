@@ -30,6 +30,7 @@ final class BrandController extends AdminController
     // Reads
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(BrandRepository::class);
@@ -46,6 +47,7 @@ final class BrandController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function showCreate(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -60,6 +62,7 @@ final class BrandController extends AdminController
     }
 
 
+    /** @param array<string,string> $params */
     public function showEdit(Request $request, array $params = []): Response
     {
         $repo  = $this->container->get(BrandRepository::class);
@@ -85,6 +88,7 @@ final class BrandController extends AdminController
     // Writes
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function store(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -117,6 +121,7 @@ final class BrandController extends AdminController
         return Response::redirect('/commerce/ca-admin/brands');
     }
 
+    /** @param array<string,string> $params */
     public function update(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -153,6 +158,7 @@ final class BrandController extends AdminController
         return Response::redirect('/commerce/ca-admin/brands');
     }
 
+    /** @param array<string,string> $params */
     public function archive(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(BrandRepository::class);
@@ -161,6 +167,7 @@ final class BrandController extends AdminController
         return Response::redirect('/commerce/ca-admin/brands');
     }
 
+    /** @param array<string,string> $params */
     public function restore(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(BrandRepository::class);
@@ -169,6 +176,7 @@ final class BrandController extends AdminController
         return Response::redirect('/commerce/ca-admin/brands?archived=1');
     }
 
+    /** @param array<string,string> $params */
     public function destroy(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(BrandRepository::class);
@@ -180,6 +188,7 @@ final class BrandController extends AdminController
     /**
      * JSON endpoint for the delete-confirm modal.
      */
+    /** @param array<string,string> $params */
     public function deleteInfo(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(BrandRepository::class);
@@ -224,6 +233,10 @@ final class BrandController extends AdminController
     }
 
     /** @return array<string,string> */
+    /**
+     * @param array<string,mixed> $data
+     * @return array<string,string>
+     */
     private function validate(array $data, ?int $excludeId, BrandRepository $repo): array
     {
         $errors = [];

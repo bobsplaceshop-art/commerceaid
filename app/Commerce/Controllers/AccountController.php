@@ -27,6 +27,7 @@ final class AccountController
      * topbar theme toggle in app.js. Returns 204 on success, 401
      * if not authenticated, 422 on invalid input.
      */
+    /** @param array<string,string> $params */
     public function setTheme(Request $request, array $params = []): Response
     {
         $auth = $this->container->get(Auth::class);

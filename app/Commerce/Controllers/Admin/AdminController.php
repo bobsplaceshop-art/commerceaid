@@ -31,8 +31,9 @@ abstract class AdminController
      * Render a view inside the admin shell (layouts.app).
      *
      * @param string $view  dot-notation view name, e.g. 'admin.dashboard'
-     * @param array  $data  view-specific data (title is optional; if
-     *                      provided it's used for breadcrumb + tab)
+     * @param array<string,mixed> $data  view-specific data (title is
+     *                      optional; if provided it's used for
+     *                      breadcrumb + tab)
      */
     protected function render(string $view, array $data = []): Response
     {

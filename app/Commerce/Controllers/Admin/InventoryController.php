@@ -32,6 +32,7 @@ final class InventoryController extends AdminController
     // Reads
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $repo    = $this->container->get(InventoryRepository::class);
@@ -62,6 +63,7 @@ final class InventoryController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function movements(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(InventoryRepository::class);
@@ -87,6 +89,7 @@ final class InventoryController extends AdminController
     /**
      * JSON: current stock for a product/variant, for the adjust modal.
      */
+    /** @param array<string,string> $params */
     public function adjustInfo(Request $request, array $params = []): Response
     {
         $repo      = $this->container->get(InventoryRepository::class);
@@ -117,6 +120,7 @@ final class InventoryController extends AdminController
     // Writes
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function adjust(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -173,6 +177,7 @@ final class InventoryController extends AdminController
     // CSV exports
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function exportCsv(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(InventoryRepository::class);
@@ -216,6 +221,7 @@ final class InventoryController extends AdminController
         return $this->csvResponse('inventory-' . date('Y-m-d') . '.csv', $rows);
     }
 
+    /** @param array<string,string> $params */
     public function exportMovementsCsv(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(InventoryRepository::class);

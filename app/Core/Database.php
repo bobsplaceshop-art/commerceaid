@@ -55,7 +55,7 @@ final class Database
         return $this->pdo;
     }
 
-    /** @param array<int,mixed> $params */
+    /** @param array<int|string,mixed> $params */
     public function query(string $sql, array $params = []): PDOStatement
     {
         $stmt = $this->pdo()->prepare($sql);
@@ -64,7 +64,7 @@ final class Database
     }
 
     /**
-     * @param array<int,mixed> $params
+     * @param array<int|string,mixed> $params
      * @return array<int,array<string,mixed>>
      */
     public function select(string $sql, array $params = []): array
@@ -73,7 +73,7 @@ final class Database
     }
 
     /**
-     * @param array<int,mixed> $params
+     * @param array<int|string,mixed> $params
      * @return array<string,mixed>|null
      */
     public function selectOne(string $sql, array $params = []): ?array
@@ -82,20 +82,20 @@ final class Database
         return $row === false ? null : $row;
     }
 
-    /** @param array<int,mixed> $params */
+    /** @param array<int|string,mixed> $params */
     public function scalar(string $sql, array $params = []): mixed
     {
         $value = $this->query($sql, $params)->fetchColumn();
         return $value === false ? null : $value;
     }
 
-    /** @param array<int,mixed> $params */
+    /** @param array<int|string,mixed> $params */
     public function execute(string $sql, array $params = []): int
     {
         return $this->query($sql, $params)->rowCount();
     }
 
-    /** @param array<int,mixed> $params */
+    /** @param array<int|string,mixed> $params */
     public function insert(string $sql, array $params = []): int
     {
         $this->query($sql, $params);

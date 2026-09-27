@@ -45,6 +45,7 @@ final class ProductController extends AdminController
     // Reads
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $repo    = $this->container->get(ProductRepository::class);
@@ -74,6 +75,7 @@ final class ProductController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function showCreate(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -95,6 +97,7 @@ final class ProductController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function showEdit(Request $request, array $params = []): Response
     {
         $repo      = $this->container->get(ProductRepository::class);
@@ -129,6 +132,7 @@ final class ProductController extends AdminController
     // Writes
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function store(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -174,6 +178,7 @@ final class ProductController extends AdminController
         return Response::redirect('/commerce/ca-admin/products');
     }
 
+    /** @param array<string,string> $params */
     public function update(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -243,6 +248,7 @@ final class ProductController extends AdminController
         return Response::redirect('/commerce/ca-admin/products/' . $id . '/edit?tab=' . $tab);
     }
 
+    /** @param array<string,string> $params */
     public function publish(Request $request, array $params = []): Response
     {
         $id   = (int) $params['id'];
@@ -254,6 +260,7 @@ final class ProductController extends AdminController
         return Response::redirect('/commerce/ca-admin/products/' . $id . '/edit');
     }
 
+    /** @param array<string,string> $params */
     public function unpublish(Request $request, array $params = []): Response
     {
         $id   = (int) $params['id'];
@@ -265,6 +272,7 @@ final class ProductController extends AdminController
         return Response::redirect('/commerce/ca-admin/products/' . $id . '/edit');
     }
 
+    /** @param array<string,string> $params */
     public function archive(Request $request, array $params = []): Response
     {
         $this->container->get(ProductRepository::class)->archive((int) $params['id']);
@@ -272,6 +280,7 @@ final class ProductController extends AdminController
         return Response::redirect('/commerce/ca-admin/products');
     }
 
+    /** @param array<string,string> $params */
     public function restore(Request $request, array $params = []): Response
     {
         $this->container->get(ProductRepository::class)->restore((int) $params['id']);
@@ -279,6 +288,7 @@ final class ProductController extends AdminController
         return Response::redirect('/commerce/ca-admin/products?status=archived');
     }
 
+    /** @param array<string,string> $params */
     public function destroy(Request $request, array $params = []): Response
     {
         $this->container->get(ProductRepository::class)->softDelete((int) $params['id']);
@@ -289,6 +299,7 @@ final class ProductController extends AdminController
     /**
      * JSON for the delete-confirm modal.
      */
+    /** @param array<string,string> $params */
     public function deleteInfo(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(ProductRepository::class);
@@ -316,6 +327,7 @@ final class ProductController extends AdminController
      * Renders a full-page variant editor. Auto-generates variants
      * from category attributes on first visit. Warns on drift.
      */
+    /** @param array<string,string> $params */
     public function variants(Request $request, array $params = []): Response
     {
         $productId = (int) ($params['id'] ?? 0);
@@ -449,6 +461,7 @@ final class ProductController extends AdminController
      *   The endpoint builds the Cartesian product and creates any
      *   combination that doesn't already exist.
      */
+    /** @param array<string,string> $params */
     public function generateVariants(Request $request, array $params = []): Response
     {
         $session   = $this->container->get(Session::class);
@@ -542,6 +555,7 @@ final class ProductController extends AdminController
      *   variants[id][sku], variants[id][price], variants[id][compare_at_price],
      *   variants[id][stock_quantity], variants[id][low_stock_threshold]
      */
+    /** @param array<string,string> $params */
     public function saveVariants(Request $request, array $params = []): Response
     {
         $session   = $this->container->get(Session::class);
@@ -607,6 +621,7 @@ final class ProductController extends AdminController
      * Delete one variant. Removes attribute links and inventory row.
      * Inventory movements are kept for the ledger.
      */
+    /** @param array<string,string> $params */
     public function deleteVariant(Request $request, array $params = []): Response
     {
         $session   = $this->container->get(Session::class);
@@ -624,6 +639,7 @@ final class ProductController extends AdminController
      * Regenerate variants from current category attributes.
      * Deletes all existing variants and rebuilds.
      */
+    /** @param array<string,string> $params */
     public function regenerateVariants(Request $request, array $params = []): Response
     {
         $session    = $this->container->get(Session::class);
@@ -742,8 +758,8 @@ final class ProductController extends AdminController
     /**
      * Compare expected combinations against existing variants.
      *
-     * @param array $variants list of ProductVariant
-     * @param array $expected result of expectedCombinations()
+     * @param array<int, \CorporateAid\Commerce\Models\ProductVariant> $variants
+     * @param array<int, array{ids:array<int,int>, key:string}> $expected result of expectedCombinations()
      * @return array{drift: bool, missing: int, extra: int, expected_count: int}
      */
     private function detectDrift(int $productId, array $variants, array $expected): array
@@ -768,8 +784,8 @@ final class ProductController extends AdminController
     /**
      * Insert variant rows for any combination not already in the DB.
      *
-     * @param array $expected result of expectedCombinations()
-     * @param array $axes     for display/logging
+     * @param array<int, array{ids:array<int,int>, key:string}> $expected
+     * @param array<int, array<string,mixed>> $axes for display/logging
      */
     private function autoGenerate(int $productId, array $expected, array $axes, float $basePrice): void
     {
@@ -836,7 +852,10 @@ final class ProductController extends AdminController
         ];
     }
 
-    /** @return array<string,string> */
+    /**
+     * @param array<string,mixed> $data
+     * @return array<string,string>
+     */
     private function validate(array $data, ?int $excludeId, ProductRepository $repo): array
     {
         $errors = [];
@@ -935,6 +954,7 @@ final class ProductController extends AdminController
         return $errors;
     }
 
+    /** @param array<string,mixed> $data */
     private function hydrate(Product $product, array $data): Product
     {
         $product->productType       = in_array($data['product_type'], ['simple','variable'], true) ? $data['product_type'] : 'simple';

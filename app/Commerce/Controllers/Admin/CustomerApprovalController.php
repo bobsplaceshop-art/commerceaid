@@ -52,6 +52,7 @@ final class CustomerApprovalController extends AdminController
     // GET /commerce/ca-admin/customer-approvals
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(CustomerRepository::class);
@@ -82,6 +83,7 @@ final class CustomerApprovalController extends AdminController
     // GET /commerce/ca-admin/customer-approvals/{id}/history
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function history(Request $request, array $params = []): Response
     {
         $id   = (int) ($params['id'] ?? 0);
@@ -129,6 +131,7 @@ final class CustomerApprovalController extends AdminController
     // POST /commerce/ca-admin/customer-approvals/{id}/approve
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function approve(Request $request, array $params = []): Response
     {
         $id      = (int) ($params['id'] ?? 0);
@@ -172,6 +175,7 @@ final class CustomerApprovalController extends AdminController
     // POST /commerce/ca-admin/customer-approvals/{id}/reject
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function reject(Request $request, array $params = []): Response
     {
         $id      = (int) ($params['id'] ?? 0);
@@ -222,6 +226,7 @@ final class CustomerApprovalController extends AdminController
     // POST /commerce/ca-admin/customer-approvals/{id}/reset
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function reset(Request $request, array $params = []): Response
     {
         $id      = (int) ($params['id'] ?? 0);

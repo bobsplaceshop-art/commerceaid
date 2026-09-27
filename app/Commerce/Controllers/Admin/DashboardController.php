@@ -13,6 +13,7 @@ use CorporateAid\Commerce\Repositories\InventoryRepository;
  */
 final class DashboardController extends AdminController
 {
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $inventory = $this->container->get(InventoryRepository::class);

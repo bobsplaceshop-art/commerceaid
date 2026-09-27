@@ -37,6 +37,7 @@ final class CustomerGroupController extends AdminController
     // Group CRUD
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $repo   = $this->container->get(CustomerGroupRepository::class);
@@ -67,6 +68,7 @@ final class CustomerGroupController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function showCreate(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -80,6 +82,7 @@ final class CustomerGroupController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function showEdit(Request $request, array $params = []): Response
     {
         $repo    = $this->container->get(CustomerGroupRepository::class);
@@ -100,6 +103,7 @@ final class CustomerGroupController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function store(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -132,6 +136,7 @@ final class CustomerGroupController extends AdminController
         return Response::redirect('/commerce/ca-admin/customer-groups');
     }
 
+    /** @param array<string,string> $params */
     public function update(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -168,6 +173,7 @@ final class CustomerGroupController extends AdminController
         return Response::redirect('/commerce/ca-admin/customer-groups/' . $id . '/edit');
     }
 
+    /** @param array<string,string> $params */
     public function archive(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -184,6 +190,7 @@ final class CustomerGroupController extends AdminController
         return Response::redirect('/commerce/ca-admin/customer-groups');
     }
 
+    /** @param array<string,string> $params */
     public function restore(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(CustomerGroupRepository::class);
@@ -196,6 +203,7 @@ final class CustomerGroupController extends AdminController
     // Price list
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function prices(Request $request, array $params = []): Response
     {
         $groupRepo = $this->container->get(CustomerGroupRepository::class);
@@ -229,6 +237,7 @@ final class CustomerGroupController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function addPrice(Request $request, array $params = []): Response
     {
         $session   = $this->container->get(Session::class);
@@ -300,6 +309,7 @@ final class CustomerGroupController extends AdminController
         return Response::redirect('/commerce/ca-admin/customer-groups/' . $id . '/prices');
     }
 
+    /** @param array<string,string> $params */
     public function deletePrice(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -336,7 +346,10 @@ final class CustomerGroupController extends AdminController
         ];
     }
 
-    /** @return array<string,string> */
+    /**
+     * @param array<string,mixed> $data
+     * @return array<string,string>
+     */
     private function validateGroup(array $data, ?int $excludeId, CustomerGroupRepository $repo): array
     {
         $errors = [];

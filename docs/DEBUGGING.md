@@ -161,6 +161,49 @@ A directory-level scan catches two things per-file scans miss:
 When the directory scan is clean, the batch is coherent. Commit
 it. Do not proceed to the next batch on a per-file clean only.
 
+### Annotation rules learned in Batch 2
+
+Four rules from the second batch of the PHPStan level 6 pass. Each
+came from a specific miss and cost a round-trip.
+
+**1. PDO-bound params are `array<int|string,mixed>`, not
+`array<int,mixed>`.** PDO's `execute()` accepts both positional
+(`[1, 2]`) and named (`[':id' => 1]`) bindings. Annotating
+`Database::insert()` as `array<int,mixed>` broke every caller
+that passes named bindings (found in StoreRepository).
+The correct shape is `array<int|string,mixed>` on every method
+that feeds PDO.
+
+**2. Methods that take AND return arrays need both annotations
+in one patch.** The `validate()` methods on four controllers
+had two errors each - a `$data` param error and a return type
+error. PHPStan reported the param error first and suppressed the
+return error until the param was fixed. Patching only the param
+produced a second round-trip. When a method returns an array
+shape, add both annotations in the same anchor.
+
+**3. Existence checks must be anchored to the specific method,
+not the file.** A check like `if '@return array<string,string>'
+in content` matched a *different* method's annotation (the
+`collectInput()` helper also returns `array<string,mixed>` in
+some cases, and had already been annotated). The correct check
+is a two-line sequence that uniquely identifies the target
+method signature.
+
+**4. Stale-ignore checks require a FULL project scan.** The
+`app/Core + app/Helpers` directory scan that preceded the Batch 1
+ignore cleanup did not see the rest of the codebase. Removing
+five ignore patterns as "stale" was wrong - four of them still
+had live matches in files outside Core/Helpers. Directory scans
+prove a batch is locally clean. Only a full-project scan proves
+an ignore pattern is truly stale. Every ignore pattern was
+restored in Batch 2 with a documented reason for the removal
+attempt.
+
+These four rules apply to every remaining batch. Rule 1 and
+rule 2 are the highest-value - they apply to any method that
+touches PDO or that validates and returns an error map.
+
 ### On every commit
 
 The pre-commit hook runs `bin/lint.php` automatically. You'll

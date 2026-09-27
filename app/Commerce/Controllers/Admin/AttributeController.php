@@ -37,6 +37,7 @@ final class AttributeController extends AdminController
     // Reads
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $defs = $this->definitions();
@@ -53,6 +54,7 @@ final class AttributeController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function showCreate(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -67,6 +69,7 @@ final class AttributeController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function showEdit(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -91,6 +94,7 @@ final class AttributeController extends AdminController
     // Writes — definition
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function store(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -123,6 +127,7 @@ final class AttributeController extends AdminController
         return Response::redirect('/commerce/ca-admin/attributes');
     }
 
+    /** @param array<string,string> $params */
     public function update(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -167,6 +172,7 @@ final class AttributeController extends AdminController
     // Writes — values
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function addValue(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -229,6 +235,7 @@ final class AttributeController extends AdminController
         return Response::redirect('/commerce/ca-admin/attributes/' . $id . '/edit');
     }
 
+    /** @param array<string,string> $params */
     public function removeValue(Request $request, array $params = []): Response
     {
         $db         = $this->container->get(Database::class);
@@ -265,6 +272,7 @@ final class AttributeController extends AdminController
     // Writes — definition lifecycle
     // =================================================================
 
+    /** @param array<string,string> $params */
     public function destroy(Request $request, array $params = []): Response
     {
         $db      = $this->container->get(Database::class);
@@ -287,6 +295,7 @@ final class AttributeController extends AdminController
         return Response::redirect('/commerce/ca-admin/attributes');
     }
 
+    /** @param array<string,string> $params */
     public function deleteInfo(Request $request, array $params = []): Response
     {
         $db = $this->container->get(Database::class);
@@ -380,6 +389,10 @@ final class AttributeController extends AdminController
     }
 
     /** @return array<string,string> */
+    /**
+     * @param array<string,mixed> $data
+     * @return array<string,string>
+     */
     private function validateDefinition(array $data, ?int $excludeId): array
     {
         $errors = [];

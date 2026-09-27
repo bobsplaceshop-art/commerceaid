@@ -48,21 +48,47 @@ parameters:
     # pattern, we remove its entry too.
     # -----------------------------------------------------------------
     ignoreErrors:
-        # REMOVED 2026-09-27 (level 6 pass): nullsafe.neverNull,
-        # nullCoalesce.expr, return.unusedType, arrayValues.list,
-        # identical.alwaysFalse. These were silenced at level 5 but
-        # no longer match any finding at level 6. PHPStan reports
-        # unmatched ignores as errors, so they had to go. If any of
-        # these patterns reappears in a future level, re-add with a
-        # reason.
-
-        # Null coalescing on values PHPStan has proven non-null.
-        # Still matched at level 6. Stylistic, not a bug.
+        # REMOVED-THEN-RESTORED 2026-09-27 (level 6 pass).
+        #
+        # The Batch 1 cleanup removed these 5 patterns because the
+        # narrow app/Core + app/Helpers scan showed them as unmatched.
+        # That scan was too narrow. The full project scan at the end
+        # of Batch 2 revealed all 5 patterns still fire on files
+        # outside Core/Helpers:
+        #
+        #   nullCoalesce.expr     SetupGateMiddleware:47,
+        #                         StoreResolutionMiddleware:93
+        #   return.unusedType     CheckboxType:22, Hasher:16
+        #   arrayValues.list      NotificationRuleService:44
+        #   identical.alwaysFalse Hasher:27
+        #   nullsafe.neverNull    InventoryController:158
+        #
+        # Lesson: the stale-ignore check requires a FULL project scan.
+        # A directory scan only proves a batch is locally clean.
+        # Restoration is the correct move; the code sites are
+        # candidates for cleanup in the batches that touch them.
+        -
+            identifier: nullsafe.neverNull
+        -
+            identifier: nullCoalesce.expr
         -
             identifier: nullCoalesce.offset
 
         # Properties written but never read in the class body.
-        # Still matched at level 6. Usually constructor-injected
-        # dependencies reserved for future use.
+        # Stylistic. Reserved-for-future-use dependencies.
         -
             identifier: property.onlyWritten
+
+        # Return types wider than necessary.
+        -
+            identifier: return.unusedType
+
+        # array_values() called on an already-list value.
+        -
+            identifier: arrayValues.list
+
+        # Defensive checks against values proven non-null.
+        -
+            identifier: identical.alwaysFalse
+
+        # REINSTATED ALL 5 2026-09-27. See note above.

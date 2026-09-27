@@ -56,12 +56,14 @@ final class SetupController extends AdminController
     ];
 
     /** Route: GET /commerce/ca-admin/setup */
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         return Response::redirect('/commerce/ca-admin/setup/business');
     }
 
     /** Route: GET /commerce/ca-admin/setup/skip */
+    /** @param array<string,string> $params */
     public function skip(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -73,6 +75,7 @@ final class SetupController extends AdminController
      * Route: GET /commerce/ca-admin/setup/{tab}
      * Dispatches to the appropriate show method.
      */
+    /** @param array<string,string> $params */
     public function show(Request $request, array $params = []): Response
     {
         $tab = (string) ($params['tab'] ?? 'business');
@@ -96,6 +99,7 @@ final class SetupController extends AdminController
     /**
      * Route: POST /commerce/ca-admin/setup/{tab}
      */
+    /** @param array<string,string> $params */
     public function save(Request $request, array $params = []): Response
     {
         $tab = (string) ($params['tab'] ?? 'business');
@@ -242,6 +246,7 @@ final class SetupController extends AdminController
      * Common render pipeline for every setup tab.
      * Injects the tab nav metadata, progress, and store row.
      */
+    /** @param array<string,mixed> $data */
     private function renderTab(string $tab, array $data = []): Response
     {
         $storeService = $this->container->get(StoreService::class);
@@ -285,7 +290,7 @@ final class SetupController extends AdminController
     /**
      * Generic field saver for real tabs.
      *
-     * @param array<string, array> $rules Map of field name -> rule set
+     * @param array<string, array<string,mixed>> $rules Map of field name -> rule set
      */
     private function saveStoreFields(Request $request, array $rules, string $tab): Response
     {
@@ -390,6 +395,7 @@ final class SetupController extends AdminController
     }
 
 
+    /** @return array<int, array<string,mixed>> */
     private function availableCurrencies(): array
     {
         return $this->container->get(Database::class)
@@ -401,6 +407,7 @@ final class SetupController extends AdminController
      * When commerce_store_payment_methods is wired, this will read
      * the store's enabled/disabled state from that table.
      */
+    /** @return array<int, array{key:string,label:string,icon:string,desc:string}> */
     private function availablePaymentProviders(): array
     {
         return [
