@@ -26,6 +26,9 @@ use CorporateAid\Commerce\Repositories\ProductVariantRepository;
 use CorporateAid\Commerce\Repositories\AttributeRepository;
 use CorporateAid\Commerce\Repositories\CategoryAttributeRepository;
 use CorporateAid\Commerce\Services\CatalogService;
+use CorporateAid\Commerce\Repositories\CartItemRepository;
+use CorporateAid\Commerce\Repositories\CartRepository;
+use CorporateAid\Commerce\Services\CartService;
 use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\StoreService;
 
@@ -107,6 +110,21 @@ final class CommerceServiceProvider
                 $c->get('customer_session')
             ));
 
+        // Cart uses the customer session, not the admin session.
+        // Guests and logged-in customers both resolve through
+        // CartService; the session binding is what determines
+        // where guest cart items are stored.
+        $c->singleton(CartService::class,
+            fn() => new CartService(
+                $c->get('customer_session'),
+                $c->get(CartRepository::class),
+                $c->get(CartItemRepository::class),
+                $c->get(ProductRepository::class),
+                $c->get(ProductVariantRepository::class),
+                $c->get(InventoryRepository::class),
+                $c->get(CustomerAuthService::class)
+            ));
+
         // ---------- Services: catalog ----------
         $c->singleton(CatalogService::class,
             fn() => new CatalogService(
@@ -145,6 +163,18 @@ final class CommerceServiceProvider
 
         $c->singleton(CustomerAddressRepository::class,
             fn() => new CustomerAddressRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(CartRepository::class,
+            fn() => new CartRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(CartItemRepository::class,
+            fn() => new CartItemRepository(
                 $c->get(Database::class),
                 $c->get(StoreContext::class)
             ));

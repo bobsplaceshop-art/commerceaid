@@ -44,8 +44,8 @@ if (!in_array($serverTheme, ['dark', 'light', 'system'], true)) {
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="<?= asset('css/app.css') ?>" rel="stylesheet">
-    <link href="<?= asset('css/setup.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/app.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/setup.css') ?>" rel="stylesheet">
 
     <?php /* Pre-paint theme resolution - runs before stylesheets apply */ ?>
     <script>

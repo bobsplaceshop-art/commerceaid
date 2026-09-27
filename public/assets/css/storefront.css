@@ -795,16 +795,15 @@ h1, h2, h3, h4 {
     text-align: center;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 640px) and (max-width: 899px) {
     .sf-footer-columns-inner {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    /* Newsletter spans both columns - it needs full width for
-     * the input + button row to breathe. On mobile (1 column)
-     * this has no effect. At 900px+ the grid becomes 5 columns
-     * and the newsletter fills the last track, so no span
-     * override is needed there. */
+    /* In the two-column range, the newsletter needs full
+     * width for its input + button row. In the one-column
+     * range (below 640px) it already spans. In the 5-column
+     * range (900px+) it fills its own track. */
     .sf-footer-newsletter {
         grid-column: 1 / -1;
     }
@@ -816,9 +815,6 @@ h1, h2, h3, h4 {
         justify-items: start;
         text-align: left;
     }
-
-    /* Desktop: newsletter column is the last one - left-align
-     * is fine there too. The 1.5fr track just makes it wider. */
 }
 
 .sf-footer-heading {

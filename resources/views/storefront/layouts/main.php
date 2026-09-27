@@ -35,8 +35,9 @@
  * The admin dark mode toggle does not affect the public site.
  */
 
-$store   = $store   ?? null;
-$title   = $title   ?? '';
+$store     = $store     ?? null;
+$title     = $title     ?? '';
+$cartCount = $cartCount ?? 0;
 $content = $content ?? '';
 
 $flashSuccess = function_exists('flash') ? flash('success') : null;
@@ -67,11 +68,11 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
-    <link href="<?= asset('css/storefront.css') ?>" rel="stylesheet">
-    <link href="<?= asset('css/storefront-home.css') ?>" rel="stylesheet">
-    <link href="<?= asset('css/storefront-catalog.css') ?>" rel="stylesheet">
-    <link href="<?= asset('css/storefront-product.css') ?>" rel="stylesheet">
-    <link href="<?= asset('css/storefront-auth.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/storefront.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/storefront-home.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/storefront-catalog.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/storefront-product.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/storefront-auth.css') ?>" rel="stylesheet">
 </head>
 <body class="sf-body">
 
@@ -82,6 +83,7 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <?= view_partial('storefront/partials/header', [
         'store'     => $store,
         'brandName' => $brandName,
+        'cartCount' => $cartCount,
     ]) ?>
 
     <?php if ($hasFlash): ?>

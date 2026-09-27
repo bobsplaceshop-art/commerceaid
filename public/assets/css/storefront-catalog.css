@@ -250,7 +250,14 @@ select.sf-filter-input {
 }
 
 @media (min-width: 1024px) {
-    .sf-product-grid { grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+    .sf-product-grid { grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+}
+
+/* Large desktop: 6 columns. Matches the customer design brief
+ * (six product tiles per row). The grid feels like a catalog
+ * at this density - product discovery at a glance. */
+@media (min-width: 1280px) {
+    .sf-product-grid { grid-template-columns: repeat(6, 1fr); gap: 1rem; }
 }
 
 /* ----- Card ----- */
@@ -275,6 +282,20 @@ select.sf-filter-input {
     overflow: hidden;
     background: var(--sf-cream);
     aspect-ratio: 4 / 5;
+}
+
+/* Tighter aspect at wider viewports - portrait but not tall.
+ * Keeps six cards per row from becoming overwhelming. */
+@media (min-width: 1024px) {
+    .sf-product-card-media {
+        aspect-ratio: 3 / 4;
+    }
+}
+
+@media (min-width: 1280px) {
+    .sf-product-card-media {
+        aspect-ratio: 2 / 3;
+    }
 }
 
 .sf-product-card-image-link {

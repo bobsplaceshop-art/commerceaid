@@ -25,8 +25,10 @@
 $store     = $store     ?? null;
 $brandName = $brandName ?? 'Anaya Global';
 
-// Cart count: hardcoded until 008D wires real cart state.
-$cartCount = 0;
+// Cart count. Resolved by the layout from CartService::count()
+// once per request and passed to this partial. Falls back to 0
+// if the layout doesn't provide it (defensive).
+$cartCount = $cartCount ?? 0;
 
 // Navigation items.
 //

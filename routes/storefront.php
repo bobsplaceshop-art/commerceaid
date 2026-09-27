@@ -10,6 +10,7 @@ use CorporateAid\Commerce\Controllers\Storefront\CategoryController;
 use CorporateAid\Commerce\Controllers\Storefront\ProductController;
 use CorporateAid\Commerce\Controllers\Storefront\AuthController;
 use CorporateAid\Commerce\Controllers\Storefront\AccountController;
+use CorporateAid\Commerce\Controllers\Storefront\CartController;
 
 /** @var Router $router */
 
@@ -124,3 +125,23 @@ $router->post('/account/addresses/{id}/default', [AccountController::class, 'set
 
 $router->get('/account/password',                [AccountController::class, 'showPassword'],      ['store', 'customer.auth']);
 $router->post('/account/password',               [AccountController::class, 'changePassword'],    ['store', 'customer.auth', 'csrf']);
+
+// ---------------------------------------------------------------------
+// Cart (Stage 008D)
+// ---------------------------------------------------------------------
+//
+// Public routes. No auth required — guests can use the cart.
+// CSRF on every POST.
+//
+// Every mutation route accepts both form POST and AJAX POST
+// (based on the Accept header). Form POST returns a redirect;
+// AJAX returns JSON. Same handler, different response format.
+//
+// The /cart/count route is JSON-only and powers the mini-cart
+// badge in the header.
+$router->get('/cart',        [CartController::class, 'index'],  ['store']);
+$router->post('/cart/add',   [CartController::class, 'add'],    ['store', 'csrf']);
+$router->post('/cart/update',[CartController::class, 'update'], ['store', 'csrf']);
+$router->post('/cart/remove',[CartController::class, 'remove'], ['store', 'csrf']);
+$router->post('/cart/clear', [CartController::class, 'clear'],  ['store', 'csrf']);
+$router->get('/cart/count',  [CartController::class, 'count'],  ['store']);

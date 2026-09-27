@@ -7,6 +7,7 @@ use CorporateAid\Core\Container;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\View;
 use CorporateAid\Commerce\Context\StoreContext;
+use CorporateAid\Commerce\Services\CartService;
 
 /**
  * Base controller for every storefront page.
@@ -46,12 +47,30 @@ abstract class StorefrontController
     {
         $viewSvc = $this->container->get(View::class);
 
-        $data['store'] = $this->resolveStore();
-        $data['title'] = $data['title'] ?? '';
+        $data['store']     = $this->resolveStore();
+        $data['title']     = $data['title'] ?? '';
+        $data['cartCount'] = $this->resolveCartCount();
 
         return Response::html(
             $viewSvc->render($view, $data, 'storefront.layouts.main')
         );
+    }
+
+    /**
+     * Cart unit count for the header badge. Resolved once per
+     * request so views and the layout share the same value.
+     *
+     * Defensive: if the cart service fails for any reason, the
+     * page still renders with a count of 0. A broken cart should
+     * not break the whole storefront.
+     */
+    private function resolveCartCount(): int
+    {
+        try {
+            return $this->container->get(CartService::class)->count();
+        } catch (\Throwable $e) {
+            return 0;
+        }
     }
 
     /**

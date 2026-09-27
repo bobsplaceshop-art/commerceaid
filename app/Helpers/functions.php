@@ -34,6 +34,51 @@ if (!function_exists('asset')) {
     }
 }
 
+if (!function_exists('public_path')) {
+    /**
+     * Absolute filesystem path to the public directory, or a file
+     * within it. Used by versioned_asset() to stat the file for
+     * its modification time.
+     */
+    function public_path(string $suffix = ''): string
+    {
+        $base = \CorporateAid\Core\App::instance()->basePath('public');
+        return $suffix !== ''
+            ? $base . '/' . ltrim($suffix, '/')
+            : $base;
+    }
+}
+
+if (!function_exists('versioned_asset')) {
+    /**
+     * Same as asset(), but appends a ?v=<mtime> query string so
+     * browsers refetch when the file changes on disk.
+     *
+     * Without this, CSS and JS files are cached aggressively and
+     * browser hard-refresh is unreliable (Chrome's ETag cache can
+     * serve stale content even after Ctrl+Shift+R). With it, every
+     * file modification changes the URL, and the browser has no
+     * choice but to fetch.
+     *
+     * Falls back to the plain asset URL if the file does not
+     * exist (so a typo in a view doesn't fatal - it just renders
+     * a 404 for that asset, which the dev overlay would catch).
+     */
+    function versioned_asset(string $path): string
+    {
+        $url = asset($path);
+        try {
+            $file = public_path('assets/' . ltrim($path, '/'));
+            if (is_file($file)) {
+                $url .= '?v=' . filemtime($file);
+            }
+        } catch (\Throwable) {
+            // App not booted (rare). Fall through with unversioned URL.
+        }
+        return $url;
+    }
+}
+
 if (!function_exists('csrf_token')) {
     function csrf_token(): string
     {

@@ -178,10 +178,37 @@ for ($i = 1; $i <= 4; $i++) {
             <?php endif; ?>
 
             <div class="sf-product-actions" data-sf-block="add-to-cart">
-                <button type="button" class="sf-btn sf-btn-primary sf-btn-lg sf-btn-block" disabled>
-                    <i class="bi bi-bag-plus me-2" aria-hidden="true"></i>
-                    Add to Cart &mdash; coming soon
-                </button>
+                <?php
+                // Variable products need a variant selection step
+                // (Stage 008F-adjacent). Until that UI ships, the
+                // add-to-cart form is only active for simple products.
+                $canAddToCart = $product !== null && !$product->isVariable();
+                ?>
+
+                <?php if ($canAddToCart): ?>
+                    <form method="POST"
+                          action="/cart/add"
+                          class="sf-add-to-cart-form"
+                          data-sf-add-to-cart>
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="product_id" value="<?= (int) $product->id ?>">
+                        <input type="hidden" name="variant_id" value="0">
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit"
+                                class="sf-btn sf-btn-primary sf-btn-lg sf-btn-block">
+                            <i class="bi bi-bag-plus me-2" aria-hidden="true"></i>
+                            Add to Cart
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <button type="button"
+                            class="sf-btn sf-btn-primary sf-btn-lg sf-btn-block"
+                            disabled
+                            title="Option selection coming soon">
+                        <i class="bi bi-bag-plus me-2" aria-hidden="true"></i>
+                        Select options first
+                    </button>
+                <?php endif; ?>
                 <button type="button" class="sf-btn sf-btn-outline sf-btn-lg sf-btn-block" disabled>
                     <i class="bi bi-heart me-2" aria-hidden="true"></i>
                     Add to Wishlist
