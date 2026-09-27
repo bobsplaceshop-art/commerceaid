@@ -8,6 +8,8 @@ use CorporateAid\Commerce\Controllers\Storefront\HomeController;
 use CorporateAid\Commerce\Controllers\Storefront\CatalogController;
 use CorporateAid\Commerce\Controllers\Storefront\CategoryController;
 use CorporateAid\Commerce\Controllers\Storefront\ProductController;
+use CorporateAid\Commerce\Controllers\Storefront\AuthController;
+use CorporateAid\Commerce\Controllers\Storefront\AccountController;
 
 /** @var Router $router */
 
@@ -78,3 +80,47 @@ $router->get('/products/{slug}', [ProductController::class,  'show'],  ['store']
 // Same ordering rule: specific before wildcard.
 $router->get('/categories',        [CategoryController::class, 'index'], ['store']);
 $router->get('/categories/{slug}', [CategoryController::class, 'show'],  ['store']);
+
+// ---------------------------------------------------------------------
+// Customer authentication (Stage 008C)
+// ---------------------------------------------------------------------
+//
+// Auth routes are PUBLIC - they must be reachable when the customer
+// is not logged in. They use 'store' for store resolution but not
+// 'customer.auth'.
+//
+// Rate limiting is applied at the route level via the 'ratelimit'
+// middleware. Format: ratelimit:action,max_attempts,window_minutes.
+//
+// Customer login lives at /account/login (NOT /login). The admin
+// login owns /login.
+$router->get('/account/register',          [AuthController::class, 'showRegister'],       ['store']);
+$router->post('/account/register',         [AuthController::class, 'register'],           ['store', 'csrf', 'ratelimit:register,3,60']);
+$router->get('/account/login',             [AuthController::class, 'showLogin'],          ['store']);
+$router->post('/account/login',            [AuthController::class, 'login'],              ['store', 'csrf', 'ratelimit:login,5,15']);
+$router->post('/account/logout',           [AuthController::class, 'logout'],             ['store', 'csrf']);
+$router->get('/account/forgot-password',   [AuthController::class, 'showForgotPassword'], ['store']);
+$router->post('/account/forgot-password',  [AuthController::class, 'sendResetLink'],      ['store', 'csrf', 'ratelimit:forgot,3,60']);
+$router->get('/account/reset-password',    [AuthController::class, 'showResetPassword'],  ['store']);
+$router->post('/account/reset-password',   [AuthController::class, 'resetPassword'],      ['store', 'csrf', 'ratelimit:reset,5,60']);
+
+// ---------------------------------------------------------------------
+// Customer account (guarded by customer.auth)
+// ---------------------------------------------------------------------
+//
+// These routes require a logged-in customer. The 'customer.auth'
+// alias maps to CustomerAuthMiddleware, which redirects to
+// /account/login?intended=... on failure.
+$router->get('/account',                         [AccountController::class, 'dashboard'],         ['store', 'customer.auth']);
+$router->get('/account/orders',                  [AccountController::class, 'orders'],            ['store', 'customer.auth']);
+
+$router->get('/account/addresses',               [AccountController::class, 'addresses'],         ['store', 'customer.auth']);
+$router->get('/account/addresses/create',        [AccountController::class, 'showCreateAddress'], ['store', 'customer.auth']);
+$router->post('/account/addresses',              [AccountController::class, 'createAddress'],     ['store', 'customer.auth', 'csrf']);
+$router->get('/account/addresses/{id}/edit',     [AccountController::class, 'showEditAddress'],   ['store', 'customer.auth']);
+$router->post('/account/addresses/{id}',         [AccountController::class, 'updateAddress'],     ['store', 'customer.auth', 'csrf']);
+$router->post('/account/addresses/{id}/delete',  [AccountController::class, 'deleteAddress'],     ['store', 'customer.auth', 'csrf']);
+$router->post('/account/addresses/{id}/default', [AccountController::class, 'setDefaultAddress'], ['store', 'customer.auth', 'csrf']);
+
+$router->get('/account/password',                [AccountController::class, 'showPassword'],      ['store', 'customer.auth']);
+$router->post('/account/password',               [AccountController::class, 'changePassword'],    ['store', 'customer.auth', 'csrf']);
