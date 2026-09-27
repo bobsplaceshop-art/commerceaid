@@ -9,6 +9,7 @@ use CorporateAid\Core\Database;
 use CorporateAid\Core\Router;
 use CorporateAid\Core\Session;
 use CorporateAid\Commerce\Context\StoreContext;
+use CorporateAid\Commerce\Middleware\CustomerAuthMiddleware;
 use CorporateAid\Commerce\Middleware\SetupGateMiddleware;
 use CorporateAid\Commerce\Middleware\StoreResolutionMiddleware;
 use CorporateAid\Commerce\Repositories\BrandRepository;
@@ -161,6 +162,16 @@ final class CommerceServiceProvider
                 $c->get(StoreService::class),
                 $c->get(StoreContext::class),
                 $c->get(Session::class)
+            ));
+
+        // Customer-side guard. Uses CustomerAuthService (customer
+        // session), not Core\Auth (admin session). The loginPath
+        // default is /account/login - distinct from the admin
+        // /login. Route files reference this as the 'customer.auth'
+        // alias.
+        $c->singleton(CustomerAuthMiddleware::class,
+            fn() => new CustomerAuthMiddleware(
+                $c->get(CustomerAuthService::class)
             ));
 
         // ---------------------------------------------------------------
