@@ -54,6 +54,6 @@ final class Hasher
      */
     public static function randomToken(int $bytes = 32): string
     {
-        return bin2hex(random_bytes($bytes));
+        return bin2hex(random_bytes(max(1, $bytes)));
     }
 }

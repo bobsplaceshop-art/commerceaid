@@ -38,7 +38,7 @@ final class Migrator
     /** @return array<string, true> */
     public function applied(): array
     {
-        $rows = $this->pdo->query("SELECT `filename` FROM `core_migrations`")->fetchAll(PDO::FETCH_COLUMN);
+        $rows = $this->query("SELECT `filename` FROM `core_migrations`")->fetchAll(PDO::FETCH_COLUMN);
         $out = [];
         foreach ($rows as $f) {
             $out[(string) $f] = true;
@@ -71,7 +71,7 @@ final class Migrator
             return [];
         }
 
-        $batch = (int) $this->pdo->query("SELECT COALESCE(MAX(`batch`), 0) + 1 FROM `core_migrations`")->fetchColumn();
+        $batch = (int) $this->query("SELECT COALESCE(MAX(`batch`), 0) + 1 FROM `core_migrations`")->fetchColumn();
         $ran = [];
 
         foreach ($pending as $filename) {
@@ -227,5 +227,15 @@ final class Migrator
         }
 
         return $statements;
+    }
+
+    /** Run a query and fail loudly if PDO returns false. */
+    private function query(string $sql): \PDOStatement
+    {
+        $stmt = $this->pdo->query($sql);
+        if ($stmt === false) {
+            throw new RuntimeException('PDO query failed: ' . $sql);
+        }
+        return $stmt;
     }
 }

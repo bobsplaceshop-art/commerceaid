@@ -50,7 +50,7 @@ final class Session
             'domain'   => (string) $this->config['cookie_domain'],
             'secure'   => $secure,
             'httponly' => (bool) $this->config['cookie_httponly'],
-            'samesite' => (string) $this->config['cookie_samesite'],
+            'samesite' => self::normalizeSameSite((string) $this->config['cookie_samesite']),
         ]);
 
         ini_set('session.use_strict_mode', '1');
@@ -103,7 +103,7 @@ final class Session
             if (ini_get('session.use_cookies')) {
                 $params = session_get_cookie_params();
                 setcookie(
-                    session_name(),
+                    (string) session_name(),
                     '',
                     time() - 42000,
                     $params['path'],
@@ -220,5 +220,16 @@ final class Session
     public function clearReauth(): void
     {
         $this->forget('_reauth_at');
+    }
+
+    /** Normalize a samesite value to one of the three accepted literals. */
+    /** @return 'Strict'|'None'|'Lax' */
+    private static function normalizeSameSite(string $value): string
+    {
+        return match (strtolower($value)) {
+            'strict' => 'Strict',
+            'none'   => 'None',
+            default  => 'Lax',
+        };
     }
 }

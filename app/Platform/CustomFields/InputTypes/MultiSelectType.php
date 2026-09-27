@@ -34,7 +34,7 @@ final class MultiSelectType implements InputType
     public function cast(mixed $value): ?string
     {
         $values = $this->normalizeValues($value);
-        return empty($values) ? null : json_encode(array_values($values));
+        return empty($values) ? null : (json_encode(array_values($values)) ?: null);
     }
 
     public function humanize(?string $value): string

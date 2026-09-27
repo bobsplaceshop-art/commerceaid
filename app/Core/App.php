@@ -125,7 +125,7 @@ final class App
     {
         $configDir = $this->basePath . '/config';
         $merged = [];
-        foreach (glob($configDir . '/*.php') as $file) {
+        foreach (glob($configDir . '/*.php') ?: [] as $file) {
             $name = basename($file, '.php');
             if ($name === 'local' || $name === 'cli') {
                 continue;

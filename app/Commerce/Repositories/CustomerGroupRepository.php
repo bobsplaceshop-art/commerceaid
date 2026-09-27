@@ -26,7 +26,7 @@ final class CustomerGroupRepository extends CommerceRepository
         return array_map(fn ($r) => CustomerGroup::fromRow($r), $rows);
     }
 
-    /** @return array<int, array{id:int, name:string, is_default:int}> */
+    /** @return array<int, array<string,mixed>> */
     public function listForSelect(): array
     {
         return $this->db->select(

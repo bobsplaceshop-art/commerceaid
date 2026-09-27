@@ -95,7 +95,7 @@ final class CatalogService
 
     /**
      * Active brands as a flat list, for select dropdowns.
-     * @return array<int, array{id:int, name:string}>
+     * @return array<int, array<string,mixed>>
      */
     public function brandsForSelect(): array
     {

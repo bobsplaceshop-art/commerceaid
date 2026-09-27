@@ -262,12 +262,16 @@ final class InventoryController extends AdminController
     private function csvResponse(string $filename, array $rows): Response
     {
         $out = fopen('php://temp', 'r+');
+        if ($out === false) {
+            return Response::html('Could not open temporary stream for CSV export.', 500);
+        }
         foreach ($rows as $row) {
             fputcsv($out, $row);
         }
         rewind($out);
         $csv = stream_get_contents($out);
         fclose($out);
+        $csv = $csv === false ? '' : $csv;
 
         return new Response($csv, 200, [
             'Content-Type'        => 'text/csv; charset=utf-8',

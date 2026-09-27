@@ -170,7 +170,7 @@ final class UserRepository
      * Return active staff users suitable for recruiter assignment.
      * Excludes client users. Returns minimal fields for dropdowns.
      *
-     * @return array<int, array{id:int, name:string, email:string, role_slugs:string}>
+     * @return array<int, array<string,mixed>>
      */
     public function listForAssignment(): array
     {

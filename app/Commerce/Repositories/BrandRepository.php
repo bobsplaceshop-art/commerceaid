@@ -30,7 +30,7 @@ final class BrandRepository extends CommerceRepository
 
     /**
      * Lightweight list for dropdowns (id + name only).
-     * @return array<int, array{id:int, name:string}>
+     * @return array<int, array<string,mixed>>
      */
     public function listForSelect(): array
     {

@@ -226,7 +226,7 @@ final class CustomFieldService
 
         $index = null;
         foreach ($all as $i => $f) {
-            if ($f->id === $fieldId) { $index = $i; break; }
+            if ($f->id === $fieldId) { $index = (int) $i; break; }
         }
         if ($index === null) return false;
 
@@ -238,13 +238,13 @@ final class CustomFieldService
         $other = $all[$swapIndex];
 
         // Swap their sort_order values. If they're equal (both 0), reassign sequentially.
-        $a = $field->sortOrder;
-        $b = $other->sortOrder;
+        $a = (int) $field->sortOrder;
+        $b = (int) $other->sortOrder;
 
         if ($a === $b) {
             // Renumber the whole list with gaps of 10, preserving order
             foreach ($all as $i => $f) {
-                $this->fields->setSortOrder($f->id, ($i + 1) * 10);
+                $this->fields->setSortOrder($f->id, ((int) $i + 1) * 10);
             }
             // Re-fetch the two fields after renumbering
             $all = $this->fields->orderedFor($field->entityType);

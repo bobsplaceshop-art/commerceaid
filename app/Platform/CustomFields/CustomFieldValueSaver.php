@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CorporateAid\Platform\CustomFields;
 
 use CorporateAid\Core\Auth;
+use CorporateAid\Platform\Models\CustomField;
 use CorporateAid\Platform\Repositories\CustomFieldRepository;
 use CorporateAid\Platform\Repositories\CustomFieldValueRepository;
 use CorporateAid\Platform\Services\FileService;
@@ -54,7 +55,7 @@ final class CustomFieldValueSaver
      * @param string $entityType  e.g. 'organisation'
      * @param int    $entityId    The entity's ID (already persisted)
      * @param array<string,mixed> $submitted   Custom field values from the form (cf[x] inputs)
-     * @param array<string,array<string,mixed>> $files  Uploaded files, keyed by field key (from $_FILES)
+     * @param array<string, array{name:string, type:string, tmp_name:string, error:int, size:int}> $files  Uploaded files, keyed by field key (from $_FILES)
      */
     public function save(string $entityType, int $entityId, array $submitted, array $files = []): void
     {
@@ -102,9 +103,9 @@ final class CustomFieldValueSaver
      * Failures are logged but do not block the form submission. The
      * entity stays valid; only the file attachment is lost.
      */
-    /** @param array<string,mixed> $fileData */
+    /** @param array{name:string, type:string, tmp_name:string, error:int, size:int} $fileData */
     private function saveFileValue(
-        object $field,
+        CustomField $field,
         string $entityType,
         int $entityId,
         array $fileData
