@@ -104,5 +104,72 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     ]) ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <?php if (function_exists('config') && config('app.debug')): ?>
+    <script>
+    /* Dev-mode error overlay. Only renders when app.debug is on.
+       Catches uncaught errors, unhandled promise rejections, and
+       explicit console.error calls. Displays them in a dismissible
+       corner overlay so client-side issues surface without opening
+       DevTools. Zero cost when debug is off. */
+    (function () {
+        'use strict';
+        var MAX_ITEMS = 5;
+        var TTL_MS = 8000;
+        var container = null;
+
+        function ensureContainer() {
+            if (container) return container;
+            container = document.createElement('div');
+            container.id = 'ra-debug-overlay';
+            container.setAttribute('style',
+                'position:fixed;top:10px;right:10px;z-index:2147483647;' +
+                'max-width:420px;font-family:monospace;font-size:12px;'
+            );
+            document.body.appendChild(container);
+            return container;
+        }
+
+        function show(kind, message, detail) {
+            var c = ensureContainer();
+            var item = document.createElement('div');
+            item.setAttribute('style',
+                'background:' + (kind === 'error' ? '#7f1d1d' : '#78350f') + ';' +
+                'color:#fff;padding:8px 12px;margin-bottom:6px;border-radius:4px;' +
+                'box-shadow:0 2px 8px rgba(0,0,0,0.4);word-break:break-word;'
+            );
+            item.textContent = '[' + kind + '] ' + message +
+                (detail ? ' - ' + detail : '');
+            c.appendChild(item);
+
+            while (c.children.length > MAX_ITEMS) {
+                c.removeChild(c.firstChild);
+            }
+
+            setTimeout(function () {
+                if (item.parentNode) item.parentNode.removeChild(item);
+            }, TTL_MS);
+        }
+
+        window.addEventListener('error', function (e) {
+            show('error', e.message || 'unknown',
+                (e.filename || '') + ':' + (e.lineno || ''));
+        });
+
+        window.addEventListener('unhandledrejection', function (e) {
+            show('error', 'Unhandled promise rejection',
+                e.reason ? String(e.reason) : '');
+        });
+
+        var origError = console.error;
+        console.error = function () {
+            try {
+                show('error', Array.prototype.map.call(arguments, String).join(' '), '');
+            } catch (ignore) {}
+            return origError.apply(console, arguments);
+        };
+    })();
+    </script>
+    <?php endif; ?>
 </body>
 </html>
