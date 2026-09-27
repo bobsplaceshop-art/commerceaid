@@ -125,6 +125,42 @@ This checks: file exists, no backticks, no mangled chars, no
 flash reads (if --view), any expected substrings. Then it runs
 the full project linter.
 
+### Post-patch verification (mandatory)
+
+After every patch, verification has two parts, both required:
+
+1. **PHPStan scoped to the file.** Confirms the annotations are
+   syntactically correct and resolved.
+2. **`git status --short <file>`.** Confirms the file is actually
+   modified on disk.
+
+PHPStan alone is not proof. A cached analysis can report clean on
+a file the patch never touched. If `git status` does not show the
+file as `M`, the patch did not run. Stop and diagnose before
+moving on.
+
+This rule was added after the Config.php annotation was verified
+via PHPStan but never actually written to disk. The next batch
+scan caught it. The `git status` check would have caught it in
+seconds.
+
+### Every batch ends with a directory-level scan
+
+At the end of each batch of files, run PHPStan against the entire
+directory, not just each file.
+
+    php vendor/bin/phpstan analyse app/Core app/Helpers --memory-limit=512M
+
+A directory-level scan catches two things per-file scans miss:
+
+1. Files that were silently skipped in the batch.
+2. Stale entries in `phpstan.neon`'s `ignoreErrors` section.
+   PHPStan reports unmatched ignores as errors, which only
+   surfaces when the whole directory is scanned.
+
+When the directory scan is clean, the batch is coherent. Commit
+it. Do not proceed to the next batch on a per-file clean only.
+
 ### On every commit
 
 The pre-commit hook runs `bin/lint.php` automatically. You'll

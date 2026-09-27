@@ -13,8 +13,10 @@ use RuntimeException;
 class HttpException extends RuntimeException
 {
     private int $statusCode;
+    /** @var array<string,string> */
     private array $headers;
 
+    /** @param array<string,string> $headers */
     public function __construct(int $statusCode, string $message = '', array $headers = [], ?\Throwable $previous = null)
     {
         parent::__construct($message, 0, $previous);
@@ -27,6 +29,19 @@ class HttpException extends RuntimeException
         return $this->statusCode;
     }
 
+    /**
+     * Response headers to send with the error page.
+     *
+     * Currently unused by the framework error handler - kept as
+     * part of the exception's API because it is the correct place
+     * to carry headers for statuses that require them: Location
+     * for 301/302, WWW-Authenticate for 401, Retry-After for 429.
+     * The convenience factories below do not pass headers today;
+     * a future thrower that needs them calls the constructor
+     * directly.
+     *
+     * @return array<string,string>
+     */
     public function getHeaders(): array
     {
         return $this->headers;

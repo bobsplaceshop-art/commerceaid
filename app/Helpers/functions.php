@@ -94,6 +94,8 @@ if (!function_exists('view_partial')) {
     /**
      * Render a partial template. Returns HTML string.
      * Partials are expected to be self-contained (no layout).
+     *
+     * @param array<string,mixed> $data
      */
     function view_partial(string $name, array $data = []): string
     {

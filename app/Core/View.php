@@ -13,6 +13,7 @@ final class View
 {
     private string $viewPath;
     private Config $config;
+    /** @var array<string,mixed> */
     private array $shared = [];
 
     public function __construct(string $viewPath, Config $config)
@@ -26,6 +27,7 @@ final class View
         $this->shared[$key] = $value;
     }
 
+    /** @param array<string,mixed> $values */
     public function shareMany(array $values): void
     {
         foreach ($values as $k => $v) {
@@ -37,6 +39,7 @@ final class View
      * Render a view. If $layout is given, the view's output is passed
      * into the layout as $content.
      */
+    /** @param array<string,mixed> $data */
     public function render(string $view, array $data = [], ?string $layout = null): string
     {
         $content = $this->renderFile($view, $data);
@@ -48,6 +51,7 @@ final class View
         return $content;
     }
 
+    /** @param array<string,mixed> $data */
     private function renderFile(string $name, array $data): string
     {
         $file = $this->resolvePath($name);

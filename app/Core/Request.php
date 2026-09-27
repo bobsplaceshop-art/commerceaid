@@ -12,14 +12,28 @@ final class Request
     private string $method;
     private string $path;
     private string $queryString;
+    /** @var array<string,mixed> */
     private array $queryParams;
+    /** @var array<string,mixed> */
     private array $body;
+    /** @var array<string,mixed> */
     private array $files;
+    /** @var array<string,mixed> */
     private array $server;
+    /** @var array<string,string> */
     private array $cookies;
+    /** @var array<string,string> */
     private array $headers;
     private ?string $rawBody;
 
+    /**
+     * @param array<string,mixed> $queryParams
+     * @param array<string,mixed> $body
+     * @param array<string,mixed> $files
+     * @param array<string,mixed> $server
+     * @param array<string,string> $cookies
+     * @param array<string,string> $headers
+     */
     public function __construct(
         string $method,
         string $path,
@@ -75,6 +89,10 @@ final class Request
         );
     }
 
+    /**
+     * @param array<string,mixed> $server
+     * @return array<string,string>
+     */
     private static function extractHeaders(array $server): array
     {
         $headers = [];
@@ -115,6 +133,7 @@ final class Request
         return $default;
     }
 
+    /** @return array<string,mixed> */
     public function all(): array
     {
         $merged = $this->queryParams;
@@ -124,6 +143,10 @@ final class Request
         return $merged;
     }
 
+    /**
+     * @param array<int,string> $keys
+     * @return array<string,mixed>
+     */
     public function only(array $keys): array
     {
         $all = $this->all();
@@ -135,6 +158,7 @@ final class Request
         return array_key_exists($key, $this->body) || array_key_exists($key, $this->queryParams);
     }
 
+    /** @return array<string,mixed>|null */
     public function file(string $key): ?array
     {
         $file = $this->files[$key] ?? null;

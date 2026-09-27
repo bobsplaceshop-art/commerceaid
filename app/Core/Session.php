@@ -9,12 +9,14 @@ namespace CorporateAid\Core;
  */
 final class Session
 {
+    /** @var array<string,mixed> */
     private array $config;
     private bool $started = false;
 
     /** @var array<string, mixed> one-shot flash data for the next request */
     private array $flash = [];
 
+    /** @param array<string,mixed> $config */
     public function __construct(array $config = [])
     {
         $this->config = array_merge([
@@ -139,6 +141,7 @@ final class Session
 
     // ---------- Old input (after validation failure) ----------
 
+    /** @param array<string,mixed> $input */
     public function flashOldInput(array $input): void
     {
         unset($input['password'], $input['password_confirmation'], $input['_csrf']);
