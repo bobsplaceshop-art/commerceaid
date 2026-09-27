@@ -675,12 +675,20 @@ h1, h2, h3, h4 {
     grid-template-columns: 1fr;
     gap: 2rem;
     align-items: center;
+    justify-items: center;
+    text-align: center;
 }
 
 @media (min-width: 900px) {
     .sf-footer-top-inner {
         grid-template-columns: 1fr 1.5fr 1fr;
+        justify-items: stretch;
+        text-align: left;
     }
+
+    .sf-footer-top-inner > :nth-child(1) { justify-self: start;  text-align: left;   }
+    .sf-footer-top-inner > :nth-child(2) { justify-self: center; text-align: center; }
+    .sf-footer-top-inner > :nth-child(3) { justify-self: end;    text-align: right;  }
 }
 
 .sf-footer-brand {
@@ -781,14 +789,36 @@ h1, h2, h3, h4 {
 
 .sf-footer-columns-inner {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 2rem;
+    justify-items: stretch;
+    text-align: center;
 }
 
 @media (min-width: 640px) {
     .sf-footer-columns-inner {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(2, 1fr);
     }
+
+    /* Newsletter spans both columns - it needs full width for
+     * the input + button row to breathe. On mobile (1 column)
+     * this has no effect. At 900px+ the grid becomes 5 columns
+     * and the newsletter fills the last track, so no span
+     * override is needed there. */
+    .sf-footer-newsletter {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (min-width: 900px) {
+    .sf-footer-columns-inner {
+        grid-template-columns: repeat(4, 1fr) 1.5fr;
+        justify-items: start;
+        text-align: left;
+    }
+
+    /* Desktop: newsletter column is the last one - left-align
+     * is fine there too. The 1.5fr track just makes it wider. */
 }
 
 .sf-footer-heading {
@@ -862,24 +892,6 @@ h1, h2, h3, h4 {
  * five children instead of four.
  * ===================================================================== */
 
-/* ----- Revise the column grid for 5 children ----- */
-
-.sf-footer-columns-inner {
-    grid-template-columns: 1fr;
-}
-
-@media (min-width: 640px) {
-    .sf-footer-columns-inner {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 900px) {
-    .sf-footer-columns-inner {
-        grid-template-columns: repeat(4, 1fr) 1.5fr;
-    }
-}
-
 /* ----- Newsletter column ----- */
 
 .sf-footer-newsletter-copy {
@@ -900,6 +912,13 @@ h1, h2, h3, h4 {
         flex-direction: row;
         align-items: stretch;
     }
+}
+
+/* Give the newsletter form full available width on mobile.
+ * The parent column stretches (justify-items: stretch), so the
+ * form fills it and the input gets a comfortable tap target. */
+.sf-footer-newsletter-form {
+    width: 100%;
 }
 
 .sf-footer-newsletter-input {
