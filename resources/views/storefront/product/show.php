@@ -40,6 +40,10 @@ $stockQty        = $stockQty        ?? null;
 $variants        = $variants        ?? [];
 $related         = $related         ?? [];
 
+// The related products come from the same primary category.
+// Pass the category name to each card so the label renders.
+$relatedCategoryLabel = ($primaryCategory !== null) ? $primaryCategory->name : null;
+
 $price     = (float) $product->price;
 $compareAt = $product->compareAtPrice !== null ? (float) $product->compareAtPrice : null;
 $onSale    = $product->isOnSale();
@@ -209,7 +213,10 @@ for ($i = 1; $i <= 4; $i++) {
             </header>
             <div class="sf-product-grid">
                 <?php foreach ($related as $p): ?>
-                    <?= view_partial('storefront/catalog/_product-card', ['product' => $p]) ?>
+                    <?= view_partial('storefront/catalog/_product-card', [
+                        'product'       => $p,
+                        'categoryLabel' => $relatedCategoryLabel,
+                    ]) ?>
                 <?php endforeach; ?>
             </div>
         </section>

@@ -51,12 +51,12 @@ DirectoryIndex index.php
     #                             + Google Fonts (gstatic) + data URIs
     #   img-src     'self' data: picsum.photos fastly.picsum.photos
     #                           - images: local + inline data URIs
-    #                             + dev placeholder service
-    #                             NOTE - picsum is a DEVELOPMENT
-    #                             PLACEHOLDER. When real product
-    #                             media ships from the store's own
-    #                             domain, remove both picsum.photos
-    #                             and fastly.picsum.photos.
+    #                             + picsum.photos placeholder
+    #                             NOTE - picsum.photos is a DEVELOPMENT
+    #                             PLACEHOLDER. When real product and
+    #                             category media ships from the store's
+    #                             own domain, remove both picsum.photos
+    #                             and fastly.picsum.photos from img-src.
     #   connect-src 'self' cdn.jsdelivr.net
     #                           - fetch/XHR destinations (jsdelivr for source maps)
     #   frame-ancestors 'none'  - block framing (overlaps with X-Frame-Options)

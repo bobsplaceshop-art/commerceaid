@@ -9,33 +9,33 @@
  *   - product/show.php (related products)
  *
  * Context:
- *   $product  Product  the product to render
- *
- * Interactive elements (wishlist, quick view, add to cart) are
- * rendered as disabled stubs. They light up when their owning
- * sub-stages ship:
- *   - Wishlist   -> a later sub-stage
- *   - Quick view -> a later sub-stage
- *   - Add to cart -> 008D
- *
- * Rating:
- *   The reviews system does not exist yet. The card renders an
- *   empty 5-star row with a "(0)" count. When reviews land, this
- *   block is replaced with real aggregate data.
- *
- * Images:
- *   Uses picsum.photos seeded by product slug. Deterministic per
- *   product. Replaced by real product media when uploads land.
- *   Aspect ratio is 4:5, the industry standard for product cards.
+ *   $product        Product   the product to render
+ *   $categoryLabel  ?string   optional category name shown above
+ *                             the product name. Callers that know
+ *                             their context (home, category page)
+ *                             pass it. Mixed listings (catalog)
+ *                             leave it null and it does not
+ *                             render.
  *
  * Store builder contract:
- *   Interactive actions carry data-sf-card-action attributes, and
- *   optional blocks carry data-sf-card-block attributes. When the
- *   store builder allows toggling these on or off, the JS reads
- *   those attributes. The structure does not change.
+ *   Interactive elements carry data-sf-card-action attributes,
+ *   optional blocks carry data-sf-card-block attributes. The
+ *   theme builder will use these to toggle features on/off per
+ *   store.
+ *
+ * Images:
+ *   picsum.photos seeded by product slug, deterministic per
+ *   product. Replaced by real product media when the media
+ *   library ships.
+ *
+ * Rating:
+ *   The reviews system does not exist yet. When $ratingCount is
+ *   zero the rating block does not render at all. When it exists
+ *   (future), stars and count render here.
  */
 
-$product = $product ?? null;
+$product       = $product       ?? null;
+$categoryLabel = $categoryLabel ?? null;
 if ($product === null) {
     return;
 }
@@ -57,10 +57,11 @@ if ($product->isOutOfStock()) {
     $stockLabel = 'On backorder';
 }
 
-$imageUrl   = 'https://picsum.photos/seed/' . rawurlencode($product->slug) . '/600/750';
-$detailUrl  = '/products/' . rawurlencode($product->slug);
+$imageUrl  = 'https://picsum.photos/seed/' . rawurlencode($product->slug) . '/600/750';
+$detailUrl = '/products/' . rawurlencode($product->slug);
 
-// Rating stub. Replace with real data when reviews ship.
+// Rating stub. Replace with real data when reviews ship. When
+// zero, the whole rating block is omitted (per the collapse rule).
 $ratingAvg   = 0.0;
 $ratingCount = 0;
 ?>
@@ -95,7 +96,7 @@ $ratingCount = 0;
                 <i class="bi bi-heart" aria-hidden="true"></i>
             </button>
             <button type="button"
-                    class="sf-product-card-action"
+                    class="sf-product-card-action sf-product-card-action-desktop"
                     data-sf-card-action="quick-view"
                     aria-label="Quick view"
                     disabled>
@@ -107,16 +108,9 @@ $ratingCount = 0;
 
     <div class="sf-product-card-body">
 
-        <div class="sf-product-card-rating" data-sf-card-block="rating">
-            <span class="sf-product-card-stars" aria-hidden="true">
-                <i class="bi bi-star"></i>
-                <i class="bi bi-star"></i>
-                <i class="bi bi-star"></i>
-                <i class="bi bi-star"></i>
-                <i class="bi bi-star"></i>
-            </span>
-            <span class="sf-product-card-rating-count">(<?= (int) $ratingCount ?>)</span>
-        </div>
+        <?php if ($categoryLabel !== null && $categoryLabel !== ''): ?>
+            <span class="sf-product-card-category"><?= e($categoryLabel) ?></span>
+        <?php endif; ?>
 
         <h3 class="sf-product-card-name" id="<?= e($cardId) ?>-name">
             <a href="<?= e($detailUrl) ?>"><?= e($product->name) ?></a>
@@ -132,6 +126,24 @@ $ratingCount = 0;
                 </span>
             <?php endif; ?>
         </div>
+
+        <?php if ($ratingCount > 0): ?>
+            <div class="sf-product-card-rating" data-sf-card-block="rating">
+                <span class="sf-product-card-stars" aria-hidden="true">
+                    <?php
+                    // Render filled + empty stars up to 5. For now this
+                    // is stubbed to full stars when rating exists.
+                    for ($i = 1; $i <= 5; $i++):
+                        $cls = $i <= (int) round($ratingAvg) ? 'bi-star-fill' : 'bi-star';
+                    ?>
+                        <i class="bi <?= $cls ?>"></i>
+                    <?php endfor; ?>
+                </span>
+                <span class="sf-product-card-rating-count">
+                    (<?= (int) $ratingCount ?>)
+                </span>
+            </div>
+        <?php endif; ?>
 
         <div class="sf-product-card-stock <?= e($stockClass) ?>">
             <span class="sf-product-card-stock-dot" aria-hidden="true"></span>

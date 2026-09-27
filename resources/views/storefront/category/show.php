@@ -95,7 +95,10 @@ $pageUrl = function (int $p): string {
     <?php else: ?>
         <div class="sf-product-grid">
             <?php foreach ($items as $p): ?>
-                <?= view_partial('storefront/catalog/_product-card', ['product' => $p]) ?>
+                <?= view_partial('storefront/catalog/_product-card', [
+                    'product'       => $p,
+                    'categoryLabel' => $category->name,
+                ]) ?>
             <?php endforeach; ?>
         </div>
 

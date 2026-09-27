@@ -853,3 +853,158 @@ h1, h2, h3, h4 {
     color: var(--sf-ink);
     margin: 0 0 1.5rem;
 }
+
+/* =====================================================================
+ * FOOTER - newsletter column and payment badges (008B.2)
+ * =====================================================================
+ * The footer grew a newsletter placeholder column and a payment
+ * method row. The column grid is redefined here to accommodate
+ * five children instead of four.
+ * ===================================================================== */
+
+/* ----- Revise the column grid for 5 children ----- */
+
+.sf-footer-columns-inner {
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+    .sf-footer-columns-inner {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 900px) {
+    .sf-footer-columns-inner {
+        grid-template-columns: repeat(4, 1fr) 1.5fr;
+    }
+}
+
+/* ----- Newsletter column ----- */
+
+.sf-footer-newsletter-copy {
+    font-size: .82rem;
+    color: rgba(248, 241, 232, 0.72);
+    line-height: 1.55;
+    margin: 0 0 .85rem;
+}
+
+.sf-footer-newsletter-form {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+
+@media (min-width: 480px) {
+    .sf-footer-newsletter-form {
+        flex-direction: row;
+        align-items: stretch;
+    }
+}
+
+.sf-footer-newsletter-input {
+    flex: 1;
+    min-width: 0;
+    padding: .7rem .85rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--sf-radius);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--sf-cream);
+    font-family: var(--sf-font-body);
+    font-size: .85rem;
+}
+
+.sf-footer-newsletter-input::placeholder {
+    color: rgba(248, 241, 232, 0.5);
+}
+
+.sf-footer-newsletter-input:disabled {
+    opacity: .7;
+    cursor: not-allowed;
+}
+
+.sf-footer-newsletter-btn {
+    flex-shrink: 0;
+    padding: .7rem 1.15rem;
+    border: 0;
+    border-radius: var(--sf-radius);
+    background: var(--sf-gold);
+    color: var(--sf-white);
+    font-family: var(--sf-font-body);
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background var(--sf-t-base) var(--sf-ease);
+}
+
+.sf-footer-newsletter-btn:hover:not(:disabled) {
+    background: var(--sf-gold-dark);
+}
+
+.sf-footer-newsletter-btn:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+/* =====================================================================
+ * FOOTER - payment method badges
+ * ===================================================================== */
+
+.sf-footer-payments {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.sf-footer-payment {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    color: rgba(248, 241, 232, 0.85);
+}
+
+.sf-footer-payment-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 20px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.sf-footer-payment-badge svg {
+    width: 100%;
+    height: 100%;
+    color: var(--sf-gold-light);
+}
+
+.sf-footer-payment-secure,
+.sf-footer-payment-secure .sf-footer-payment-label {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.sf-footer-payment-secure i {
+    font-size: .95rem;
+    color: var(--sf-gold-light);
+}
+
+.sf-footer-payment-secure .sf-footer-payment-label {
+    font-size: .72rem;
+    font-weight: 500;
+    letter-spacing: .05em;
+    color: rgba(248, 241, 232, 0.85);
+}
+
+/* The bottom row of the footer now contains copyright text on
+   the left and payment badges on the right. It wraps on narrow
+   screens. */
+
+.sf-footer-bottom-inner {
+    gap: 1rem;
+}

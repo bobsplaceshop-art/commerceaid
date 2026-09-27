@@ -748,3 +748,55 @@ select.sf-filter-input {
     color: var(--sf-white);
     border-color: var(--sf-ink);
 }
+
+/* =====================================================================
+ * PRODUCT CARD - category label + gold CTA (008B.2)
+ * =====================================================================
+ * Added in the extended visual pass. The card gained a small
+ * category label above the product name, and the add-to-cart
+ * button restyled from outline to champagne gold to match the
+ * reference design.
+ * ===================================================================== */
+
+.sf-product-card-category {
+    display: block;
+    font-family: var(--sf-font-body);
+    font-size: .68rem;
+    font-weight: 500;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--sf-ink-muted);
+    margin: 0 0 -.15rem 0;
+    line-height: 1.2;
+}
+
+/* ----- Add to cart - gold variant ----- */
+
+.sf-product-card-add {
+    border-color: var(--sf-gold);
+    background: var(--sf-gold);
+    color: var(--sf-white);
+}
+
+.sf-product-card-add:hover:not(:disabled) {
+    background: var(--sf-gold-dark);
+    border-color: var(--sf-gold-dark);
+    color: var(--sf-white);
+}
+
+.sf-product-card-add:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+.sf-product-card-add i {
+    font-size: .95rem;
+}
+
+/* ----- Quick view hidden on touch devices ----- */
+
+@media (hover: none) {
+    .sf-product-card-action-desktop {
+        display: none;
+    }
+}

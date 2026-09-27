@@ -4,31 +4,34 @@
  *
  * Renders the storefront merchandising rhythm from the design
  * brief:
- *   hero -> categories -> promo panels -> new arrivals ->
- *   promo strip -> best sellers -> newsletter
+ *   hero -> trust row -> categories -> promo panels ->
+ *   new arrivals -> trust strip -> best sellers -> newsletter
  *
  * Context (from HomeController::index):
- *   $featured       array<int, Product>  featured products
- *   $newArrivals    array<int, Product>  newest products
- *   $bestSellers    array<int, Product>  mirrors featured for now
- *   $topCategories  array<int, Category> top-level categories (max 7)
+ *   $featured       array<int, Product>
+ *   $newArrivals    array<int, Product>
+ *   $bestSellers    array<int, Product>
+ *   $topCategories  array<int, Category>
  *
  * Store builder contract:
  *   Every top-level section is wrapped in
  *     <section class="sf-home-{type}" data-sf-section="{type}">
- *   When the store builder lands, section order will be driven by
- *   `commerce_homepage_sections.sort_order`. The wrapper structure
- *   is designed so reordering requires no HTML changes.
+ *   Section order today is fixed. The theme builder will drive
+ *   order from commerce_homepage_sections.sort_order. Wrapper
+ *   structure is designed so reordering requires no HTML changes.
  *
- * Images:
- *   Product and category images use picsum.photos seeded by a
- *   stable identifier (slug or name). This produces consistent
- *   placeholder photography during development. Real media
- *   replaces this when uploads land.
+ * Section collapse rule:
+ *   Data-driven sections (categories, promo panels, new arrivals,
+ *   best sellers) render NOTHING when their data is empty. Not an
+ *   empty state - the section is absent. The section below fills
+ *   the gap seamlessly. Brand/messaging sections (hero, trust
+ *   row, promo strip, trust strip, newsletter) always render.
  *
- *   Hero is a CSS-composed layout (no external asset). Replacing
- *   it with an uploaded hero image is a one-file change when the
- *   customer supplies the asset.
+ * Image strategy:
+ *   Categories and promo panels use loremflickr keyword-driven
+ *   photos so the storefront looks like one coherent brand.
+ *   Products still use picsum seeded by slug (real product media
+ *   comes from the media library in a future stage).
  */
 
 $featured      = $featured      ?? [];
@@ -36,10 +39,6 @@ $newArrivals   = $newArrivals   ?? [];
 $bestSellers   = $bestSellers   ?? [];
 $topCategories = $topCategories ?? [];
 
-// The layout computes $brandName for the header/footer, but layout
-// locals are not visible to the content view. Read it from config
-// here so the newsletter (and anything else that needs it) shows
-// the correct store name.
 $brandName = (string) (
     function_exists('config')
         ? config('branding.product_name', 'Anaya Global')
@@ -47,45 +46,75 @@ $brandName = (string) (
 );
 
 /**
- * Placeholder image URL helper. Deterministic per seed.
+ * Deterministic placeholder image per seed.
+ *
+ * Uses picsum.photos seeded by the identifier, so the same category
+ * or promo panel always renders the same photo. Prefix a namespace
+ * to the seed ("cat-", "promo-") so different content types do not
+ * share photos.
+ *
+ * Why not keyword-driven services: loremflickr was tried and was
+ * unreliable from the development environment (image loads failed
+ * silently). picsum is reliable and already allowed by the CSP.
+ * When the store builder supports real category media uploads,
+ * this placeholder is replaced with the store's own imagery.
  */
-$placeholderImage = function (string $seed, int $w = 600, int $h = 750): string {
-    return 'https://picsum.photos/seed/' . rawurlencode($seed) . '/' . $w . '/' . $h;
+$seedImage = function (string $seed, string $namespace = 'x', int $w = 600, int $h = 750): string {
+    return 'https://picsum.photos/seed/' . rawurlencode($namespace . '-' . $seed) . '/' . $w . '/' . $h;
+};
+
+/**
+ * Product image placeholder. Same shape as $seedImage.
+ */
+$productImage = function (string $slug, int $w = 600, int $h = 750): string {
+    return 'https://picsum.photos/seed/' . rawurlencode($slug) . '/' . $w . '/' . $h;
 };
 
 // Promotional panels.
 //
-// Contract: these will come from `commerce_homepage_sections` with
-// type='promo_panel' and a JSON config. Today hardcoded.
+// Contract: these will come from commerce_homepage_sections with
+// type='promo_panel'. Today hardcoded.
 $promoPanels = [
     [
-        'id'       => 'elegant-fashion',
-        'eyebrow'  => 'Elegant Fashion',
-        'title'    => 'For Every Moment',
-        'cta'      => "Shop Women's",
-        'href'     => '/categories/women',
+        'id'      => 'elegant-fashion',
+        'keyword' => 'woman,elegant',
+        'eyebrow' => 'Elegant Fashion',
+        'title'   => 'For Every Moment',
+        'cta'     => "Shop Women's",
+        'href'    => '/categories/women',
     ],
     [
-        'id'       => 'bags-accessories',
-        'eyebrow'  => 'Stylish Bags',
-        'title'    => '& Accessories',
-        'cta'      => 'Shop Now',
-        'href'     => '/categories/bags-accessories',
+        'id'      => 'bags-accessories',
+        'keyword' => 'handbag,luxury',
+        'eyebrow' => 'Stylish Bags',
+        'title'   => '& Accessories',
+        'cta'     => 'Shop Now',
+        'href'    => '/categories/bags-accessories',
     ],
     [
-        'id'       => 'trendy-kids',
-        'eyebrow'  => 'Trendy Kids',
-        'title'    => 'Collection',
-        'cta'      => 'Shop Now',
-        'href'     => '/categories/children',
+        'id'      => 'trendy-kids',
+        'keyword' => 'kids,fashion',
+        'eyebrow' => 'Trendy Kids',
+        'title'   => 'Collection',
+        'cta'     => 'Shop Now',
+        'href'    => '/categories/children',
     ],
     [
-        'id'       => 'home-interiors',
-        'eyebrow'  => 'Make Your Home',
-        'title'    => 'More Beautiful',
-        'cta'      => 'Shop Home',
-        'href'     => '/categories/home',
+        'id'      => 'home-interiors',
+        'keyword' => 'home,interior',
+        'eyebrow' => 'Make Your Home',
+        'title'   => 'More Beautiful',
+        'cta'     => 'Shop Home',
+        'href'    => '/categories/home',
     ],
+];
+
+// Trust row items (below hero).
+$trustRow = [
+    ['icon' => 'bi-award',           'title' => 'Premium Quality',  'sub' => 'Only the best for you'],
+    ['icon' => 'bi-truck',           'title' => 'Fast & Reliable',  'sub' => 'Delivery Always'],
+    ['icon' => 'bi-headset',         'title' => 'Dedicated Support', 'sub' => "We're here to help"],
+    ['icon' => 'bi-globe2',          'title' => 'Global Fashion',   'sub' => 'Local Love'],
 ];
 ?>
 
@@ -144,32 +173,46 @@ $promoPanels = [
 </section>
 
 <!-- ============================================================= -->
-<!-- SHOP BY CATEGORY                                              -->
+<!-- TRUST ROW (always renders)                                    -->
 <!-- ============================================================= -->
-<section class="sf-home-categories" data-sf-section="categories">
+<section class="sf-home-trust-row" data-sf-section="trust-row">
     <div class="sf-container">
+        <ul class="sf-home-trust-row-list">
+            <?php foreach ($trustRow as $t): ?>
+                <li class="sf-home-trust-row-item">
+                    <i class="bi <?= e($t['icon']) ?>" aria-hidden="true"></i>
+                    <div class="sf-home-trust-row-text">
+                        <span class="sf-home-trust-row-title"><?= e($t['title']) ?></span>
+                        <span class="sf-home-trust-row-sub"><?= e($t['sub']) ?></span>
+                    </div>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+</section>
 
-        <header class="sf-home-section-heading">
-            <span class="sf-home-heading-line" aria-hidden="true"></span>
-            <h2 class="sf-home-heading-text">Shop by Category</h2>
-            <span class="sf-home-heading-line" aria-hidden="true"></span>
-        </header>
+<!-- ============================================================= -->
+<!-- SHOP BY CATEGORY (collapses when empty)                       -->
+<!-- ============================================================= -->
+<?php if (!empty($topCategories)): ?>
+    <section class="sf-home-categories" data-sf-section="categories">
+        <div class="sf-container">
 
-        <?php if (empty($topCategories)): ?>
-            <div class="sf-empty">
-                <i class="bi bi-grid"></i>
-                <p class="sf-empty-text">Categories will appear here once the catalog is live.</p>
-            </div>
-        <?php else: ?>
+            <header class="sf-home-section-heading">
+                <span class="sf-home-heading-line" aria-hidden="true"></span>
+                <h2 class="sf-home-heading-text">Shop by Category</h2>
+                <span class="sf-home-heading-line" aria-hidden="true"></span>
+            </header>
+
             <div class="sf-home-category-grid">
                 <?php foreach ($topCategories as $c): ?>
                     <a href="/categories/<?= e(rawurlencode($c->slug)) ?>" class="sf-home-category-card">
                         <div class="sf-home-category-image">
-                            <img src="<?= e($placeholderImage($c->slug, 400, 500)) ?>"
+                            <img src="<?= e($seedImage($c->slug, 'cat')) ?>"
                                  alt=""
                                  loading="lazy"
-                                 width="400"
-                                 height="500">
+                                 width="600"
+                                 height="750">
                         </div>
                         <div class="sf-home-category-footer">
                             <span class="sf-home-category-name"><?= e($c->name) ?></span>
@@ -180,71 +223,68 @@ $promoPanels = [
                     </a>
                 <?php endforeach; ?>
             </div>
-        <?php endif; ?>
 
-    </div>
-</section>
-
-<!-- ============================================================= -->
-<!-- PROMOTIONAL COLLECTIONS                                       -->
-<!-- ============================================================= -->
-<section class="sf-home-promos" data-sf-section="promo-panels">
-    <div class="sf-container">
-        <div class="sf-home-promo-grid">
-            <?php foreach ($promoPanels as $p): ?>
-                <a href="<?= e($p['href']) ?>" class="sf-home-promo-panel" data-promo-id="<?= e($p['id']) ?>">
-                    <div class="sf-home-promo-image">
-                        <img src="<?= e($placeholderImage($p['id'], 700, 500)) ?>"
-                             alt=""
-                             loading="lazy"
-                             width="700"
-                             height="500">
-                    </div>
-                    <div class="sf-home-promo-body">
-                        <span class="sf-home-promo-eyebrow"><?= e($p['eyebrow']) ?></span>
-                        <span class="sf-home-promo-title"><?= $p['title'] /* contains & */ ?></span>
-                        <span class="sf-home-promo-cta">
-                            <?= e($p['cta']) ?>
-                            <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                        </span>
-                    </div>
-                </a>
-            <?php endforeach; ?>
         </div>
-    </div>
-</section>
+    </section>
+<?php endif; ?>
 
 <!-- ============================================================= -->
-<!-- NEW ARRIVALS                                                  -->
+<!-- PROMOTIONAL COLLECTIONS (collapses when empty)                -->
 <!-- ============================================================= -->
-<section class="sf-home-products" data-sf-section="new-arrivals">
-    <div class="sf-container">
-
-        <header class="sf-home-section-heading sf-home-section-heading-left">
-            <h2 class="sf-home-heading-text">New Arrivals</h2>
-            <a href="/products?sort=newest" class="sf-home-heading-link">
-                View all <i class="bi bi-arrow-right" aria-hidden="true"></i>
-            </a>
-        </header>
-
-        <?php if (empty($newArrivals)): ?>
-            <div class="sf-empty">
-                <i class="bi bi-box-seam"></i>
-                <p class="sf-empty-text">New arrivals will appear here once products are published.</p>
+<?php if (!empty($promoPanels)): ?>
+    <section class="sf-home-promos" data-sf-section="promo-panels">
+        <div class="sf-container">
+            <div class="sf-home-promo-grid">
+                <?php foreach ($promoPanels as $p): ?>
+                    <a href="<?= e($p['href']) ?>" class="sf-home-promo-panel" data-promo-id="<?= e($p['id']) ?>">
+                        <div class="sf-home-promo-image">
+                            <img src="<?= e($seedImage($p['id'], 'promo', 700, 500)) ?>"
+                                 alt=""
+                                 loading="lazy"
+                                 width="700"
+                                 height="500">
+                        </div>
+                        <div class="sf-home-promo-body">
+                            <span class="sf-home-promo-eyebrow"><?= e($p['eyebrow']) ?></span>
+                            <span class="sf-home-promo-title"><?= $p['title'] /* contains & */ ?></span>
+                            <span class="sf-home-promo-cta">
+                                <?= e($p['cta']) ?>
+                                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                            </span>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
             </div>
-        <?php else: ?>
+        </div>
+    </section>
+<?php endif; ?>
+
+<!-- ============================================================= -->
+<!-- NEW ARRIVALS (collapses when empty)                           -->
+<!-- ============================================================= -->
+<?php if (!empty($newArrivals)): ?>
+    <section class="sf-home-products" data-sf-section="new-arrivals">
+        <div class="sf-container">
+
+            <header class="sf-home-section-heading sf-home-section-heading-left">
+                <h2 class="sf-home-heading-text">New Arrivals</h2>
+                <a href="/products?sort=newest" class="sf-home-heading-link">
+                    View All <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </a>
+            </header>
+
             <div class="sf-product-grid">
                 <?php foreach ($newArrivals as $p): ?>
                     <?= view_partial('storefront/catalog/_product-card', ['product' => $p]) ?>
                 <?php endforeach; ?>
             </div>
-        <?php endif; ?>
 
-    </div>
-</section>
+        </div>
+    </section>
+<?php endif; ?>
 
 <!-- ============================================================= -->
-<!-- PROMOTIONAL STRIP                                             -->
+<!-- PROMOTIONAL STRIP (always renders)                            -->
 <!-- ============================================================= -->
 <section class="sf-home-strip" data-sf-section="promo-strip">
     <div class="sf-container sf-home-strip-inner">
@@ -261,36 +301,50 @@ $promoPanels = [
 </section>
 
 <!-- ============================================================= -->
-<!-- BEST SELLERS                                                  -->
+<!-- TRUST STRIP (always renders)                                  -->
 <!-- ============================================================= -->
-<section class="sf-home-products" data-sf-section="best-sellers">
+<section class="sf-home-trust-strip" data-sf-section="trust-strip">
     <div class="sf-container">
+        <ul class="sf-home-trust-strip-list">
+            <?php foreach ($trustRow as $t): ?>
+                <li class="sf-home-trust-strip-item">
+                    <i class="bi <?= e($t['icon']) ?>" aria-hidden="true"></i>
+                    <div class="sf-home-trust-strip-text">
+                        <span class="sf-home-trust-strip-title"><?= e($t['title']) ?></span>
+                        <span class="sf-home-trust-strip-sub"><?= e($t['sub']) ?></span>
+                    </div>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+</section>
 
-        <header class="sf-home-section-heading sf-home-section-heading-left">
-            <h2 class="sf-home-heading-text">Best Sellers</h2>
-            <a href="/products" class="sf-home-heading-link">
-                View all <i class="bi bi-arrow-right" aria-hidden="true"></i>
-            </a>
-        </header>
+<!-- ============================================================= -->
+<!-- BEST SELLERS (collapses when empty)                           -->
+<!-- ============================================================= -->
+<?php if (!empty($bestSellers)): ?>
+    <section class="sf-home-products" data-sf-section="best-sellers">
+        <div class="sf-container">
 
-        <?php if (empty($bestSellers)): ?>
-            <div class="sf-empty">
-                <i class="bi bi-star"></i>
-                <p class="sf-empty-text">Best sellers will appear here once orders start flowing.</p>
-            </div>
-        <?php else: ?>
+            <header class="sf-home-section-heading sf-home-section-heading-left">
+                <h2 class="sf-home-heading-text">Best Sellers</h2>
+                <a href="/products" class="sf-home-heading-link">
+                    View All <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </a>
+            </header>
+
             <div class="sf-product-grid">
                 <?php foreach ($bestSellers as $p): ?>
                     <?= view_partial('storefront/catalog/_product-card', ['product' => $p]) ?>
                 <?php endforeach; ?>
             </div>
-        <?php endif; ?>
 
-    </div>
-</section>
+        </div>
+    </section>
+<?php endif; ?>
 
 <!-- ============================================================= -->
-<!-- NEWSLETTER                                                    -->
+<!-- NEWSLETTER (always renders - placeholder for theme builder)   -->
 <!-- ============================================================= -->
 <section class="sf-home-newsletter" data-sf-section="newsletter">
     <div class="sf-container sf-home-newsletter-inner">
@@ -298,7 +352,7 @@ $promoPanels = [
             <h2 class="sf-home-newsletter-title">Stay in Style</h2>
             <p class="sf-home-newsletter-sub">
                 Discover new arrivals, exclusive offers and inspiration from
-                <?= e($brandName ?? 'Anaya Global') ?>.
+                <?= e($brandName) ?>.
             </p>
         </div>
         <form class="sf-home-newsletter-form" onsubmit="return false;">
