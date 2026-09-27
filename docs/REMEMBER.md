@@ -991,6 +991,53 @@ was "two items marked active, scroll picks the first one".
 - Baseline item 21 in `docs/baseline/02-assumptions.md`
 - Sidebar rewrite in Stage 007B M3-6i
 
+### Pattern 23 - Cascade check before every patch
+
+**Problem:** patches that fix the target file but break a caller, a
+sibling, or a downstream consumer. The bug fixed, another bug
+introduced. Silent because both files pass lint.
+
+**Rule:** before writing any patch that modifies an existing file:
+
+1. Read the entire file, not just the target lines.
+2. List what the file depends on (imports, parent classes,
+   injected services).
+3. Grep for every reference to the file's class name, method
+   names, and public properties. This is the "who calls me" list.
+4. For each change, state the cascade risk explicitly. Not "no
+   impact" - name what could be affected and confirm it is not.
+5. If a downstream file needs updating in the same patch,
+   include it. If the impact is wider than expected, stop and
+   discuss before patching.
+
+**Exception class to watch for:** return-shape annotations.
+Adding `@return array<string,mixed>` to a method whose callers
+assume a narrower shape does not break runtime but breaks
+PHPStan at the caller. Every return-type annotation on a shared
+method must be checked against callers.
+
+**Cost:** one grep plus one moment of thought.
+
+**Benefit:** no cross-file surprises.
+
+**Where we hit it:** Pre-emptively adopted. Prior incidents that
+would have been caught by this rule:
+
+- Sidebar scroll fix (007B M3-6i) - the `$isActive` change
+  affected the scroll-to-active logic in the same file, which
+  was not checked until the symptom appeared.
+- Reject button quote collision (007B) - the onclick pattern
+  worked in products/index.php but was not checked against the
+  approvals view before writing.
+- Route loader change (008B) - `App::loadRoutes()` needed the
+  new route file added to its array. Missed on the first pass,
+  caught by a 404.
+
+**See also:**
+- Pattern 19 in this document (pre-flight inventory before
+  touching closed code). Pattern 23 extends it from "touching
+  closed code" to "every patch".
+
 ---
 
 ## 19. Documents to Read First When Joining

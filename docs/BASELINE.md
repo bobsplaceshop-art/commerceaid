@@ -35,7 +35,7 @@ documented is either unknown or unverified.
 | 13 | [13-middleware.md](baseline/13-middleware.md) | Middleware aliases |
 | 14 | [14-provider.md](baseline/14-provider.md) | Service provider |
 | 15 | [15-naming.md](baseline/15-naming.md) | Naming conventions |
-| 16 | [16-precedence.md](baseline/16-precedence.md) | Precedence + supersedes clause |
+| 16 | [16-precedence.md](baseline/16-precedence.md) | Precedence + supersedes + cascade |
 
 ---
 

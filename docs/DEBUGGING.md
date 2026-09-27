@@ -84,6 +84,37 @@ without manual effort.
 
 ## When to Run What
 
+### Before every patch (mandatory)
+
+Before writing any patch that modifies an existing file, run the
+cascade check. Full rule in `docs/REMEMBER.md` Pattern 23, summary
+here:
+
+1. Read the entire file, not just the target lines.
+2. List what the file depends on.
+3. Grep for every reference to the file's class name, method
+   names, and public properties.
+4. State the cascade risk explicitly. Name what could be affected
+   and confirm it is not.
+5. Patch. Include downstream updates in the same patch if needed.
+
+Two commands to run before every patch:
+
+    # Who does this file call out to?
+    grep -n "^use \|extends \|implements \|new \|::" <file>
+
+    # Who calls into this file?
+    grep -rn "<ClassName>\|<methodName>" app/ routes/ resources/
+
+The first tells you the file's outward dependencies. The second
+tells you who might be affected by a change.
+
+Skip this step only if the change is a pure addition (a new
+method, a new class) that no existing caller can reach. Even
+then, the return-shape exception applies: if a new method returns
+an array that a caller will assume a shape for, state the shape
+in the annotation.
+
 ### On every file write
 
 After writing or editing a PHP file, run:

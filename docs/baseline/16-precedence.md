@@ -67,6 +67,50 @@ baseline and reality is a future incident waiting to happen.
 Explicit rule-changing is progress. Documented changes become part
 of the baseline for the next person.
 
+## Cascade Check Before Every Patch
+
+Before writing any patch that modifies an existing file, run the
+cascade check. It is mandatory. It applies to every patch, not
+just patches to "closed" or "risky" code.
+
+The check, in order:
+
+1. **Read the entire file.** Not just the target lines. A patch
+   written against a fragment misses context.
+2. **List what the file depends on.** Imports, parent classes,
+   injected services, interfaces implemented. Anything it calls
+   out to.
+3. **Grep for every reference to the file.** Class name, method
+   names, public properties. This is the "who calls me" list.
+4. **State the cascade risk explicitly.** Not "no impact" -
+   name what could be affected and confirm it is not. Silent
+   gaps in this step are what the rule exists to prevent.
+5. **Patch.** If a downstream file needs updating in the same
+   patch, include it. If the impact is wider than expected,
+   stop and discuss before patching.
+
+**Why this is mandatory:** the bugs that have cost the most
+time in this project are not the ones in the file being edited.
+They are in the callers, siblings, or downstream consumers who
+assumed the old shape. A grep costs seconds. A missed cascade
+costs a debugging cycle.
+
+**Exception class:** return-shape annotations. Adding
+`@return array<string,mixed>` to a shared method does not break
+runtime, but breaks PHPStan at every caller that assumed a
+narrower shape. Every return-type annotation on a shared method
+must be checked against callers in the same patch.
+
+**Relationship to precedence:** the cascade check does not
+override the code. It is a procedure, not a rule about the code.
+Source code is still the final authority; the cascade check is
+how you reach a correct patch.
+
+See `docs/REMEMBER.md` Pattern 23 for the incident history and
+the full worked example.
+
+---
+
 ## The Cost of a Stale Baseline
 
 A stale baseline is worse than no baseline at all. If the document
