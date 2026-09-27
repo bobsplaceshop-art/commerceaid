@@ -12,6 +12,7 @@ final class CheckboxType implements InputType
     public function supportsOptions(): bool { return false; }
     public function configFields(): array { return []; }
 
+    /** @param array<string,mixed> $constraints */
     public function validate(mixed $value, array $constraints, bool $isRequired): array
     {
         $checked = ($value === '1' || $value === 1 || $value === true || $value === 'on');
@@ -30,6 +31,7 @@ final class CheckboxType implements InputType
         return ($value === '1') ? 'Yes' : 'No';
     }
 
+    /** @param array<string,mixed> $constraints */
     public function render(string $fieldKey, string $fieldLabel, ?string $currentValue, array $constraints, array $options, ?string $helpText, bool $isRequired, array $errors = []): string
     {
         $checked = ($currentValue === '1') ? ' checked' : '';

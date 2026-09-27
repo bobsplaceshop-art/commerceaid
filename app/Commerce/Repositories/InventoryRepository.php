@@ -144,6 +144,7 @@ final class InventoryRepository extends CommerceRepository
      * @param array  $options        optional: reference_type, reference_id, reason, created_by
      * @throws \InvalidArgumentException on unknown movement type
      */
+    /** @param array<string,mixed> $options */
     public function adjust(
         int $productId,
         int $variantId,
@@ -459,6 +460,10 @@ final class InventoryRepository extends CommerceRepository
     /**
      * @return array{0:string, 1:array}
      */
+    /**
+     * @param array<string,mixed> $filters
+     * @return array{0:string,1:array<int,mixed>}
+     */
     private function buildListFilters(array $filters): array
     {
         $where = ["i.`store_id` = ?", "p.`deleted_at` IS NULL"];
@@ -506,6 +511,10 @@ final class InventoryRepository extends CommerceRepository
 
     /**
      * @return array{0:string, 1:array}
+     */
+    /**
+     * @param array<string,mixed> $filters
+     * @return array{0:string,1:array<int,mixed>}
      */
     private function buildMovementFilters(array $filters): array
     {

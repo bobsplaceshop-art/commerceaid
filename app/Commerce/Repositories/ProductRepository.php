@@ -526,6 +526,10 @@ final class ProductRepository extends CommerceRepository
      * Build the WHERE clause + params for admin paginate().
      * @return array{0:string, 1:array}
      */
+    /**
+     * @param array<string,mixed> $filters
+     * @return array{0:string,1:array<int,mixed>}
+     */
     private function buildFilters(array $filters): array
     {
         $where = ["p.`store_id` = ?"];
@@ -581,6 +585,10 @@ final class ProductRepository extends CommerceRepository
      * Everything else is opt-in.
      *
      * @return array{0:string, 1:array}
+     */
+    /**
+     * @param array<string,mixed> $filters
+     * @return array{0:string,1:array<int,mixed>}
      */
     private function buildPublishedFilters(array $filters): array
     {
@@ -647,6 +655,7 @@ final class ProductRepository extends CommerceRepository
      * Resolve the ORDER BY fragment for a storefront listing.
      * Unknown or missing sort keys default to 'newest'.
      */
+    /** @param array<string,mixed> $filters */
     private function publishedOrderBy(array $filters): string
     {
         $key = (string) ($filters['sort'] ?? 'newest');

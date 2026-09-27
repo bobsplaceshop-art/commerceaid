@@ -73,6 +73,7 @@ final class RateLimiter
      * Check if the action is allowed given the current settings.
      * The explicit args are fallbacks - settings take precedence.
      */
+    /** @return array<string,mixed> */
     public function check(string $action, string $ip, int $maxAttempts = 0, int $windowMinutes = 0): array
     {
         $maxAttempts = $maxAttempts > 0 ? $maxAttempts : $this->maxFor($action);

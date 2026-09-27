@@ -16,6 +16,7 @@ final class LongTextType implements InputType
         return [['key' => 'max_length', 'label' => 'Maximum length', 'type' => 'number', 'help' => 'Default 5000']];
     }
 
+    /** @param array<string,mixed> $constraints */
     public function validate(mixed $value, array $constraints, bool $isRequired): array
     {
         $v = is_string($value) ? trim($value) : '';
@@ -43,6 +44,7 @@ final class LongTextType implements InputType
         return $value ?? '';
     }
 
+    /** @param array<string,mixed> $constraints */
     public function render(string $fieldKey, string $fieldLabel, ?string $currentValue, array $constraints, array $options, ?string $helpText, bool $isRequired, array $errors = []): string
     {
         $max = (int) ($constraints['max_length'] ?? 5000);

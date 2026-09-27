@@ -113,6 +113,7 @@ final class StoreRepository
     // =================================================================
 
     /** Insert a store. Returns the new id. */
+    /** @param array<string,mixed> $data */
     public function create(array $data): int
     {
         $columns = array_keys($data);
@@ -130,6 +131,7 @@ final class StoreRepository
     }
 
     /** Update a store row. Returns affected row count. */
+    /** @param array<string,mixed> $data */
     public function update(int $id, array $data): int
     {
         if ($data === []) return 0;

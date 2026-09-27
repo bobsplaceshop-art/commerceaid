@@ -476,6 +476,10 @@ final class CustomerRepository extends CommerceRepository
     // =================================================================
 
     /** @return array{0:string, 1:array} */
+    /**
+     * @param array<string,mixed> $filters
+     * @return array{0:string,1:array<int,mixed>}
+     */
     private function buildFilters(array $filters): array
     {
         $where = ["c.`store_id` = ?"];

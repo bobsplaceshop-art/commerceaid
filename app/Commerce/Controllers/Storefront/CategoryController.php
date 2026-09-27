@@ -31,6 +31,7 @@ final class CategoryController extends StorefrontController
     // GET /categories
     // -----------------------------------------------------------------
 
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(CategoryRepository::class);
@@ -57,6 +58,7 @@ final class CategoryController extends StorefrontController
     // GET /categories/{slug}
     // -----------------------------------------------------------------
 
+    /** @param array<string,string> $params */
     public function show(Request $request, array $params = []): Response
     {
         $categoryRepo = $this->container->get(CategoryRepository::class);

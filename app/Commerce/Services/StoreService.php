@@ -96,6 +96,7 @@ final class StoreService
     /**
      * Create a store. Returns the new id.
      *
+     * @param array<string,mixed> $input
      * @throws \InvalidArgumentException on validation failure
      */
     public function createStore(array $input): int
@@ -164,6 +165,8 @@ final class StoreService
     /**
      * Update mutable store fields.
      * Whitelist prevents mass-assignment.
+     *
+     * @param array<string,mixed> $data
      */
     public function updateStore(int $storeId, array $data): void
     {

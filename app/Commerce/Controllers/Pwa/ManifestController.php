@@ -18,6 +18,7 @@ final class ManifestController
     {
     }
 
+    /** @param array<string,string> $params */
     public function __invoke(Request $request, array $params = []): Response
     {
         $config = $this->container->get('config');

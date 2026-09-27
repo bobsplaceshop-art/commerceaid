@@ -41,6 +41,7 @@ final class CatalogController extends StorefrontController
         'featured'   => 'Featured first',
     ];
 
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $products = $this->container->get(ProductRepository::class);

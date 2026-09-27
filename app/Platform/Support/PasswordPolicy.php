@@ -112,6 +112,7 @@ final class PasswordPolicy
 
     // ---------- helpers ----------
 
+    /** @return array<int,string> */
     private static function classesPresent(string $password): array
     {
         $classes = [];

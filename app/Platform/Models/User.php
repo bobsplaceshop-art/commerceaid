@@ -33,6 +33,7 @@ final class User
     /** @var string[] */
     public array $permissionSlugs = [];
 
+    /** @param array<string,mixed> $row */
     public static function fromRow(array $row): self
     {
         $u = new self();

@@ -18,6 +18,7 @@ final class TextType implements InputType
         ];
     }
 
+    /** @param array<string,mixed> $constraints */
     public function validate(mixed $value, array $constraints, bool $isRequired): array
     {
         $v = is_string($value) ? trim($value) : '';
@@ -49,6 +50,7 @@ final class TextType implements InputType
         return $value ?? '';
     }
 
+    /** @param array<string,mixed> $constraints */
     public function render(
         string $fieldKey,
         string $fieldLabel,

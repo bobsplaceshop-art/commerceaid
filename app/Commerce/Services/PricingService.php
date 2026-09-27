@@ -108,6 +108,9 @@ final class PricingService
         ];
     }
 
+    /**
+     * @return array{unit_price:float,compare_at_price:float|null,base_price:float,source:string,tier_label:string|null,discount_percent:int}
+     */
     private function result(float $unit, ?float $compare, float $base, ?string $tierLabel): array
     {
         $discount = 0;

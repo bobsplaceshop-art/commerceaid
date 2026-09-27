@@ -58,6 +58,7 @@ final class FileType implements InputType
      * is required and no file is uploaded, that's caught by the
      * CustomFieldValueSaver before the file is stored.
      */
+    /** @param array<string,mixed> $constraints */
     public function validate(mixed $value, array $constraints, bool $isRequired): array
     {
         return [];
@@ -81,6 +82,7 @@ final class FileType implements InputType
         return $value ? 'Attached document' : '';
     }
 
+    /** @param array<string,mixed> $constraints */
     public function render(string $fieldKey, string $fieldLabel, ?string $currentValue, array $constraints, array $options, ?string $helpText, bool $isRequired, array $errors = []): string
     {
         $exts  = $constraints['extensions'] ?? 'pdf,doc,docx,png,jpg';

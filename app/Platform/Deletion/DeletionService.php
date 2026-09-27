@@ -134,6 +134,7 @@ final class DeletionService
      * Bulk delete. First inspects ALL records. If any has dependents that the user
      * hasn't opted into ("WITH CHILDREN" phrase), the whole operation is aborted.
      */
+    /** @param array<int,mixed> $entities */
     public function deleteBulk(array $entities, string $typedPhrase, ?string $reason = null): DeletionResult
     {
         if (empty($entities)) {
@@ -203,6 +204,7 @@ final class DeletionService
         return $user->can($entity->entityType() . '.delete');
     }
 
+    /** @param array<int, array{label:string, count:int, route:string}> $dependents */
     private function logDeletion(
         DeletableEntity $entity,
         string $phrase,

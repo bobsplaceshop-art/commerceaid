@@ -20,6 +20,7 @@ final class NumberType implements InputType
         ];
     }
 
+    /** @param array<string,mixed> $constraints */
     public function validate(mixed $value, array $constraints, bool $isRequired): array
     {
         $v = is_string($value) ? trim($value) : (is_numeric($value) ? (string) $value : '');
@@ -63,6 +64,7 @@ final class NumberType implements InputType
         return $value ?? '';
     }
 
+    /** @param array<string,mixed> $constraints */
     public function render(string $fieldKey, string $fieldLabel, ?string $currentValue, array $constraints, array $options, ?string $helpText, bool $isRequired, array $errors = []): string
     {
         $step = '1';

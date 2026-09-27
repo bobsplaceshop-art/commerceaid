@@ -23,6 +23,7 @@ final class AuthController
     {
     }
 
+    /** @param array<string,string> $params */
     public function showLogin(Request $request, array $params = []): Response
     {
         $view    = $this->container->get(View::class);
@@ -45,6 +46,7 @@ final class AuthController
         );
     }
 
+    /** @param array<string,string> $params */
     public function login(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -98,6 +100,7 @@ final class AuthController
     }
 
 
+    /** @param array<string,string> $params */
     public function logout(Request $request, array $params = []): Response
     {
         $auth = $this->container->get(Auth::class);

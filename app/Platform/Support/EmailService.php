@@ -13,6 +13,7 @@ use PHPMailer\PHPMailer\Exception as MailException;
  */
 final class EmailService
 {
+    /** @param array<string,mixed> $config */
     public function __construct(
         private array $config,
         private Logger $logger
@@ -28,6 +29,7 @@ final class EmailService
      * @param string|null  $textBody Optional plain-text alternative
      * @return bool
      */
+    /** @param string|array<int|string,string> $to */
     public function send(string|array $to, string $subject, string $htmlBody, ?string $textBody = null): bool
     {
         $mail = new PHPMailer(true);
@@ -90,6 +92,10 @@ final class EmailService
      *
      * @param string $template  e.g. 'password-reset' (no .php)
      * @param array  $variables Variables extracted into the template
+     */
+    /**
+     * @param string|array<int|string,string> $to
+     * @param array<string,mixed> $variables
      */
     public function sendTemplate(string|array $to, string $subject, string $template, array $variables = []): bool
     {

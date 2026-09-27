@@ -23,7 +23,7 @@ final class ActivityLogger
      * @param string      $description   Human-readable summary for the timeline
      * @param string|null $subjectType   e.g. "organisation"
      * @param int|null    $subjectId     Numeric ID of the affected record
-     * @param array       $meta          Optional structured context
+     * @param array<string,mixed> $meta Optional structured context
      */
     public function log(
         string $action,

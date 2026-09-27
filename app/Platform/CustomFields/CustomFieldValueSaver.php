@@ -53,8 +53,8 @@ final class CustomFieldValueSaver
      *
      * @param string $entityType  e.g. 'organisation'
      * @param int    $entityId    The entity's ID (already persisted)
-     * @param array  $submitted   Custom field values from the form (cf[x] inputs)
-     * @param array  $files       Uploaded files, keyed by field key (from $_FILES)
+     * @param array<string,mixed> $submitted   Custom field values from the form (cf[x] inputs)
+     * @param array<string,array<string,mixed>> $files  Uploaded files, keyed by field key (from $_FILES)
      */
     public function save(string $entityType, int $entityId, array $submitted, array $files = []): void
     {
@@ -102,6 +102,7 @@ final class CustomFieldValueSaver
      * Failures are logged but do not block the form submission. The
      * entity stays valid; only the file attachment is lost.
      */
+    /** @param array<string,mixed> $fileData */
     private function saveFileValue(
         object $field,
         string $entityType,

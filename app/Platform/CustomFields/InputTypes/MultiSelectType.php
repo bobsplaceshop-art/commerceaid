@@ -12,6 +12,7 @@ final class MultiSelectType implements InputType
     public function supportsOptions(): bool { return true; }
     public function configFields(): array { return []; }
 
+    /** @param array<string,mixed> $constraints */
     public function validate(mixed $value, array $constraints, bool $isRequired): array
     {
         $values = $this->normalizeValues($value);
@@ -44,6 +45,7 @@ final class MultiSelectType implements InputType
         return implode(', ', array_map('strval', $decoded));
     }
 
+    /** @return array<int,string> */
     private function normalizeValues(mixed $value): array
     {
         if (is_array($value)) return array_map('strval', $value);
@@ -55,6 +57,7 @@ final class MultiSelectType implements InputType
         return [];
     }
 
+    /** @param array<string,mixed> $constraints */
     public function render(string $fieldKey, string $fieldLabel, ?string $currentValue, array $constraints, array $options, ?string $helpText, bool $isRequired, array $errors = []): string
     {
         $current = $this->normalizeValues($currentValue);

@@ -13,6 +13,7 @@ final class CustomFieldValue
     public ?string $createdAt;
     public ?string $updatedAt;
 
+    /** @param array<string,mixed> $row */
     public static function fromRow(array $row): self
     {
         $v = new self();

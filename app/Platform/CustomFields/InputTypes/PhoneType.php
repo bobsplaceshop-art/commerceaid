@@ -12,6 +12,7 @@ final class PhoneType implements InputType
     public function supportsOptions(): bool { return false; }
     public function configFields(): array { return []; }
 
+    /** @param array<string,mixed> $constraints */
     public function validate(mixed $value, array $constraints, bool $isRequired): array
     {
         $v = is_string($value) ? trim($value) : '';
@@ -32,6 +33,7 @@ final class PhoneType implements InputType
 
     public function humanize(?string $value): string { return $value ?? ''; }
 
+    /** @param array<string,mixed> $constraints */
     public function render(string $fieldKey, string $fieldLabel, ?string $currentValue, array $constraints, array $options, ?string $helpText, bool $isRequired, array $errors = []): string
     {
         $html  = '<div class="ra-field">';

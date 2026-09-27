@@ -14,6 +14,7 @@ final class Notification
     public ?string $readAt;
     public ?string $createdAt;
 
+    /** @param array<string,mixed> $row */
     public static function fromRow(array $row): self
     {
         $n = new self();

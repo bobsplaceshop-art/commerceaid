@@ -43,6 +43,7 @@ final class HomeController extends StorefrontController
     private const SECTION_LIMIT = 8;
     private const CATEGORY_LIMIT = 7;
 
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $products = $this->container->get(ProductRepository::class);

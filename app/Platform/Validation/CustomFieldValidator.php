@@ -13,7 +13,10 @@ use CorporateAid\Platform\CustomFields\InputTypeRegistry;
  */
 final class CustomFieldValidator
 {
-    /** @return string[] list of error messages; empty means valid */
+    /**
+     * @param array<string,mixed> $input
+     * @return array<int,string> list of error messages; empty means valid
+     */
     public function validate(array $input, ?int $editingId = null): array
     {
         $errors = [];

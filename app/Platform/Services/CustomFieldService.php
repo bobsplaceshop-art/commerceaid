@@ -32,6 +32,7 @@ final class CustomFieldService
      *
      * @throws \RuntimeException with errors attached
      */
+    /** @param array<string,mixed> $input */
     public function create(string $entityType, array $input): int
     {
         $errors = $this->validator->validate($input);
@@ -75,6 +76,7 @@ final class CustomFieldService
         return $fieldId;
     }
 
+    /** @param array<string,mixed> $input */
     public function update(int $fieldId, array $input): void
     {
         $field = $this->fields->findById($fieldId);
@@ -258,6 +260,10 @@ final class CustomFieldService
 
     // ---------- helpers ----------
 
+    /**
+     * @param array<string,mixed> $input
+     * @return array<int,string>
+     */
     private function extractOptions(array $input): array
     {
         $type = (string) ($input['input_type'] ?? '');
@@ -275,6 +281,10 @@ final class CustomFieldService
         return array_values(array_unique($clean));
     }
 
+    /**
+     * @param array<string,mixed> $input
+     * @return array<string,mixed>
+     */
     private function extractConstraints(array $input): array
     {
         $constraints = $input['constraints'] ?? [];

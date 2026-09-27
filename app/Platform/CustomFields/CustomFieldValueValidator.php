@@ -10,6 +10,7 @@ final class CustomFieldValueValidator
     public function __construct(private CustomFieldRepository $fields) {}
 
     /**
+     * @param array<string,mixed> $submitted
      * @return array<string, string[]> errors keyed by field_key
      */
     public function validate(string $entityType, array $submitted): array

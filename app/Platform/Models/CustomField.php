@@ -25,6 +25,7 @@ final class CustomField
     public ?string $updatedAt;
     public ?string $deletedAt;
 
+    /** @param array<string,mixed> $row */
     public static function fromRow(array $row): self
     {
         $f = new self();

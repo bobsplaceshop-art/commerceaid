@@ -17,6 +17,7 @@ final class EntityFile
     public ?int $linkedBy;
     public ?string $createdAt;
 
+    /** @param array<string,mixed> $row */
     public static function fromRow(array $row): self
     {
         $e = new self();

@@ -20,6 +20,10 @@ final class NotificationRuleService
     }
 
     /** @return int[] */
+    /**
+     * @param array<string,mixed> $context
+     * @return array<int,int>
+     */
     public function resolveRecipients(string $eventType, array $context = [], bool $excludeActor = true): array
     {
         $rules = $this->activeRulesFor($eventType);
@@ -70,6 +74,11 @@ final class NotificationRuleService
     }
 
     /** @return int[] */
+    /**
+     * @param array<string,mixed> $rule
+     * @param array<string,mixed> $context
+     * @return array<int,int>
+     */
     private function resolveOne(array $rule, array $context): array
     {
         $type  = (string) $rule['recipient_type'];
@@ -132,6 +141,10 @@ final class NotificationRuleService
     }
 
     /** @return int[] */
+    /**
+     * @param array<string,mixed> $context
+     * @return array<int,int>
+     */
     private function owner(array $context): array
     {
         foreach (['owner_id', 'assigned_to', 'assignee_id'] as $key) {

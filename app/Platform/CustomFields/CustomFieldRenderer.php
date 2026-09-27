@@ -28,6 +28,10 @@ final class CustomFieldRenderer
         private CustomFieldValueRepository $values
     ) {}
 
+    /**
+     * @param array<string,mixed> $submitted
+     * @param array<string,array<int,string>> $errors
+     */
     public function renderForm(
         string $entityType,
         ?int $entityId = null,

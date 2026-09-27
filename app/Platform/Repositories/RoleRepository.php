@@ -14,16 +14,19 @@ final class RoleRepository
         $this->db = $db;
     }
 
+    /** @return array<int,array<string,mixed>> */
     public function all(): array
     {
         return $this->db->select("SELECT `id`, `name`, `slug`, `description`, `is_system` FROM `core_roles` ORDER BY `name`");
     }
 
+    /** @return array<string,mixed>|null */
     public function findBySlug(string $slug): ?array
     {
         return $this->db->selectOne("SELECT * FROM `core_roles` WHERE `slug` = ? LIMIT 1", [$slug]);
     }
 
+    /** @return array<string,array<int,array<string,mixed>>> */
     public function permissionsGroupedByModule(): array
     {
         $rows = $this->db->select("SELECT `id`, `slug`, `module`, `description` FROM `core_permissions` ORDER BY `module`, `slug`");

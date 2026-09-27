@@ -32,6 +32,7 @@ interface InputType
      * Validate a submitted value. Return an empty array if valid,
      * or an array of error messages.
      *
+     * @param array<string,mixed> $constraints
      * @return string[]
      */
     public function validate(mixed $value, array $constraints, bool $isRequired): array;
@@ -53,7 +54,7 @@ interface InputType
      * @param string       $fieldKey      e.g. 'rwanda_work_permit_status'
      * @param string       $fieldLabel    e.g. 'Rwanda work permit status'
      * @param string|null  $currentValue  raw stored value (from custom_field_values)
-     * @param array        $constraints   decoded from custom_fields.constraints
+     * @param array<string,mixed> $constraints decoded from custom_fields.constraints
      * @param string[]     $options       decoded from custom_fields.options
      * @param string|null  $helpText
      * @param bool         $isRequired

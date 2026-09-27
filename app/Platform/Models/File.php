@@ -24,6 +24,7 @@ final class File
     public ?string $createdAt;
     public ?string $deletedAt;
 
+    /** @param array<string,mixed> $row */
     public static function fromRow(array $row): self
     {
         $f = new self();

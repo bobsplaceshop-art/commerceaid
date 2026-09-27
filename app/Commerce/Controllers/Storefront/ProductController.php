@@ -31,6 +31,7 @@ final class ProductController extends StorefrontController
 {
     private const RELATED_LIMIT = 4;
 
+    /** @param array<string,string> $params */
     public function show(Request $request, array $params = []): Response
     {
         $products = $this->container->get(ProductRepository::class);

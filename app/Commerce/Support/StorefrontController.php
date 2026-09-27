@@ -40,7 +40,7 @@ abstract class StorefrontController
      *
      * @param string $view  dot-notation view name, e.g.
      *                      'storefront.home'
-     * @param array  $data  view-specific data
+     * @param array<string,mixed> $data  view-specific data
      */
     protected function render(string $view, array $data = []): Response
     {
