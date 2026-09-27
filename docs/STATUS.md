@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-09-27
-**Version:** 0.3.0-alpha
-**Stage:** 008B.2 complete. Next: 008C (customer auth + account)
+**Version:** 0.4.0-alpha
+**Stage:** 008C complete. Next: 008D (cart)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -66,11 +66,22 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 - Store builder contract: every element carries a data-sf-*
   attribute for future admin editability
 
+### Customer accounts (008C)
+
+- Registration with optional group selection
+- Login, logout, forgot password, reset password
+- Account dashboard with group / net-terms display
+- Address book CRUD with set-default
+- Password change with current-password verification
+- Approval workflow integration: pending customers can log
+  in and browse; checkout gated by Customer::canCheckout()
+- Separate customer session cookie (ca_customer_session)
+  distinct from admin ca_session
+
 ---
 
 ## What Doesn't Work Yet
 
-- Customer registration / login / account (Stage 008C)
 - Shopping cart (008D)
 - Checkout flow (008E)
 - Order lifecycle customer view (008F)
@@ -88,17 +99,17 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008C
+## Current Focus — Stage 008D
 
-**Deliverable:** Customer-side authentication and account.
+**Deliverable:** Shopping cart.
 
-Customer registration, login, logout, forgot password, account
-dashboard, address book, password change. Distinct from admin
-login (separate session cookie). Approval workflow integrated:
-pending customers can log in and browse but cannot check out
-until approved.
+Session-based cart for guests, database-persisted cart for
+logged-in customers. Cart merge on login. Mini-cart in the
+header. AJAX add-to-cart endpoint.
 
-~12 new files, mostly views and one controller.
+~10 new files: two migrations (commerce_carts,
+commerce_cart_items), a CartService, a CartController, and
+the cart views.
 
 ---
 
@@ -120,7 +131,9 @@ Test data in dev:
 - 3 customer groups (Retail, Wholesale, VIP)
 - 1 category
 - 3 attributes: Color, Size, Care Instructions
-- 1 B2B test customer (pending)
+- 1 B2B test customer (pending from 007B)
+- 1 registered storefront customer (rmbuthia49@gmail.com)
+- 1 pending Wholesale registration (test-wholesale@example.com)
 
 ---
 

@@ -318,6 +318,46 @@ See the test protocol at the end of every stage doc.
 
 ---
 
+## The CSS Override Pattern
+
+When adding new styling to an existing component, edit the
+original rule in place. Do not append a revised version at
+the bottom of the file.
+
+The 008B.2 addendum did the latter. It appended a new
+`.sf-footer-columns-inner` block at the bottom with three
+rules inside media queries. Two additional definitions were
+left untouched earlier in the file. The result: five
+competing rules for one selector, and the effective cascade
+was only knowable by reading the entire file top to bottom
+and understanding source-order precedence.
+
+The bug that surfaced: mobile footer was left-aligned with
+an empty right gutter. Reading any single rule in isolation
+looked correct. Only the whole stack revealed that an
+unqualified `grid-template-columns: 1fr` at line 867 was
+overriding the intended two-column mobile layout from
+line 782.
+
+**The rule:**
+
+  - Edit the original rule. Do not append a revision.
+  - If a rule needs to change at a breakpoint, wrap the
+    change in a media query and place it next to the original.
+  - Delete superseded rules when editing. A rule that is
+    never meant to apply is not "kept for safety" - it is a
+    landmine for the next reader.
+  - One selector, one source of truth.
+
+**The test:** if you have to read the file top-to-bottom to
+predict what a selector will do, the cascade has a problem.
+Consolidate.
+
+**Where we hit it:** Storefront footer, 008B.2 addendum,
+surfaced during 008C testing.
+
+---
+
 ## The Anti-Pattern to Avoid
 
 Do not skip the checks because "it's a small change."

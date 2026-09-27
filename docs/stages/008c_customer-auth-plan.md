@@ -458,18 +458,70 @@ After the full sub-stage:
 
 ## Progress
 
+**Status: Complete (2026-09-27)**
+
 | # | Item | Status |
 |---|---|---|
-| 1 | Plan document | This file |
-| 2 | CustomerSession config + binding | Pending |
-| 3 | CustomerAuthService | Pending |
-| 4 | CustomerRepository extensions | Pending |
-| 5 | CustomerSessionRepository | Pending |
-| 6 | CustomerAuthMiddleware | Pending |
-| 7 | AuthController + 4 views | Pending |
-| 8 | AccountController + 5 views | Pending |
-| 9 | Routes | Pending |
-| 10 | Full test pass + commit | Pending |
+| 1 | Plan document | ✅ |
+| 2 | CustomerSession config + binding | ✅ |
+| 3 | CustomerAuthService | ✅ |
+| 4 | CustomerRepository extensions | ✅ |
+| 5 | CustomerSessionRepository | N/A - deferred (session tracking added later if needed) |
+| 6 | CustomerAuthMiddleware | ✅ |
+| 7 | AuthController + 4 views | ✅ |
+| 8 | AccountController + 5 views + CustomerAddress model/repo | ✅ |
+| 9 | Routes (9 auth + 11 account) | ✅ |
+| 10 | Full test pass + 6 commits | ✅ |
+
+### Delivered beyond the plan
+
+  - **RedirectGuard** extracted to Platform\Support.
+    Shared open-redirect check used by both admin and
+    customer auth controllers. Preempts the licensing
+    flows which will have multiple redirect-after-action
+    paths.
+
+  - **Time Discipline** documented in docs/baseline.
+    MySQL owns timestamp writes and comparisons. Fixes a
+    real bug where PHP/MySQL timezone drift invalidated
+    every password reset token on creation.
+
+  - **Plaintext reset log line** (RESET-LINK-FOR-COPY).
+    Makes manual dev testing practical without JSON
+    parsing gymnastics.
+
+  - **Footer CSS consolidation** (a storefront fix found
+    during testing, landed in the same stage because the
+    account views surfaced the issue).
+
+### Bugs found during test pass
+
+  1. **CustomerAuthMiddleware not bound in container.**
+     Kernel alias existed, container binding did not.
+     `/account` and other guarded routes threw 500 at
+     dispatch time. Fixed in c97f124.
+
+  2. **Reset token expiry computed in PHP.**
+     `date('Y-m-d H:i:s', time() + 3600)` compared against
+     MySQL's `NOW()`. With PHP on UTC and MySQL on
+     Africa/Nairobi, every token appeared expired at
+     creation. Fixed in 2d52d47 - MySQL now computes
+     `DATE_ADD(NOW(), INTERVAL 60 MINUTE)`.
+
+  3. **Footer CSS cascade unknowable.**
+     Five competing definitions of `.sf-footer-columns-inner`
+     from the 008B.2 addendum. Mobile layout was
+     left-aligned with empty right gutter. Consolidated
+     into one authoritative block. Fixed in 53db57e.
+
+### What's deferred
+
+  - Email sending (reset link goes to log; real email
+    lands with Stage 010)
+  - Email verification on signup
+  - Wishlist, reviews (later stages)
+  - Customer session tracking table (commerce_customer_sessions
+    exists, but the tracking write is not yet wired)
 
 ---
 

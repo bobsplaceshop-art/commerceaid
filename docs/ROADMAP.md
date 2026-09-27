@@ -36,6 +36,7 @@ Adding a stage or reordering requires updating this document first.
 | 008A  | Storefront shell & Store model         | 2026-09-27 |
 | 008B  | Storefront visual identity & catalog   | 2026-09-27 |
 | 008B.2| Extended visual pass                   | 2026-09-27 |
+| 008C  | Customer registration, login, account  | 2026-09-27 |
 
 Also completed outside the staged sequence:
 
@@ -53,32 +54,6 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008C - Customer Registration, Login, Account
-
-**Goal:** Customer-side authentication and account management,
-distinct from admin login.
-
-**Deliverables:**
-
-- `Storefront/AuthController` - register, login, logout
-- `Storefront/AccountController` - dashboard, orders, addresses,
-  password change
-- Views for registration, login, forgot password, account dashboard
-- Customer session namespace (separate cookie from admin)
-- Approval workflow integration (pending customers can log in but
-  cannot check out until approved)
-- Address book CRUD
-- Password change
-- Order history view (initially empty until checkout lands)
-
-**Depends on:** Stage 008B (storefront shell + customer model)
-
-**Files:** ~12 new files, mostly views and a controller.
-
----
-
-## Planned Stages
-
 ### Stage 008D - Cart
 
 **Goal:** Session-based cart for guests, database-persisted cart
@@ -94,6 +69,10 @@ for logged-in customers. Cart merge on login.
 - Cart page with quantity controls
 
 **Depends on:** Stage 008C (customer auth for persistent carts)
+
+---
+
+## Planned Stages
 
 ### Stage 008E - Checkout
 
