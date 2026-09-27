@@ -5,6 +5,9 @@ use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\Router;
 use CorporateAid\Commerce\Controllers\Storefront\HomeController;
+use CorporateAid\Commerce\Controllers\Storefront\CatalogController;
+use CorporateAid\Commerce\Controllers\Storefront\CategoryController;
+use CorporateAid\Commerce\Controllers\Storefront\ProductController;
 
 /** @var Router $router */
 
@@ -59,3 +62,19 @@ $router->get('/offline', function (Request $req, array $params): Response {
         . '</body></html>'
     );
 });
+
+// ---------------------------------------------------------------------
+// Catalog - product listing and detail
+// ---------------------------------------------------------------------
+// Specific route (/products) must precede the wildcard
+// (/products/{slug}) so /products matches the listing and not
+// a product named "products".
+$router->get('/products',        [CatalogController::class,  'index'], ['store']);
+$router->get('/products/{slug}', [ProductController::class,  'show'],  ['store']);
+
+// ---------------------------------------------------------------------
+// Categories - index and detail
+// ---------------------------------------------------------------------
+// Same ordering rule: specific before wildcard.
+$router->get('/categories',        [CategoryController::class, 'index'], ['store']);
+$router->get('/categories/{slug}', [CategoryController::class, 'show'],  ['store']);

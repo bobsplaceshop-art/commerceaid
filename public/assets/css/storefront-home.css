@@ -1,0 +1,556 @@
+/* =====================================================================
+ * ANAYA GLOBAL - Storefront homepage stylesheet
+ * =====================================================================
+ *
+ * Covers the merchandising sections on the storefront home page:
+ *   - Hero (CSS-composed brand campaign)
+ *   - Shop by Category
+ *   - Promotional Collections
+ *   - Product sections (New Arrivals, Best Sellers)
+ *   - Promotional Strip
+ *   - Newsletter
+ *
+ * Loaded after storefront.css. Overrides nothing in the core sheet
+ * because this file's classes are unique to the homepage.
+ *
+ * Store builder contract:
+ *   The hero composition is CSS-driven. When the store builder
+ *   supports custom hero imagery, replace the CSS backgrounds with
+ *   an <img> inside .sf-home-hero and hide .sf-home-hero-scene.
+ * ===================================================================== */
+
+/* =====================================================================
+ * HERO
+ * ===================================================================== */
+
+.sf-home-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 400px;
+    background: var(--sf-cream);
+    overflow: hidden;
+}
+
+@media (min-width: 900px) {
+    .sf-home-hero {
+        grid-template-columns: 1fr 1.6fr 1fr;
+        min-height: 460px;
+    }
+}
+
+/* ----- Left and right decorative scenes ----- */
+
+.sf-home-hero-left,
+.sf-home-hero-right {
+    position: relative;
+    min-height: 220px;
+    overflow: hidden;
+}
+
+@media (min-width: 900px) {
+    .sf-home-hero-left,
+    .sf-home-hero-right {
+        min-height: auto;
+    }
+}
+
+.sf-home-hero-scene {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 30% 40%, rgba(198, 161, 91, 0.35), transparent 55%),
+        radial-gradient(ellipse at 70% 70%, rgba(237, 225, 210, 0.9), transparent 60%),
+        linear-gradient(135deg, #EDE1D2 0%, #F8F1E8 50%, #D8BF8A 100%);
+}
+
+.sf-home-hero-scene-right {
+    background:
+        radial-gradient(ellipse at 70% 40%, rgba(198, 161, 91, 0.35), transparent 55%),
+        radial-gradient(ellipse at 30% 70%, rgba(237, 225, 210, 0.9), transparent 60%),
+        linear-gradient(45deg, #F8F1E8 0%, #EDE1D2 60%, #D8BF8A 100%);
+}
+
+/* ----- Center content ----- */
+
+.sf-home-hero-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    gap: .35rem;
+    position: relative;
+    z-index: 2;
+}
+
+@media (min-width: 900px) {
+    .sf-home-hero-center { padding: 3.5rem 2rem; }
+}
+
+.sf-home-hero-emblem {
+    display: block;
+    width: 56px;
+    height: 56px;
+    color: var(--sf-ink);
+    margin-bottom: .5rem;
+}
+
+.sf-home-hero-emblem svg { width: 100%; height: 100%; }
+
+.sf-home-hero-brand {
+    font-family: var(--sf-font-display);
+    font-weight: 600;
+    font-size: 1.9rem;
+    letter-spacing: .05em;
+    color: var(--sf-ink);
+    text-transform: uppercase;
+    line-height: 1.1;
+}
+
+@media (min-width: 900px) {
+    .sf-home-hero-brand { font-size: 2.4rem; }
+}
+
+.sf-home-hero-sub {
+    font-family: var(--sf-font-body);
+    font-size: .68rem;
+    font-weight: 500;
+    letter-spacing: .35em;
+    text-transform: uppercase;
+    color: var(--sf-ink-muted);
+    margin-bottom: .75rem;
+    padding-left: .35em;
+}
+
+.sf-home-hero-slogan {
+    font-family: var(--sf-font-script);
+    font-weight: 600;
+    font-size: 1.65rem;
+    line-height: 1.15;
+    color: var(--sf-gold-dark);
+    max-width: 420px;
+    margin: 0 auto .5rem;
+}
+
+@media (min-width: 900px) {
+    .sf-home-hero-slogan { font-size: 2.1rem; }
+}
+
+/* ----- Trust indicators row ----- */
+
+.sf-home-hero-trust {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: .85rem 1.5rem;
+    list-style: none;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    max-width: 440px;
+}
+
+@media (min-width: 640px) {
+    .sf-home-hero-trust {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.sf-home-hero-trust-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .35rem;
+    color: var(--sf-ink-soft);
+    font-size: .68rem;
+    line-height: 1.25;
+    text-align: center;
+    letter-spacing: .02em;
+}
+
+.sf-home-hero-trust-item i {
+    font-size: 1.15rem;
+    color: var(--sf-ink);
+}
+
+/* ----- Script accent (right) ----- */
+
+.sf-home-hero-script {
+    position: absolute;
+    bottom: 1.25rem;
+    right: 1.5rem;
+    font-family: var(--sf-font-script);
+    font-size: 1.15rem;
+    line-height: 1.25;
+    color: var(--sf-ink);
+    text-align: right;
+    z-index: 3;
+    pointer-events: none;
+}
+
+@media (min-width: 900px) {
+    .sf-home-hero-script {
+        top: 2.5rem;
+        bottom: auto;
+        font-size: 1.35rem;
+    }
+}
+
+/* =====================================================================
+ * SHOP BY CATEGORY
+ * ===================================================================== */
+
+.sf-home-categories {
+    padding: 2rem 0 1rem;
+    background: var(--sf-white);
+}
+
+.sf-home-category-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .sf-home-category-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .sf-home-category-grid {
+        grid-template-columns: repeat(7, 1fr);
+    }
+}
+
+.sf-home-category-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--sf-white);
+    border: 1px solid var(--sf-border);
+    border-radius: var(--sf-radius);
+    overflow: hidden;
+    transition: box-shadow var(--sf-t-base) var(--sf-ease),
+                border-color var(--sf-t-base) var(--sf-ease);
+}
+
+.sf-home-category-card:hover {
+    border-color: var(--sf-gold);
+    box-shadow: 0 6px 18px -10px rgba(17, 17, 17, 0.15);
+}
+
+.sf-home-category-image {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: var(--sf-cream);
+}
+
+.sf-home-category-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--sf-t-slow) var(--sf-ease);
+}
+
+.sf-home-category-card:hover .sf-home-category-image img {
+    transform: scale(1.04);
+}
+
+.sf-home-category-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .75rem .85rem;
+}
+
+.sf-home-category-name {
+    font-family: var(--sf-font-body);
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--sf-ink);
+    letter-spacing: .01em;
+    line-height: 1.3;
+}
+
+.sf-home-category-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--sf-ink);
+    color: var(--sf-white);
+    font-size: .7rem;
+    flex-shrink: 0;
+    transition: background var(--sf-t-base) var(--sf-ease);
+}
+
+.sf-home-category-card:hover .sf-home-category-arrow {
+    background: var(--sf-gold-dark);
+}
+
+/* =====================================================================
+ * PROMOTIONAL COLLECTIONS
+ * ===================================================================== */
+
+.sf-home-promos {
+    padding: 2rem 0 3rem;
+    background: var(--sf-white);
+}
+
+.sf-home-promo-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .sf-home-promo-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .sf-home-promo-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.sf-home-promo-panel {
+    position: relative;
+    display: block;
+    aspect-ratio: 7 / 5;
+    overflow: hidden;
+    border-radius: var(--sf-radius);
+    background: var(--sf-cream);
+}
+
+.sf-home-promo-image {
+    position: absolute;
+    inset: 0;
+}
+
+.sf-home-promo-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--sf-t-slow) var(--sf-ease);
+}
+
+.sf-home-promo-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(17, 17, 17, 0) 40%, rgba(17, 17, 17, 0.55) 100%);
+    pointer-events: none;
+}
+
+.sf-home-promo-panel:hover .sf-home-promo-image img {
+    transform: scale(1.05);
+}
+
+.sf-home-promo-body {
+    position: absolute;
+    left: 1.1rem;
+    right: 1.1rem;
+    bottom: 1.1rem;
+    z-index: 2;
+    color: var(--sf-white);
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+}
+
+.sf-home-promo-eyebrow {
+    font-size: .68rem;
+    font-weight: 500;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.sf-home-promo-title {
+    font-family: var(--sf-font-display);
+    font-size: 1.35rem;
+    line-height: 1.15;
+    font-weight: 500;
+    color: var(--sf-white);
+}
+
+.sf-home-promo-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--sf-gold-light);
+    margin-top: .35rem;
+    transition: color var(--sf-t-base) var(--sf-ease);
+}
+
+.sf-home-promo-panel:hover .sf-home-promo-cta {
+    color: var(--sf-white);
+}
+
+/* =====================================================================
+ * PROMOTIONAL STRIP
+ * ===================================================================== */
+
+.sf-home-strip {
+    background: var(--sf-ink);
+    color: var(--sf-cream);
+    padding: 3rem 0;
+    margin: 2rem 0;
+}
+
+.sf-home-strip-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+@media (min-width: 900px) {
+    .sf-home-strip-inner {
+        flex-direction: row;
+        text-align: left;
+    }
+}
+
+.sf-home-strip-text {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.sf-home-strip-eyebrow {
+    font-size: .68rem;
+    font-weight: 500;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--sf-gold-light);
+}
+
+.sf-home-strip-title {
+    font-family: var(--sf-font-display);
+    font-size: 1.5rem;
+    color: var(--sf-cream);
+    font-weight: 500;
+    line-height: 1.2;
+    margin: 0;
+}
+
+@media (min-width: 900px) {
+    .sf-home-strip-title { font-size: 1.75rem; }
+}
+
+.sf-home-strip-sub {
+    font-size: .85rem;
+    color: rgba(248, 241, 232, 0.75);
+    margin: 0;
+}
+
+/* =====================================================================
+ * PRODUCT SECTIONS (New Arrivals, Best Sellers wrappers)
+ * ===================================================================== */
+
+.sf-home-products {
+    padding: 1.5rem 0 2rem;
+    background: var(--sf-white);
+}
+
+/* =====================================================================
+ * NEWSLETTER
+ * ===================================================================== */
+
+.sf-home-newsletter {
+    background: var(--sf-cream);
+    padding: 3.5rem 0;
+    margin-top: 3rem;
+    border-top: 1px solid var(--sf-border);
+    border-bottom: 1px solid var(--sf-border);
+}
+
+.sf-home-newsletter-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+    max-width: 560px;
+}
+
+.sf-home-newsletter-text {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+}
+
+.sf-home-newsletter-title {
+    font-family: var(--sf-font-script);
+    font-size: 2.25rem;
+    font-weight: 600;
+    color: var(--sf-gold-dark);
+    line-height: 1.1;
+    margin: 0;
+}
+
+@media (min-width: 640px) {
+    .sf-home-newsletter-title { font-size: 2.75rem; }
+}
+
+.sf-home-newsletter-sub {
+    font-size: .92rem;
+    color: var(--sf-ink-soft);
+    line-height: 1.55;
+    margin: 0;
+    max-width: 460px;
+}
+
+.sf-home-newsletter-form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: .5rem;
+    margin-top: .5rem;
+}
+
+@media (min-width: 640px) {
+    .sf-home-newsletter-form {
+        flex-direction: row;
+        align-items: stretch;
+    }
+}
+
+.sf-home-newsletter-input {
+    flex: 1;
+    padding: .9rem 1rem;
+    border: 1px solid var(--sf-border-strong);
+    border-radius: var(--sf-radius);
+    background: var(--sf-white);
+    font-family: var(--sf-font-body);
+    font-size: .9rem;
+    color: var(--sf-ink);
+}
+
+.sf-home-newsletter-input:disabled {
+    opacity: .7;
+    cursor: not-allowed;
+}
+
+.sf-home-newsletter-form .sf-btn {
+    flex-shrink: 0;
+}
+
+.sf-home-newsletter-note {
+    font-size: .75rem;
+    color: var(--sf-ink-muted);
+    margin: 0;
+}

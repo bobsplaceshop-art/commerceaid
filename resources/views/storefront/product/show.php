@@ -1,0 +1,218 @@
+<?php
+/**
+ * Storefront product detail at /products/{slug}.
+ *
+ * Context (from ProductController::show):
+ *   $product          Product
+ *   $brand            ?Brand
+ *   $primaryCategory  ?Category
+ *   $parentCategory   ?Category
+ *   $stockQty         ?int   available qty for simple products
+ *   $variants         array<int, ProductVariant>
+ *   $related          array<int, Product>
+ *
+ * Store builder contract:
+ *   Section  data-sf-section="product-detail"
+ *   Page     data-sf-page="product"
+ *   Product  data-sf-product-id="{id}"
+ *   Block    data-sf-block="add-to-cart"
+ *
+ * Images:
+ *   Main image  picsum.photos/seed/{slug}/900/1125
+ *   Thumbnails  picsum.photos/seed/{slug}-N/300/375 for N = 1..4
+ *   Replaced by real product media when uploads land.
+ *
+ * Variants:
+ *   The variant picker reads $v->attributeSummary, populated by
+ *   ProductVariantRepository::listForProduct(). The picker is a
+ *   disabled stub until cart lands in 008D.
+ */
+
+$product = $product ?? null;
+if ($product === null) {
+    return;
+}
+
+$brand           = $brand           ?? null;
+$primaryCategory = $primaryCategory ?? null;
+$parentCategory  = $parentCategory  ?? null;
+$stockQty        = $stockQty        ?? null;
+$variants        = $variants        ?? [];
+$related         = $related         ?? [];
+
+$price     = (float) $product->price;
+$compareAt = $product->compareAtPrice !== null ? (float) $product->compareAtPrice : null;
+$onSale    = $product->isOnSale();
+$discount  = $onSale ? (int) $product->discountPercent() : 0;
+
+$stockClass = 'sf-stock-in';
+$stockLabel = 'In stock';
+if ($product->isOutOfStock()) {
+    $stockClass = 'sf-stock-out';
+    $stockLabel = 'Out of stock';
+} elseif ($product->stockStatus === 'backorder') {
+    $stockClass = 'sf-stock-backorder';
+    $stockLabel = 'Available on backorder';
+}
+
+$mainImage  = 'https://picsum.photos/seed/' . rawurlencode($product->slug) . '/900/1125';
+$thumbnails = [];
+for ($i = 1; $i <= 4; $i++) {
+    $thumbnails[] = 'https://picsum.photos/seed/' . rawurlencode($product->slug . '-' . $i) . '/300/375';
+}
+?>
+
+<div class="sf-container sf-product-detail"
+     data-sf-page="product"
+     data-sf-product-id="<?= (int) $product->id ?>">
+
+    <nav class="sf-breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span class="sf-breadcrumb-sep" aria-hidden="true">/</span>
+        <a href="/products">Products</a>
+        <?php if ($parentCategory !== null): ?>
+            <span class="sf-breadcrumb-sep" aria-hidden="true">/</span>
+            <a href="/categories/<?= e(rawurlencode($parentCategory->slug)) ?>"><?= e($parentCategory->name) ?></a>
+        <?php endif; ?>
+        <?php if ($primaryCategory !== null): ?>
+            <span class="sf-breadcrumb-sep" aria-hidden="true">/</span>
+            <a href="/categories/<?= e(rawurlencode($primaryCategory->slug)) ?>"><?= e($primaryCategory->name) ?></a>
+        <?php endif; ?>
+        <span class="sf-breadcrumb-sep" aria-hidden="true">/</span>
+        <span class="sf-breadcrumb-current" aria-current="page"><?= e($product->name) ?></span>
+    </nav>
+
+    <section class="sf-product-layout" data-sf-section="product-detail">
+
+        <!-- ========================================================= -->
+        <!-- Media column                                              -->
+        <!-- ========================================================= -->
+        <div class="sf-product-media">
+            <div class="sf-product-image-large">
+                <img src="<?= e($mainImage) ?>"
+                     alt=""
+                     width="900"
+                     height="1125"
+                     class="sf-product-main-img">
+
+                <?php if ($onSale): ?>
+                    <span class="sf-product-badge sf-badge-sale">
+                        <?= $discount > 0 ? '-' . $discount . '%' : 'Sale' ?>
+                    </span>
+                <?php elseif ($product->isNew): ?>
+                    <span class="sf-product-badge sf-badge-new">New</span>
+                <?php endif; ?>
+            </div>
+
+            <div class="sf-product-thumbnails" aria-hidden="true">
+                <?php foreach ($thumbnails as $i => $thumb): ?>
+                    <div class="sf-product-thumb <?= $i === 0 ? 'is-active' : '' ?>">
+                        <img src="<?= e($thumb) ?>" alt="" width="300" height="375" loading="lazy">
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- Info column                                               -->
+        <!-- ========================================================= -->
+        <div class="sf-product-info">
+
+            <?php if ($brand !== null): ?>
+                <a href="/products?brand=<?= e(rawurlencode($brand->slug)) ?>" class="sf-product-brand">
+                    <?= e($brand->name) ?>
+                </a>
+            <?php endif; ?>
+
+            <h1 class="sf-product-title"><?= e($product->name) ?></h1>
+
+            <?php if (!empty($product->shortDescription)): ?>
+                <p class="sf-product-short"><?= e($product->shortDescription) ?></p>
+            <?php endif; ?>
+
+            <div class="sf-product-price-block">
+                <span class="sf-product-price"><?= e(number_format($price, 2)) ?></span>
+                <?php if ($onSale && $compareAt !== null): ?>
+                    <span class="sf-product-compare"><?= e(number_format($compareAt, 2)) ?></span>
+                    <span class="sf-product-save">Save <?= $discount > 0 ? $discount . '%' : 'now' ?></span>
+                <?php endif; ?>
+            </div>
+
+            <div class="sf-product-stock <?= e($stockClass) ?>">
+                <span class="sf-product-stock-dot" aria-hidden="true"></span>
+                <?= e($stockLabel) ?>
+                <?php if ($stockQty !== null && $stockQty > 0 && $stockQty <= 10): ?>
+                    <span class="muted">&middot; only <?= (int) $stockQty ?> left</span>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($product->isVariable() && !empty($variants)): ?>
+                <div class="sf-product-variants">
+                    <label for="sf-variant-select" class="sf-filter-label">Choose an option</label>
+                    <select id="sf-variant-select" class="sf-filter-input" disabled>
+                        <option value="">Select&hellip;</option>
+                        <?php foreach ($variants as $v): ?>
+                            <option value="<?= (int) $v->id ?>">
+                                <?php
+                                $label = trim((string) $v->attributeSummary);
+                                if ($label === '') {
+                                    $label = $v->sku ?: 'Variant #' . (int) $v->id;
+                                }
+                                echo e($label);
+                                ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="muted sf-product-variants-note">Interactive variant picker coming soon.</p>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($product->minOrderQuantity) && $product->minOrderQuantity > 1): ?>
+                <p class="sf-product-moq muted">
+                    Minimum order: <?= (int) $product->minOrderQuantity ?> units
+                </p>
+            <?php endif; ?>
+
+            <div class="sf-product-actions" data-sf-block="add-to-cart">
+                <button type="button" class="sf-btn sf-btn-primary sf-btn-lg sf-btn-block" disabled>
+                    <i class="bi bi-bag-plus me-2" aria-hidden="true"></i>
+                    Add to Cart &mdash; coming soon
+                </button>
+                <button type="button" class="sf-btn sf-btn-outline sf-btn-lg sf-btn-block" disabled>
+                    <i class="bi bi-heart me-2" aria-hidden="true"></i>
+                    Add to Wishlist
+                </button>
+            </div>
+
+            <ul class="sf-product-trust" aria-label="Purchase guarantees">
+                <li><i class="bi bi-truck" aria-hidden="true"></i> Fast &amp; safe delivery</li>
+                <li><i class="bi bi-shield-check" aria-hidden="true"></i> Secure payment</li>
+                <li><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Easy returns</li>
+            </ul>
+
+        </div>
+    </section>
+
+    <?php if (!empty($product->description)): ?>
+        <section class="sf-product-description">
+            <h2 class="sf-section-title">Description</h2>
+            <div class="sf-product-description-body">
+                <?= nl2br(e($product->description)) ?>
+            </div>
+        </section>
+    <?php endif; ?>
+
+    <?php if (!empty($related)): ?>
+        <section class="sf-product-related">
+            <header class="sf-home-section-heading sf-home-section-heading-left">
+                <h2 class="sf-home-heading-text">You may also like</h2>
+            </header>
+            <div class="sf-product-grid">
+                <?php foreach ($related as $p): ?>
+                    <?= view_partial('storefront/catalog/_product-card', ['product' => $p]) ?>
+                <?php endforeach; ?>
+            </div>
+        </section>
+    <?php endif; ?>
+
+</div>

@@ -6,23 +6,33 @@
  * serves the admin. Same View pipeline, different chrome.
  *
  * Context (from StorefrontController):
- *   $store   - the resolved store, or null
- *   $title   - page title
- *   $content - the rendered view
+ *   $store    ?Store  the resolved store, or null
+ *   $title    string  page title
+ *   $content  string  the rendered view
  *
  * Context (added by this layout):
- *   $brandName       - the display name for the site
- *   $flashSuccess    - success flash message, or null
- *   $flashError      - error flash message, or null
+ *   $brandName     string  display name
+ *   $flashSuccess  ?string
+ *   $flashError    ?string
  *
  * Flash handling: same pattern as the admin layout. Layout reads
  * flash via the global flash() helper, which consumes on read.
  * Views never touch flash themselves.
  *
+ * Typography:
+ *   Display serif  - Playfair Display
+ *   Interface sans - Inter
+ *   Script accent  - Dancing Script
+ *   Loaded from Google Fonts with preconnect for faster first paint.
+ *
+ * Stylesheets (loaded in this order):
+ *   1. storefront.css          core: variables, header, footer, hero
+ *   2. storefront-home.css     homepage sections
+ *   3. storefront-catalog.css  product grid, filters, product card
+ *   4. storefront-product.css  product detail page
+ *
  * Theme: the storefront is always light. No data-theme attribute.
- * prefers-color-scheme is honored at the CSS level if we ever add
- * a dark palette. The admin dark mode toggle does not affect the
- * public site.
+ * The admin dark mode toggle does not affect the public site.
  */
 
 $store   = $store   ?? null;
@@ -33,10 +43,9 @@ $flashSuccess = function_exists('flash') ? flash('success') : null;
 $flashError   = function_exists('flash') ? flash('error')   : null;
 $hasFlash     = ($flashSuccess !== null || $flashError !== null);
 
-$branding  = function_exists('config') ? (array) config('branding', []) : [];
+$branding   = function_exists('config') ? (array) config('branding', []) : [];
 $configName = $branding['product_name'] ?? 'Anaya Global';
 
-// Prefer the store's name when available. Fall back to config.
 $brandName = ($store !== null && !empty($store->name))
     ? (string) $store->name
     : $configName;
@@ -51,11 +60,23 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
     <title><?= e($pageTitle) ?></title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@400;600&display=swap">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
     <link href="<?= asset('css/storefront.css') ?>" rel="stylesheet">
+    <link href="<?= asset('css/storefront-home.css') ?>" rel="stylesheet">
+    <link href="<?= asset('css/storefront-catalog.css') ?>" rel="stylesheet">
+    <link href="<?= asset('css/storefront-product.css') ?>" rel="stylesheet">
 </head>
 <body class="sf-body">
+
+    <?= view_partial('storefront/partials/utility-bar', [
+        'store' => $store,
+    ]) ?>
 
     <?= view_partial('storefront/partials/header', [
         'store'     => $store,

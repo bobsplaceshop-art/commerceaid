@@ -14,11 +14,29 @@ use CorporateAid\Commerce\Models\ProductVariant;
  * repository owns the product row plus the write paths for those
  * relationships. Reads for related entities live in their own
  * repositories (Brand, Category, etc.).
+ *
+ * Two pagination methods exist:
+ *   - paginate()          admin: any status, admin filters, admin sort
+ *   - paginatePublished() storefront: published only, storefront filters
+ *
+ * The two methods share the same table and the same model but have
+ * different filter sets and different safety rules. Keeping them
+ * separate makes each SQL statement easier to read and lets indexes
+ * be optimized for each use case independently.
  */
 final class ProductRepository extends CommerceRepository
 {
+    /** @var array<string,string> Sort key -> SQL ORDER BY fragment */
+    private const PUBLISHED_SORT_MAP = [
+        'newest'     => "p.`published_at` DESC, p.`id` DESC",
+        'price_asc'  => "p.`price` ASC, p.`id` ASC",
+        'price_desc' => "p.`price` DESC, p.`id` ASC",
+        'name_asc'   => "p.`name` ASC, p.`id` ASC",
+        'featured'   => "p.`is_featured` DESC, p.`published_at` DESC, p.`id` DESC",
+    ];
+
     // =================================================================
-    // Reads
+    // Reads - admin
     // =================================================================
 
     /**
@@ -66,6 +84,77 @@ final class ProductRepository extends CommerceRepository
             'pages'    => (int) ceil($total / $perPage),
         ];
     }
+
+    // =================================================================
+    // Reads - storefront
+    // =================================================================
+
+    /**
+     * Storefront product listing.
+     *
+     * Returns only products that are visible to anonymous visitors:
+     *   - status = 'published'
+     *   - published_at IS NULL OR published_at <= NOW()
+     *   - deleted_at IS NULL
+     *
+     * Supported filters (all optional):
+     *   q             - search across name, short_description,
+     *                   description, sku
+     *   category_id   - products assigned to this category
+     *   brand_id      - direct column match
+     *   in_stock_only - products with available > 0 in inventory
+     *   price_min     - inclusive lower bound on price
+     *   price_max     - inclusive upper bound on price
+     *   sort          - 'newest' | 'price_asc' | 'price_desc' |
+     *                   'name_asc' | 'featured'
+     *
+     * @param array{
+     *   q?: string,
+     *   category_id?: int,
+     *   brand_id?: int,
+     *   in_stock_only?: bool,
+     *   price_min?: float,
+     *   price_max?: float,
+     *   sort?: string
+     * } $filters
+     * @return array{items: array<int, Product>, total: int, page: int, per_page: int, pages: int}
+     */
+    public function paginatePublished(array $filters = [], int $page = 1, int $perPage = 24): array
+    {
+        $page = max(1, $page);
+        $perPage = min(48, max(1, $perPage));
+        $offset = ($page - 1) * $perPage;
+
+        [$where, $params] = $this->buildPublishedFilters($filters);
+        $orderBy = $this->publishedOrderBy($filters);
+
+        $total = (int) $this->db->scalar(
+            "SELECT COUNT(*) FROM `commerce_products` p WHERE {$where}",
+            $params
+        );
+
+        $rows = $this->db->select(
+            "SELECT p.* FROM `commerce_products` p
+              WHERE {$where}
+              ORDER BY {$orderBy}
+              LIMIT {$perPage} OFFSET {$offset}",
+            $params
+        );
+
+        $items = array_map(fn ($r) => Product::fromRow($r), $rows);
+
+        return [
+            'items'    => $items,
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'pages'    => max(1, (int) ceil($total / $perPage)),
+        ];
+    }
+
+    // =================================================================
+    // Reads - individual records
+    // =================================================================
 
     public function findById(int $id, bool $withVariants = false): ?Product
     {
@@ -434,7 +523,7 @@ final class ProductRepository extends CommerceRepository
     // =================================================================
 
     /**
-     * Build the WHERE clause + params for paginate().
+     * Build the WHERE clause + params for admin paginate().
      * @return array{0:string, 1:array}
      */
     private function buildFilters(array $filters): array
@@ -483,5 +572,84 @@ final class ProductRepository extends CommerceRepository
         }
 
         return [implode(' AND ', $where), $params];
+    }
+
+    /**
+     * Build the WHERE clause + params for storefront paginatePublished().
+     *
+     * Always includes the "published and visible to public" guard.
+     * Everything else is opt-in.
+     *
+     * @return array{0:string, 1:array}
+     */
+    private function buildPublishedFilters(array $filters): array
+    {
+        $where = [
+            "p.`store_id` = ?",
+            "p.`deleted_at` IS NULL",
+            "p.`status` = 'published'",
+            "(p.`published_at` IS NULL OR p.`published_at` <= NOW())",
+        ];
+        $params = [$this->storeId()];
+
+        if (!empty($filters['q'])) {
+            $like = '%' . $filters['q'] . '%';
+            $where[] = "(p.`name` LIKE ? OR p.`short_description` LIKE ? OR p.`description` LIKE ? OR p.`sku` LIKE ?)";
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        if (!empty($filters['category_id'])) {
+            $where[] = "EXISTS (
+                SELECT 1 FROM `commerce_product_categories` pc
+                 WHERE pc.`product_id` = p.`id`
+                   AND pc.`store_id` = p.`store_id`
+                   AND pc.`category_id` = ?
+            )";
+            $params[] = (int) $filters['category_id'];
+        }
+
+        if (!empty($filters['brand_id'])) {
+            $where[] = "p.`brand_id` = ?";
+            $params[] = (int) $filters['brand_id'];
+        }
+
+        if (!empty($filters['price_min']) && is_numeric($filters['price_min'])) {
+            $where[] = "p.`price` >= ?";
+            $params[] = (float) $filters['price_min'];
+        }
+
+        if (!empty($filters['price_max']) && is_numeric($filters['price_max'])) {
+            $where[] = "p.`price` <= ?";
+            $params[] = (float) $filters['price_max'];
+        }
+
+        if (!empty($filters['in_stock_only'])) {
+            $where[] = "EXISTS (
+                SELECT 1 FROM `commerce_inventory` i
+                 WHERE i.`product_id` = p.`id`
+                   AND i.`store_id` = p.`store_id`
+                   AND i.`variant_id` = 0
+                   AND i.`available` > 0
+            )";
+        }
+
+        if (!empty($filters['featured'])) {
+            $where[] = "p.`is_featured` = 1";
+        }
+
+        return [implode(' AND ', $where), $params];
+    }
+
+    /**
+     * Resolve the ORDER BY fragment for a storefront listing.
+     * Unknown or missing sort keys default to 'newest'.
+     */
+    private function publishedOrderBy(array $filters): string
+    {
+        $key = (string) ($filters['sort'] ?? 'newest');
+        return self::PUBLISHED_SORT_MAP[$key] ?? self::PUBLISHED_SORT_MAP['newest'];
     }
 }
