@@ -1,8 +1,8 @@
 # Project Status
 
-**As of:** 2026-09-26
-**Version:** 0.2.0-alpha
-**Stage:** 007B complete. Next: git setup, then Stage 008.
+**As of:** 2026-09-27
+**Version:** 0.3.0-alpha
+**Stage:** 008B.2 complete. Next: 008C (customer auth + account)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -24,8 +24,7 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 ### Admin
 
 - Login / logout / password change
-- Setup wizard with 8 tabs (business, currency, branding,
-  checkout, payments, shipping, tax, advanced)
+- Setup wizard with 8 tabs
 - Grouped collapsible sidebar with localStorage persistence
 - Sidebar active item scrolls into view on load
 - Dark / light / system theme with per-user preference
@@ -38,95 +37,90 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 - Categories: tree with attribute mapping
 - Brands: flat list
 - Attributes: full CRUD + 12 input types
-- Products: 5-tab editor (basic, pricing, inventory, shipping, SEO)
+- Products: 5-tab editor
 - Product variations: auto-generate from category attributes
 - Variation manager: search, filters, bulk actions, pagination
 - Inventory: list, filters, adjust modal, movement ledger
-- CSV exports (inventory + movements)
+- CSV exports
 
-### B2B (007A + 007B complete)
+### B2B
 
 - Customer groups with default / B2B / approval flags
 - Price lists with tier pricing per group
-- Product-level minimum order quantity
-- **Net terms field on groups** (0 = prepay, 30 = net-30, etc.)
-- Customer model + repository with approval workflow
-- **Customer approval queue** at /commerce/ca-admin/customer-approvals
-- **Per-customer approval history timeline** with reasons and actor
-- **Reset reason** (optional), **reject reason** (required)
-- Reject modal, reset modal, history modal (all AJAX-aware)
-- Filter tabs with counts on every tab
-- Approval history table (append-only, transactional writes)
-- Customer + order schema (10 tables ready for storefront)
-- Purchase order fields on orders (po_number, net_due_at)
+- Net terms field on groups
+- Customer approval queue with per-transaction history
+- Purchase order fields on orders (schema ready)
+
+### Storefront (public)
+
+- Home page with hero, trust row, category grid, promo panels,
+  product sections, trust strip, newsletter
+- Catalog page with filters, active chips, sort, pagination
+- Product detail page with media column, sticky info,
+  thumbnails, related products
+- Category index (7-card grid)
+- Category detail (hero banner + subcategory chips)
+- Full visual identity: Playfair Display + Inter +
+  Dancing Script, cream/beige/champagne-gold/charcoal palette
+- Section collapse rule: data-driven sections vanish when empty
+- Store builder contract: every element carries a data-sf-*
+  attribute for future admin editability
 
 ---
 
 ## What Doesn't Work Yet
 
-- Public storefront (no customer-facing pages)
-- Customer registration / login (only admins can log in)
-- Shopping cart
-- Checkout flow
-- Payment capture
-- Shipping rate calculation
-- Tax calculation at checkout
+- Customer registration / login / account (Stage 008C)
+- Shopping cart (008D)
+- Checkout flow (008E)
+- Order lifecycle customer view (008F)
+- Search, PWA, attribute facets, category-hiding polish (008G)
+- Payment capture (010)
+- Shipping rate engine (010)
+- Tax engine (010)
+- Forms builder (009)
+- Store builder admin UI (011)
+- Theme engine + 20 themes (012)
 - Product reviews
 - Wishlist
-- Forms builder
-- Theme customizer
-- Additional themes
+- Real product / category / hero photography
+- Real rating aggregates
 
 ---
 
-## Current Focus — Before Stage 008
+## Current Focus — Stage 008C
 
-**Git setup.** Every stage so far was developed in place with no
-version control. Stage 008 introduces user-facing surfaces
-(storefront, cart, checkout, customer account). Those cannot be
-built without rollback capability.
+**Deliverable:** Customer-side authentication and account.
 
-Work items:
+Customer registration, login, logout, forgot password, account
+dashboard, address book, password change. Distinct from admin
+login (separate session cookie). Approval workflow integrated:
+pending customers can log in and browse but cannot check out
+until approved.
 
-1. `git init` in the project root
-2. Comprehensive `.gitignore` (vendor/, storage/logs,
-   storage/uploads, config/local.php, config/cli.php, .env,
-   OS cruft)
-3. First commit: entire project state up to and including 007B
-4. Tag the commit `stage-007b-complete`
-5. Establish branching model (trunk-based with feature branches,
-   or git-flow)
-6. Optional: local bare repo for offline backup
-
-Details in `docs/git-setup.md` (to be written).
+~12 new files, mostly views and one controller.
 
 ---
 
 ## Database State
 
-- 47 `core_*` tables (inherited from Recruit Aid)
-- **28 `commerce_*` tables** (was 24 at start of 007B)
-- **29 migrations** applied (`0001` through `0208`)
+- 47 `core_*` tables
+- 28 `commerce_*` tables
+- 29 migrations applied (`0001` through `0208`)
 - 6 seeders applied:
-  - currencies (10)
-  - roles and permissions (6 roles, 11 permissions)
-  - admin user
-  - default store
-  - customer groups (Retail, Wholesale, VIP)
-  - **test B2B customer** (Sarah Njeri, pending state)
+  - currencies, roles + permissions, admin user,
+    default store, customer groups, test B2B customer
 
 Test data in dev:
+
 - 1 admin user: `admin@anayaglobal.test` / `ChangeMe!2026`
 - 1 store: `Anaya Global` (slug: anaya)
 - 3 products: Comb, Wool Crew Neck Sweater, T-Shirt
 - 1 variable product with 12 variations (T-Shirt)
-- 3 customer groups (Retail default, Wholesale B2B with 30-day
-  net terms, VIP)
-- 1 category with attribute mapping
+- 3 customer groups (Retail, Wholesale, VIP)
+- 1 category
 - 3 attributes: Color, Size, Care Instructions
-- **1 B2B customer in pending state** (Sarah Njeri, Mombasa
-  Traders Ltd)
-- **Several approval history rows** from test passes
+- 1 B2B test customer (pending)
 
 ---
 
@@ -141,47 +135,52 @@ Test data in dev:
 - Admin: `http://localhost:8081/commerce/ca-admin`
 - DB name: `anaya_commerce`
 
+### Tooling
+
+- `composer lint` — PHP syntax check across app/ + routes/
+- `composer analyse` — PHPStan level 5 (currently zero errors)
+- `composer check` — both
+- Pre-commit hook runs `bin/lint.php` before every commit
+- `bin/verify-file.php` — per-file post-write verification
+
+**Commits happen from WSL**, not Laragon Terminal. See
+`docs/git-workflow.md` for the reasoning.
+
+### Backup
+
+- Local: `/mnt/c/Users/Admin/Documents/RepoBackup/commerceaid.git`
+- Remote: Google Drive Desktop syncs that folder
+- Push after every meaningful commit: `git push backup main`
+
 ---
 
 ## Known Issues
 
-- None blocking. All UI verified in last session:
-  - Customer approval queue
-  - Reject / reset / history modals
-  - Net terms field on group edit
-  - Sidebar scroll-to-active
-  - Inventory adjust modal
-  - Customer groups CRUD
-  - Price list management
-  - Toggle persistence (via EditView helper)
-  - Tab persistence across saves
-  - Modal display bug (fixed)
+None blocking.
 
 Deferred / cosmetic:
-- Topbar search (coming soon) input is disabled
-- Settings gear in topbar links to /commerce/ca-admin/settings
-  which 404s
-- `docs/REMEMBER.md` has a duplicated "Known Issues" section
-  from an earlier append operation - needs a cleanup pass
+
+- Topbar search input is disabled (search lands in 008G)
+- Settings gear in topbar links to a route that 404s
+- `/offline` page uses plain styling (redesign in 008G)
+- Product / category / hero images are picsum placeholders
+  (real media in a later stage)
+- Category cards with no products still appear (hide rule in
+  008G)
 
 ---
 
 ## Patterns Locked
 
-See `docs/REMEMBER.md` for the full pattern list (22 total).
+See `docs/REMEMBER.md` for the full list (22 patterns). Recent:
 
-Quick reference:
-
-- Pattern 1-14: earlier session patterns
-- Pattern 15: EditView helper for snake/camel case
-- Pattern 16: Tab scroll to active
 - Pattern 17: FKs to core_* are INT UNSIGNED
 - Pattern 18: Partial migration application
 - Pattern 19: Pre-flight inventory before touching closed code
 - Pattern 20: One file per message during critical work
 - Pattern 21: StoreContext required for repository DB access
-- **Pattern 22: Prefix-match active state breaks on strict-prefix
-  routes**
+- Pattern 22: Prefix-match active state breaks on strict-prefix
+  routes
 
 ---
 
@@ -189,22 +188,15 @@ Quick reference:
 
 `docs/BASELINE.md` + `docs/baseline/*.md` (16 sections) documents
 every verified codebase convention. Read this before writing any
-new code. It supersedes any assumption not backed by a file read.
-
-Key corrections it caught:
-- Flash is layout-only
-- View paths use dot-notation
-- Controllers have no constructor
-- Route params arrive as strings
-- `/commerce/ca-admin` needs exact-match for active state
+new code.
 
 ---
 
 ## Next 3 Stages
 
-- **Git setup** (prerequisite to Stage 008)
-- **008**: Storefront - public site, cart, checkout, account
-- **009**: Forms builder
+- **008C** (now): Customer auth + account
+- **008D**: Cart
+- **008E**: Checkout + order creation
 
 ---
 
@@ -228,7 +220,7 @@ Login: `admin@anayaglobal.test` / `ChangeMe!2026`
 If this is a new session:
 
 1. Read `docs/STATUS.md` (this file)
-2. Read `docs/REMEMBER.md` (full context + 22 patterns)
+2. Read `docs/REMEMBER.md` (full context + patterns)
 3. Check `docs/stages/README.md` for stage index
 4. Skim `docs/BASELINE.md` for the verified conventions
 5. Verify environment: `php -v` in Laragon Terminal

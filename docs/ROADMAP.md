@@ -1,7 +1,7 @@
 # Anaya Global Commerce Platform - Roadmap
 
-**Status:** Locked 2026-09-26
-**Supersedes:** prior roadmap, updated for B2B split
+**Status:** Locked 2026-09-27
+**Supersedes:** prior roadmap, updated for storefront split
 
 ---
 
@@ -33,87 +33,124 @@ Adding a stage or reordering requires updating this document first.
 | 006G  | Inventory overview                     | 2026-09-26 |
 | 007A  | Customer groups & price lists          | 2026-09-26 |
 | 007B  | Purchase orders & approval             | 2026-09-26 |
+| 008A  | Storefront shell & Store model         | 2026-09-27 |
+| 008B  | Storefront visual identity & catalog   | 2026-09-27 |
+| 008B.2| Extended visual pass                   | 2026-09-27 |
 
----
+Also completed outside the staged sequence:
 
-## Before the Next Stage
-
-The project is being placed under git. Every prior stage was
-developed in place with no version control history. Starting with
-Stage 008, every change is committed, tagged, and diffable.
-
-This is a hard prerequisite. Stage 008 introduces the public
-storefront, cart, checkout, and customer account lifecycle. Those
-surfaces are user-facing and cannot be developed without rollback
-capability.
-
-Git setup is a separate work item. See
-`docs/git-setup.md` (to be written) for details.
+  - Git initialization (2026-09-26)
+  - Backup remote + Google Drive Desktop sync (2026-09-26)
+  - Static analysis tooling: PHPStan at level 5, syntax linter,
+    pre-commit hook (2026-09-27)
+  - docs/BASELINE.md + 16 section files documenting verified
+    codebase conventions
 
 ---
 
 ## In Progress
 
-None. Stage 007B closed 2026-09-26.
+### Stage 008C - Customer Registration, Login, Account
+
+**Goal:** Customer-side authentication and account management,
+distinct from admin login.
+
+**Deliverables:**
+
+- `Storefront/AuthController` - register, login, logout
+- `Storefront/AccountController` - dashboard, orders, addresses,
+  password change
+- Views for registration, login, forgot password, account dashboard
+- Customer session namespace (separate cookie from admin)
+- Approval workflow integration (pending customers can log in but
+  cannot check out until approved)
+- Address book CRUD
+- Password change
+- Order history view (initially empty until checkout lands)
+
+**Depends on:** Stage 008B (storefront shell + customer model)
+
+**Files:** ~12 new files, mostly views and a controller.
 
 ---
 
 ## Planned Stages
 
-### Stage 008 - Storefront & Search
+### Stage 008D - Cart
 
-**Detailed plan:** see `docs/stages/008_storefront-plan.md`
-
-**Goal:** Public-facing storefront. Product pages, category
-browsing, search, filters, cart, checkout, customer account.
+**Goal:** Session-based cart for guests, database-persisted cart
+for logged-in customers. Cart merge on login.
 
 **Deliverables:**
 
-- Storefront routing (flat URLs: /products, /categories, /cart,
-  /checkout, /account)
-- Mobile-first responsive design per docs/RESPONSIVENESS.md
-- Product grid, product detail, category listing
-- Faceted search: category, brand, price, availability, attributes
-- Cart (guest + customer, merged on login)
-- Checkout flow: cart review -> customer info -> shipping ->
-  payment -> confirmation
-- Customer account: dashboard, orders, addresses, wishlist,
-  password change
-- Product reviews with moderation
-- Wishlist (guest + customer)
-- Order models fully wired (Customer, Order, OrderItem,
-  OrderStatusHistory repositories and services)
-- B2B checkout with purchase order / net terms
-- Customer registration + login (customer-side, distinct from
-  admin login)
-- Approval workflow integrated into signup (pending -> approved
-  gates checkout)
-- Storefront PWA: manifest, service worker, offline shell
-- Dashboard storefront links
+- `Storefront/CartController` - add, update, remove, view
+- `CartService` - cart state management
+- Migrations: `commerce_carts`, `commerce_cart_items`
+- Mini-cart in header
+- AJAX add-to-cart endpoint
+- Cart page with quantity controls
 
-**Depends on:** Stages 006 (catalog), 007 (B2B)
+**Depends on:** Stage 008C (customer auth for persistent carts)
+
+### Stage 008E - Checkout
+
+**Goal:** Full checkout flow with B2B purchase order support.
+
+**Deliverables:**
+
+- `Storefront/CheckoutController` - multi-step checkout
+- Order creation (transactional, with inventory reservation)
+- Order confirmation page + email queue
+- B2B path: purchase order / net terms for approved customers
+- Stub payment providers: COD, bank transfer, purchase order
+- Shipping method stub (real engine in 010)
+
+**Depends on:** Stage 008D (cart)
+
+### Stage 008F - Order Lifecycle (Customer-Facing)
+
+**Goal:** Customer can view their orders, order detail, reorder.
+
+**Deliverables:**
+
+- `Storefront/OrdersController` - list, view detail
+- Order status display, shipment tracking stub
+
+**Depends on:** Stage 008E (checkout)
+
+### Stage 008G - PWA, Search, Storefront Polish
+
+**Goal:** Close the storefront loop with PWA, search, and the
+deferred polish items.
+
+**Deliverables:**
+
+- Service worker + offline shell
+- PWA manifest per store
+- Full-text search across products
+- **Categories with no visible products hidden from the
+  storefront** (home grid, category index, header nav)
+- `/offline` page visual redesign
+- Attribute-based faceted search (color, size, etc.)
+- Responsive audit at 375 / 768 / 1024
+
+**Depends on:** Stages 008A-008F
 
 ### Stage 009 - Forms & Submissions
 
-**Goal:** Native form builder as a differentiator. Customer
-inquiries, wholesale applications, custom order requests.
+**Goal:** Native form builder as a differentiator.
 
 **Deliverables:**
 
 - commerce_forms, commerce_form_fields, commerce_form_submissions
-- Field type registry (text, email, phone, number, textarea,
-  select, radio, checkbox, file, date, address, product_selector)
-- Conditional logic engine (show/hide fields based on other values)
-- Form builder admin: create, drag-drop ordering, live preview
-- Submission management: list, filter, mark read/replied, CSV
+- Field type registry with 12+ input types
+- Conditional logic engine
+- Form builder admin with drag-drop and live preview
+- Submission management with filters and CSV export
 - Form rendering in themes
-- Product inquiry form attachment
-- Theme builder integration (form section type)
-- Webhook on submission
-- Notification rules on submission
-- Spam defense (honeypot, rate limit)
+- Webhook + notification on submission
 
-**Depends on:** Stage 008 (storefront), 007 (customers)
+**Depends on:** Stages 008 (storefront), 007 (customers)
 
 ### Stage 010 - Payments & Shipping (Deep)
 
@@ -121,22 +158,21 @@ inquiries, wholesale applications, custom order requests.
 
 **Deliverables:**
 
-- Payment provider registry (see Stage 012 for admin UI)
+- Payment provider registry
 - Reference implementations: M-Pesa, Stripe, PayPal, Pesapal,
   Flutterwave, Manual, COD, Bank Transfer
-- Webhook handling for each provider
-- Refund processing
-- Shipping zones, methods, rates (flat, free-over-threshold,
-  weight-based, price-based, local pickup)
-- Shipping carrier integrations (DHL, FedEx as optional)
+- Webhook handling per provider, refund processing
+- Shipping zones, methods, rates (flat, free-over, weight-based,
+  price-based, local pickup)
+- Shipping carrier integrations (DHL, FedEx optional)
 - Tax engine: tax classes, rates per region, inclusive/exclusive
 
-**Depends on:** Stage 008 (checkout)
+**Depends on:** Stage 008E (checkout)
 
-### Stage 011 - Advanced Commerce
+### Stage 011 - Advanced Commerce + Store Builder
 
 **Goal:** Subscriptions, gift cards, multi-location inventory,
-BOPIS, store credit.
+and the store builder admin UI.
 
 **Deliverables:**
 
@@ -144,15 +180,21 @@ BOPIS, store credit.
 - Gift cards: purchase, redeem, balance tracking
 - Multi-location inventory: warehouses, transfers
 - BOPIS: buy online pick up in store
-- Store credit: refunds to credit
-- Loyalty points
+- Store credit, loyalty points
+- **Store builder admin UI:**
+  - `commerce_homepage_sections` table (section type, order,
+    config JSON)
+  - `commerce_navigation_menu_items` table (header + footer nav)
+  - `commerce_store_trust_badges`, `commerce_store_social_links`
+  - Drag-drop section editor
+  - Live preview using the storefront views
+  - Section type registry
 
 **Depends on:** Stages 006-010
 
 ### Stage 012 - Theme Engine & Page Builder
 
-**Goal:** Full storefront theming system with 20+
-industry-specific themes.
+**Goal:** Full storefront theming system with 20+ industry themes.
 
 **Deliverables:**
 
@@ -163,12 +205,68 @@ industry-specific themes.
 - Section types: hero, product grid, category grid, testimonials,
   rich text, video, banner, newsletter, FAQ, form, spacer
 - Navigation management
-- At least 20 themes shipped: Modern, Minimal, Fashion, Luxury,
+- At least 20 themes: Modern, Minimal, Fashion, Luxury,
   Electronics, Furniture, Grocery, Restaurant, Services, Beauty,
   Home & Living, Gifts, Pharmacy, Wholesale/B2B, Kids, Sports,
   Auto Parts, Real Estate, Digital Products, Marketplace
 
 **Depends on:** All prior stages
+
+---
+
+## Backlog (Not Yet Scheduled)
+
+Items that have been deferred during development but not yet
+assigned to a stage. Each entry should note why it exists and
+where it will likely land.
+
+### Configurable Search Filters
+
+Admin should be able to add or remove filterable fields (brands,
+categories, price ranges, attribute facets) from the storefront
+search without code changes. Defaults remain the current set.
+
+**Likely stage:** 010 or 011.
+
+### Store Builder Section Reorder
+
+The `data-sf-section` attributes are already in place on every
+homepage section. The UI to reorder them from the admin panel
+lands with Stage 011 (Advanced Commerce + Store Builder).
+
+### Categories Without Products Hidden
+
+Categories that have no published products (directly or via
+descendants) should not appear on the storefront home grid,
+category index, or header navigation.
+
+**Likely stage:** 008G (storefront polish).
+
+### Media Library
+
+Real product, category, and hero photography uploads require a
+media library that doesn't exist yet. Currently the storefront
+uses picsum.photos placeholders throughout.
+
+**Likely stage:** 009 (Forms & Submissions infrastructure) or
+a dedicated sub-stage.
+
+### Storefront-Hosted Hero Asset
+
+The hero section is a CSS-composed three-column layout. Real
+editorial photography (Eiffel Tower, airplane, globe, phone
+mockup, woman with bags) will be supplied by the customer.
+The swap is a one-file change when the asset is ready.
+
+**Likely stage:** when the customer supplies the asset.
+
+### Session Table vs File Sessions
+
+Currently sessions are file-based (satisfies shared cPanel
+hosting). If we ever move to a host with better DB access,
+session storage could move to a table. Not a priority.
+
+**Likely stage:** not scheduled.
 
 ---
 
