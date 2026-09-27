@@ -1,0 +1,258 @@
+/* =====================================================================
+   Storefront Auth Stylesheet
+   =====================================================================
+   Used by the customer authentication pages:
+     /account/login
+     /account/register
+     /account/forgot-password
+     /account/reset-password
+     /account (dashboard shell reuses the card block below)
+
+   Loaded only on those pages. The rest of the storefront does not
+   pay for these styles.
+
+   Design language: centred card, generous whitespace, quiet
+   typography. The auth pages are the one place on the storefront
+   where the layout is focused rather than browsing.
+
+   Uses the storefront CSS variables from storefront.css: --sf-cream,
+   --sf-gold, --sf-charcoal, --sf-muted, etc.
+
+   See docs/stages/008c_customer-auth-plan.md.
+   ===================================================================== */
+
+/* ---------- Page wrapper ---------------------------------------- */
+
+.sf-auth-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem 5rem;
+    background: var(--sf-cream, #F8F1E8);
+    min-height: 60vh;
+}
+
+.sf-auth-card {
+    width: 100%;
+    max-width: 460px;
+    background: #ffffff;
+    border: 1px solid rgba(198, 161, 91, 0.25);
+    padding: 2.5rem 2.25rem 2rem;
+    box-shadow: 0 20px 60px rgba(17, 17, 17, 0.06);
+}
+
+.sf-auth-card-wide {
+    max-width: 560px;
+}
+
+.sf-auth-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.875rem;
+    font-weight: 500;
+    color: var(--sf-charcoal, #111111);
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.01em;
+}
+
+.sf-auth-subhead {
+    font-size: 0.9375rem;
+    color: var(--sf-muted, #777777);
+    margin: 0 0 2rem;
+    line-height: 1.55;
+}
+
+.sf-auth-footer {
+    margin: 1.75rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(198, 161, 91, 0.15);
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--sf-muted, #777777);
+}
+
+.sf-auth-footer a {
+    color: var(--sf-gold, #C6A15B);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.sf-auth-footer a:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Form fields ----------------------------------------- */
+
+.sf-field {
+    margin-bottom: 1.25rem;
+}
+
+.sf-field-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--sf-charcoal, #111111);
+    margin-bottom: 0.375rem;
+}
+
+.sf-field-label .req {
+    color: #b91c1c;
+    margin-left: 0.125rem;
+}
+
+.sf-input,
+.sf-select,
+.sf-textarea {
+    width: 100%;
+    padding: 0.6875rem 0.875rem;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    color: var(--sf-charcoal, #111111);
+    background: #ffffff;
+    border: 1px solid #d6cec0;
+    border-radius: 2px;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+    box-sizing: border-box;
+}
+
+.sf-input:focus,
+.sf-select:focus,
+.sf-textarea:focus {
+    outline: none;
+    border-color: var(--sf-gold, #C6A15B);
+    box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.15);
+}
+
+.sf-input.is-error,
+.sf-select.is-error {
+    border-color: #b91c1c;
+}
+
+.sf-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23111' stroke-width='1.5' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.875rem center;
+    padding-right: 2.25rem;
+}
+
+/* ---------- Password input with toggle -------------------------- */
+
+.sf-password-wrap {
+    position: relative;
+}
+
+.sf-password-wrap .sf-input {
+    padding-right: 2.75rem;
+}
+
+.sf-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: var(--sf-muted, #777777);
+    line-height: 1;
+}
+
+.sf-password-toggle:hover {
+    color: var(--sf-charcoal, #111111);
+}
+
+/* ---------- Checkbox ------------------------------------------- */
+
+.sf-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.sf-check input[type="checkbox"] {
+    margin-top: 0.125rem;
+    accent-color: var(--sf-gold, #C6A15B);
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+.sf-check-label {
+    font-size: 0.875rem;
+    color: var(--sf-charcoal, #111111);
+    line-height: 1.5;
+}
+
+/* ---------- Errors and help text -------------------------------- */
+
+.sf-form-error {
+    display: block;
+    font-size: 0.8125rem;
+    color: #b91c1c;
+    margin-top: 0.375rem;
+}
+
+.sf-form-help {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--sf-muted, #777777);
+    margin-top: 0.375rem;
+    line-height: 1.5;
+}
+
+.sf-form-alert {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.875rem;
+    border-radius: 2px;
+    line-height: 1.5;
+}
+
+.sf-form-alert-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.sf-form-alert-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+
+/* ---------- Actions --------------------------------------------- */
+
+.sf-form-actions {
+    margin-top: 1.75rem;
+}
+
+.sf-form-actions .sf-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.sf-form-row-split {
+    display: flex;
+    gap: 1rem;
+}
+
+.sf-form-row-split .sf-field {
+    flex: 1;
+    min-width: 0;
+}
+
+@media (max-width: 520px) {
+    .sf-form-row-split {
+        flex-direction: column;
+        gap: 0;
+    }
+    .sf-auth-card {
+        padding: 1.75rem 1.25rem 1.5rem;
+    }
+    .sf-auth-heading {
+        font-size: 1.5rem;
+    }
+}

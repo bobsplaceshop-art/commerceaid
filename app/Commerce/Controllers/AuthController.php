@@ -11,6 +11,7 @@ use CorporateAid\Core\Response;
 use CorporateAid\Core\Session;
 use CorporateAid\Core\View;
 use CorporateAid\Commerce\Support\Validator;
+use CorporateAid\Platform\Support\RedirectGuard;
 
 /**
  * Admin authentication.
@@ -31,7 +32,7 @@ final class AuthController
         $session = $this->container->get(Session::class);
 
         $intended = (string) $request->query('intended', '');
-        if (!$this->isSafeInternalRedirect($intended)) {
+        if (!RedirectGuard::isSafeInternalRedirect($intended)) {
             $intended = '';
         }
 
@@ -92,7 +93,7 @@ final class AuthController
 
         $intended = (string) $request->input('intended', '');
 
-        if (!$this->isSafeInternalRedirect($intended) || $intended === '/logout') {
+        if (!RedirectGuard::isSafeInternalRedirect($intended) || $intended === '/logout') {
             $intended = self::DEFAULT_REDIRECT;
         }
 
@@ -108,20 +109,10 @@ final class AuthController
         return Response::redirect('/login');
     }
 
-    private function isSafeInternalRedirect(string $url): bool
-    {
-        if ($url === '') return false;
-        if ($url[0] !== '/') return false;
-        if (str_starts_with($url, '//')) return false;
-        if (str_starts_with($url, '/\\')) return false;
-        if (str_contains($url, "\n") || str_contains($url, "\r")) return false;
-        return true;
-    }
-
     private function intendedQuery(Request $request): string
     {
         $intended = (string) $request->input('intended', '');
-        if ($intended === '' || !$this->isSafeInternalRedirect($intended)) {
+        if ($intended === '' || !RedirectGuard::isSafeInternalRedirect($intended)) {
             return '';
         }
         return '?intended=' . rawurlencode($intended);
