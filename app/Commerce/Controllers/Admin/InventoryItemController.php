@@ -46,7 +46,7 @@ final class InventoryItemController extends AdminController
         $recent = $inventory->movementsPaginate(
             ['product_id' => $productId],
             1,
-            20
+            10
         );
 
         return $this->render('admin.inventory.item', [
