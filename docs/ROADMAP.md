@@ -508,6 +508,38 @@ shipping deep), or its own short stage. The compliance
 sub-stage is the natural home because Grundpreis is the
 reason it exists.
 
+### Storefront Flash Session Mismatch
+
+`AccountController` resolves `Session::class` for every flash
+write. `Session::class` is bound to the *admin* session
+(`ca_session`) in `App.php`. The customer session is bound
+separately as `'customer_session'` (`ca_customer_session`) in
+`CommerceServiceProvider`.
+
+So when a customer adds an address, the flash is written to
+the admin session, not the customer session. In a normal
+single-user browser this accidentally works: the server sets
+a fresh admin cookie if none exists, and the storefront
+layout reads flash from `Session::class` too. But:
+
+  - A customer who is also an admin sees cross-contamination
+    between their admin flashes and customer flashes.
+  - Any future code that reads flash specifically from
+    `'customer_session'` will not find address flashes.
+  - The account page's flash behavior depends on an implicit
+    binding, not on the correct one.
+
+Fix: `AccountController` (and any other storefront controller
+that writes flash) should resolve `'customer_session'`
+explicitly. Same pattern the customer auth flow and the cart
+already use.
+
+`CheckoutController` (008E file 3) does this correctly from
+the start. The `AccountController` fix is a small standalone
+commit.
+
+Likely stage: 008E or 008G. Small.
+
 ### Product Card Title Truncation
 
 Product cards in the catalog grid render the full product
