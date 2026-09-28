@@ -765,7 +765,6 @@
 
 .sf-account-shell {
     background: var(--sf-cream, #f8f1e8);
-    min-height: 60vh;
     padding: 2.5rem 0 4rem;
 }
 
@@ -1033,4 +1032,93 @@
 .sf-account-breadcrumbs-sep {
     margin: 0 .5rem;
     color: var(--sf-border, #e5e1d8);
+}
+
+/* ---- Mobile fixes (008F.1) ----
+   Grid and flex children default to min-width: auto, which
+   means they refuse to shrink below their content. The chip
+   strip is ~1300px of horizontal flex, so the whole shell
+   becomes 1300px. Setting min-width: 0 lets them shrink to
+   the viewport and lets the chip strip scroll instead.
+   ---- */
+.sf-account-shell-container > * {
+    min-width: 0;
+}
+.sf-account-main {
+    min-width: 0;
+    max-width: 100%;
+}
+
+@media (max-width: 768px) {
+    /* Hide the native scrollbar on the chip strip. It is
+       intentionally scrollable but should not display chrome. */
+    .sf-account-nav {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .sf-account-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* The chip strip should not force its parent wider than
+       the viewport. The container has overflow-x: auto, so it
+       scrolls internally. */
+    .sf-account-nav-list {
+        width: max-content;
+        min-width: 0;
+    }
+
+    /* Shell keeps a matching min-height at mobile widths. */
+
+    /* The order rows in the orders list should not push the
+       View button off screen. Stack them vertically. */
+    .sf-order-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .sf-order-row-actions {
+        align-self: flex-start;
+        margin-top: .75rem;
+    }
+
+    /* Tighter panel padding on mobile. */
+    .sf-account-panel {
+        padding: 1.25rem 1rem;
+    }
+
+    /* The order detail status grid should stack. */
+    .sf-order-status-grid {
+        grid-template-columns: 1fr;
+    }
+    .sf-order-item {
+        grid-template-columns: 1fr auto;
+    }
+    .sf-order-item-qty {
+        display: none;
+    }
+
+    /* Keep the container from ever exceeding the viewport. */
+    .sf-account-shell-container {
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+}
+
+/* ---- Account shell fills the storefront main area ----
+   The parent .sf-main has padding-bottom: 64px to space the
+   footer from short content. On the account pages the shell
+   should own that space so its cream background fills it.
+   The shell pulls itself into the padding using a negative
+   margin-bottom and re-applies the space as its own padding.
+*/
+.sf-account-shell {
+    margin-bottom: -64px;
+    padding-bottom: calc(2.5rem + 64px);
+}
+
+@media (max-width: 768px) {
+    .sf-account-shell {
+        margin-bottom: -64px;
+        padding-bottom: calc(1.25rem + 64px);
+    }
 }
