@@ -6,6 +6,7 @@ namespace CorporateAid\Commerce;
 use CorporateAid\Core\Auth;
 use CorporateAid\Core\Container;
 use CorporateAid\Core\Database;
+use CorporateAid\Platform\Support\CodeGenerator;
 use CorporateAid\Core\Router;
 use CorporateAid\Core\Session;
 use CorporateAid\Commerce\Context\StoreContext;
@@ -30,6 +31,7 @@ use CorporateAid\Commerce\Repositories\ProductVariantRepository;
 use CorporateAid\Commerce\Repositories\AttributeRepository;
 use CorporateAid\Commerce\Repositories\CategoryAttributeRepository;
 use CorporateAid\Commerce\Services\CatalogService;
+use CorporateAid\Commerce\Services\CheckoutService;
 use CorporateAid\Commerce\Repositories\CartItemRepository;
 use CorporateAid\Commerce\Repositories\CartRepository;
 use CorporateAid\Commerce\Services\CartService;
@@ -157,6 +159,22 @@ final class CommerceServiceProvider
                 $c->get(ProductRepository::class),
                 $c->get(ProductVariantRepository::class),
                 $c->get(CustomerGroupPriceRepository::class)
+            ));
+
+        // ---------- Services: checkout ----------
+        $c->singleton(CheckoutService::class,
+            fn() => new CheckoutService(
+                $c->get(Database::class),
+                $c->get(CartService::class),
+                $c->get(OrderRepository::class),
+                $c->get(OrderItemRepository::class),
+                $c->get(OrderStatusHistoryRepository::class),
+                $c->get(InventoryRepository::class),
+                $c->get(LegalPageRepository::class),
+                $c->get(CustomerGroupRepository::class),
+                $c->get(CustomerAddressRepository::class),
+                $c->get(CodeGenerator::class),
+                $c->get(StoreContext::class)
             ));
 
         // ---------- Customers ----------

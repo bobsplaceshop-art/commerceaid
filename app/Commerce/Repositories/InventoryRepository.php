@@ -307,6 +307,54 @@ final class InventoryRepository extends CommerceRepository
         return $indexed;
     }
 
+    /**
+     * Bulk fetch with FOR UPDATE row locks.
+     *
+     * Same shape as forUnits() - same return keys, same model -
+     * but the query appends FOR UPDATE so the rows are locked
+     * until the surrounding transaction commits or rolls back.
+     *
+     * MUST be called inside a transaction. Calling this outside
+     * a transaction throws a PDO exception from MySQL (the lock
+     * has nothing to hold it).
+     *
+     * Used by CheckoutService to serialize concurrent checkouts
+     * of the same sellable unit. The lock is held from the
+     * re-check (step 2 of the transaction) through the reserve
+     * (step 7), preventing a race where two customers both pass
+     * the stock check and both reserve.
+     *
+     * @param array<int, array{product_id:int, variant_id:int}> $units
+     * @return array<string, Inventory> keyed by "productId:variantId"
+     */
+    public function forUnitsLocked(array $units): array
+    {
+        if ($units === []) {
+            return [];
+        }
+
+        $or = [];
+        $params = [$this->storeId()];
+        foreach ($units as $u) {
+            $or[] = "(`product_id` = ? AND `variant_id` = ?)";
+            $params[] = (int) $u['product_id'];
+            $params[] = (int) $u['variant_id'];
+        }
+
+        $sql = "SELECT * FROM `commerce_inventory`
+                 WHERE `store_id` = ? AND (" . implode(' OR ', $or) . ")
+                 FOR UPDATE";
+
+        $rows = $this->db->select($sql, $params);
+
+        $indexed = [];
+        foreach ($rows as $row) {
+            $inv = Inventory::fromRow($row);
+            $indexed[$inv->productId . ':' . $inv->variantId] = $inv;
+        }
+        return $indexed;
+    }
+
     // =================================================================
     // Counts
     // =================================================================

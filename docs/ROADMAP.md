@@ -508,6 +508,51 @@ shipping deep), or its own short stage. The compliance
 sub-stage is the natural home because Grundpreis is the
 reason it exists.
 
+### Product Card Title Truncation
+
+Product cards in the catalog grid render the full product
+name. Long names wrap to five or six lines, producing ragged
+card heights and an uneven grid. Reference marketplaces
+(Kilimall, Jumia) clamp the title to two lines with an
+ellipsis.
+
+Fix: CSS-only. `-webkit-line-clamp: 2` on the product card
+title with `overflow: hidden`. Modern browsers all support
+this. The product detail page keeps the full title.
+
+Where: `public/assets/css/storefront-catalog.css`, one rule.
+
+Likely stage: 008G (storefront polish). Small.
+
+### Variant Image Preview
+
+Colour swatches on the product page show a small preview
+image per colour. Clicking a swatch swaps the main product
+image. Reference: Kilimall product detail page, eight
+colour swatches with mini thumbnails, main image swaps on
+selection.
+
+Requires:
+
+  - `commerce_product_images` already has a nullable
+    `variant_id` column. Assigning images to specific
+    variants is what this feature needs. No schema change.
+  - Admin product editor needs UI to upload images and
+    assign each to a variant (or to an attribute value
+    like "Color: Red").
+  - Storefront product detail page needs the swatch UI
+    and the JS to swap the hero image on click.
+  - The variant selector on the product page is currently
+    disabled ("Variant selection coming soon" from 008D).
+    This feature would activate it.
+
+Scope note: this is not a small change. It touches the
+admin product editor, the storefront product page, and the
+variant selector logic.
+
+Likely stage: 008G (storefront polish) or a dedicated
+008G.1 sub-stage if it grows beyond a couple of files.
+
 ### Storefront-Hosted Hero Asset
 
 The hero section is a CSS-composed three-column layout. Real
