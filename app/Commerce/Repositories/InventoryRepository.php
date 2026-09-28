@@ -822,6 +822,11 @@ final class InventoryRepository extends CommerceRepository
             $params[] = $like;
         }
 
+        if (!empty($filters['product_id'])) {
+            $where[] = "m.`product_id` = ?";
+            $params[] = (int) $filters['product_id'];
+        }
+
         if (!empty($filters['type'])) {
             $where[] = "m.`movement_type` = ?";
             $params[] = (string) $filters['type'];

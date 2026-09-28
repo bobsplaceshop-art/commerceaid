@@ -116,20 +116,26 @@ $typeLabel    = $isVariable
             </div>
         </div>
 
-        <!-- Movement history lands in File 7 -->
-
-        <!-- Sticky action bar -->
-        <div class="ra-sticky-actions">
-            <div class="ra-sticky-actions-inner">
-                <a href="/commerce/ca-admin/inventory" class="ra-btn ra-btn-outline">Cancel</a>
-                <button type="submit" class="ra-btn ra-btn-primary">
-                    <i class="bi bi-check-lg me-1"></i> Save changes
-                </button>
-            </div>
-        </div>
-
-        <div class="ra-sticky-spacer"></div>
     </form>
+
+    <?= view_partial('admin.inventory._movement-block', [
+        'movements'   => $movements,
+        'moveTotal'   => $moveTotal,
+        'productId'   => $productId,
+        'productName' => $product->name,
+    ]) ?>
+
+    <!-- Sticky action bar (outside the form, bound via form="" attribute) -->
+    <div class="ra-sticky-actions">
+        <div class="ra-sticky-actions-inner">
+            <a href="/commerce/ca-admin/inventory" class="ra-btn ra-btn-outline">Cancel</a>
+            <button type="submit" form="ra-inventory-item-form" class="ra-btn ra-btn-primary">
+                <i class="bi bi-check-lg me-1"></i> Save changes
+            </button>
+        </div>
+    </div>
+
+    <div class="ra-sticky-spacer"></div>
 
     <style>
     .ra-btn-sm { padding: .35rem .65rem; font-size: .82rem; }

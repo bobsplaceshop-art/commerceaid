@@ -43,11 +43,19 @@ final class InventoryItemController extends AdminController
 
         $stats = $this->aggregateStats($product->productType, $units);
 
+        $recent = $inventory->movementsPaginate(
+            ['product_id' => $productId],
+            1,
+            20
+        );
+
         return $this->render('admin.inventory.item', [
-            'title'   => 'Inventory - ' . $product->name,
-            'product' => $product,
-            'units'   => $units,
-            'stats'   => $stats,
+            'title'     => 'Inventory - ' . $product->name,
+            'product'   => $product,
+            'units'     => $units,
+            'stats'     => $stats,
+            'movements' => $recent['items'],
+            'moveTotal' => $recent['total'],
         ]);
     }
 
