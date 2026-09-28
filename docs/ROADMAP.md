@@ -37,6 +37,8 @@ Adding a stage or reordering requires updating this document first.
 | 008B  | Storefront visual identity & catalog   | 2026-09-27 |
 | 008B.2| Extended visual pass                   | 2026-09-27 |
 | 008C  | Customer registration, login, account  | 2026-09-27 |
+| 008D  | Cart                                   | 2026-09-28 |
+| 008D.1| Variant-level inventory                | 2026-09-28 |
 
 Also completed outside the staged sequence:
 
@@ -54,21 +56,31 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008D - Cart
+### Stage 008D.2 - Per-Product Inventory Page
 
-**Goal:** Session-based cart for guests, database-persisted cart
-for logged-in customers. Cart merge on login.
+**Goal:** Replace the "adjust one item" modal for variable
+products with a dedicated per-product inventory page. Group
+all variants in one table so a merchant can see and adjust
+the full picture at a glance.
 
 **Deliverables:**
 
-- `Storefront/CartController` - add, update, remove, view
-- `CartService` - cart state management
-- Migrations: `commerce_carts`, `commerce_cart_items`
-- Mini-cart in header
-- AJAX add-to-cart endpoint
-- Cart page with quantity controls
+- `InventoryItemController` - shows a per-product page at
+  `/commerce/ca-admin/inventory/item/{product_id}`
+- `resources/views/admin/inventory/item.php` - variant stock
+  table with inline adjust controls and sticky save bar
+- Inline movement history (this product only)
+- Simple products: same page with one row (the product itself)
+- Modal stays for simple-product quick adjust from the list
 
-**Depends on:** Stage 008C (customer auth for persistent carts)
+**Rationale:** The current inventory list shows one row per
+sellable unit. For a T-Shirt with 12 variants that means 12
+rows. Fine at 12; unusable at 50+. A per-product page groups
+by product and lets the merchant adjust several variants at
+once.
+
+**Depends on:** Stage 008D (cart), Stage 008D.1 (variant
+inventory)
 
 ---
 

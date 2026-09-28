@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-09-27
-**Version:** 0.4.0-alpha
-**Stage:** 008C complete. Next: 008D (cart)
+**Version:** 0.5.0-alpha
+**Stage:** 008D.1 complete. Next: 008D.2 (per-product inventory page)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -65,6 +65,20 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 - Section collapse rule: data-driven sections vanish when empty
 - Store builder contract: every element carries a data-sf-*
   attribute for future admin editability
+
+### Shopping cart (008D)
+
+- Session-based cart for guests ($_SESSION['cart'])
+- DB-persisted cart for logged-in customers
+  (commerce_carts + commerce_cart_items)
+- Merge on login: guest session cart flows into DB
+- Mini-cart badge in header with live AJAX updates
+- Cart page with quantity controls, remove, subtotal
+- Toast notification on add-to-cart
+- Per-variant stock checks (variant is the sellable unit)
+- Stock rejection: cannot add more than available
+- Variant selector on product detail page
+- Quantity input on product detail page
 
 ### Customer accounts (008C)
 
