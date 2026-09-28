@@ -163,15 +163,7 @@ final class InventoryRepository extends CommerceRepository
         $this->db->beginTransaction();
         try {
             // 1) Ensure a current stock row exists.
-            $current = $this->forUnit($productId, $variantId);
-            if ($current === null) {
-                $this->db->execute(
-                    "INSERT INTO `commerce_inventory`
-                        (`store_id`, `product_id`, `variant_id`, `quantity`, `reserved`)
-                     VALUES (?, ?, ?, 0, 0)",
-                    [$this->storeId(), $productId, $variantId]
-                );
-            }
+            $this->ensureRow($productId, $variantId);
 
             // 2) Read the current quantity WITH A LOCK so concurrent
             //    adjustments don't race. This is the critical section.
@@ -234,6 +226,29 @@ final class InventoryRepository extends CommerceRepository
             );
         }
         return InventoryMovement::fromRow($row);
+    }
+
+    /**
+     * Ensure an inventory row exists for the given sellable unit.
+     * Creates one with quantity = 0 and reserved = 0 if missing.
+     * Idempotent - a second call for the same unit is a no-op.
+     *
+     * Called by adjust() before any UPDATE, and by
+     * ProductVariantRepository::create() when a new variant is
+     * born. Every sellable unit gets exactly one row.
+     */
+    public function ensureRow(int $productId, int $variantId): void
+    {
+        $existing = $this->forUnit($productId, $variantId);
+        if ($existing !== null) {
+            return;
+        }
+        $this->db->execute(
+            "INSERT INTO `commerce_inventory`
+                (`store_id`, `product_id`, `variant_id`, `quantity`, `reserved`)
+             VALUES (?, ?, ?, 0, 0)",
+            [$this->storeId(), $productId, $variantId]
+        );
     }
 
     /**

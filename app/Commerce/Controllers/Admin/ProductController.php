@@ -159,11 +159,19 @@ final class ProductController extends AdminController
         $repo->syncCategories($productId, $data['category_ids']);
         $repo->syncTags($productId, $data['tag_ids']);
 
-        // Create the initial inventory row for simple products
-        if ($data['manage_stock']) {
+        // Create the initial inventory row for simple products.
+        //
+        // Variable products get NO parent inventory row. A
+        // variable product is a marketing container, not a
+        // sellable unit. Each variant gets its own row, created
+        // when the variant is born (see
+        // ProductVariantRepository::create()). The 008D.1
+        // migration enforces this invariant in existing data.
+        $isSimpleProduct = ($data['product_type'] === 'simple');
+        if ($data['manage_stock'] && $isSimpleProduct) {
             $this->container->get(InventoryRepository::class)->adjust(
                 $productId,
-                0, // variant_id = 0 for simple
+                0, // variant_id = 0 for simple products only
                 (int) $data['stock_quantity'],
                 'opening',
                 [
@@ -221,7 +229,11 @@ final class ProductController extends AdminController
             $currentQty = $current?->quantity ?? 0;
             $newQty = (int) $data['stock_quantity'];
 
-            if ($newQty !== $currentQty) {
+            // Variable products have no variant_id = 0 row. Their
+            // stock is managed per variant through the variations
+            // page. Skip the parent-row adjustment for them.
+            $isSimpleProduct = ($product->productType === 'simple');
+            if ($isSimpleProduct && $newQty !== $currentQty) {
                 $inventory->adjust(
                     $id,
                     0,

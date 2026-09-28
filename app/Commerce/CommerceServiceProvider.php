@@ -82,7 +82,8 @@ final class CommerceServiceProvider
         $c->singleton(ProductVariantRepository::class,
             fn() => new ProductVariantRepository(
                 $c->get(Database::class),
-                $c->get(StoreContext::class)
+                $c->get(StoreContext::class),
+                $c->get(InventoryRepository::class)
             ));
 
         // Attribute definitions are store-independent, so no StoreContext

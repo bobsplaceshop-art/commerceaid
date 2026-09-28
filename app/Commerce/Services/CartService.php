@@ -514,10 +514,32 @@ final class CartService
     {
         $inv = $this->inventory->forUnit($productId, $variantId);
 
-        // No inventory row: the product does not track stock.
-        // Treat as always available.
         if ($inv === null) {
-            return;
+            // After the 008D.1 migration, every sellable unit has
+            // exactly one inventory row. If a row is missing here,
+            // something is wrong with the data model - not a
+            // customer error. Fail loud so we find out immediately
+            // instead of silently allowing unlimited stock.
+            //
+            // The one exception: products that legitimately do not
+            // track stock. That is expressed at the product level
+            // (manage_stock = 0), and in that case a row may not
+            // exist. We check the product's manage_stock flag
+            // before deciding this is a data-integrity issue.
+            $product = $this->products->findById($productId);
+
+            if ($product !== null && !$product->manageStock) {
+                // The product does not track stock. Any quantity
+                // is allowed. This is the digital-goods case.
+                return;
+            }
+
+            throw new \RuntimeException(
+                "Inventory row missing for product {$productId}, "
+                . "variant {$variantId}. Every sellable unit must "
+                . "have exactly one inventory row. If the 0301 "
+                . "migration has not been applied, run it first."
+            );
         }
 
         if (!$inv->canSell($qty)) {

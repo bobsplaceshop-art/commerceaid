@@ -16,6 +16,19 @@ use CorporateAid\Commerce\Models\ProductVariant;
  */
 final class ProductVariantRepository extends CommerceRepository
 {
+    /**
+     * @param \CorporateAid\Core\Database $db
+     * @param \CorporateAid\Commerce\Context\StoreContext $context
+     * @param InventoryRepository $inventory
+     */
+    public function __construct(
+        \CorporateAid\Core\Database $db,
+        \CorporateAid\Commerce\Context\StoreContext $context,
+        private InventoryRepository $inventory
+    ) {
+        parent::__construct($db, $context);
+    }
+
     // =================================================================
     // Reads
     // =================================================================
@@ -160,6 +173,14 @@ final class ProductVariantRepository extends CommerceRepository
         );
 
         $this->linkAttributeValues($variantId, $attributeValueIds);
+
+        // Every sellable unit has exactly one inventory row. The
+        // variant is the sellable unit for variable products, so
+        // its inventory row is created here, at the moment the
+        // variant is born. Quantity starts at 0; the merchant
+        // assigns real stock through the variations editor.
+        $this->inventory->ensureRow($productId, $variantId);
+
         return $variantId;
     }
 
