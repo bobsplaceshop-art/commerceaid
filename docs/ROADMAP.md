@@ -346,6 +346,44 @@ auto-derived version, 011 for the admin-curated version.
 Reference: Kilimall product detail + cart page cross-sell
 pattern, supplied by the customer as a design concept.
 
+### Coming Soon / Maintenance Mode
+
+A per-store toggle that replaces the public storefront with
+a branded holding page. Intended for:
+
+  - Pre-launch: the store exists but is not ready for
+    customers. Visitors see a coming-soon page; admins
+    browse the full storefront normally.
+  - Maintenance: the store is temporarily offline (payment
+    issues, catalog overhaul, migrations).
+  - Private beta: the store is live but only accessible to
+    invited customers, with a password gate or email
+    capture for waitlist.
+
+Shape:
+
+  - Admin toggle in Store Settings: enabled / disabled,
+    with an optional scheduled window (starts_at, ends_at).
+  - The holding page is edited in the admin: headline,
+    subtext, hero image, optional countdown, optional
+    newsletter / waitlist signup form.
+  - The page renders from a theme or template that can be
+    swapped (per the future theme engine, Stage 012).
+  - Logged-in admins bypass the gate and see the full site.
+  - The gate runs as middleware: if enabled and the visitor
+    is not admin, render the coming-soon view instead of
+    the requested page. Return 503 with a Retry-After header
+    for crawlers, so search engines do not deindex the site.
+
+Why this is its own entry: it touches the storefront
+middleware stack, the admin Store Settings page, and (in
+the themed version) the theme engine. Small feature, but it
+spans three layers.
+
+Likely stage: 008G (PWA, Search, Storefront Polish) for the
+basic version, or 011 (Advanced Commerce + Store Builder)
+for the themed version with per-store templates.
+
 ### Data Import (CSV / Excel)
 
 A merchant setting up a store needs to bulk-load products,
