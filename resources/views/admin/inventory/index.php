@@ -144,7 +144,7 @@ $exportUrl = '/commerce/ca-admin/inventory/export.csv' . ($hasFilters ? '?' . ht
                 <?= $hasFilters ? 'No units match your filters' : 'No inventory yet' ?>
             </h2>
             <p class="muted small mb-3">
-                <?= $hasFilters ? 'Try clearing filters or adjusting your search.' : 'Inventory rows appear when products with managed stock are saved.' ?>
+                <?= $hasFilters ? 'Try clearing filters or adjusting your search.' : 'Products with managed stock appear here once they are saved.' ?>
             </p>
             <?php if ($hasFilters): ?>
                 <a href="/commerce/ca-admin/inventory" class="ra-btn ra-btn-outline">Clear filters</a>
@@ -158,66 +158,69 @@ $exportUrl = '/commerce/ca-admin/inventory/export.csv' . ($hasFilters ? '?' . ht
             <thead>
                 <tr>
                     <th>Product</th>
-                    <th class="ra-hide-sm" style="width:160px;">Variant</th>
+                    <th class="ra-hide-sm" style="width:130px;">Type</th>
                     <th class="ra-hide-sm" style="width:130px;">SKU</th>
-                    <th style="width:80px;text-align:right;">On hand</th>
-                    <th class="ra-hide-sm" style="width:80px;text-align:right;">Reserved</th>
-                    <th style="width:80px;text-align:right;">Available</th>
+                    <th style="width:90px;text-align:right;">Units</th>
                     <th style="width:110px;">Status</th>
-                    <th style="width:100px;text-align:right;">Actions</th>
+                    <th style="width:120px;text-align:right;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($items as $row): ?>
                     <?php
-                    $threshold = $row['unit_threshold'] ?? $row['product_threshold'] ?? 5;
-                    $available = (int) $row['available'];
-                    $isOut     = $available <= 0;
-                    $isLow     = !$isOut && $available <= $threshold;
+                    $unitCount  = (int) $row['unit_count'];
+                    $isVariable = $row['product_type'] === 'variable';
+                    $statusKey  = $row['product_status_display'] ?? 'in_stock';
 
-                    if ($isOut) {
-                        $statusBadge = '<span class="ra-badge ra-badge-danger">Out of stock</span>';
-                    } elseif ($isLow) {
-                        $statusBadge = '<span class="ra-badge ra-badge-warning">Low stock</span>';
-                    } else {
-                        $statusBadge = '<span class="ra-badge ra-badge-success">In stock</span>';
-                    }
+                    $statusBadge = match ($statusKey) {
+                        'out_of_stock' => '<span class="ra-badge ra-badge-danger">Out of stock</span>',
+                        'low_stock'    => '<span class="ra-badge ra-badge-warning">Low stock</span>',
+                        'no_stock'     => '<span class="ra-badge ra-badge-muted">No stock row</span>',
+                        default        => '<span class="ra-badge ra-badge-success">In stock</span>',
+                    };
 
-                    $variantLabel = $row['variant_summary'] ?? null;
-                    $sku = $row['variant_sku'] ?? $row['product_sku'] ?? '';
+                    $typeLabel = $isVariable
+                        ? $unitCount . ' variant' . ($unitCount === 1 ? '' : 's')
+                        : 'Simple';
+
+                    // TODO: switch to /commerce/ca-admin/inventory/item/{id}
+                    // once the per-product detail page ships (Stage 008D.2
+                    // File 4). For now link to the product edit page so
+                    // the row is clickable without a 404.
+                    $detailUrl = '/commerce/ca-admin/products/' . (int) $row['product_id'] . '/edit';
+                    $units     = (int) $row['total_quantity'];
                     ?>
                     <tr>
                         <td>
-                            <a href="/commerce/ca-admin/products/<?= (int) $row['product_id'] ?>/edit"
-                               class="text-decoration-none">
+                            <a href="<?= e($detailUrl) ?>" class="text-decoration-none">
                                 <?= e($row['product_name']) ?>
                             </a>
                         </td>
                         <td class="ra-hide-sm">
-                            <?php if ($variantLabel): ?>
-                                <span class="muted small"><?= e($variantLabel) ?></span>
-                            <?php else: ?>
-                                <span class="muted small">&mdash;</span>
-                            <?php endif; ?>
+                            <span class="muted small"><?= e($typeLabel) ?></span>
                         </td>
-                        <td class="ra-hide-sm"><code class="muted small"><?= e($sku ?: '—') ?></code></td>
-                        <td class="text-end"><?= (int) $row['quantity'] ?></td>
-                        <td class="text-end muted ra-hide-sm"><?= (int) $row['reserved'] ?></td>
+                        <td class="ra-hide-sm">
+                            <code class="muted small"><?= e($row['product_sku'] ?: '—') ?></code>
+                        </td>
                         <td class="text-end">
-                            <strong style="<?= $isOut ? 'color:#ef4444;' : ($isLow ? 'color:#f59e0b;' : '') ?>">
-                                <?= $available ?>
-                            </strong>
+                            <strong><?= $units ?></strong>
                         </td>
                         <td><?= $statusBadge ?></td>
                         <td class="text-end ra-actions-cell">
-                            <button type="button" class="ra-icon-btn ra-adjust-btn"
-                                    data-product-id="<?= (int) $row['product_id'] ?>"
-                                    data-variant-id="<?= (int) $row['variant_id'] ?>"
-                                    data-product-name="<?= e($row['product_name']) ?>"
-                                    data-variant-label="<?= e($variantLabel ?? '') ?>"
-                                    title="Adjust stock">
-                                <i class="bi bi-pencil-square"></i>
-                            </button>
+                            <?php if (!$isVariable): ?>
+                                <button type="button" class="ra-icon-btn ra-adjust-btn"
+                                        data-product-id="<?= (int) $row['product_id'] ?>"
+                                        data-variant-id="0"
+                                        data-product-name="<?= e($row['product_name']) ?>"
+                                        data-variant-label=""
+                                        title="Adjust stock">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                            <?php endif; ?>
+                            <a href="<?= e($detailUrl) ?>"
+                               class="ra-icon-btn" title="View stock detail">
+                                <i class="bi bi-eye"></i>
+                            </a>
                             <a href="/commerce/ca-admin/inventory/movements?q=<?= urlencode($row['product_name']) ?>"
                                class="ra-icon-btn" title="View movements">
                                 <i class="bi bi-clock-history"></i>

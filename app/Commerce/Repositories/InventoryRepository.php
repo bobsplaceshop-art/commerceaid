@@ -534,6 +534,274 @@ final class InventoryRepository extends CommerceRepository
         return [implode(' AND ', $where), $params];
     }
 
+    // =================================================================
+    // Product-grouped list (Stage 008D.2)
+    // =================================================================
+
+    /**
+     * Paginated inventory list grouped by product.
+     *
+     * Every row represents one product, not one sellable unit.
+     * Simple products produce one row. Variable products produce
+     * one row with a variant count and aggregate stock. The
+     * aggregate columns drive the list page's status badge.
+     *
+     * @param array<string,mixed> $filters Same filters as paginate()
+     * @return array{
+     *     items: array<int, array<string,mixed>>,
+     *     total: int,
+     *     page: int,
+     *     per_page: int,
+     *     pages: int
+     * }
+     */
+    public function paginateProductsWithStock(
+        array $filters = [],
+        int $page = 1,
+        int $perPage = 25
+    ): array {
+        $page    = max(1, $page);
+        $perPage = min(100, max(1, $perPage));
+        $offset  = ($page - 1) * $perPage;
+
+        [$where, $params] = $this->buildProductListFilters($filters);
+
+        // Count of products (not sellable units) matching filters.
+        $total = (int) $this->db->scalar(
+            "SELECT COUNT(DISTINCT p.`id`)
+               FROM `commerce_products` p
+          LEFT JOIN `commerce_inventory` i
+                 ON i.`product_id` = p.`id`
+                AND i.`store_id` = p.`store_id`
+              WHERE {$where}",
+            $params
+        );
+
+        // One row per product with aggregate stock. The
+        // HAVING clause is empty - filters already narrowed the
+        // candidate set.
+        $rows = $this->db->select(
+            "SELECT
+                p.`id`              AS product_id,
+                p.`name`            AS product_name,
+                p.`slug`            AS product_slug,
+                p.`sku`             AS product_sku,
+                p.`product_type`,
+                p.`status`          AS product_status,
+                p.`low_stock_threshold` AS product_threshold,
+                p.`deleted_at`,
+                COUNT(DISTINCT i.`id`)  AS unit_count,
+                COALESCE(SUM(i.`quantity`), 0)  AS total_quantity,
+                COALESCE(SUM(i.`reserved`), 0)  AS total_reserved,
+                COALESCE(SUM(i.`available`), 0) AS total_available,
+                SUM(CASE WHEN i.`available` > 0 THEN 1 ELSE 0 END)
+                    AS units_in_stock,
+                MAX(CASE
+                        WHEN i.`available` > 0
+                         AND i.`available` <= COALESCE(
+                                i.`low_stock_threshold`,
+                                p.`low_stock_threshold`,
+                                5
+                             )
+                        THEN 1
+                        ELSE 0
+                    END) AS any_low_stock
+               FROM `commerce_products` p
+          LEFT JOIN `commerce_inventory` i
+                 ON i.`product_id` = p.`id`
+                AND i.`store_id` = p.`store_id`
+              WHERE {$where}
+              GROUP BY p.`id`
+              ORDER BY p.`name` ASC
+              LIMIT {$perPage} OFFSET {$offset}",
+            $params
+        );
+
+        // Compute the product-level status badge server-side so
+        // the view doesn't repeat the logic.
+        //
+        // The semantics here are about the product as a whole,
+        // not about individual sellable units:
+        //
+        //   out_of_stock  - zero sellable units have any stock.
+        //                   The product cannot be bought at all.
+        //   low_stock     - at least one sellable unit is in stock
+        //                   but at or below threshold. The
+        //                   product is buyable but some variant
+        //                   needs attention.
+        //   in_stock      - all sellable units are healthy.
+        //   no_stock      - no inventory rows exist. Edge case;
+        //                   should not occur after the 008D.1
+        //                   migration.
+        foreach ($rows as &$row) {
+            $unitCount    = (int) $row['unit_count'];
+            $unitsInStock = (int) $row['units_in_stock'];
+            $anyLow       = (int) $row['any_low_stock'] === 1;
+
+            if ($unitCount === 0) {
+                $row['product_status_display'] = 'no_stock';
+            } elseif ($unitsInStock === 0) {
+                $row['product_status_display'] = 'out_of_stock';
+            } elseif ($anyLow) {
+                $row['product_status_display'] = 'low_stock';
+            } else {
+                $row['product_status_display'] = 'in_stock';
+            }
+        }
+        unset($row);
+
+        return [
+            'items'    => $rows,
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'pages'    => max(1, (int) ceil($total / $perPage)),
+        ];
+    }
+
+    /**
+     * All inventory rows for one product with joined variant info.
+     * Used by the per-product detail page.
+     *
+     * @return array<int, array<string,mixed>>
+     */
+    public function stockForProduct(int $productId): array
+    {
+        return $this->db->select(
+            "SELECT
+                i.`id`              AS inventory_id,
+                i.`product_id`,
+                i.`variant_id`,
+                i.`quantity`,
+                i.`reserved`,
+                i.`available`,
+                i.`low_stock_threshold` AS unit_threshold,
+                i.`backorders_allowed`  AS unit_backorders,
+                i.`updated_at`          AS inventory_updated,
+                p.`name`            AS product_name,
+                p.`sku`             AS product_sku,
+                p.`product_type`,
+                p.`low_stock_threshold` AS product_threshold,
+                v.`sku`             AS variant_sku,
+                v.`status`          AS variant_status,
+                v.`sort_order`      AS variant_sort,
+                (SELECT GROUP_CONCAT(
+                            CONCAT(ad.`name`, ': ', av.`value`)
+                            ORDER BY ad.`sort_order`
+                            SEPARATOR ', '
+                        )
+                   FROM `commerce_variant_attribute_values` vav
+                   JOIN `commerce_attribute_definitions` ad
+                     ON ad.`id` = vav.`attribute_id`
+                   JOIN `commerce_attribute_values` av
+                     ON av.`id` = vav.`attribute_value_id`
+                  WHERE vav.`variant_id` = i.`variant_id`
+                ) AS variant_summary
+               FROM `commerce_inventory` i
+               JOIN `commerce_products` p
+                 ON p.`id` = i.`product_id`
+                AND p.`store_id` = i.`store_id`
+          LEFT JOIN `commerce_product_variants` v
+                 ON v.`id` = i.`variant_id`
+                AND i.`variant_id` > 0
+              WHERE i.`store_id` = ?
+                AND i.`product_id` = ?
+              ORDER BY v.`sort_order` ASC, i.`variant_id` ASC",
+            [$this->storeId(), $productId]
+        );
+    }
+
+    /**
+     * Filter builder for the product-grouped list. Same filter
+     * names as buildListFilters() (q, category_id, brand_id,
+     * status), but the status filter applies to the aggregate
+     * product status, not per-unit.
+     *
+     * @param array<string,mixed> $filters
+     * @return array{0:string,1:array<int,mixed>}
+     */
+    private function buildProductListFilters(array $filters): array
+    {
+        $where  = ["p.`store_id` = ?", "p.`deleted_at` IS NULL"];
+        $params = [$this->storeId()];
+
+        if (!empty($filters['q'])) {
+            $like = '%' . $filters['q'] . '%';
+            $where[] = "(p.`name` LIKE ? OR p.`sku` LIKE ?)";
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        if (!empty($filters['category_id'])) {
+            $where[] = "EXISTS (
+                SELECT 1 FROM `commerce_product_categories` pc
+                 WHERE pc.`product_id` = p.`id`
+                   AND pc.`store_id` = p.`store_id`
+                   AND pc.`category_id` = ?
+            )";
+            $params[] = (int) $filters['category_id'];
+        }
+
+        if (!empty($filters['brand_id'])) {
+            $where[] = "p.`brand_id` = ?";
+            $params[] = (int) $filters['brand_id'];
+        }
+
+        if (!empty($filters['status'])) {
+            // Aggregate-level status. Uses a HAVING-style
+            // subquery so the filter applies after GROUP BY.
+            // We express it as an EXISTS on the join so the
+            // outer query stays one row per product.
+            switch ($filters['status']) {
+                case 'in_stock':
+                    // At least one unit is in stock and none are
+                    // low or out.
+                    $where[] = "NOT EXISTS (
+                        SELECT 1 FROM `commerce_inventory` ii
+                         WHERE ii.`product_id` = p.`id`
+                           AND ii.`store_id` = p.`store_id`
+                           AND ii.`available` <= COALESCE(
+                               ii.`low_stock_threshold`,
+                               p.`low_stock_threshold`,
+                               5
+                           )
+                    )";
+                    $where[] = "EXISTS (
+                        SELECT 1 FROM `commerce_inventory` ii
+                         WHERE ii.`product_id` = p.`id`
+                           AND ii.`store_id` = p.`store_id`
+                    )";
+                    break;
+                case 'low_stock':
+                    // Any unit is low (but not all are out).
+                    $where[] = "EXISTS (
+                        SELECT 1 FROM `commerce_inventory` ii
+                         WHERE ii.`product_id` = p.`id`
+                           AND ii.`store_id` = p.`store_id`
+                           AND ii.`available` > 0
+                           AND ii.`available` <= COALESCE(
+                               ii.`low_stock_threshold`,
+                               p.`low_stock_threshold`,
+                               5
+                           )
+                    )";
+                    break;
+                case 'out_of_stock':
+                    // Every unit is out of stock (or no units).
+                    $where[] = "NOT EXISTS (
+                        SELECT 1 FROM `commerce_inventory` ii
+                         WHERE ii.`product_id` = p.`id`
+                           AND ii.`store_id` = p.`store_id`
+                           AND ii.`available` > 0
+                    )";
+                    break;
+            }
+        }
+
+        return [implode(' AND ', $where), $params];
+    }
+
+
     /**
      * @return array{0:string, 1:array}
      */

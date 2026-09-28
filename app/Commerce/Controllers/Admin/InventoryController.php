@@ -47,7 +47,7 @@ final class InventoryController extends AdminController
         $filters = array_filter($filters, fn ($v) => $v !== '' && $v !== 0);
 
         $page = max(1, (int) $request->query('page', 1));
-        $result = $repo->paginate($filters, $page, self::PER_PAGE);
+        $result = $repo->paginateProductsWithStock($filters, $page, self::PER_PAGE);
 
         return $this->render('admin.inventory.index', [
             'title'      => 'Inventory',
