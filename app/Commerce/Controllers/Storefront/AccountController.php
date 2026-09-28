@@ -110,17 +110,67 @@ final class AccountController extends StorefrontController
         }
 
         $orders = $this->container->get(OrderRepository::class);
+
+        // Tab classification. Unknown or missing -> 'all'.
+        $validTabs = ['unpaid', 'to_ship', 'shipped', 'completed', 'cancelled', 'all'];
+        $tab = (string) $request->query('tab', 'all');
+        if (!in_array($tab, $validTabs, true)) {
+            $tab = 'all';
+        }
+
         $page   = max(1, (int) $request->query('page', 1));
-        $result = $orders->paginate(
-            ['customer_id' => $customer->id],
-            $page,
-            20
-        );
+        $result = $orders->paginateForCustomerTab($customer->id, $tab, $page, 20);
+        $counts = $orders->countForCustomerTabs($customer->id);
 
         return $this->render('storefront.account.orders', [
             'title'    => 'My Orders',
             'customer' => $customer,
             'result'   => $result,
+            'tab'      => $tab,
+            'counts'   => $counts,
+        ]);
+    }
+
+    /**
+     * Customer-facing order detail. Ownership-guarded: the
+     * order must belong to the logged-in customer. A customer
+     * cannot view another customer's order by guessing the
+     * number.
+     *
+     * @param array<string,string> $params
+     */
+    public function orderDetail(Request $request, array $params = []): Response
+    {
+        $customerAuth = $this->container->get(CustomerAuthService::class);
+        $customer = $customerAuth->user();
+
+        if ($customer === null) {
+            return Response::redirect('/account/login');
+        }
+
+        $orderNumber = (string) ($params['orderNumber'] ?? '');
+        if ($orderNumber === '') {
+            return Response::redirect('/account/orders');
+        }
+
+        $orders = $this->container->get(OrderRepository::class);
+        $order = $orders->findForCustomer($orderNumber, $customer->id);
+
+        if ($order === null) {
+            // Not this customer's order, or does not exist. Same
+            // response either way - do not leak existence.
+            return Response::redirect('/account/orders');
+        }
+
+        // Line items with their snapshots.
+        $itemRepo = $this->container->get(\CorporateAid\Commerce\Repositories\OrderItemRepository::class);
+        $items = $itemRepo->forOrder($order->id);
+
+        return $this->render('storefront.account.order-detail', [
+            'title'    => 'Order ' . $order->orderNumber,
+            'customer' => $customer,
+            'order'    => $order,
+            'items'    => $items,
         ]);
     }
 

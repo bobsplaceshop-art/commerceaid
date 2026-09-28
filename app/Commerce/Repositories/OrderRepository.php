@@ -139,6 +139,136 @@ final class OrderRepository extends CommerceRepository
     }
 
     // =================================================================
+    // Customer order tabs (Stage 008F)
+    // =================================================================
+
+    /**
+     * Paginated orders for a customer, filtered by tab.
+     *
+     * Tabs are a customer-facing classification across the
+     * three underlying status tracks (status, payment_status,
+     * fulfilment_status). Not a stored field.
+     *
+     * @param string $tab  unpaid | to_ship | shipped | completed | cancelled | all
+     * @return array{items:array<int,Order>,total:int,page:int,per_page:int,pages:int}
+     */
+    public function paginateForCustomerTab(
+        int $customerId,
+        string $tab,
+        int $page = 1,
+        int $perPage = 20
+    ): array {
+        $page    = max(1, $page);
+        $perPage = min(100, max(1, $perPage));
+        $offset  = ($page - 1) * $perPage;
+
+        $where  = ["`store_id` = ?", "`customer_id` = ?"];
+        $params = [$this->storeId(), $customerId];
+
+        // Tab-specific classification. See the plan doc for the
+        // reasoning behind each condition.
+        $tabWhere = match ($tab) {
+            'unpaid' => "`payment_status` = 'unpaid' "
+                      . "AND `status` NOT IN ('cancelled', 'failed')",
+            'to_ship' => "`payment_status` = 'paid' "
+                       . "AND `fulfilment_status` IN ('unfulfilled', 'partially_fulfilled') "
+                       . "AND `status` NOT IN ('cancelled', 'completed')",
+            'shipped' => "`fulfilment_status` = 'fulfilled' "
+                       . "AND `status` NOT IN ('cancelled', 'completed')",
+            'completed' => "`status` = 'completed'",
+            'cancelled' => "`status` IN ('cancelled', 'failed')",
+            default => null, // 'all' or unknown - no additional filter
+        };
+
+        if ($tabWhere !== null) {
+            $where[] = '(' . $tabWhere . ')';
+        }
+
+        $whereSql = implode(' AND ', $where);
+
+        $total = (int) $this->db->scalar(
+            "SELECT COUNT(*) FROM `commerce_orders` WHERE {$whereSql}",
+            $params
+        );
+
+        $rows = $this->db->select(
+            "SELECT * FROM `commerce_orders`
+              WHERE {$whereSql}
+              ORDER BY `id` DESC
+              LIMIT {$perPage} OFFSET {$offset}",
+            $params
+        );
+
+        return [
+            'items'    => array_map(fn ($r) => Order::fromRow($r), $rows),
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'pages'    => max(1, (int) ceil($total / $perPage)),
+        ];
+    }
+
+    /**
+     * Count orders in each tab for the badge display. Returns
+     * an associative array with keys unpaid, to_ship, shipped,
+     * completed, cancelled, all.
+     *
+     * @return array<string, int>
+     */
+    public function countForCustomerTabs(int $customerId): array
+    {
+        $rows = $this->db->select(
+            "SELECT
+                SUM(CASE WHEN `payment_status` = 'unpaid'
+                          AND `status` NOT IN ('cancelled', 'failed')
+                     THEN 1 ELSE 0 END) AS unpaid,
+                SUM(CASE WHEN `payment_status` = 'paid'
+                          AND `fulfilment_status` IN ('unfulfilled', 'partially_fulfilled')
+                          AND `status` NOT IN ('cancelled', 'completed')
+                     THEN 1 ELSE 0 END) AS to_ship,
+                SUM(CASE WHEN `fulfilment_status` = 'fulfilled'
+                          AND `status` NOT IN ('cancelled', 'completed')
+                     THEN 1 ELSE 0 END) AS shipped,
+                SUM(CASE WHEN `status` = 'completed'
+                     THEN 1 ELSE 0 END) AS completed,
+                SUM(CASE WHEN `status` IN ('cancelled', 'failed')
+                     THEN 1 ELSE 0 END) AS cancelled,
+                COUNT(*) AS total_count
+               FROM `commerce_orders`
+              WHERE `store_id` = ? AND `customer_id` = ?",
+            [$this->storeId(), $customerId]
+        );
+
+        $r = $rows[0] ?? [];
+        return [
+            'unpaid'    => (int) ($r['unpaid'] ?? 0),
+            'to_ship'   => (int) ($r['to_ship'] ?? 0),
+            'shipped'   => (int) ($r['shipped'] ?? 0),
+            'completed' => (int) ($r['completed'] ?? 0),
+            'cancelled' => (int) ($r['cancelled'] ?? 0),
+            'all'       => (int) ($r['total_count'] ?? 0),
+        ];
+    }
+
+    /**
+     * Find an order by number, restricted to a specific customer.
+     * Used by the customer-facing order detail page. Returns null
+     * when the order belongs to a different customer or does not
+     * exist - the caller redirects to the order list on null.
+     */
+    public function findForCustomer(string $orderNumber, int $customerId): ?Order
+    {
+        $row = $this->db->selectOne(
+            "SELECT * FROM `commerce_orders`
+              WHERE `store_id` = ?
+                AND `order_number` = ?
+                AND `customer_id` = ?",
+            [$this->storeId(), $orderNumber, $customerId]
+        );
+        return $row === null ? null : Order::fromRow($row);
+    }
+
+    // =================================================================
     // Guest order claim (Stage 008E.2)
     // =================================================================
 

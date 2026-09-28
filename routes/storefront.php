@@ -116,6 +116,7 @@ $router->post('/account/reset-password',   [AuthController::class, 'resetPasswor
 // /account/login?intended=... on failure.
 $router->get('/account',                         [AccountController::class, 'dashboard'],         ['store', 'customer.auth']);
 $router->get('/account/orders',                  [AccountController::class, 'orders'],            ['store', 'customer.auth']);
+$router->get('/account/orders/{orderNumber}',      [AccountController::class, 'orderDetail'],       ['store', 'customer.auth']);
 
 $router->get('/account/addresses',               [AccountController::class, 'addresses'],         ['store', 'customer.auth']);
 $router->get('/account/addresses/create',        [AccountController::class, 'showCreateAddress'], ['store', 'customer.auth']);
