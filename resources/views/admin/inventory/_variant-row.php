@@ -42,7 +42,7 @@ $isSimple    = ((int) ($u['variant_id'] ?? 0)) === 0;
                aria-label="Quantity on hand">
     </td>
     <td class="text-end ra-hide-sm"><?= $reserved ?></td>
-    <td class="text-end">
+    <td class="text-end ra-hide-sm">
         <strong><?= $available ?></strong>
     </td>
     <td>

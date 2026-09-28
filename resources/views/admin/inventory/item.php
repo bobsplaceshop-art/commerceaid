@@ -103,7 +103,7 @@ $typeLabel    = $isVariable
                             <th class="ra-hide-sm" style="width:160px;">SKU</th>
                             <th style="width:140px;text-align:right;">On hand</th>
                             <th class="ra-hide-sm" style="width:90px;text-align:right;">Reserved</th>
-                            <th style="width:90px;text-align:right;">Available</th>
+                            <th class="ra-hide-sm" style="width:90px;text-align:right;">Available</th>
                             <th style="width:130px;">Status</th>
                         </tr>
                     </thead>
