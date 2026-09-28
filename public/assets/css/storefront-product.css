@@ -323,3 +323,31 @@
     color: var(--sf-muted, #777);
     line-height: 1.5;
 }
+
+/* ---- Product image gallery (Stage 008G) ----
+   Thumbnails are <button> elements so they are focusable and
+   keyboard-accessible. The active thumb gets a distinct border.
+   ---- */
+
+.sf-product-thumb {
+    /* Reset button defaults */
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    transition: border-color .12s ease, opacity .12s ease;
+    opacity: .85;
+}
+.sf-product-thumb:hover {
+    opacity: 1;
+    border-color: var(--sf-gold, #c6a15b);
+}
+.sf-product-thumb.is-active {
+    opacity: 1;
+    border-color: var(--sf-gold, #c6a15b);
+    box-shadow: 0 0 0 2px rgba(198, 161, 91, .2);
+}
+.sf-product-thumb:focus-visible {
+    outline: 2px solid var(--sf-gold, #c6a15b);
+    outline-offset: 2px;
+}

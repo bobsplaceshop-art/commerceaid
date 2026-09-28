@@ -67,7 +67,11 @@ if ($isLiveSoldOut) {
 $mainImage  = 'https://picsum.photos/seed/' . rawurlencode($product->slug) . '/900/1125';
 $thumbnails = [];
 for ($i = 1; $i <= 4; $i++) {
-    $thumbnails[] = 'https://picsum.photos/seed/' . rawurlencode($product->slug . '-' . $i) . '/300/375';
+    $seed = rawurlencode($product->slug . '-' . $i);
+    $thumbnails[] = [
+        'thumb' => 'https://picsum.photos/seed/' . $seed . '/300/375',
+        'large' => 'https://picsum.photos/seed/' . $seed . '/900/1125',
+    ];
 }
 ?>
 
@@ -96,13 +100,14 @@ for ($i = 1; $i <= 4; $i++) {
         <!-- ========================================================= -->
         <!-- Media column                                              -->
         <!-- ========================================================= -->
-        <div class="sf-product-media">
+        <div class="sf-product-media" data-sf-gallery>
             <div class="sf-product-image-large">
                 <img src="<?= e($mainImage) ?>"
                      alt=""
                      width="900"
                      height="1125"
-                     class="sf-product-main-img">
+                     class="sf-product-main-img"
+                     data-sf-gallery-main>
 
                 <?php if ($onSale): ?>
                     <span class="sf-product-badge sf-badge-sale">
@@ -113,11 +118,15 @@ for ($i = 1; $i <= 4; $i++) {
                 <?php endif; ?>
             </div>
 
-            <div class="sf-product-thumbnails" aria-hidden="true">
+            <div class="sf-product-thumbnails" role="group" aria-label="Product images">
                 <?php foreach ($thumbnails as $i => $thumb): ?>
-                    <div class="sf-product-thumb <?= $i === 0 ? 'is-active' : '' ?>">
-                        <img src="<?= e($thumb) ?>" alt="" width="300" height="375" loading="lazy">
-                    </div>
+                    <button type="button"
+                            class="sf-product-thumb <?= $i === 0 ? 'is-active' : '' ?>"
+                            data-sf-gallery-thumb
+                            data-large="<?= e($thumb['large']) ?>"
+                            aria-label="Show image <?= $i + 1 ?>">
+                        <img src="<?= e($thumb['thumb']) ?>" alt="" width="300" height="375" loading="lazy">
+                    </button>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -287,3 +296,5 @@ for ($i = 1; $i <= 4; $i++) {
     <?php endif; ?>
 
 </div>
+
+<script src="/assets/js/storefront-gallery.js" defer></script>
