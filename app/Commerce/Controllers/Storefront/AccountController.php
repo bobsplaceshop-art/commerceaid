@@ -103,10 +103,24 @@ final class AccountController extends StorefrontController
     public function orders(Request $request, array $params = []): Response
     {
         $customerAuth = $this->container->get(CustomerAuthService::class);
+        $customer = $customerAuth->user();
+
+        if ($customer === null) {
+            return Response::redirect('/account/login');
+        }
+
+        $orders = $this->container->get(OrderRepository::class);
+        $page   = max(1, (int) $request->query('page', 1));
+        $result = $orders->paginate(
+            ['customer_id' => $customer->id],
+            $page,
+            20
+        );
 
         return $this->render('storefront.account.orders', [
             'title'    => 'My Orders',
-            'customer' => $customerAuth->user(),
+            'customer' => $customer,
+            'result'   => $result,
         ]);
     }
 
