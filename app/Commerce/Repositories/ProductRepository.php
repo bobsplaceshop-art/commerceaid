@@ -634,6 +634,28 @@ final class ProductRepository extends CommerceRepository
             $params[] = (float) $filters['price_max'];
         }
 
+        // Hide products with no available stock (Stage 008G).
+        // Products that do not track stock (manage_stock = 0)
+        // are always visible - digital goods have no inventory
+        // row. Products that do track stock are visible only
+        // when at least one sellable unit has available > 0.
+        //
+        // The subquery reads commerce_inventory, which holds
+        // one row per sellable unit: simple products have
+        // variant_id = 0, variable products have one row per
+        // variant. The subquery is complete for both.
+        if (!empty($filters['hide_out_of_stock'])) {
+            $where[] = "(
+                p.`manage_stock` = 0
+                OR EXISTS (
+                    SELECT 1 FROM `commerce_inventory` i
+                     WHERE i.`product_id` = p.`id`
+                       AND i.`store_id` = p.`store_id`
+                       AND i.`available` > 0
+                )
+            )";
+        }
+
         if (!empty($filters['in_stock_only'])) {
             $where[] = "EXISTS (
                 SELECT 1 FROM `commerce_inventory` i

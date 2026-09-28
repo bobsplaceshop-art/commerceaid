@@ -43,7 +43,7 @@ final class SearchController extends StorefrontController
 
         $page   = max(1, (int) $request->query('page', 1));
         $result = $products->paginatePublished(
-            ['q' => $query],
+            array_merge(['q' => $query], $this->hideOutOfStockFilter()),
             $page,
             self::PER_PAGE
         );

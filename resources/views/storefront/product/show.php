@@ -49,11 +49,16 @@ $compareAt = $product->compareAtPrice !== null ? (float) $product->compareAtPric
 $onSale    = $product->isOnSale();
 $discount  = $onSale ? (int) $product->discountPercent() : 0;
 
+// Live sold-out state comes from the controller (reads
+// commerce_inventory, not the cached product.stock_status).
+// The cached field can drift; the live check cannot.
+$isLiveSoldOut = $isLiveSoldOut ?? false;
+
 $stockClass = 'sf-stock-in';
 $stockLabel = 'In stock';
-if ($product->isOutOfStock()) {
+if ($isLiveSoldOut) {
     $stockClass = 'sf-stock-out';
-    $stockLabel = 'Out of stock';
+    $stockLabel = 'Sold out';
 } elseif ($product->stockStatus === 'backorder') {
     $stockClass = 'sf-stock-backorder';
     $stockLabel = 'Available on backorder';
@@ -165,7 +170,16 @@ for ($i = 1; $i <= 4; $i++) {
                     && !empty($variants);
                 ?>
 
-                <?php if ($product !== null && (!$product->isVariable() || $isVariableWithVariants)): ?>
+                <?php if ($isLiveSoldOut): ?>
+                    <div class="sf-product-sold-out" role="status">
+                        <i class="bi bi-slash-circle me-1" aria-hidden="true"></i>
+                        Currently unavailable
+                    </div>
+                    <p class="sf-product-sold-out-hint">
+                        This product is out of stock. It will reappear in our listings
+                        when stock is replenished.
+                    </p>
+                <?php elseif ($product !== null && (!$product->isVariable() || $isVariableWithVariants)): ?>
                     <form method="POST"
                           action="/cart/add"
                           class="sf-add-to-cart-form"

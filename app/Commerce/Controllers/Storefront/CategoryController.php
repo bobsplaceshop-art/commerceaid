@@ -78,8 +78,12 @@ final class CategoryController extends StorefrontController
         $page = max(1, (int) $request->query('page', 1));
 
         // Product listing scoped to this category.
-        $result = $productRepo->paginatePublished(
+        $filters = array_merge(
             ['category_id' => $category->id, 'sort' => 'newest'],
+            $this->hideOutOfStockFilter()
+        );
+        $result = $productRepo->paginatePublished(
+            $filters,
             $page,
             self::PER_PAGE
         );

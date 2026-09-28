@@ -88,11 +88,48 @@ final class ProductController extends StorefrontController
             $variantList = $variants->listForProduct($product->id);
         }
 
+        // ----- Live sold-out state -----
+        // The product's cached stock_status can drift from the
+        // live inventory. This boolean reflects truth:
+        //
+        //   simple:  available <= 0
+        //   variable: no variant with available > 0
+        //   no inventory row: treated as sold out for simple
+        //     products, treated as sold out for variable products
+        //     with no active variants
+        //
+        // Products that do not track stock (manage_stock = 0)
+        // are never sold out - digital goods have no inventory.
+        $isLiveSoldOut = false;
+
+        if ($product->manageStock) {
+            $units = $inventory->stockForProduct($product->id);
+
+            if ($units === []) {
+                // No inventory rows for a stock-managed product.
+                // Data integrity issue post-008D.1; treat as
+                // sold out rather than advertising availability.
+                $isLiveSoldOut = true;
+            } else {
+                $anyAvailable = false;
+                foreach ($units as $u) {
+                    if ((int) ($u['available'] ?? 0) > 0) {
+                        $anyAvailable = true;
+                        break;
+                    }
+                }
+                $isLiveSoldOut = !$anyAvailable;
+            }
+        }
+
         // ----- Related products -----
         $related = [];
         if ($primaryCategory !== null) {
             $relatedResult = $products->paginatePublished(
-                ['category_id' => $primaryCategory->id, 'sort' => 'newest'],
+                array_merge(
+                    ['category_id' => $primaryCategory->id, 'sort' => 'newest'],
+                    $this->hideOutOfStockFilter()
+                ),
                 1,
                 self::RELATED_LIMIT + 1
             );
@@ -117,6 +154,7 @@ final class ProductController extends StorefrontController
             'primaryCategory' => $primaryCategory,
             'parentCategory'  => $parentCategory,
             'stockQty'        => $stockQty,
+            'isLiveSoldOut'   => $isLiveSoldOut,
             'variants'        => $variantList,
             'related'         => $related,
         ]);

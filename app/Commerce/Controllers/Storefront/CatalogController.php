@@ -100,6 +100,7 @@ final class CatalogController extends StorefrontController
         $filters['sort'] = $sortKey;
 
         // ----- Query -----
+        $filters = array_merge($filters, $this->hideOutOfStockFilter());
         $result = $products->paginatePublished($filters, $page, self::PER_PAGE);
 
         // ----- Filter dropdown data -----

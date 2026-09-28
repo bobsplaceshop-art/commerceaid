@@ -294,3 +294,32 @@
     padding-top: 2rem;
     border-top: 1px solid var(--sf-border);
 }
+
+/* ---- Sold-out state (Stage 008G) ----
+   Replaces the Add to Cart form when the product has no
+   available stock. The page still renders so bookmarks and
+   search engine results resolve.
+   ---- */
+
+.sf-product-sold-out {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: var(--sf-cream, #f8f1e8);
+    border: 1px solid var(--sf-border, #e5e1d8);
+    border-radius: 4px;
+    color: var(--sf-charcoal, #111);
+    font-size: .95rem;
+    font-weight: 500;
+}
+.sf-product-sold-out .bi {
+    color: var(--sf-muted, #777);
+    font-size: 1.1rem;
+}
+
+.sf-product-sold-out-hint {
+    margin: .75rem 0 0;
+    font-size: .85rem;
+    color: var(--sf-muted, #777);
+    line-height: 1.5;
+}

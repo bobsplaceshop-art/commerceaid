@@ -85,6 +85,29 @@ abstract class StorefrontController
     }
 
     /**
+     * Filter flag for the storefront catalog: hide products
+     * whose every sellable unit is out of stock.
+     *
+     * Read once per request. Returns ['hide_out_of_stock' => true]
+     * when the setting is on, an empty array otherwise so it
+     * can be merged into any filter array.
+     *
+     * @return array<string,mixed>
+     */
+    protected function hideOutOfStockFilter(): array
+    {
+        try {
+            $settings = $this->container->get(
+                \CorporateAid\Commerce\Repositories\StoreSettingsRepository::class
+            );
+            $enabled = $settings->bool('catalog.hide_out_of_stock', false);
+            return $enabled ? ['hide_out_of_stock' => true] : [];
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    /**
      * Cart unit count for the header badge. Resolved once per
      * request so views and the layout share the same value.
      *

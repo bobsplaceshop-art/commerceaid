@@ -49,16 +49,20 @@ final class HomeController extends StorefrontController
         $products = $this->container->get(ProductRepository::class);
         $categories = $this->container->get(CategoryRepository::class);
 
+        // Hide out-of-stock products if the merchant enabled it.
+        // Empty array when disabled - merge is a no-op.
+        $stockFilter = $this->hideOutOfStockFilter();
+
         // ----- Featured products -----
         $featured = $products->paginatePublished(
-            ['featured' => true, 'sort' => 'newest'],
+            array_merge(['featured' => true, 'sort' => 'newest'], $stockFilter),
             1,
             self::SECTION_LIMIT
         );
 
         // ----- New arrivals -----
         $newArrivals = $products->paginatePublished(
-            ['sort' => 'newest'],
+            array_merge(['sort' => 'newest'], $stockFilter),
             1,
             self::SECTION_LIMIT
         );

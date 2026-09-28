@@ -69,6 +69,20 @@ final class StoreSettingDefinitions
         // -------------------------------------------------------------
         // Compliance
         // -------------------------------------------------------------
+        'catalog.hide_out_of_stock' => [
+            'label'   => 'Hide out-of-stock products from listings',
+            'type'    => 'boolean',
+            'default' => false,
+            'group'   => self::GROUP_GENERAL,
+            'hint'    => 'When enabled, products whose every sellable '
+                       . 'variant is unavailable are hidden from '
+                       . 'catalog pages, category pages, home sections, '
+                       . 'search results, and related products. Direct '
+                       . 'product URLs still work and show a Sold out '
+                       . 'state so bookmarks and search engine results '
+                       . 'continue to resolve.',
+        ],
+
         'compliance.cookie_banner.enabled' => [
             'label'   => 'Cookie consent banner',
             'type'    => 'boolean',
