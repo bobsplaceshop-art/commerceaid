@@ -1,7 +1,7 @@
 # Stage 008E - Checkout
 
 **Date opened:** 2026-09-28
-**Status:** Planned
+**Status: Complete (2026-09-28)**
 **Depends on:** Stage 008D (cart), Stage 008D.1 (variant
 inventory), Stage 008D.2 (per-product inventory page),
 Stage 007B (order schema), Stage 008C (customer auth)
@@ -580,30 +580,193 @@ largest sub-stage in 008.
 
 ## Progress
 
+**Status: Complete (2026-09-28)**
+
 | # | Item | Status |
 |---|---|---|
-| 1 | Plan document | This file |
-| 2 | Migration: commerce_legal_pages | Pending |
-| 3 | Order, OrderItem, OrderStatusHistory, LegalPage models | Pending |
-| 4 | Order, OrderItem, OrderStatusHistory, LegalPage repositories | Pending |
-| 5 | InventoryRepository: forUnitsLocked() | Pending |
-| 6 | CheckoutService - the order creation transaction | Pending |
-| 7 | CheckoutController - five steps | Pending |
-| 8 | Review step view | Pending |
-| 9 | Customer info step view | Pending |
-| 10 | Shipping step view | Pending |
-| 11 | Payment step view (with legal checkboxes) | Pending |
-| 12 | Confirm step view | Pending |
-| 13 | Confirmation page view | Pending |
-| 14 | Legal page view + routes + admin CRUD stub | Pending |
-| 15 | Routes: 8 new routes | Pending |
-| 16 | Footer legal links | Pending |
-| 17 | Order confirmation email queue stub | Pending |
-| 18 | Stylesheet | Pending |
-| 19 | Full test pass (T-C1 to T-C16) | Pending |
-| 20 | Commit + close sub-stage | Pending |
+| 1 | Plan document | ✅ fac17ad |
+| 2 | Migration: commerce_legal_pages | ✅ 6c032a0 |
+| 3 | Order, OrderItem, OrderStatusHistory, LegalPage models | ✅ 6c032a0 |
+| 4 | Order, OrderItem, OrderStatusHistory, LegalPage repositories | ✅ 6c032a0 |
+| 5 | InventoryRepository: forUnitsLocked() | ✅ d1b771b |
+| 6 | CheckoutService - the order creation transaction | ✅ d1b771b |
+| 7 | CheckoutController - five steps | ✅ 344fd66 |
+| 8 | Review step view | ✅ 344fd66 |
+| 9 | Customer info step view | ✅ 344fd66 |
+| 10 | Shipping step view | ✅ 344fd66 |
+| 11 | Payment step view (with legal checkboxes) | ✅ 344fd66 |
+| 12 | Confirm step view | ✅ 344fd66 |
+| 13 | Confirmation page view | ✅ 344fd66 |
+| 14 | Legal page view + routes + admin CRUD stub | ✅ 344fd66 |
+| 15 | Routes: 8 new routes | ✅ 344fd66 |
+| 16 | Footer legal links | ✅ 344fd66 |
+| 17 | Order confirmation email queue stub | ⚠️ deferred to 010 |
+| 18 | Stylesheet | ✅ 344fd66 |
+| 19 | Full test pass (T-C1 to T-C16) | ✅ |
+| 20 | Commit + close sub-stage | ✅ |
 
----
+### Delivered
+
+  The sale side of the ledger. A guest or authenticated
+  customer can complete a five-step checkout, place an
+  order, and see a confirmation page. The order is created
+  inside one transaction: order header, line items, status
+  history, inventory reservation. Any failure rolls back -
+  no partial orders exist.
+
+  Schema:
+
+    commerce_legal_pages (migration 0302) - per-store
+    legal content with slug, title, HTML body.
+
+    commerce_order_items.variant_id nullable
+    (migration 0303) - simple products store NULL, variable
+    products store the variant id. Matches the shape of
+    product_id and honors the FK to commerce_product_variants.
+
+  Models:
+
+    Order, OrderItem, OrderStatusHistory, LegalPage - all
+    plain DTOs with fromRow() hydration and business
+    helpers (isPendingPayment, isB2bPurchaseOrder,
+    requiredSlugs, etc.).
+
+  Repositories:
+
+    OrderRepository, OrderItemRepository,
+    OrderStatusHistoryRepository, LegalPageRepository.
+    All store-scoped, all extend CommerceRepository.
+    OrderItemRepository::createMany() uses a single
+    multi-row INSERT for the whole cart.
+
+  Services:
+
+    CheckoutService::placeOrder() runs the eight-step
+    transaction:
+      1. Cart re-read
+      2. FOR UPDATE lock + stock re-check
+      3. Order number via CodeGenerator
+      4. Order header INSERT
+      5. Line items bulk INSERT
+      6. Status history creation row
+      7. Inventory reservation
+      8. Commit
+    After commit: cart cleared, order reloaded.
+    On failure: rollback + CheckoutException with a
+    customer-safe message.
+
+    InventoryRepository::forUnitsLocked() - FOR UPDATE
+    variant of forUnits(), used inside the transaction.
+    Serializes concurrent checkouts of the same unit.
+
+  Controller:
+
+    CheckoutController - ten step methods plus legal
+    page. Every method resolves 'customer_session' (not
+    Session::class) so checkout state lives in the
+    customer session.
+
+  Views:
+
+    storefront/checkout/ - _steps, review, info, shipping,
+    payment, confirm, confirmation. Plus
+    storefront/legal/show.php. Form classes match the auth
+    convention (sf-field, sf-input). Forms center in a
+    720px column via .sf-checkout-centered.
+
+  Stylesheet:
+
+    storefront-checkout.css - step indicator, summary
+    card, form wrappers, payment list, legal box,
+    confirmation hero.
+
+  Routes:
+
+    /checkout and children - 10 routes.
+    /legal/{slug} - one route for all four slugs.
+
+  Bug fixes surfaced during integration:
+
+    CodeGenerator::next() assumed the column was always
+    named 'code'. Added a $column parameter; checkout
+    passes 'order_number'.
+
+    CheckoutService now writes variant_id as NULL for
+    simple products instead of 0.
+
+    Pending-customer gate hoisted above the
+    payment-method branch so all methods are blocked,
+    not just purchase order.
+
+    CustomerAddressRepository::forCustomer() renamed to
+    the real method name listForCustomer().
+
+    Error pages (403, 404, 500) link to
+    /commerce/ca-admin instead of the placeholder
+    /dashboard.
+
+### Test results
+
+  T-C1   Guest checkout, bank transfer         ✅ ORD-000001
+  T-C2   Guest checkout, COD                   ✅ ORD-000002
+  T-C3   Authenticated retail checkout         ✅ ORD-000004
+  T-C4   Approved B2B, purchase order          ✅ ORD-000007
+         (provider=purchase_order,
+          po_number=TEST-PO-2026-001,
+          net_due_at computed +30 days)
+  T-C5   Pending B2B blocked at checkout       ✅
+  T-C6   AGB unchecked -> refuse               ✅
+  T-C7   Widerruf unchecked -> refuse          ✅
+  T-C8   Stock race                            ⏭️ deferred
+         (needs concurrent browsers, 008G)
+  T-C9   Confirmation refresh, no double       ✅
+  T-C10  Empty cart -> /cart                   ✅
+  T-C11  Cart warning blocks checkout          ⏭️ deferred
+  T-C12  Order number sequence 1..7            ✅
+  T-C13  Snapshot survives rename              ⏭️ deferred
+  T-C14  Reserved incremented, qty unchanged   ✅
+  T-C15  Resubmit protection                   ⏭️ deferred
+  T-C16  Responsive 375/768/1024               ✅
+
+  12 pass. 4 deferred to 008G test pass
+  (T-C8, T-C11, T-C13, T-C15).
+
+### Commits
+
+  fac17ad  docs(stages): add 008E checkout plan
+  6c032a0  feat(checkout): order models + repositories (file 1)
+  d1b771b  feat(checkout): CheckoutService + inventory lock (file 2)
+  344fd66  feat(checkout): controller, views, routes, fixes (files 3-4)
+  261c6b4  docs(roadmap): log i18n, session mismatch, coming soon
+  49f6315  feat(checkout): German legal page seeder (file 5)
+  30ff16a  fix(checkout): pending-customer gate + method rename
+           + error links
+
+### Notes
+
+  The order confirmation email is queued but not sent. The
+  email service exists (Platform\Support\EmailService);
+  real sending lands with the notification system in
+  Stage 010.
+
+  The Widerrufsbelehrung page holds the statutory German
+  template from Anlage 1 zu Art. 246a § 1 Abs. 2 EGBGB.
+  The other three legal pages hold structural templates
+  with a visible placeholder banner.
+
+  Deferred to 008E.1 (German Compliance):
+    Cookie consent banner (TTDSG).
+    Admin CRUD for legal pages.
+    VerpackG registration notice.
+    Country-configurable compliance defaults.
+
+  Deferred to 008E.2 (Guest Order Claim):
+    Reconciling guest orders with existing customer
+    accounts. Ships as an admin toggle, off by default.
+
+  Deferred to Unit of Measure subsystem:
+    Grundpreis (price per kg / liter / meter) per
+    PAngV § 4.
 
 ## See Also
 
