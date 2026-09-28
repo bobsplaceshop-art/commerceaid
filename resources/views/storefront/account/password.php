@@ -17,8 +17,7 @@ $err = fn (string $k): string => isset($errors[$k])
     : '';
 ?>
 
-<div class="sf-auth-wrap" data-sf-page="account-password">
-    <div class="sf-auth-card">
+<div class="sf-account-panel" data-sf-page="account-password">
 
         <h1 class="sf-auth-heading">Change password</h1>
         <p class="sf-auth-subhead">
@@ -92,7 +91,6 @@ $err = fn (string $k): string => isset($errors[$k])
             <a href="/account">Back to account</a>
         </p>
 
-    </div>
 </div>
 
 <script>

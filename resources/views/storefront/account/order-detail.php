@@ -61,7 +61,7 @@ $carrierLabel = $order->carrierLabel();
 $withdrawalEligible = $order->isWithdrawalEligible();
 $withdrawalDeadline = $order->withdrawalDeadline();
 ?>
-<div class="sf-order-detail" data-sf-page="account-order-detail">
+<div class="sf-account-panel" data-sf-page="account-order-detail">
 
     <nav class="sf-order-detail-breadcrumb" aria-label="Breadcrumb">
         <a href="/account">Account</a>

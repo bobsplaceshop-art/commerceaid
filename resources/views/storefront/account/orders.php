@@ -36,7 +36,7 @@ $pageUrl = function (int $p) use ($tab): string {
     return '/account/orders?' . http_build_query(['tab' => $tab, 'page' => $p]);
 };
 ?>
-<div class="sf-orders-wrap" data-sf-page="account-orders">
+<div class="sf-account-panel" data-sf-page="account-orders">
 
     <header class="sf-orders-header">
         <h1 class="sf-orders-title">My Orders</h1>

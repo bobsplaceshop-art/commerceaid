@@ -44,6 +44,39 @@ use CorporateAid\Platform\Support\Hasher;
  */
 final class AccountController extends StorefrontController
 {
+    /**
+     * Route every account page through the account shell.
+     *
+     * The shell (storefront.account._shell) renders the sidebar
+     * and delegates to the actual view. This override is the
+     * only place that knows about the shell. Individual methods
+     * call $this->render('storefront.account.dashboard', [...])
+     * exactly as before.
+     *
+     * @param array<string,mixed> $data
+     */
+    protected function render(string $view, array $data = []): Response
+    {
+        // Load the claimable count once per account render for
+        // the sidebar badge. Fast COUNT query.
+        $claimableCount = 0;
+        $customer = $data['customer'] ?? null;
+        if ($customer instanceof \CorporateAid\Commerce\Models\Customer) {
+            try {
+                $orders = $this->container->get(OrderRepository::class);
+                $claimable = $orders->listClaimableForCustomer($customer->id);
+                $claimableCount = count($claimable);
+            } catch (\Throwable) {
+                $claimableCount = 0;
+            }
+        }
+
+        $data['claimableCount']     = $claimableCount;
+        $data['_account_inner_view'] = $view;
+
+        return parent::render('storefront.account._shell', $data);
+    }
+
     // =================================================================
     // Dashboard
     // =================================================================

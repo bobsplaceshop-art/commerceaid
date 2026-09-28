@@ -24,8 +24,7 @@ $typeLabel = function (string $type): string {
 };
 ?>
 
-<div class="sf-auth-wrap" data-sf-page="account-addresses">
-    <div class="sf-auth-card sf-auth-card-wide">
+<div class="sf-account-panel" data-sf-page="account-addresses">
 
         <h1 class="sf-auth-heading">My Addresses</h1>
         <p class="sf-auth-subhead">
@@ -136,5 +135,4 @@ $typeLabel = function (string $type): string {
             <a href="/account">Back to account</a>
         </p>
 
-    </div>
 </div>

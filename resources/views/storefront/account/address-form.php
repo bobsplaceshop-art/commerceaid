@@ -62,8 +62,7 @@ $isDefaultChecked = array_key_exists('is_default', $old)
     : ($address?->isDefault ?? false);
 ?>
 
-<div class="sf-auth-wrap" data-sf-page="account-address-form">
-    <div class="sf-auth-card sf-auth-card-wide">
+<div class="sf-account-panel" data-sf-page="account-address-form">
 
         <h1 class="sf-auth-heading">
             <?= $mode === 'edit' ? 'Edit address' : 'Add an address' ?>
@@ -209,5 +208,4 @@ $isDefaultChecked = array_key_exists('is_default', $old)
             </div>
         </form>
 
-    </div>
 </div>

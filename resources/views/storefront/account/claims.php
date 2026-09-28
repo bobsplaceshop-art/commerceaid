@@ -15,8 +15,7 @@ if ($customer === null) {
 
 $count = count($claimable);
 ?>
-<div class="sf-auth-wrap" data-sf-page="account-claims">
-    <div class="sf-auth-card sf-auth-card-wide">
+<div class="sf-account-panel" data-sf-page="account-claims">
 
         <h1 class="sf-auth-heading">Claim your orders</h1>
         <p class="sf-auth-subhead">
@@ -105,5 +104,4 @@ $count = count($claimable);
 
         <?php endif; ?>
 
-    </div>
 </div>

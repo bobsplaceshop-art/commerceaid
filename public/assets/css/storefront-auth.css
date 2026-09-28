@@ -756,3 +756,260 @@
         align-self: flex-end;
     }
 }
+
+/* =====================================================================
+   Account shell (Stage 008F.1)
+   Two-column layout: sidebar + content. Sidebar collapses to a
+   horizontally-scrollable tab strip at <768px.
+   ===================================================================== */
+
+.sf-account-shell {
+    background: var(--sf-cream, #f8f1e8);
+    min-height: 60vh;
+    padding: 2.5rem 0 4rem;
+}
+
+.sf-account-shell-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 2.5rem;
+    align-items: start;
+}
+
+/* ---- Sidebar ---- */
+.sf-account-sidebar {
+    position: sticky;
+    top: 1rem;
+}
+
+.sf-account-nav {
+    background: #fff;
+    border: 1px solid var(--sf-border, #e5e1d8);
+    border-radius: 6px;
+    padding: .5rem 0;
+}
+
+.sf-account-nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sf-account-nav-group {
+    border-bottom: 1px solid var(--sf-border, #e5e1d8);
+}
+.sf-account-nav-group:last-child {
+    border-bottom: none;
+}
+
+.sf-account-nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: .85rem 1.25rem;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--sf-muted, #777);
+    cursor: pointer;
+    transition: color .12s ease;
+}
+.sf-account-nav-toggle:hover {
+    color: var(--sf-charcoal, #111);
+}
+.sf-account-nav-chevron {
+    font-size: .7rem;
+    transition: transform .15s ease;
+}
+.sf-account-nav-group.is-expanded .sf-account-nav-chevron {
+    transform: rotate(180deg);
+}
+
+.sf-account-nav-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .2s ease;
+}
+.sf-account-nav-group.is-expanded .sf-account-nav-items {
+    max-height: 400px;
+}
+
+.sf-account-nav-item {
+    margin: 0;
+}
+
+.sf-account-nav-link {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .55rem 1.25rem .55rem 1.75rem;
+    color: var(--sf-charcoal, #111);
+    text-decoration: none;
+    font-size: .9rem;
+    border-left: 2px solid transparent;
+    transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+.sf-account-nav-link:hover {
+    background: var(--sf-cream, #f8f1e8);
+}
+.sf-account-nav-link.is-active {
+    color: var(--sf-charcoal, #111);
+    background: var(--sf-cream, #f8f1e8);
+    border-left-color: var(--sf-gold, #c6a15b);
+    font-weight: 500;
+}
+.sf-account-nav-link.is-soon {
+    color: var(--sf-muted, #999);
+    cursor: default;
+}
+.sf-account-nav-link .bi {
+    font-size: .95rem;
+    width: 1rem;
+    text-align: center;
+    color: var(--sf-muted, #777);
+}
+.sf-account-nav-link.is-active .bi {
+    color: var(--sf-gold, #c6a15b);
+}
+
+.sf-account-nav-badge {
+    margin-left: auto;
+    display: inline-block;
+    min-width: 1.2rem;
+    padding: .1rem .4rem;
+    font-size: .7rem;
+    font-weight: 600;
+    background: var(--sf-gold, #c6a15b);
+    color: #fff;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.sf-account-nav-soon {
+    margin-left: auto;
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--sf-muted, #aaa);
+    padding: .1rem .4rem;
+    background: var(--sf-cream, #f8f1e8);
+    border-radius: 3px;
+}
+
+/* ---- Content pane ---- */
+.sf-account-main {
+    min-width: 0;
+}
+
+.sf-account-panel {
+    background: #fff;
+    border: 1px solid var(--sf-border, #e5e1d8);
+    border-radius: 6px;
+    padding: 2rem 2.25rem;
+}
+
+/* The order detail page and orders list use their own
+   padding conventions. Give the panel no padding when it
+   contains those. */
+.sf-account-panel[data-sf-page="account-orders"],
+.sf-account-panel[data-sf-page="account-order-detail"] {
+    padding: 2rem 2.25rem;
+}
+
+/* Headings inside the panel keep the auth styling. */
+.sf-account-panel .sf-auth-heading {
+    margin-top: 0;
+}
+
+/* ---- Mobile ---- */
+@media (max-width: 900px) {
+    .sf-account-shell-container {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    .sf-account-sidebar {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .sf-account-shell {
+        padding: 1.25rem 0 2rem;
+    }
+    .sf-account-shell-container {
+        padding: 0 1rem;
+        gap: 1rem;
+    }
+    .sf-account-nav {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -1rem;
+        padding: 0 1rem;
+    }
+    .sf-account-nav-list {
+        display: flex;
+        gap: .5rem;
+        padding-bottom: .25rem;
+    }
+    .sf-account-nav-group {
+        display: contents;
+        border: none;
+    }
+    /* On mobile, hide the group labels and render every item
+       as a chip in the horizontal scroll. */
+    .sf-account-nav-toggle {
+        display: none;
+    }
+    .sf-account-nav-items {
+        display: contents;
+        max-height: none;
+        overflow: visible;
+    }
+    .sf-account-nav-item {
+        flex-shrink: 0;
+    }
+    .sf-account-nav-link {
+        padding: .55rem .9rem;
+        border-left: none;
+        border-bottom: 2px solid transparent;
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid var(--sf-border, #e5e1d8);
+        font-size: .85rem;
+    }
+    .sf-account-nav-link.is-active {
+        background: var(--sf-charcoal, #111);
+        color: #fff;
+        border-color: var(--sf-charcoal, #111);
+    }
+    .sf-account-nav-link.is-active .bi {
+        color: #fff;
+    }
+    .sf-account-nav-link.is-soon {
+        background: var(--sf-cream, #f8f1e8);
+        border-style: dashed;
+    }
+    .sf-account-nav-soon {
+        background: transparent;
+        padding: 0;
+        margin-left: .35rem;
+    }
+    .sf-account-panel {
+        padding: 1.5rem 1.25rem;
+    }
+}

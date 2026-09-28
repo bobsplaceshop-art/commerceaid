@@ -32,8 +32,7 @@ $isPending  = $customer->isPending();
 $isRejected = $customer->isRejected();
 ?>
 
-<div class="sf-auth-wrap" data-sf-page="account-dashboard">
-    <div class="sf-auth-card sf-auth-card-wide">
+<div class="sf-account-panel" data-sf-page="account-dashboard">
 
         <h1 class="sf-auth-heading">
             Welcome, <?= e($customer->fullName()) ?>
@@ -151,5 +150,4 @@ $isRejected = $customer->isRejected();
             </button>
         </form>
 
-    </div>
 </div>
