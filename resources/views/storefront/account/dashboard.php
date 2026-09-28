@@ -3,8 +3,11 @@
  * Customer account dashboard at /account.
  *
  * Context (from AccountController::dashboard):
- *   $customer  ?Customer      always non-null (route is guarded)
- *   $group     ?CustomerGroup the customer's group, or null
+ *   $customer      ?Customer      always non-null (route is guarded)
+ *   $group         ?CustomerGroup the customer's group, or null
+ *   $hasClaimable  bool           true when the customer has guest
+ *                                 orders they can claim and has not
+ *                                 dismissed the notification
  *
  * The dashboard is the first thing a customer sees after login.
  * It shows:
@@ -16,8 +19,9 @@
  * See docs/stages/008c_customer-auth-plan.md.
  */
 
-$customer = $customer ?? null;
-$group    = $group    ?? null;
+$customer     = $customer     ?? null;
+$group        = $group        ?? null;
+$hasClaimable = $hasClaimable ?? false;
 
 if ($customer === null) {
     // Defensive - the route is guarded, but be safe.
@@ -37,6 +41,28 @@ $isRejected = $customer->isRejected();
         <p class="sf-auth-subhead">
             Manage your account details, addresses, and orders from here.
         </p>
+
+        <?php if ($hasClaimable): ?>
+            <div class="sf-alert sf-alert-info" style="margin-bottom:1.5rem;">
+                <strong>We found orders placed with your email address.</strong>
+                <p class="mb-2 mt-1 small">
+                    You have guest orders we can link to your account.
+                    Once linked, they will appear in your order history.
+                </p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="/account/claims" class="sf-btn sf-btn-primary">
+                        <i class="bi bi-link-45deg me-1"></i>
+                        Review orders
+                    </a>
+                    <form method="POST" action="/account/claims/dismiss" style="display:inline;">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="sf-btn sf-btn-outline">
+                            Not now
+                        </button>
+                    </form>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <?php if ($isPending): ?>
             <div class="sf-form-alert" style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;">

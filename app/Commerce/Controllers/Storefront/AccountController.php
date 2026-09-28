@@ -6,6 +6,7 @@ namespace CorporateAid\Commerce\Controllers\Storefront;
 use CorporateAid\Commerce\Models\CustomerAddress;
 use CorporateAid\Commerce\Repositories\CustomerAddressRepository;
 use CorporateAid\Commerce\Repositories\CustomerGroupRepository;
+use CorporateAid\Commerce\Repositories\OrderRepository;
 use CorporateAid\Commerce\Repositories\CustomerRepository;
 use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Support\StorefrontController;
@@ -61,9 +62,35 @@ final class AccountController extends StorefrontController
             $group = $groups->findById($customer->customerGroupId);
         }
 
+        // Guest order claim: does this customer have any orders
+        // marked as claimable that they have not yet decided on?
+        // Fast COUNT check. Renders a banner on the dashboard when
+        // true, unless the customer has already dismissed it for
+        // this session.
+        $hasClaimable = false;
+        if ($customer !== null) {
+            try {
+                $orders = $this->container->get(OrderRepository::class);
+                $hasClaimable = $orders->hasClaimableOrders($customer->id);
+            } catch (\Throwable) {
+                // A broken claim read should not break the dashboard.
+                $hasClaimable = false;
+            }
+        }
+
+        // Session-level dismissal.
+        $dismissed = false;
+        try {
+            $dismissed = (bool) $this->container->get(Session::class)
+                ->get('guest_claim_dismissed', false);
+        } catch (\Throwable) {
+            $dismissed = false;
+        }
+
         return $this->render('storefront.account.dashboard', [
-            'title'    => 'My Account',
-            'customer' => $customer,
+            'title'         => 'My Account',
+            'customer'      => $customer,
+            'hasClaimable'  => $hasClaimable && !$dismissed,
             'group'    => $group,
         ]);
     }

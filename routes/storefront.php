@@ -10,6 +10,7 @@ use CorporateAid\Commerce\Controllers\Storefront\CategoryController;
 use CorporateAid\Commerce\Controllers\Storefront\ProductController;
 use CorporateAid\Commerce\Controllers\Storefront\AuthController;
 use CorporateAid\Commerce\Controllers\Storefront\AccountController;
+use CorporateAid\Commerce\Controllers\Storefront\CustomerClaimController;
 use CorporateAid\Commerce\Controllers\Storefront\CartController;
 use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
 
@@ -126,6 +127,11 @@ $router->post('/account/addresses/{id}/default', [AccountController::class, 'set
 
 $router->get('/account/password',                [AccountController::class, 'showPassword'],      ['store', 'customer.auth']);
 $router->post('/account/password',               [AccountController::class, 'changePassword'],    ['store', 'customer.auth', 'csrf']);
+
+// Guest order claim (Stage 008E.2)
+$router->get('/account/claims',           [CustomerClaimController::class, 'list'],    ['store', 'customer.auth']);
+$router->post('/account/claims/link',     [CustomerClaimController::class, 'link'],    ['store', 'customer.auth', 'csrf']);
+$router->post('/account/claims/dismiss',  [CustomerClaimController::class, 'dismiss'], ['store', 'customer.auth', 'csrf']);
 
 // ---------------------------------------------------------------------
 // Cart (Stage 008D)
