@@ -138,6 +138,99 @@ final class OrderRepository extends CommerceRepository
         return $this->countByStatus('pending_payment');
     }
 
+    // =================================================================
+    // Guest order claim (Stage 008E.2)
+    // =================================================================
+
+    /**
+     * Orders marked as claimable by this customer. A claimable
+     * order has claimable_by_customer_id set to the customer id
+     * and has not yet been claimed.
+     *
+     * @return array<int, Order>
+     */
+    public function listClaimableForCustomer(int $customerId): array
+    {
+        $rows = $this->db->select(
+            "SELECT * FROM `commerce_orders`
+              WHERE `store_id` = ?
+                AND `claimable_by_customer_id` = ?
+                AND `claimed_at` IS NULL
+              ORDER BY `id` DESC",
+            [$this->storeId(), $customerId]
+        );
+        return array_map(fn ($r) => Order::fromRow($r), $rows);
+    }
+
+    /**
+     * Fast check: does this customer have any unclaimed orders?
+     * Cheaper than listClaimableForCustomer when we only need a
+     * boolean for the dashboard notification.
+     */
+    public function hasClaimableOrders(int $customerId): bool
+    {
+        $count = (int) $this->db->scalar(
+            "SELECT COUNT(*) FROM `commerce_orders`
+              WHERE `store_id` = ?
+                AND `claimable_by_customer_id` = ?
+                AND `claimed_at` IS NULL",
+            [$this->storeId(), $customerId]
+        );
+        return $count > 0;
+    }
+
+    /**
+     * Link claimable orders to a customer. Each order must:
+     *   - be in this store
+     *   - be claimable by this exact customer
+     *   - not have been claimed already
+     *
+     * On success:
+     *   customer_id              <- claimable_by_customer_id
+     *   claimed_at               <- NOW()
+     *   claimable_by_customer_id <- NULL
+     *
+     * The WHERE clauses guard against races: two concurrent
+     * requests both calling this method, only the first wins.
+     * Returns the number of orders actually claimed.
+     *
+     * @param array<int, int> $orderIds
+     */
+    public function claimOrders(array $orderIds, int $customerId): int
+    {
+        if ($orderIds === []) {
+            return 0;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($orderIds), '?'));
+
+        // Parameter order matches the placeholder order in the
+        // SQL below:
+        //   1. customer_id        (SET)
+        //   2. store_id           (WHERE)
+        //   3..N. id IN (...)     (WHERE)
+        //   N+1. claimable_by     (WHERE)
+        $params = [$customerId, $this->storeId()];
+        foreach ($orderIds as $id) {
+            $params[] = (int) $id;
+        }
+        $params[] = $customerId;
+
+        $stmt = $this->db->execute(
+            "UPDATE `commerce_orders`
+                SET `customer_id` = ?,
+                    `claimed_at` = NOW(),
+                    `claimable_by_customer_id` = NULL
+              WHERE `store_id` = ?
+                AND `id` IN ({$placeholders})
+                AND `claimable_by_customer_id` = ?
+                AND `claimed_at` IS NULL",
+            $params
+        );
+
+        return $stmt;
+    }
+
     /**
      * @param array<string,mixed> $filters
      * @return array{0:string,1:array<int,mixed>}

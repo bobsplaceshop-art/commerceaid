@@ -102,6 +102,28 @@ final class StoreSettingDefinitions
             'hint'    => 'Set automatically when the admin acknowledges '
                        . 'the VerpackG registration notice.',
         ],
+
+        'compliance.guest_claim.enabled' => [
+            'label'   => 'Reconcile guest orders with existing accounts',
+            'type'    => 'boolean',
+            'default' => false,
+            'group'   => self::GROUP_COMPLIANCE,
+            'hint'    => 'When enabled, guest orders placed with an email '
+                       . 'that matches an existing customer account will be '
+                       . 'marked as claimable by that customer. The customer '
+                       . 'will be offered a link to claim the order on their '
+                       . 'next login. '
+                       . 'Legal note (DSGVO): the claimable link asserts '
+                       . 'that the entered email matched an account email, '
+                       . 'not that the customer owns the order. Ownership '
+                       . 'is established only when the customer explicitly '
+                       . 'claims. '
+                       . 'Operational note: if a guest mistypes an existing '
+                       . 'customer email, the wrong customer may be '
+                       . 'offered the claim. Consider whether the '
+                       . 'reconciliation benefit outweighs this risk for '
+                       . 'your business.',
+        ],
     ];
 
     /**
