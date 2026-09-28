@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-09-28
-**Version:** 0.8.0-alpha
-**Stage:** 008E.1 complete. Next: 008E.2 (guest order claim)
+**Version:** 0.9.0-alpha
+**Stage:** 008E.2 complete. Next: 008F (order lifecycle)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.

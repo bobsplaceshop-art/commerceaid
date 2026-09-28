@@ -42,6 +42,7 @@ Adding a stage or reordering requires updating this document first.
 | 008D.2| Per-product inventory page          | 2026-09-28 |
 | 008E  | Checkout                               | 2026-09-28 |
 | 008E.1| German compliance                      | 2026-09-28 |
+| 008E.2| Guest order claim                     | 2026-09-28 |
 
 Also completed outside the staged sequence:
 
@@ -59,23 +60,28 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008E.2 - Guest Order Claim
+### Stage 008F - Order Lifecycle (Customer-Facing)
 
-**Goal:** Reconcile guest orders with existing customer accounts
-after the fact, without adding friction at checkout.
+**Goal:** The customer can see every order, understand its
+current state, and track it. The post-purchase half of the
+relationship.
 
 **Deliverables:**
 
-- Migration: claimable_by_customer_id, claimed_at on
-  commerce_orders.
-- CheckoutService populates claimable_by_customer_id on guest
-  orders whose email matches an existing customer.
-- CustomerClaimController - list claimable orders, claim action.
-- Claim notification on the customer dashboard.
-- Admin toggle: off by default, disclaimer when enabling.
+- Order list with status tabs (Unpaid / To Be Shipped /
+  Shipped / Completed / Cancelled).
+- Order detail page with line items, addresses, payment
+  method, three-track status display.
+- New columns: carrier_key, tracking_number on
+  commerce_orders. URL template map for DHL, FedEx, UPS,
+  DPD, Hermes, etc.
+- Widerrufsrecht link on every order detail.
+- 14-day withdrawal window indicator.
+- Rewire /account/orders from stub to real list.
 
-**Depends on:** Stage 008E (checkout, complete),
-Stage 008C (customer auth, complete).
+See the full scope in the Planned Stages section below.
+
+**Depends on:** Stage 008E (checkout, complete).
 
 ## Planned Stages
 
@@ -158,71 +164,6 @@ opens.
 
 These are captured as Open Questions, to be resolved in the
 007C plan document before code is written.
-
-### Stage 008F - Order Lifecycle (Customer-Facing)
-
-**Goal:** The customer can see every order, understand its
-current state, and track it. The post-purchase half of the
-relationship.
-
-The AliExpress-style account portal is the reference for the
-shape (order list with status tabs, order detail with line
-items and shipping info), but we build better: purpose-built
-empty states, honest status labels, and a Widerrufsrecht
-link on every order detail that opens the withdrawal policy.
-
-**Design principles locked:**
-
-  1. One account, one coherent surface. Every /account/* page
-     shares the same shell (sidebar + header + breadcrumbs).
-     Moving between orders, wishlist, returns, and messages
-     feels like moving between rooms in the same house.
-
-  2. Tabs where they clarify, sections where they don't.
-     Tabs are for genuinely distinct states (five order
-     statuses). A single page is fine for addresses.
-
-  3. Every empty state has a purpose. "No order" is a
-     placeholder. Ours says what the empty state means and
-     offers the next action.
-
-  4. The customer account mirrors the merchant's admin.
-     Not identical, but visually and structurally related.
-
-**Deliverables:**
-
-- `Storefront/OrdersController` - list with status tabs,
-  detail page.
-- Status tabs: Unpaid / To Be Shipped / Shipped / Completed /
-  Cancelled. Each tab filters the customer's own orders.
-- Order detail page shows: line items with snapshots (name,
-  variant, sku, qty, unit price, line total), shipping
-  address, billing address, payment method, current statuses
-  (main, payment, fulfilment), totals.
-- **Tracking number display.** New columns on commerce_orders:
-  `carrier_key`, `tracking_number`. A carrier key maps to a
-  URL template (DHL, FedEx, UPS, DPD, Hermes, etc.) via a
-  small config map. The link opens the carrier's public
-  tracking page. No API integration.
-- **Widerrufsrecht link on every order detail.** German
-  consumer protection requires the customer to have access
-  to the withdrawal policy from their order. Links to
-  /legal/widerruf.
-- Rewire `/account/orders` from the current stub to the real
-  list. Order numbers link to the detail page, not the
-  checkout confirmation URL.
-- 14-day withdrawal-window indicator (informational badge:
-  "Withdrawal available until Oct 12"). Ties into 008H.
-
-**Out of scope (later stages):**
-
-- Carrier API polling and auto-updated tracking (010).
-- Split shipments (010).
-- Reorder button (deferred until the cart supports
-  one-click re-add, 008G polish or later).
-- Customer-facing order notes / attachments (012+).
-
-**Depends on:** Stage 008E (checkout, complete).
 
 ### Stage 008F.1 - Account Shell & Navigation
 
