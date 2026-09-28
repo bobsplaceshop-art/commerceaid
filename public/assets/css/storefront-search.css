@@ -156,11 +156,20 @@
     color: var(--sf-charcoal, #111);
 }
 
-/* Utility: hidden below 768px, shown at 768px and below */
-.sf-hide-sm {}
-.sf-show-sm { display: none; }
+/* Utility classes are defined in storefront.css. Here we only
+   add the mobile-specific hiding of the header search form via
+   a stronger selector, in case the utility class is overridden
+   by source order elsewhere. */
+@media (max-width: 900px) {
+    .sf-header-search {
+        display: none !important;
+    }
+    .sf-header-actions .sf-show-sm {
+        display: inline-flex !important;
+    }
+}
 
-@media (max-width: 768px) {
-    .sf-hide-sm { display: none !important; }
-    .sf-show-sm { display: inline-flex !important; }
+/* On desktop the mobile-only icon link is hidden. */
+.sf-header-actions .sf-show-sm {
+    display: none;
 }

@@ -1084,3 +1084,24 @@ h1, h2, h3, h4 {
 .sf-footer-bottom-inner {
     gap: 1rem;
 }
+
+/* ---- Mobile header overflow fix (008G audit) ----
+   At phone widths (<640px), the logo's wordmark + subtitle
+   force the flex row wider than the viewport. The header
+   actions (search, account, cart) then overflow off-screen.
+   
+   Fix: hide the wordmark on mobile, keep only the emblem.
+   The emblem is the recognizable mark. Desktop unchanged.
+   ---- */
+@media (max-width: 639px) {
+    .sf-logo-text {
+        display: none;
+    }
+    .sf-header-inner {
+        gap: 1rem;
+        padding: .9rem 1rem;
+    }
+    .sf-header-actions {
+        gap: .25rem;
+    }
+}

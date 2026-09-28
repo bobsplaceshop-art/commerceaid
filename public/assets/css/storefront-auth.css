@@ -1100,7 +1100,6 @@
     /* Keep the container from ever exceeding the viewport. */
     .sf-account-shell-container {
         max-width: 100vw;
-        overflow-x: hidden;
     }
 }
 
@@ -1120,5 +1119,38 @@
     .sf-account-shell {
         margin-bottom: -64px;
         padding-bottom: calc(1.25rem + 64px);
+    }
+}
+
+/* ---- Account nav overflow guard (008G audit) ----
+   The mobile chip strip (sf-account-nav) scrolls horizontally.
+   But its children still contribute to document.body.scrollWidth
+   unless every ancestor up to the shell is clamped with
+   min-width: 0 and max-width: 100%.
+   ---- */
+
+.sf-account-shell,
+.sf-account-shell-container,
+.sf-account-sidebar,
+.sf-account-main,
+.sf-account-nav {
+    max-width: 100%;
+}
+
+.sf-account-shell-container {
+    min-width: 0;
+    /* No overflow: clip/hidden here. The chip strip on mobile
+       needs its own overflow-x: auto to scroll. The parent
+       only constrains width via min-width: 0. */
+}
+
+@media (max-width: 768px) {
+    .sf-account-nav {
+        max-width: 100vw;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+    .sf-account-nav-list {
+        max-width: none;
     }
 }

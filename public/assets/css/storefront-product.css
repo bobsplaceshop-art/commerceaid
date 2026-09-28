@@ -351,3 +351,47 @@
     outline: 2px solid var(--sf-gold, #c6a15b);
     outline-offset: 2px;
 }
+
+/* =====================================================================
+   Mobile overflow fix (Stage 008G)
+   The product detail grid was overflowing at phone widths
+   (<430px). Grid and flex children default to min-width: auto,
+   which refuses to shrink below their content. The main image
+   at 900px intrinsic width forced the whole layout wide.
+   ===================================================================== */
+
+.sf-product-layout > * {
+    min-width: 0;
+}
+.sf-product-media {
+    min-width: 0;
+    max-width: 100%;
+}
+.sf-product-media > * {
+    min-width: 0;
+    max-width: 100%;
+}
+.sf-product-image-large {
+    max-width: 100%;
+}
+.sf-product-main-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.sf-product-thumbnails {
+    max-width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 640px) {
+    /* Slightly tighter thumbs on small screens. The grid stays
+       4-up because each thumb is already aspect-ratio locked. */
+    .sf-product-thumbnails {
+        gap: .35rem;
+    }
+    .sf-product-detail {
+        padding-bottom: 2rem;
+    }
+}
