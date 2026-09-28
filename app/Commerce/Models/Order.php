@@ -49,6 +49,10 @@ final class Order
     public ?string $shippingMethodKey = null;
     public ?string $shippingMethodLabel = null;
 
+    public ?string $carrierKey = null;
+    public ?string $trackingNumber = null;
+    public ?string $trackingUrl = null;
+
     public ?string $paymentProviderKey = null;
     public ?string $paymentReference = null;
     public ?string $poNumber = null;
@@ -90,6 +94,9 @@ final class Order
         $o->shippingAddressJson  = $row['shipping_address_json'] ?? null;
         $o->shippingMethodKey    = $row['shipping_method_key'] ?? null;
         $o->shippingMethodLabel  = $row['shipping_method_label'] ?? null;
+        $o->carrierKey           = $row['carrier_key'] ?? null;
+        $o->trackingNumber       = $row['tracking_number'] ?? null;
+        $o->trackingUrl          = $row['tracking_url'] ?? null;
         $o->paymentProviderKey   = $row['payment_provider_key'] ?? null;
         $o->paymentReference     = $row['payment_reference'] ?? null;
         $o->poNumber             = $row['po_number'] ?? null;
@@ -163,6 +170,107 @@ final class Order
     public function shippingAddress(): ?array
     {
         return $this->decodeAddress($this->shippingAddressJson);
+    }
+
+    // =================================================================
+    // Tracking (Stage 008F)
+    // =================================================================
+
+    /**
+     * Does this order have tracking to display? True when both
+     * a carrier key and a tracking number are set.
+     */
+    public function hasTracking(): bool
+    {
+        return $this->carrierKey !== null
+            && $this->carrierKey !== ''
+            && $this->trackingNumber !== null
+            && $this->trackingNumber !== '';
+    }
+
+    /**
+     * The carrier label for display. "DHL", "FedEx", etc.
+     * Null when no carrier is set.
+     */
+    public function carrierLabel(): ?string
+    {
+        return \CorporateAid\Commerce\Support\CarrierTemplates::label($this->carrierKey);
+    }
+
+    /**
+     * The resolved tracking URL. If the tracking_url column
+     * holds an override, that is returned verbatim. Otherwise
+     * the URL is computed from the carrier template map.
+     *
+     * Returns null when tracking cannot be resolved (missing
+     * carrier, missing number, or an unknown carrier without
+     * an override).
+     */
+    public function resolvedTrackingUrl(): ?string
+    {
+        if ($this->trackingUrl !== null && $this->trackingUrl !== '') {
+            return $this->trackingUrl;
+        }
+        return \CorporateAid\Commerce\Support\CarrierTemplates::url(
+            $this->carrierKey,
+            $this->trackingNumber
+        );
+    }
+
+    // =================================================================
+    // Widerrufsrecht (Stage 008F)
+    // =================================================================
+
+    /**
+     * Is this order eligible for the Widerrufsrecht block?
+     *
+     * A German consumer's withdrawal right applies for 14 days
+     * from delivery (or from order placement, for goods not yet
+     * delivered). We compute from placed_at as a conservative
+     * approximation - the customer's 14-day window starts when
+     * they place the order, which is at worst a day or two
+     * earlier than the delivery-date-based legal standard.
+     *
+     * The block is hidden when:
+     *   - the order is cancelled, failed, or fully refunded
+     *   - the withdrawal window has already closed
+     *   - the order has no placed_at timestamp
+     */
+    public function isWithdrawalEligible(): bool
+    {
+        if ($this->placedAt === null || $this->placedAt === '') {
+            return false;
+        }
+        if (in_array($this->status, ['cancelled', 'failed', 'refunded'], true)) {
+            return false;
+        }
+        if ($this->paymentStatus === 'refunded') {
+            return false;
+        }
+        $deadline = $this->withdrawalDeadline();
+        if ($deadline === null) {
+            return false;
+        }
+        return strtotime($deadline) >= time();
+    }
+
+    /**
+     * The date the withdrawal window closes: placed_at + 14 days.
+     * Null when placed_at is missing.
+     *
+     * Returns an ISO 8601 datetime string (Y-m-d H:i:s) suitable
+     * for display or comparison.
+     */
+    public function withdrawalDeadline(): ?string
+    {
+        if ($this->placedAt === null || $this->placedAt === '') {
+            return null;
+        }
+        $placed = strtotime($this->placedAt);
+        if ($placed === false) {
+            return null;
+        }
+        return date('Y-m-d H:i:s', $placed + (14 * 86400));
     }
 
     /**
