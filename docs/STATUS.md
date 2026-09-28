@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-09-28
-**Version:** 0.6.0-alpha
-**Stage:** 008D.2 complete. Next: 008E (checkout)
+**Version:** 0.7.0-alpha
+**Stage:** 008E complete. Next: 008E.1 (German compliance)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -96,7 +96,6 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ## What Doesn't Work Yet
 
-- Checkout flow (008E)
 - Order lifecycle customer view (008F)
 - Search, PWA, attribute facets, category-hiding polish (008G)
 - Payment capture (010)

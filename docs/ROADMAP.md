@@ -40,6 +40,7 @@ Adding a stage or reordering requires updating this document first.
 | 008D  | Cart                                   | 2026-09-28 |
 | 008D.1| Variant-level inventory                | 2026-09-28 |
 | 008D.2| Per-product inventory page          | 2026-09-28 |
+| 008E  | Checkout                               | 2026-09-28 |
 
 Also completed outside the staged sequence:
 
@@ -57,21 +58,26 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008E - Checkout
+### Stage 008E.1 - German E-Commerce Compliance
 
-**Goal:** Full checkout flow with B2B purchase order support.
+**Goal:** Ship the regulatory elements required before the
+first deployment goes live.
 
 **Deliverables:**
 
-- `Storefront/CheckoutController` - multi-step checkout
-- Order creation (transactional, with inventory reservation)
-- Order confirmation page + email queue
-- B2B path: purchase order / net terms for approved customers
-- Stub payment providers: COD, bank transfer, purchase order
-- Shipping method stub (real engine in 010)
+- Configurable legal pages admin CRUD (Impressum, AGB,
+  Widerrufsbelehrung, Datenschutzerklaerung). Currently
+  seeded via SQL; needs a merchant-editable UI.
+- TTDSG-compliant cookie consent banner. Accept and reject
+  equally prominent. No pre-checked boxes.
+- VerpackG registration notice in admin settings.
+- Country-configurable compliance defaults driven by
+  commerce_stores.country_code.
 
-**Depends on:** Stage 008D (cart), Stage 008D.1 (variant
-inventory), Stage 008D.2 (per-product inventory page)
+**Depends on:** Stage 008E (checkout, complete). The
+compliance gates that block checkout already ship with
+008E. This stage delivers the merchant-facing management
+UI and the remaining regulatory notices.
 
 ## Planned Stages
 
@@ -154,54 +160,6 @@ opens.
 
 These are captured as Open Questions, to be resolved in the
 007C plan document before code is written.
-
-### Stage 008E.1 - German E-Commerce Compliance
-
-**Goal:** Ship the regulatory elements required for the first
-deployment destination (Germany). The gates that block
-checkout ship WITH 008E; the remaining elements land here.
-
-**Why now:** Germany is the first deployment destination.
-Consumer protection law requires specific disclosures before
-an order can be placed. Shipping these late means the first
-deployment is non-compliant, which is not an option.
-
-**Deliverables:**
-
-Legal pages subsystem:
-
-  - Configurable legal pages (Impressum, AGB,
-    Widerrufsbelehrung, Datenschutzerklaerung).
-    Editable from admin without developer involvement.
-  - Maybe reuses a generic pages table if Stage 009 (Forms
-    & Submissions) introduces CMS-lite. Otherwise a small
-    dedicated commerce_legal_pages table with slug, title,
-    body (HTML), updated_at.
-  - Footer links from every storefront page.
-  - One-click reachable from checkout pages.
-
-Cookie consent banner:
-
-  - TTDSG-compliant: accept and reject equally prominent,
-    no pre-checked boxes, no manipulative design.
-  - Essential-only cookies (session, CSRF) do not require
-    consent. Analytics and marketing cookies do.
-  - Records the consent decision with timestamp + version.
-
-Admin settings notices:
-
-  - VerpackG (packaging register) registration reminder.
-  - LUCID number field (once registered with ZSVR).
-
-**Depends on:** Stage 008E (checkout), Stage 008G (PWA
-polish) for the banner to live in the storefront shell.
-
-**Deferred from 008E.1 to a future stage:**
-
-  Grundpreis (unit price per kg / liter / meter) requires
-  a Unit of Measure subsystem (see backlog). Once the UoM
-  subsystem exists, Grundpreis display is a natural
-  follow-up.
 
 ### Stage 008F - Order Lifecycle (Customer-Facing)
 
