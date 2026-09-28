@@ -4,6 +4,16 @@
  *
  * Context (from LegalPageController::showEdit):
  *   $page  LegalPage
+ *
+ * The body uses a contenteditable rich text editor:
+ *   - #legal-editor-toolbar  (buttons)
+ *   - #legal-body-surface    (contenteditable div)
+ *   - #legal-body-hidden     (textarea that is actually POSTed)
+ *
+ * JS in public/assets/js/legal-page-editor.js copies the stored
+ * HTML into the surface on load, and copies the surface HTML back
+ * into the hidden textarea on submit. The controller is unchanged
+ * - it still receives $_POST['body'] as an HTML string.
  */
 $page = $page ?? null;
 if ($page === null) {
@@ -48,15 +58,41 @@ $isPublished = $page->isPublished();
             </div>
 
             <div class="mb-3">
-                <label for="legal-body" class="form-label">Body (HTML)</label>
-                <textarea id="legal-body"
+                <label class="form-label">Body</label>
+
+                <!-- Toolbar -->
+                <div class="ra-editor-toolbar" id="legal-editor-toolbar" role="toolbar" aria-label="Formatting">
+                    <button type="button" class="ra-editor-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+                    <button type="button" class="ra-editor-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+                    <span class="ra-editor-sep" aria-hidden="true"></span>
+                    <button type="button" class="ra-editor-btn" data-cmd="formatBlock" data-value="h2" title="Heading 2">H2</button>
+                    <button type="button" class="ra-editor-btn" data-cmd="formatBlock" data-value="h3" title="Heading 3">H3</button>
+                    <button type="button" class="ra-editor-btn" data-cmd="formatBlock" data-value="p" title="Paragraph">&para;</button>
+                    <span class="ra-editor-sep" aria-hidden="true"></span>
+                    <button type="button" class="ra-editor-btn" data-cmd="insertUnorderedList" title="Bullet list">&bull;</button>
+                    <button type="button" class="ra-editor-btn" data-cmd="insertOrderedList" title="Numbered list">1.</button>
+                    <span class="ra-editor-sep" aria-hidden="true"></span>
+                    <button type="button" class="ra-editor-btn" data-cmd="createLink" title="Insert link">&#128279;</button>
+                    <button type="button" class="ra-editor-btn" data-cmd="removeFormat" title="Clear formatting">&#10005;</button>
+                </div>
+
+                <!-- Editor surface. Content is set from the hidden textarea by JS. -->
+                <div id="legal-body-surface"
+                     class="ra-editor-surface"
+                     contenteditable="true"
+                     spellcheck="true"
+                     role="textbox"
+                     aria-multiline="true"></div>
+
+                <!-- The actual form field. JS syncs the surface into this on submit. -->
+                <textarea id="legal-body-hidden"
                           name="body"
-                          class="form-control"
-                          rows="24"
-                          style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85rem;line-height:1.6;"><?= e($body) ?></textarea>
+                          style="display:none;"><?= e($body) ?></textarea>
+
                 <div class="form-text">
-                    Raw HTML. Rendered on the storefront without escaping.
-                    Use standard tags (<code>&lt;h2&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;a&gt;</code>).
+                    Edit the page as formatted text. Use the toolbar for
+                    headings, bold, italic, and links. Pasting from Word
+                    or Google Docs will strip extraneous formatting.
                 </div>
             </div>
 
@@ -91,37 +127,39 @@ $isPublished = $page->isPublished();
     </div>
 
     <div class="ra-sticky-spacer"></div>
-
-    <style>
-    .ra-sticky-actions {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: var(--ra-sidebar-w, 260px) !important;
-        right: 0 !important;
-        padding: 1.5rem 2rem 1rem !important;
-        background: linear-gradient(to top, #0b1220 55%, transparent 100%) !important;
-        z-index: 900 !important;
-        pointer-events: none !important;
-    }
-    [data-theme="light"] .ra-sticky-actions {
-        background: linear-gradient(to top, #f4f6fb 55%, transparent 100%) !important;
-    }
-    .ra-sticky-actions-inner {
-        display: flex !important;
-        justify-content: flex-end !important;
-        gap: .5rem !important;
-        max-width: 1400px !important;
-        margin: 0 auto !important;
-        background: var(--ra-card-bg, #111c33) !important;
-        border: 1px solid var(--ra-border, #1f2a44) !important;
-        border-radius: 12px !important;
-        padding: .75rem 1rem !important;
-        box-shadow: 0 -4px 20px -8px rgba(0, 0, 0, 0.35) !important;
-        pointer-events: auto !important;
-    }
-    .ra-sticky-spacer { height: 6rem !important; }
-    @media (max-width: 900px) {
-        .ra-sticky-actions { left: 0 !important; padding: 1rem !important; }
-    }
-    </style>
 </form>
+
+<script src="/assets/js/legal-page-editor.js"></script>
+
+<style>
+.ra-sticky-actions {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: var(--ra-sidebar-w, 260px) !important;
+    right: 0 !important;
+    padding: 1.5rem 2rem 1rem !important;
+    background: linear-gradient(to top, #0b1220 55%, transparent 100%) !important;
+    z-index: 900 !important;
+    pointer-events: none !important;
+}
+[data-theme="light"] .ra-sticky-actions {
+    background: linear-gradient(to top, #f4f6fb 55%, transparent 100%) !important;
+}
+.ra-sticky-actions-inner {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: .5rem !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    background: var(--ra-card-bg, #111c33) !important;
+    border: 1px solid var(--ra-border, #1f2a44) !important;
+    border-radius: 12px !important;
+    padding: .75rem 1rem !important;
+    box-shadow: 0 -4px 20px -8px rgba(0, 0, 0, 0.35) !important;
+    pointer-events: auto !important;
+}
+.ra-sticky-spacer { height: 6rem !important; }
+@media (max-width: 900px) {
+    .ra-sticky-actions { left: 0 !important; padding: 1rem !important; }
+}
+</style>

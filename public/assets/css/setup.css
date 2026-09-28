@@ -726,3 +726,112 @@
         font-size: .7rem;
     }
 }
+
+/* =====================================================================
+   Legal page editor (Stage 008E.1)
+   Toolbar + contenteditable surface for editing legal page bodies.
+   ===================================================================== */
+
+.ra-editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem;
+    padding: .5rem;
+    background: var(--ra-input-bg, #0b1220);
+    border: 1px solid var(--ra-border, #1f2a44);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+}
+[data-theme="light"] .ra-editor-toolbar {
+    background: #f8fafc;
+}
+
+.ra-editor-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 .5rem;
+    font-size: .85rem;
+    color: var(--ra-fg, #e2e8f0);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease;
+}
+.ra-editor-btn:hover {
+    background: var(--ra-hover-bg, rgba(255,255,255,0.06));
+    border-color: var(--ra-border, #1f2a44);
+}
+[data-theme="light"] .ra-editor-btn:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+}
+.ra-editor-btn.is-active {
+    background: var(--ra-primary, #3b82f6);
+    color: #fff;
+    border-color: var(--ra-primary, #3b82f6);
+}
+
+.ra-editor-sep {
+    display: inline-block;
+    width: 1px;
+    height: 20px;
+    background: var(--ra-border, #1f2a44);
+    margin: 0 .25rem;
+}
+
+.ra-editor-surface {
+    min-height: 380px;
+    max-height: 720px;
+    overflow-y: auto;
+    padding: 1.25rem 1.5rem;
+    font-size: .95rem;
+    line-height: 1.7;
+    color: var(--ra-fg, #e2e8f0);
+    background: var(--ra-input-bg, #0b1220);
+    border: 1px solid var(--ra-border, #1f2a44);
+    border-radius: 0 0 6px 6px;
+    outline: none;
+}
+[data-theme="light"] .ra-editor-surface {
+    background: #fff;
+}
+.ra-editor-surface:focus {
+    border-color: var(--ra-primary, #3b82f6);
+}
+
+/* Content typography inside the editor. Mirrors the storefront
+   legal page typography so what the merchant sees matches what
+   customers will see. */
+.ra-editor-surface h1,
+.ra-editor-surface h2,
+.ra-editor-surface h3 {
+    font-weight: 500;
+    color: inherit;
+    margin: 1.5rem 0 .75rem;
+    line-height: 1.3;
+}
+.ra-editor-surface h1 { font-size: 1.5rem; }
+.ra-editor-surface h2 { font-size: 1.2rem; }
+.ra-editor-surface h3 { font-size: 1.05rem; }
+.ra-editor-surface p {
+    margin: 0 0 1rem;
+}
+.ra-editor-surface ul,
+.ra-editor-surface ol {
+    margin: 0 0 1rem 1.5rem;
+    padding: 0;
+}
+.ra-editor-surface li {
+    margin-bottom: .35rem;
+}
+.ra-editor-surface a {
+    color: var(--ra-primary, #3b82f6);
+    text-decoration: underline;
+}
+.ra-editor-surface strong { font-weight: 600; }
+.ra-editor-surface em { font-style: italic; }
