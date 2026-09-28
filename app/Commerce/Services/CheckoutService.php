@@ -20,6 +20,8 @@ use CorporateAid\Commerce\Repositories\OrderItemRepository;
 use CorporateAid\Commerce\Repositories\OrderRepository;
 use CorporateAid\Commerce\Repositories\OrderStatusHistoryRepository;
 use CorporateAid\Commerce\Repositories\StoreRepository;
+use CorporateAid\Commerce\Repositories\CustomerRepository;
+use CorporateAid\Commerce\Repositories\StoreSettingsRepository;
 use CorporateAid\Platform\Support\CodeGenerator;
 
 /**
@@ -67,6 +69,8 @@ final class CheckoutService
         private CodeGenerator $codeGen,
         private StoreContext $storeContext,
         private StoreRepository $storeRepository,
+        private CustomerRepository $customerRepository,
+        private StoreSettingsRepository $storeSettings,
     ) {
     }
 
@@ -281,6 +285,38 @@ final class CheckoutService
                 'order_number'
             );
 
+            // Step 3.5. Guest order claim resolution.
+            //
+            // If the order is a guest order (customer is null) and
+            // the merchant has enabled the guest-claim toggle, look
+            // up an existing customer by the guest email. If found,
+            // mark the order as claimable by that customer.
+            //
+            // The customer can then claim the order from their
+            // account dashboard after logging in. Ownership is
+            // asserted only at claim time, not here. This is a
+            // tentative email match, not a link.
+            //
+            // See docs/stages/008e.2_guest-order-claim-plan.md.
+            $claimableByCustomerId = null;
+
+            if ($customer === null) {
+                $claimEnabled = $this->storeSettings->bool(
+                    'compliance.guest_claim.enabled',
+                    false
+                );
+
+                if ($claimEnabled) {
+                    $guestEmail = (string) ($input['guest_email'] ?? '');
+                    if ($guestEmail !== '') {
+                        $matchedCustomer = $this->customerRepository->findByEmail($guestEmail);
+                        if ($matchedCustomer !== null) {
+                            $claimableByCustomerId = $matchedCustomer->id;
+                        }
+                    }
+                }
+            }
+
             // Step 4. Insert the order header.
             // json_encode() returns string|false. The billing_address_json
             // and shipping_address_json columns are MySQL JSON type, which
@@ -301,6 +337,7 @@ final class CheckoutService
                 'store_id'              => $this->storeContext->id(),
                 'order_number'          => $orderNumber,
                 'customer_id'           => $customer instanceof Customer ? $customer->id : null,
+                'claimable_by_customer_id' => $claimableByCustomerId,
                 'guest_email'           => $customer instanceof Customer
                                             ? null
                                             : (string) ($input['guest_email'] ?? ''),
