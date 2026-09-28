@@ -41,6 +41,7 @@ Adding a stage or reordering requires updating this document first.
 | 008D.1| Variant-level inventory                | 2026-09-28 |
 | 008D.2| Per-product inventory page          | 2026-09-28 |
 | 008E  | Checkout                               | 2026-09-28 |
+| 008E.1| German compliance                      | 2026-09-28 |
 
 Also completed outside the staged sequence:
 
@@ -58,26 +59,23 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008E.1 - German E-Commerce Compliance
+### Stage 008E.2 - Guest Order Claim
 
-**Goal:** Ship the regulatory elements required before the
-first deployment goes live.
+**Goal:** Reconcile guest orders with existing customer accounts
+after the fact, without adding friction at checkout.
 
 **Deliverables:**
 
-- Configurable legal pages admin CRUD (Impressum, AGB,
-  Widerrufsbelehrung, Datenschutzerklaerung). Currently
-  seeded via SQL; needs a merchant-editable UI.
-- TTDSG-compliant cookie consent banner. Accept and reject
-  equally prominent. No pre-checked boxes.
-- VerpackG registration notice in admin settings.
-- Country-configurable compliance defaults driven by
-  commerce_stores.country_code.
+- Migration: claimable_by_customer_id, claimed_at on
+  commerce_orders.
+- CheckoutService populates claimable_by_customer_id on guest
+  orders whose email matches an existing customer.
+- CustomerClaimController - list claimable orders, claim action.
+- Claim notification on the customer dashboard.
+- Admin toggle: off by default, disclaimer when enabling.
 
-**Depends on:** Stage 008E (checkout, complete). The
-compliance gates that block checkout already ship with
-008E. This stage delivers the merchant-facing management
-UI and the remaining regulatory notices.
+**Depends on:** Stage 008E (checkout, complete),
+Stage 008C (customer auth, complete).
 
 ## Planned Stages
 

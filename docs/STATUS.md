@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-09-28
-**Version:** 0.7.0-alpha
-**Stage:** 008E complete. Next: 008E.1 (German compliance)
+**Version:** 0.8.0-alpha
+**Stage:** 008E.1 complete. Next: 008E.2 (guest order claim)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -65,6 +65,20 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 - Section collapse rule: data-driven sections vanish when empty
 - Store builder contract: every element carries a data-sf-*
   attribute for future admin editability
+
+### Settings & Compliance (008E.1)
+
+- Store Settings page with dynamic tabbed form
+- Adding a new setting is one line in a definitions array
+- Advanced tab for arbitrary custom key-value settings
+- Legal Pages admin CRUD for Impressum, AGB, Widerrufs-
+  belehrung, Datenschutzerklaerung
+- Rich text editor for legal page content (zero deps)
+- Cookie consent banner (TTDSG-compliant)
+- Public consent API: window.CAConsent.has(category)
+- Country-driven compliance via ComplianceMap (DE wired)
+- All settings stored in commerce_store_settings key-value
+  table
 
 ### Shopping cart (008D)
 
