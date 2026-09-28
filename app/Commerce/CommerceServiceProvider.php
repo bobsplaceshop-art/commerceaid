@@ -20,6 +20,7 @@ use CorporateAid\Commerce\Repositories\ProductRepository;
 use CorporateAid\Commerce\Repositories\StoreRepository;
 use CorporateAid\Commerce\Repositories\CustomerAddressRepository;
 use CorporateAid\Commerce\Repositories\CustomerRepository;
+use CorporateAid\Commerce\Repositories\StoreSettingsRepository;
 use CorporateAid\Commerce\Repositories\OrderRepository;
 use CorporateAid\Commerce\Repositories\OrderItemRepository;
 use CorporateAid\Commerce\Repositories\OrderStatusHistoryRepository;
@@ -204,6 +205,12 @@ final class CommerceServiceProvider
 
         $c->singleton(LegalPageRepository::class,
             fn() => new LegalPageRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(StoreSettingsRepository::class,
+            fn() => new StoreSettingsRepository(
                 $c->get(Database::class),
                 $c->get(StoreContext::class)
             ));
