@@ -173,7 +173,6 @@ for ($i = 1; $i <= 4; $i++) {
 
                         <?= csrf_field() ?>
                         <input type="hidden" name="product_id" value="<?= (int) $product->id ?>">
-                        <input type="hidden" name="quantity" value="1">
 
                         <?php if ($isVariableWithVariants): ?>
                             <div class="sf-product-variants">
@@ -202,6 +201,21 @@ for ($i = 1; $i <= 4; $i++) {
                         <?php else: ?>
                             <input type="hidden" name="variant_id" value="0">
                         <?php endif; ?>
+
+                        <div class="sf-quantity-row">
+                            <label for="sf-product-qty" class="sf-quantity-label">
+                                Quantity
+                            </label>
+                            <input type="number"
+                                   id="sf-product-qty"
+                                   name="quantity"
+                                   class="sf-quantity-input"
+                                   value="1"
+                                   min="1"
+                                   max="99"
+                                   step="1"
+                                   inputmode="numeric">
+                        </div>
 
                         <button type="submit"
                                 class="sf-btn sf-btn-primary sf-btn-lg sf-btn-block">

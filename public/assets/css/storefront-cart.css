@@ -435,3 +435,49 @@
         max-width: none;
     }
 }
+
+/* =====================================================================
+   Product page quantity selector
+   =====================================================================
+   The number input that appears on the product detail page above
+   the Add to Cart button. Related to the cart because it feeds
+   the cart's quantity. Kept here so both the product-page and
+   cart-page quantity controls live in one file.
+   ===================================================================== */
+
+.sf-quantity-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+}
+
+.sf-quantity-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--sf-ink);
+    margin: 0;
+}
+
+.sf-quantity-input {
+    width: 80px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d6cec0;
+    border-radius: 2px;
+    font-size: 0.95rem;
+    text-align: center;
+    color: var(--sf-ink);
+    background: #ffffff;
+    font-family: inherit;
+}
+
+.sf-quantity-input:focus {
+    outline: none;
+    border-color: var(--sf-gold);
+    box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.15);
+}
+
+.sf-quantity-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
