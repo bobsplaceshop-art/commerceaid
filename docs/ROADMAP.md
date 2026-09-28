@@ -44,6 +44,7 @@ Adding a stage or reordering requires updating this document first.
 | 008E.1| German compliance                      | 2026-09-28 |
 | 008E.2| Guest order claim                     | 2026-09-28 |
 | 008F  | Order lifecycle (customer-facing)      | 2026-09-28 |
+| 008F.1| Account shell & navigation             | 2026-09-28 |
 
 Also completed outside the staged sequence:
 
@@ -61,32 +62,16 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008F.1 - Account Shell & Navigation
+### Stage 008G - PWA, Search, Storefront Polish
 
-**Goal:** Every /account/* page shares one shell. Left sidebar
-navigation, breadcrumbs, consistent header. The pages that
-exist (dashboard, orders, addresses, password) gain a shared
-visual frame. New pages added by later sub-stages slot into
-the same frame automatically.
+**Goal:** Close the storefront loop with PWA, search, and the
+deferred polish items.
 
-**Deliverables:**
+See the full scope in the Planned Stages section below.
 
-- account/_shell.php partial: sidebar + breadcrumbs +
-  header wrapper.
-- account/_sidebar.php partial with grouped, collapsible
-  sections:
-    My Account (dashboard, addresses, password)
-    My Orders (list, order detail)
-    Returns (link to 008H - shows "coming soon" until then)
-    Wishlist (link to 008G.1 - "coming soon" until then)
-    Recently Viewed (link to 008G.2)
-    Messages (link to 008G.3, with placeholder badge)
-- Breadcrumbs on every /account/* page.
-- Refactor existing account views to render inside the shell.
-- Mobile: sidebar collapses to horizontal tab strip or a
-  drawer.
-
-**Depends on:** Stage 008F (order detail page).
+**Depends on:** Stages 008A-008H. Runs after the customer
+account work (F, F.1, G.1, G.2, G.3, H) so the storefront
+polish lands on a stable foundation.
 
 ## Planned Stages
 
@@ -170,43 +155,6 @@ opens.
 These are captured as Open Questions, to be resolved in the
 007C plan document before code is written.
 
-
-### Stage 008G - PWA, Search, Storefront Polish
-
-**Goal:** Close the storefront loop with PWA, search, and the
-deferred polish items.
-
-**Deliverables:**
-
-- Service worker + offline shell
-- PWA manifest per store
-- Full-text search across products
-- **Out-of-stock product hiding** — admin setting, default
-  off. When on, out-of-stock products are hidden from listing
-  pages (catalog, category, home sections). Direct product
-  URLs still work and show a "Sold out" state so bookmarks
-  and SEO survive. Storewide toggle. Variable products count
-  as in stock if ANY variant is sellable. Implementation:
-  new `commerce.catalog.hide_out_of_stock` setting, conditional
-  inventory join in ProductRepository::paginatePublished().
-- **Categories with no visible products hidden from the
-  storefront** — home grid, category index, header nav.
-  Categories with zero published in-stock products (and no
-  children with any) disappear from the storefront but remain
-  in the admin. Direct category URL still works but shows
-  an empty state.
-- **Product image gallery** — clicking a thumbnail swaps the
-  main image on the product detail page. Small JS enhancement.
-- **Header search bar** — a full-width search input in the
-  middle of the main header row (between logo and actions).
-  Currently the middle of the row is empty space.
-- `/offline` page visual redesign
-- Attribute-based faceted search (color, size, etc.)
-- Responsive audit at 375 / 768 / 1024
-
-**Depends on:** Stages 008A-008H. Runs after the customer
-account work (F, F.1, G.1, G.2, G.3, H) so the storefront
-polish lands on a stable foundation.
 
 ### Stage 008G.1 - Wishlist
 

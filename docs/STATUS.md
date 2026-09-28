@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-09-28
-**Version:** 0.10.0-alpha
-**Stage:** 008F complete. Next: 008F.1 (account shell)
+**Version:** 0.11.0-alpha
+**Stage:** 008F.1 complete. Next: 008G (storefront polish)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
