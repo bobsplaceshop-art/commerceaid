@@ -4,6 +4,7 @@ declare(strict_types=1);
 use CorporateAid\Core\Router;
 use CorporateAid\Commerce\Controllers\Pwa\ManifestController;
 use CorporateAid\Commerce\Controllers\Admin\DashboardController;
+use CorporateAid\Commerce\Controllers\Admin\SettingsController;
 use CorporateAid\Commerce\Controllers\Admin\SetupController;
 use CorporateAid\Commerce\Controllers\Admin\CategoryController;
 use CorporateAid\Commerce\Controllers\Admin\BrandController;
@@ -230,6 +231,23 @@ $router->post('/commerce/ca-admin/products/{id}/variants/regenerate',
     ['store', 'auth', 'csrf']);
 
 // =====================================================================
+// Admin - Settings (Stage 008E.1)
+$router->get('/commerce/ca-admin/settings',
+    [SettingsController::class, 'index'],
+    ['store', 'auth']);
+
+$router->post('/commerce/ca-admin/settings',
+    [SettingsController::class, 'save'],
+    ['store', 'auth', 'csrf']);
+
+$router->post('/commerce/ca-admin/settings/advanced',
+    [SettingsController::class, 'addCustom'],
+    ['store', 'auth', 'csrf']);
+
+$router->post('/commerce/ca-admin/settings/advanced/delete',
+    [SettingsController::class, 'deleteCustom'],
+    ['store', 'auth', 'csrf']);
+
 // Admin - Inventory (Stage 006G)
 // =====================================================================
 $router->get('/commerce/ca-admin/inventory',
