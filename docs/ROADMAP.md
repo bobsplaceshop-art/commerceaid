@@ -43,6 +43,7 @@ Adding a stage or reordering requires updating this document first.
 | 008E  | Checkout                               | 2026-09-28 |
 | 008E.1| German compliance                      | 2026-09-28 |
 | 008E.2| Guest order claim                     | 2026-09-28 |
+| 008F  | Order lifecycle (customer-facing)      | 2026-09-28 |
 
 Also completed outside the staged sequence:
 
@@ -60,28 +61,32 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008F - Order Lifecycle (Customer-Facing)
+### Stage 008F.1 - Account Shell & Navigation
 
-**Goal:** The customer can see every order, understand its
-current state, and track it. The post-purchase half of the
-relationship.
+**Goal:** Every /account/* page shares one shell. Left sidebar
+navigation, breadcrumbs, consistent header. The pages that
+exist (dashboard, orders, addresses, password) gain a shared
+visual frame. New pages added by later sub-stages slot into
+the same frame automatically.
 
 **Deliverables:**
 
-- Order list with status tabs (Unpaid / To Be Shipped /
-  Shipped / Completed / Cancelled).
-- Order detail page with line items, addresses, payment
-  method, three-track status display.
-- New columns: carrier_key, tracking_number on
-  commerce_orders. URL template map for DHL, FedEx, UPS,
-  DPD, Hermes, etc.
-- Widerrufsrecht link on every order detail.
-- 14-day withdrawal window indicator.
-- Rewire /account/orders from stub to real list.
+- account/_shell.php partial: sidebar + breadcrumbs +
+  header wrapper.
+- account/_sidebar.php partial with grouped, collapsible
+  sections:
+    My Account (dashboard, addresses, password)
+    My Orders (list, order detail)
+    Returns (link to 008H - shows "coming soon" until then)
+    Wishlist (link to 008G.1 - "coming soon" until then)
+    Recently Viewed (link to 008G.2)
+    Messages (link to 008G.3, with placeholder badge)
+- Breadcrumbs on every /account/* page.
+- Refactor existing account views to render inside the shell.
+- Mobile: sidebar collapses to horizontal tab strip or a
+  drawer.
 
-See the full scope in the Planned Stages section below.
-
-**Depends on:** Stage 008E (checkout, complete).
+**Depends on:** Stage 008F (order detail page).
 
 ## Planned Stages
 
@@ -165,42 +170,6 @@ opens.
 These are captured as Open Questions, to be resolved in the
 007C plan document before code is written.
 
-### Stage 008F.1 - Account Shell & Navigation
-
-**Goal:** Every /account/* page shares one shell. Left sidebar
-navigation, breadcrumbs, consistent header. The pages that
-exist (dashboard, orders, addresses, password) gain a
-shared visual frame. New pages added by later sub-stages
-slot into the same frame automatically.
-
-**Deliverables:**
-
-- `resources/views/storefront/account/_shell.php` partial.
-  Renders the sidebar + breadcrumbs + header.
-- `resources/views/storefront/account/_sidebar.php` partial.
-  Grouped, collapsible sections:
-    My Account (dashboard, addresses, password)
-    My Orders (list, filters)
-    Returns (008H - link until then shows "coming soon")
-    Wishlist (008G.1)
-    Recently Viewed (008G.2)
-    Messages (008G.3, with unread badge)
-- Breadcrumb trail on every /account/* page.
-- Refactor existing account views to render inside the shell.
-  Existing pages: dashboard, orders, addresses, address-form,
-  password.
-- Mobile: sidebar collapses to a horizontal tab strip on
-  narrow viewports (or a drawer; decide at build time).
-- Responsive at 375 / 768 / 1024.
-
-**Not in scope:**
-
-- New account pages themselves. Those land in their own
-  sub-stages. F.1 is only the shell.
-- Notification badge wiring. F.1 places the placeholder;
-  008G.3 fills it.
-
-**Depends on:** Stage 008F (order detail page).
 
 ### Stage 008G - PWA, Search, Storefront Polish
 

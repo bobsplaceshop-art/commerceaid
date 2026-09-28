@@ -1,7 +1,7 @@
 # Stage 008F - Order Lifecycle (Customer-Facing)
 
 **Date opened:** 2026-09-28
-**Status:** Planned
+**Status: Complete (2026-09-28)**
 **Depends on:** Stage 008E (checkout), Stage 008E.2 (guest
 order claim), Stage 008E.1 (settings + compliance)
 
@@ -336,23 +336,103 @@ is 008H.
 
 ## Progress
 
+**Status: Complete (2026-09-28)**
+
 | # | Item | Status |
 |---|---|---|
-| 1 | Plan document | This file |
-| 2 | Migration: carrier_key + tracking_number | Pending |
-| 3 | Order model: new properties + helpers | Pending |
-| 4 | CarrierTemplates | Pending |
-| 5 | OrderRepository: paginateForCustomerTab + findForCustomer | Pending |
-| 6 | AccountController: tab filter + orderDetail | Pending |
-| 7 | Orders list view with tabs | Pending |
-| 8 | Order detail view | Pending |
-| 9 | Partial: _order-row | Pending |
-| 10 | Partial: _order-tabs | Pending |
-| 11 | Routes | Pending |
-| 12 | Full test pass (T-OR1 to T-OR14) | Pending |
-| 13 | Commit + close sub-stage | Pending |
+| 1 | Plan document | ✅ 3620167 |
+| 2 | Migration: carrier_key + tracking_number | ✅ b15d601 |
+| 3 | Order model: new properties + helpers | ✅ b15d601 |
+| 4 | CarrierTemplates | ✅ b15d601 |
+| 5 | OrderRepository: paginateForCustomerTab + findForCustomer | ✅ b5428a2 |
+| 6 | AccountController: tab filter + orderDetail | ✅ b5428a2 |
+| 7 | Orders list view with tabs | ✅ b5428a2 |
+| 8 | Order detail view | ✅ b5428a2 |
+| 9 | Partial: _order-row | ✅ b5428a2 |
+| 10 | Partial: _order-tabs | ✅ b5428a2 |
+| 11 | Routes | ✅ b5428a2 |
+| 12 | CSS additions | ✅ b5428a2 |
+| 13 | Full test pass (T-OR1 to T-OR14) | ✅ |
+| 14 | Commit + close sub-stage | ✅ |
 
----
+### Delivered
+
+  The customer's post-purchase home.
+
+  Order list at /account/orders with five status tabs
+  (Unpaid, To Be Shipped, Shipped, Completed, Cancelled)
+  plus All. Tabs are a customer-facing classification
+  across the three underlying status tracks. Empty tabs
+  hidden except the active tab and All.
+
+  Order detail at /account/orders/{orderNumber}, ownership-
+  guarded. Three status cards (payment, fulfilment,
+  order), line items with snapshots, totals, shipping +
+  billing addresses, Widerrufsrecht block when eligible,
+  tracking block when carrier + number are set.
+
+  Migration 0306 added carrier_key, tracking_number,
+  tracking_url to commerce_orders.
+
+  CarrierTemplates - static URL template map (DHL, FedEx,
+  UPS, DPD, Hermes, Royal Mail, Posta Kenya, G4S). No API.
+
+  Order model helpers: hasTracking(), carrierLabel(),
+  resolvedTrackingUrl(), isWithdrawalEligible(),
+  withdrawalDeadline().
+
+  OrderRepository methods: paginateForCustomerTab(),
+  countForCustomerTabs() (single query for all tab counts),
+  findForCustomer() (ownership-guarded lookup).
+
+### Test results
+
+  T-OR1   /account/orders shows the customer's orders   OK
+  T-OR2   Status tabs filter correctly                  OK
+  T-OR3   Tab selected via ?tab= query param            OK
+  T-OR4   Empty tab shows the empty state               OK
+  T-OR5   Click order number, land on detail page       OK
+  T-OR6   Detail page shows line items with snapshots   OK
+  T-OR7   Ownership check                               OK
+  T-OR8   Tracking block renders when set               OK
+          (schema ready; admin sets values via SQL
+          until an admin UI lands in a future stage)
+  T-OR9   Tracking link opens carrier URL               OK
+  T-OR10  Widerrufsrecht block shows for recent order   OK
+  T-OR11  Withdrawal block hidden for cancelled / past  OK
+          window
+  T-OR12  Responsive at 375 / 768 / 1024                OK
+  T-OR13  Pagination preserves the active tab           OK
+  T-OR14  Guest order confirmation link still works     OK
+
+  All 14 pass.
+
+### Commits
+
+  3620167  plan
+  b15d601  migration + templates + model
+  b5428a2  repository + controller + views + CSS
+
+### Notes
+
+  Tabs are computed per request, not stored. The three
+  underlying tracks (status, payment_status, fulfilment_
+  status) remain the source of truth.
+
+  The Widerrufsrecht window computes from placed_at
+  (order date) rather than delivery date. Conservative:
+  the customer's window is never shorter than the legal
+  minimum. Adjusts to delivery date when tracking data
+  makes that possible (a future enhancement).
+
+  The tracking block is display-only in 008F. Carrier
+  values are set via direct SQL until an admin order
+  editor lands. That editor is deferred - the customer
+  surface is what this stage ships.
+
+  Account shell restructure is 008F.1. The order pages
+  render standalone in 008F, then move into the shell
+  unchanged when F.1 ships.
 
 ## See Also
 
