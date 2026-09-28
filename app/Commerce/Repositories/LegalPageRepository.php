@@ -29,6 +29,40 @@ final class LegalPageRepository extends CommerceRepository
         return $row === null ? null : LegalPage::fromRow($row);
     }
 
+    /**
+     * Like findBySlug() but does not filter on is_published.
+     * Used by the admin edit form so drafts remain editable.
+     */
+    public function findBySlugIncludingUnpublished(string $slug): ?LegalPage
+    {
+        $row = $this->db->selectOne(
+            "SELECT * FROM `commerce_legal_pages`
+              WHERE `store_id` = ? AND `slug` = ?",
+            [$this->storeId(), $slug]
+        );
+        return $row === null ? null : LegalPage::fromRow($row);
+    }
+
+    /**
+     * Update title, body, and publish state for an existing page.
+     * Records the admin who saved.
+     */
+    public function updateContent(
+        string $slug,
+        string $title,
+        string $body,
+        bool $isPublished,
+        ?int $userId
+    ): void {
+        $this->db->execute(
+            "UPDATE `commerce_legal_pages`
+                SET `title` = ?, `body` = ?, `is_published` = ?,
+                    `updated_by` = ?
+              WHERE `store_id` = ? AND `slug` = ?",
+            [$title, $body, $isPublished ? 1 : 0, $userId, $this->storeId(), $slug]
+        );
+    }
+
     public function findById(int $id): ?LegalPage
     {
         $row = $this->db->selectOne(

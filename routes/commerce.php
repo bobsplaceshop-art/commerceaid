@@ -5,6 +5,7 @@ use CorporateAid\Core\Router;
 use CorporateAid\Commerce\Controllers\Pwa\ManifestController;
 use CorporateAid\Commerce\Controllers\Admin\DashboardController;
 use CorporateAid\Commerce\Controllers\Admin\SettingsController;
+use CorporateAid\Commerce\Controllers\Admin\LegalPageController;
 use CorporateAid\Commerce\Controllers\Admin\SetupController;
 use CorporateAid\Commerce\Controllers\Admin\CategoryController;
 use CorporateAid\Commerce\Controllers\Admin\BrandController;
@@ -246,6 +247,19 @@ $router->post('/commerce/ca-admin/settings/advanced',
 
 $router->post('/commerce/ca-admin/settings/advanced/delete',
     [SettingsController::class, 'deleteCustom'],
+    ['store', 'auth', 'csrf']);
+
+// Admin - Legal Pages (Stage 008E.1)
+$router->get('/commerce/ca-admin/legal-pages',
+    [LegalPageController::class, 'index'],
+    ['store', 'auth']);
+
+$router->get('/commerce/ca-admin/legal-pages/{slug}/edit',
+    [LegalPageController::class, 'showEdit'],
+    ['store', 'auth']);
+
+$router->post('/commerce/ca-admin/legal-pages/{slug}',
+    [LegalPageController::class, 'update'],
     ['store', 'auth', 'csrf']);
 
 // Admin - Inventory (Stage 006G)
