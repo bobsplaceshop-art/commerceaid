@@ -8,6 +8,7 @@ use CorporateAid\Commerce\Controllers\Storefront\HomeController;
 use CorporateAid\Commerce\Controllers\Storefront\CatalogController;
 use CorporateAid\Commerce\Controllers\Storefront\CategoryController;
 use CorporateAid\Commerce\Controllers\Storefront\ProductController;
+use CorporateAid\Commerce\Controllers\Storefront\SearchController;
 use CorporateAid\Commerce\Controllers\Storefront\AuthController;
 use CorporateAid\Commerce\Controllers\Storefront\AccountController;
 use CorporateAid\Commerce\Controllers\Storefront\CustomerClaimController;
@@ -153,6 +154,9 @@ $router->post('/cart/update',[CartController::class, 'update'], ['store', 'csrf'
 $router->post('/cart/remove',[CartController::class, 'remove'], ['store', 'csrf']);
 $router->post('/cart/clear', [CartController::class, 'clear'],  ['store', 'csrf']);
 $router->get('/cart/count',  [CartController::class, 'count'],  ['store']);
+
+// Search (Stage 008G)
+$router->get('/search', [SearchController::class, 'index'], ['store']);
 
 // Checkout (Stage 008E)
 $router->get('/checkout',                      [CheckoutController::class, 'review'],       ['store']);

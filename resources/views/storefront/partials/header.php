@@ -95,12 +95,28 @@ $isNavActive = function (string $href) use ($currentPath): bool {
         </button>
 
         <div class="sf-header-actions">
-            <button type="button"
-                    class="sf-icon-btn"
-                    aria-label="Search"
-                    data-sf-search-toggle>
+            <form method="GET"
+                  action="/search"
+                  class="sf-header-search sf-hide-sm"
+                  role="search">
+                <input type="search"
+                       name="q"
+                       class="sf-header-search-input"
+                       placeholder="Search products..."
+                       aria-label="Search products"
+                       required>
+                <button type="submit"
+                        class="sf-header-search-submit"
+                        aria-label="Search">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                </button>
+            </form>
+
+            <a href="/search"
+               class="sf-icon-btn sf-show-sm"
+               aria-label="Search">
                 <i class="bi bi-search" aria-hidden="true"></i>
-            </button>
+            </a>
 
             <a href="/account/login" class="sf-icon-btn" aria-label="Account">
                 <i class="bi bi-person" aria-hidden="true"></i>
