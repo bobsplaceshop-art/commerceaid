@@ -110,8 +110,25 @@ deferred polish items.
 - Service worker + offline shell
 - PWA manifest per store
 - Full-text search across products
+- **Out-of-stock product hiding** — admin setting, default
+  off. When on, out-of-stock products are hidden from listing
+  pages (catalog, category, home sections). Direct product
+  URLs still work and show a "Sold out" state so bookmarks
+  and SEO survive. Storewide toggle. Variable products count
+  as in stock if ANY variant is sellable. Implementation:
+  new `commerce.catalog.hide_out_of_stock` setting, conditional
+  inventory join in ProductRepository::paginatePublished().
 - **Categories with no visible products hidden from the
-  storefront** (home grid, category index, header nav)
+  storefront** — home grid, category index, header nav.
+  Categories with zero published in-stock products (and no
+  children with any) disappear from the storefront but remain
+  in the admin. Direct category URL still works but shows
+  an empty state.
+- **Product image gallery** — clicking a thumbnail swaps the
+  main image on the product detail page. Small JS enhancement.
+- **Header search bar** — a full-width search input in the
+  middle of the main header row (between logo and actions).
+  Currently the middle of the row is empty space.
 - `/offline` page visual redesign
 - Attribute-based faceted search (color, size, etc.)
 - Responsive audit at 375 / 768 / 1024
@@ -215,14 +232,6 @@ search without code changes. Defaults remain the current set.
 The `data-sf-section` attributes are already in place on every
 homepage section. The UI to reorder them from the admin panel
 lands with Stage 011 (Advanced Commerce + Store Builder).
-
-### Categories Without Products Hidden
-
-Categories that have no published products (directly or via
-descendants) should not appear on the storefront home grid,
-category index, or header navigation.
-
-**Likely stage:** 008G (storefront polish).
 
 ### Media Library
 
