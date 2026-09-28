@@ -57,6 +57,90 @@ final class CategoryRepository extends CommerceRepository
         return $roots;
     }
 
+    /**
+     * Return only categories that have at least one published
+     * product, OR a descendant with a published product.
+     *
+     * Used by the storefront home grid and category index so
+     * empty categories do not appear as dead links. Direct
+     * category URLs still work - this method is about hiding
+     * empty categories from lists, not from direct access.
+     *
+     * Two passes:
+     *   1. One query to count published products per category.
+     *   2. Walk the full category list bottom-up, marking a
+     *      category as visible when it has products or when
+     *      any child is visible.
+     *
+     * @return array<int, Category>
+     */
+    public function listVisibleForStorefront(): array
+    {
+        // Pass 1: product counts per category (published only).
+        $rows = $this->db->select(
+            "SELECT pc.`category_id`, COUNT(DISTINCT p.`id`) AS cnt
+               FROM `commerce_product_categories` pc
+               JOIN `commerce_products` p
+                 ON p.`id` = pc.`product_id`
+                AND p.`store_id` = pc.`store_id`
+              WHERE pc.`store_id` = ?
+                AND p.`status` = 'published'
+                AND p.`deleted_at` IS NULL
+                AND (p.`published_at` IS NULL OR p.`published_at` <= NOW())
+              GROUP BY pc.`category_id`",
+            [$this->storeId()]
+        );
+
+        $hasProducts = [];
+        foreach ($rows as $r) {
+            if ((int) $r['cnt'] > 0) {
+                $hasProducts[(int) $r['category_id']] = true;
+            }
+        }
+
+        // Pass 2: walk bottom-up. Build children map for the
+        // full tree, then recurse from roots.
+        $all = $this->listAll();
+        $byId = [];
+        foreach ($all as $c) {
+            $byId[$c->id] = $c;
+        }
+
+        $childrenOf = [];
+        foreach ($all as $c) {
+            if ($c->parentId !== null) {
+                $childrenOf[$c->parentId][] = $c->id;
+            }
+        }
+
+        // Iterative visibility propagation. Seed with categories
+        // that have products, then mark every ancestor visible.
+        $visible = $hasProducts;
+        foreach (array_keys($hasProducts) as $categoryId) {
+            $cursor = $byId[$categoryId] ?? null;
+            $guard  = 0;
+            while ($cursor !== null && $cursor->parentId !== null && $guard < 100) {
+                $parentId = $cursor->parentId;
+                if (isset($visible[$parentId])) {
+                    break; // ancestor already visible, no need to keep walking
+                }
+                $visible[$parentId] = true;
+                $cursor = $byId[$parentId] ?? null;
+                $guard++;
+            }
+        }
+
+        // Filter the flat list to visible categories, preserving
+        // the sort order from listAll().
+        $out = [];
+        foreach ($all as $c) {
+            if (isset($visible[$c->id])) {
+                $out[] = $c;
+            }
+        }
+        return $out;
+    }
+
     public function findById(int $id): ?Category
     {
         $row = $this->db->selectOne(

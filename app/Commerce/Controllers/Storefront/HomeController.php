@@ -74,7 +74,11 @@ final class HomeController extends StorefrontController
         $bestSellers = $featured;
 
         // ----- Top-level categories -----
-        $allCategories = $categories->listAll();
+        // Only categories with at least one published product
+        // (or a visible descendant) appear on the storefront.
+        // Empty categories are hidden from the grid but direct
+        // URLs still work.
+        $allCategories = $categories->listVisibleForStorefront();
         $topCategories = [];
         foreach ($allCategories as $c) {
             if ($c->parentId === null) {

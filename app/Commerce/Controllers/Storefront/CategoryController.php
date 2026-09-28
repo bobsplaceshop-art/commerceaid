@@ -36,10 +36,11 @@ final class CategoryController extends StorefrontController
     {
         $repo = $this->container->get(CategoryRepository::class);
 
-        // Fetch all active categories, then filter to top-level for
-        // the top-level grid. Child categories are shown on their
-        // parent's page.
-        $all = $repo->listAll();
+        // Fetch visible categories (those with at least one
+        // published product or a visible descendant), then
+        // filter to top-level for the grid. Child categories
+        // are shown on their parent's page.
+        $all = $repo->listVisibleForStorefront();
         $topLevel = [];
         foreach ($all as $c) {
             if ($c->parentId === null) {
