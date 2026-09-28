@@ -130,8 +130,8 @@ final class StoreSettingDefinitions
     {
         $seen = [];
         foreach (self::DEFINITIONS as $def) {
-            $g = (string) ($def['group'] ?? '');
-            if ($g !== '' && !in_array($g, $seen, true)) {
+            $g = $def['group'];
+            if (!in_array($g, $seen, true)) {
                 $seen[] = $g;
             }
         }
