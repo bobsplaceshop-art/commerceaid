@@ -175,7 +175,8 @@ final class CommerceServiceProvider
                 $c->get(CustomerGroupRepository::class),
                 $c->get(CustomerAddressRepository::class),
                 $c->get(CodeGenerator::class),
-                $c->get(StoreContext::class)
+                $c->get(StoreContext::class),
+                $c->get(StoreRepository::class)
             ));
 
         // ---------- Customers ----------

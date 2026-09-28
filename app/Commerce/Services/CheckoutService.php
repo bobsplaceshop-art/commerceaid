@@ -7,6 +7,7 @@ use CorporateAid\Core\Database;
 use CorporateAid\Core\Request;
 use CorporateAid\Commerce\Context\StoreContext;
 use CorporateAid\Commerce\Exceptions\CheckoutException;
+use CorporateAid\Commerce\Support\ComplianceMap;
 use CorporateAid\Commerce\Models\CartLineItem;
 use CorporateAid\Commerce\Models\Customer;
 use CorporateAid\Commerce\Models\Order;
@@ -18,6 +19,7 @@ use CorporateAid\Commerce\Repositories\LegalPageRepository;
 use CorporateAid\Commerce\Repositories\OrderItemRepository;
 use CorporateAid\Commerce\Repositories\OrderRepository;
 use CorporateAid\Commerce\Repositories\OrderStatusHistoryRepository;
+use CorporateAid\Commerce\Repositories\StoreRepository;
 use CorporateAid\Platform\Support\CodeGenerator;
 
 /**
@@ -64,6 +66,7 @@ final class CheckoutService
         private CustomerAddressRepository $addresses,
         private CodeGenerator $codeGen,
         private StoreContext $storeContext,
+        private StoreRepository $storeRepository,
     ) {
     }
 
@@ -121,7 +124,21 @@ final class CheckoutService
         // -----------------------------------------------------------------
         // Validate the legal pages exist (Germany compliance gate)
         // -----------------------------------------------------------------
-        $missing = $this->legalPages->missingRequiredSlugs();
+        // Country-driven compliance gate. The store's country_code
+        // selects which legal pages must exist. Germany requires
+        // impressum, agb, widerruf, datenschutz. Other countries
+        // declare their own requirements via ComplianceMap.
+        $store = $this->storeRepository->findById($this->storeContext->id());
+        $countryCode = $store !== null ? (string) $store->countryCode : '';
+
+        $requiredSlugs = ComplianceMap::requiredLegalSlugs($countryCode);
+        $missing = [];
+        foreach ($requiredSlugs as $slug) {
+            if ($this->legalPages->findBySlug($slug) === null) {
+                $missing[] = $slug;
+            }
+        }
+
         if ($missing !== []) {
             throw new CheckoutException(
                 'Checkout is temporarily unavailable. The store has not '
