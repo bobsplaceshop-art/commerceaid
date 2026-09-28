@@ -28,6 +28,17 @@ parameters:
     paths:
         - app
         - routes
+    # resources/views is intentionally excluded from the default
+    # scan. Views are templates, not application code: they are
+    # always invoked from exactly one controller, every variable
+    # is passed explicitly by that controller, and the default-
+    # guard convention (`$x = $x ?? default`) produces dead-code
+    # findings on every line because the analyzer traces the one
+    # caller and sees the var is never null. Those findings are
+    # noise, not signal. Views are covered by `php -l` (syntax)
+    # and by the browser test pass (behavior). To analyze a
+    # specific view, pass it explicitly on the CLI:
+    #   php vendor/bin/phpstan analyse resources/views/... --memory-limit=512M
     tmpDir: storage/cache/phpstan
 
     # -----------------------------------------------------------------

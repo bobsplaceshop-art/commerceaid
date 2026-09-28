@@ -1,6 +1,8 @@
 <?php
 /**
- * Inventory list - every sellable unit with current stock.
+ * Inventory list - one row per product with aggregated stock.
+ * Simple products show one sellable unit; variable products
+ * show the count of variants plus aggregate quantity.
  *
  * @var array $result      ['items' => [...], 'total' => int, 'page' => int, 'per_page' => int, 'pages' => int]
  * @var array $filters
@@ -33,7 +35,7 @@ $exportUrl = '/commerce/ca-admin/inventory/export.csv' . ($hasFilters ? '?' . ht
     <div>
         <h1 class="h3 mb-1">Inventory</h1>
         <p class="muted mb-0">
-            <?= (int) $total ?> sellable unit<?= $total === 1 ? '' : 's' ?>
+            <?= (int) $total ?> product<?= $total === 1 ? '' : 's' ?>
             <?php if ($hasFilters): ?>
                 &middot; filtered
             <?php endif; ?>
@@ -183,11 +185,7 @@ $exportUrl = '/commerce/ca-admin/inventory/export.csv' . ($hasFilters ? '?' . ht
                         ? $unitCount . ' variant' . ($unitCount === 1 ? '' : 's')
                         : 'Simple';
 
-                    // TODO: switch to /commerce/ca-admin/inventory/item/{id}
-                    // once the per-product detail page ships (Stage 008D.2
-                    // File 4). For now link to the product edit page so
-                    // the row is clickable without a 404.
-                    $detailUrl = '/commerce/ca-admin/products/' . (int) $row['product_id'] . '/edit';
+                    $detailUrl = '/commerce/ca-admin/inventory/item/' . (int) $row['product_id'];
                     $units     = (int) $row['total_quantity'];
                     ?>
                     <tr>

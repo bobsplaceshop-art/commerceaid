@@ -252,6 +252,13 @@ $router->get('/commerce/ca-admin/inventory/{productId}/adjust-info',
     [\CorporateAid\Commerce\Controllers\Admin\InventoryController::class, 'adjustInfo'],
     ['store', 'auth']);
 
+// Per-product inventory detail page (Stage 008D.2).
+// Path starts with the literal segment "item" so it cannot
+// collide with the {productId}/adjust-info route above.
+$router->get('/commerce/ca-admin/inventory/item/{productId}',
+    [\CorporateAid\Commerce\Controllers\Admin\InventoryItemController::class, 'show'],
+    ['store', 'auth']);
+
 $router->post('/commerce/ca-admin/inventory/adjust',
     [\CorporateAid\Commerce\Controllers\Admin\InventoryController::class, 'adjust'],
     ['store', 'auth', 'csrf']);
