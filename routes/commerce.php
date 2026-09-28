@@ -259,6 +259,10 @@ $router->get('/commerce/ca-admin/inventory/item/{productId}',
     [\CorporateAid\Commerce\Controllers\Admin\InventoryItemController::class, 'show'],
     ['store', 'auth']);
 
+$router->post('/commerce/ca-admin/inventory/item/{productId}',
+    [\CorporateAid\Commerce\Controllers\Admin\InventoryItemController::class, 'save'],
+    ['store', 'auth', 'csrf']);
+
 $router->post('/commerce/ca-admin/inventory/adjust',
     [\CorporateAid\Commerce\Controllers\Admin\InventoryController::class, 'adjust'],
     ['store', 'auth', 'csrf']);

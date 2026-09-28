@@ -86,6 +86,86 @@ inventory)
 
 ## Planned Stages
 
+### Stage 007C - Procurement (Suppliers, LPOs, GRN, Expenses)
+
+**Goal:** Buy-side inventory management. Track what was
+ordered from whom, at what cost, and when it arrived. Feed
+the existing inventory ledger with `transfer_in` movements
+that reference an LPO. Give the merchant an expense view
+(cost of goods received plus supplier invoices) that answers
+"what did I spend this month and on what."
+
+**Why this stage exists now:** the inventory ledger already
+records every `adjustment` and `sale` with a signed delta
+and a `reference_type`/`reference_id` back-pointer. The
+`transfer_in` movement type is already defined but has no
+producer. Procurement is that producer. The product model
+already carries `cost_price`, so margin is one join away.
+The missing piece is the supplier-facing workflow.
+
+**Deliverables:**
+
+  Schema:
+    commerce_suppliers              (vendor master)
+    commerce_suppliers_contacts     (optional, multiple per vendor)
+    commerce_purchase_orders        (LPO header: supplier, status,
+                                     expected_at, currency, terms)
+    commerce_purchase_order_items   (line items: product, variant,
+                                     qty, unit_cost, received_qty)
+    commerce_goods_receipts         (GRN header: PO link, received_at,
+                                     received_by)
+    commerce_goods_receipt_items    (per-line received qty, batch,
+                                     expiry where relevant)
+    commerce_supplier_invoices      (invoice header: supplier,
+                                     number, amount, due_at, status)
+    commerce_supplier_invoice_lines (optional, line-level match to GRN)
+
+  Admin:
+    /commerce/ca-admin/suppliers                 list + CRUD
+    /commerce/ca-admin/suppliers/{id}            detail (activity)
+    /commerce/ca-admin/purchase-orders           list + filters
+    /commerce/ca-admin/purchase-orders/create    new LPO
+    /commerce/ca-admin/purchase-orders/{id}      edit / issue / receive
+    /commerce/ca-admin/goods-receipts            list
+    /commerce/ca-admin/goods-receipts/{id}       view + post to inventory
+    /commerce/ca-admin/supplier-invoices         list + match
+    /commerce/ca-admin/supplier-invoices/{id}    detail + payment status
+    /commerce/ca-admin/expenses                  aggregate view
+
+  Services:
+    PurchaseOrderService   - create, issue, receive line qty
+    GoodsReceiptService    - post GRN to inventory via
+                             InventoryRepository::adjust() with
+                             movement_type='transfer_in' and
+                             reference to the PO/GRN
+    SupplierInvoiceService - match invoice lines to GRNs, mark paid
+
+  Reports:
+    Expense summary by month / supplier / category
+    COGS per order (uses commerce_products.cost_price at time of
+    sale, snapshot preserved on commerce_order_items)
+    Stock on order (qty ordered minus qty received, per product)
+    Supplier performance (on-time delivery, fill rate)
+
+**Depends on:** Stage 006 (catalog + inventory ledger). Can run
+in parallel with 008D-008G, but the ledger will not have `sale`
+movements until 008E ships, so COGS reports will under-report
+until then.
+
+**Blocked by nothing, but sequenced after 008D.2.** The
+detailed test pass for 008D.2 must finish before this stage
+opens.
+
+**Open questions:**
+  - Multi-currency POs (supplier invoices in USD, books in KES)?
+  - Batch/lot tracking (for expiry-sensitive categories)?
+  - Landed cost (freight, duty, other charges allocated per line)?
+  - Partial receipts (order 100, receive 60 now, 40 later)?
+  - Returns to supplier?
+
+These are captured as Open Questions, to be resolved in the
+007C plan document before code is written.
+
 ### Stage 008E - Checkout
 
 **Goal:** Full checkout flow with B2B purchase order support.
@@ -253,6 +333,44 @@ uses picsum.photos placeholders throughout.
 
 **Likely stage:** 009 (Forms & Submissions infrastructure) or
 a dedicated sub-stage.
+
+### Conversion-Focused Product Recommendations
+
+Product detail pages and the cart page become conversion
+surfaces: each renders an advertisement-style product grid
+showing related / complementary products from the same
+category. The grid is styled as a merchandising block (not
+just a list of links) with price, discount badge, star rating,
+review count, and fulfillment badge, in the pattern used by
+Kilimall, Jumia, and similar marketplaces.
+
+Surfaces:
+
+  - Product detail page: "You May Also Like" style grid below
+    the related-products block. Auto-derived from the product's
+    categories.
+  - Cart page: "You May Also Like" grid below the cart summary.
+    Derived from the union of the categories of the products
+    currently in the cart. This is where a customer is closest
+    to checkout, so the surface has the highest conversion
+    potential.
+
+Auto-derivation first (no admin curation). The customer's
+existing category structure and published products drive the
+grid. Fallback chain: same category > sibling category > best
+sellers.
+
+Admin curation (which products to promote, override order,
+pin specific items) lands later in Stage 011 (Store Builder).
+The data-sf-* attributes on the grid let the store builder
+toggle the block, set the column count, and choose the source
+(related / cross-sell / best sellers).
+
+Likely stage: 008G (PWA, Search, Storefront Polish) for the
+auto-derived version, 011 for the admin-curated version.
+
+Reference: Kilimall product detail + cart page cross-sell
+pattern, supplied by the customer as a design concept.
 
 ### Storefront-Hosted Hero Asset
 

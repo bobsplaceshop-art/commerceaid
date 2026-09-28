@@ -11,6 +11,11 @@ $product = $product ?? null;
 $units   = $units   ?? [];
 $stats   = $stats   ?? [];
 
+// Per-row errors from the save handler, if any.
+$rowErrors = function_exists('flash')
+    ? (array) (flash('inventory_item_errors') ?? [])
+    : [];
+
 if ($product === null) {
     echo '<div class="ra-alert ra-alert-error">Product not found.</div>';
     return;
@@ -61,6 +66,17 @@ $typeLabel    = $isVariable
     </div>
 </div>
 
+<?php if ($rowErrors !== []): ?>
+    <div class="ra-alert ra-alert-error mb-3">
+        <strong>Some rows could not be saved:</strong>
+        <ul class="mb-0 mt-1 small">
+            <?php foreach ($rowErrors as $err): ?>
+                <li><?= e((string) $err) ?></li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
+
 <?php if (empty($units)): ?>
     <div class="ra-card">
         <div class="ra-card-body text-center py-5">
@@ -106,8 +122,7 @@ $typeLabel    = $isVariable
         <div class="ra-sticky-actions">
             <div class="ra-sticky-actions-inner">
                 <a href="/commerce/ca-admin/inventory" class="ra-btn ra-btn-outline">Cancel</a>
-                <button type="submit" class="ra-btn ra-btn-primary" disabled
-                        title="Save handler lands in the next commit">
+                <button type="submit" class="ra-btn ra-btn-primary">
                     <i class="bi bi-check-lg me-1"></i> Save changes
                 </button>
             </div>
