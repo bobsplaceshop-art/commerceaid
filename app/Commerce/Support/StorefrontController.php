@@ -47,13 +47,41 @@ abstract class StorefrontController
     {
         $viewSvc = $this->container->get(View::class);
 
-        $data['store']     = $this->resolveStore();
-        $data['title']     = $data['title'] ?? '';
-        $data['cartCount'] = $this->resolveCartCount();
+        $data['store']               = $this->resolveStore();
+        $data['title']               = $data['title'] ?? '';
+        $data['cartCount']           = $this->resolveCartCount();
+        $data['cookieBannerEnabled'] = $this->resolveCookieBannerEnabled();
 
         return Response::html(
             $viewSvc->render($view, $data, 'storefront.layouts.main')
         );
+    }
+
+    /**
+     * Whether the cookie consent banner should render on this
+     * page load. Reads the store setting once per request.
+     *
+     * The layout renders the banner partial, its CSS, and its JS
+     * only when this returns true. The CSS and JS are not loaded
+     * at all when the banner is disabled - no dead assets.
+     *
+     * Defensive: if the settings read fails for any reason, the
+     * banner is disabled. A broken settings table should not
+     * break the storefront.
+     */
+    private function resolveCookieBannerEnabled(): bool
+    {
+        try {
+            $settings = $this->container->get(
+                \CorporateAid\Commerce\Repositories\StoreSettingsRepository::class
+            );
+            // Default true: German deployment requires the banner.
+            // The row is absent on a fresh store until someone
+            // visits Store Settings and toggles it.
+            return $settings->bool('compliance.cookie_banner.enabled', true);
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /**

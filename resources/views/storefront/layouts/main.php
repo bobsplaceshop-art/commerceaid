@@ -340,5 +340,11 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     })();
     </script>
     <?php endif; ?>
+<?php if (!empty($cookieBannerEnabled)): ?>
+    <?= view_partial('storefront.partials._cookie-banner', ['store' => $store]) ?>
+    <link href="<?= versioned_asset('css/storefront-cookie-banner.css') ?>" rel="stylesheet">
+    <script src="<?= versioned_asset('js/cookie-consent.js') ?>" defer></script>
+<?php endif; ?>
+
 </body>
 </html>

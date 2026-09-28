@@ -1,0 +1,120 @@
+/* =====================================================================
+   Cookie consent banner (Stage 008E.1)
+   TTDSG-compliant. Fixed to the bottom, non-modal, dismissible
+   only by choosing Accept or Reject.
+   ===================================================================== */
+
+.ca-cookie-banner {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background: #0b1220;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 -8px 24px -12px rgba(0, 0, 0, 0.4);
+    color: #e2e8f0;
+    font-family: inherit;
+}
+
+.ca-cookie-banner[hidden] {
+    display: none;
+}
+
+.ca-cookie-banner-inner {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.ca-cookie-banner-text {
+    flex: 1 1 480px;
+    min-width: 0;
+}
+
+.ca-cookie-banner-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 .5rem;
+    color: #fff;
+}
+
+.ca-cookie-banner-body {
+    font-size: .875rem;
+    line-height: 1.55;
+    margin: 0 0 .5rem;
+    color: #cbd5e1;
+}
+
+.ca-cookie-banner-links {
+    font-size: .8rem;
+    margin: 0;
+}
+.ca-cookie-banner-links a {
+    color: #c6a15b;
+    text-decoration: underline;
+}
+.ca-cookie-banner-links a:hover {
+    color: #d8bf8a;
+}
+
+.ca-cookie-banner-actions {
+    display: flex;
+    gap: .75rem;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.ca-cookie-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: .6rem 1.1rem;
+    font-size: .875rem;
+    font-weight: 500;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: opacity .15s ease, background .15s ease;
+    white-space: nowrap;
+}
+
+.ca-cookie-btn-outline {
+    background: transparent;
+    color: #e2e8f0;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+.ca-cookie-btn-outline:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.ca-cookie-btn-primary {
+    background: #c6a15b;
+    color: #0b1220;
+    border-color: #c6a15b;
+}
+.ca-cookie-btn-primary:hover {
+    opacity: 0.9;
+}
+
+/* Mobile: stack and full-width buttons */
+@media (max-width: 640px) {
+    .ca-cookie-banner-inner {
+        padding: 1rem;
+        gap: 1rem;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .ca-cookie-banner-actions {
+        flex-direction: column-reverse;
+    }
+    .ca-cookie-btn {
+        width: 100%;
+    }
+}
