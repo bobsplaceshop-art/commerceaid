@@ -3,8 +3,8 @@
 **Project:** Anaya Global Commerce Platform
 **Path (Windows):** C:\projects\commerceaid
 **Path (WSL):** /mnt/c/projects/commerceaid
-**Document date:** 2026-09-26
-**Current status:** Stage 006F (Product Variations) is functionally complete; awaiting final test pass + stage documentation.
+**Document date:** 2026-09-28
+**Current status:** Stage 008D.2 (Per-Product Inventory Page) complete; ready to open Stage 008E (Checkout).
 
 ---
 
@@ -116,18 +116,17 @@ goes through CommerceServiceProvider (via App::PRODUCT_PROVIDERS array).
 | 006C | Categories admin CRUD | Done |
 | 006D | Brands admin CRUD | Done |
 | 006E | Products list & editor | Done |
-| 006F | Product variations | Done (pending final test) |
-| 006G | Inventory overview | Next |
-| 007 | B2B & customer groups | Planned |
-| 008 | Storefront & search | Planned |
-| 009 | Forms & submissions | Planned |
-| 010 | Payments & shipping (deep) | Planned |
-| 011 | Advanced commerce | Planned |
-| 012 | Theme engine & page builder | Planned |
-
-Stage docs live in docs/stages/*.md. Index: docs/stages/README.md.
-
----
+| 006F | Product variations | Done |
+| 006G | Inventory overview | Done |
+| 007A | Customer groups & price lists | Done |
+| 007B | Purchase orders & approval | Done |
+| 008A | Storefront shell & Store model | Done |
+| 008B | Storefront visual identity & catalog | Done |
+| 008B.2 | Extended visual pass | Done |
+| 008C | Customer registration, login, account | Done |
+| 008D | Cart | Done |
+| 008D.1 | Variant-level inventory | Done |
+| 008D.2 | Per-product inventory page | Done |
 
 ## 5. Database Schema - Summary
 
@@ -674,33 +673,48 @@ How to handle it:
 
 ## 11. Immediate Next Steps
 
-1. Test the product variations page end to end:
-   - Search narrows results (400ms debounce)
-   - Group chips filter by first axis
-   - Bulk actions work (Enable, Disable, Set price)
-   - Pagination preserves filters
-   - Save persists edits
-   - Regenerate wipes and rebuilds
-2. Write the 006F stage doc at docs/stages/006f_product-variations.md
-3. Update docs/stages/README.md index
-4. Move to Stage 006G (Inventory overview) or Stage 007 (B2B)
+**Stage 008D.2 (Per-Product Inventory Page) is complete.**
 
-### What Stage 006G Will Cover (Inventory Overview)
+What shipped in 008D:
 
-- Dashboard tiles for low-stock and out-of-stock counts
-- Movement history view with filters (by product, type, date range)
-- Bulk stock adjustment form
-- Uses everything already built (InventoryRepository)
+  008D    Cart — session + DB cart, merge on login, mini-cart
+          in header, stock checks per variant.
+  008D.1  Variant-level inventory — the data-model fix.
+          Every sellable unit has exactly one inventory row.
+          Variable products have no parent row. The cart
+          checks the specific variant's row.
+  008D.2  Per-product inventory page — inventory list grouped
+          by product, detail page with inline bulk adjustment
+          and recent-movements block, mobile-responsive tables.
 
-### What Stage 007 Will Cover (B2B)
+### Next: Stage 008E - Checkout
 
-- Customer groups (retail, wholesale, VIP)
-- Price lists per group
-- Purchase orders and approval workflows
-- Quote management
-- B2B-specific checkout
+The sale side of the ledger. Multi-step checkout with order
+creation, inventory reservation (via
+InventoryRepository::reserve), B2B purchase order support for
+approved customers, and stub payment providers (COD, bank
+transfer, PO). Full scope in docs/ROADMAP.md.
 
----
+### Prerequisites for 008E
+
+  - 008D.2 complete                      OK
+  - commerce_orders schema exists        OK (Stage 007B)
+  - commerce_order_items schema exists   OK (Stage 007B)
+  - Order status history schema exists   OK (Stage 007B)
+  - Cart merge on login works            OK (008D)
+  - Per-variant stock enforcement works  OK (008D.1)
+
+### Also queued (see ROADMAP backlog)
+
+  - Stage 007C - Procurement (suppliers, LPOs, GRN, expenses)
+    Sequenced after 008E so the ledger gets receipts AND sales
+    in the same era.
+  - Data Import (CSV / Excel)
+    Bulk-load products, categories, customers, suppliers.
+    Wait until schema is frozen (after 007C + 008E).
+  - Conversion-Focused Product Recommendations
+    Ad-style product grid on product detail and cart pages.
+    Lands in 008G polish or 011 store builder.
 
 ## 12. Files Referenced in This Document
 

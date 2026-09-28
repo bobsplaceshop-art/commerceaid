@@ -270,7 +270,7 @@ Responsive rules from `docs/RESPONSIVENESS.md`:
 
 ## What's Not Built Yet
 
-- Storefront (Stage 008)
+- Checkout (Stage 008E)
 - Forms builder (Stage 009)
 - Full payment provider integrations (Stage 010)
 - Shipping zone editor (Stage 010)
@@ -285,5 +285,13 @@ Responsive rules from `docs/RESPONSIVENESS.md`:
 
 Stage 006 (Catalog): complete.
 Stage 007A (B2B foundation): complete.
-Stage 007B (Approval + PO): in progress — schema and customer
-model done, admin UI next.
+Stage 007B (Approval + PO): complete.
+Stage 008A (Storefront shell): complete.
+Stage 008B (Storefront visual identity): complete.
+Stage 008B.2 (Extended visual pass): complete.
+Stage 008C (Customer auth + account): complete.
+Stage 008D (Cart): complete.
+Stage 008D.1 (Variant-level inventory): complete.
+Stage 008D.2 (Per-product inventory page): complete.
+
+Next: Stage 008E (Checkout).

@@ -25,11 +25,11 @@ records what actually shipped, in order.
 | 008A   | Storefront shell and Store model      | 2026-09-27 | Done   |
 | 008B   | Storefront visual identity and catalog| 2026-09-27 | Done   |
 | 008B.2 | Extended visual pass                  | 2026-09-27 | Done   |
-| 008C   | Customer registration, login, account | -          | Next   |
-| 008D   | Cart                                  | -          | Planned |
-| 008E   | Checkout                              | -          | Planned |
-| 008F   | Order lifecycle (customer-facing)     | -          | Planned |
-| 008G   | PWA, search, storefront polish        | -          | Planned |
+| 008C   | Customer registration, login, account | 2026-09-27 | Done   |
+| 008D   | Cart                                  | 2026-09-28 | Done   |
+| 008D.1 | Variant-level inventory               | 2026-09-28 | Done   |
+| 008D.2 | Per-product inventory page            | 2026-09-28 | Done   |
+| 008E   | Checkout                              | -          | Next   |
 | 009    | Forms and submissions                 | -          | Planned |
 | 010    | Payments and shipping (deep)          | -          | Planned |
 | 011    | Advanced commerce + store builder     | -          | Planned |
@@ -53,7 +53,7 @@ reviewable.
 
 ## Current focus
 
-**Stage 008C - Customer Registration, Login, Account.**
+**Stage 008E - Checkout.**
 
 Customer-side authentication and account management. Distinct
 from the admin login (separate session cookie, separate user
