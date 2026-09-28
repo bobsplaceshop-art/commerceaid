@@ -161,14 +161,105 @@ These are captured as Open Questions, to be resolved in the
 
 ### Stage 008F - Order Lifecycle (Customer-Facing)
 
-**Goal:** Customer can view their orders, order detail, reorder.
+**Goal:** The customer can see every order, understand its
+current state, and track it. The post-purchase half of the
+relationship.
+
+The AliExpress-style account portal is the reference for the
+shape (order list with status tabs, order detail with line
+items and shipping info), but we build better: purpose-built
+empty states, honest status labels, and a Widerrufsrecht
+link on every order detail that opens the withdrawal policy.
+
+**Design principles locked:**
+
+  1. One account, one coherent surface. Every /account/* page
+     shares the same shell (sidebar + header + breadcrumbs).
+     Moving between orders, wishlist, returns, and messages
+     feels like moving between rooms in the same house.
+
+  2. Tabs where they clarify, sections where they don't.
+     Tabs are for genuinely distinct states (five order
+     statuses). A single page is fine for addresses.
+
+  3. Every empty state has a purpose. "No order" is a
+     placeholder. Ours says what the empty state means and
+     offers the next action.
+
+  4. The customer account mirrors the merchant's admin.
+     Not identical, but visually and structurally related.
 
 **Deliverables:**
 
-- `Storefront/OrdersController` - list, view detail
-- Order status display, shipment tracking stub
+- `Storefront/OrdersController` - list with status tabs,
+  detail page.
+- Status tabs: Unpaid / To Be Shipped / Shipped / Completed /
+  Cancelled. Each tab filters the customer's own orders.
+- Order detail page shows: line items with snapshots (name,
+  variant, sku, qty, unit price, line total), shipping
+  address, billing address, payment method, current statuses
+  (main, payment, fulfilment), totals.
+- **Tracking number display.** New columns on commerce_orders:
+  `carrier_key`, `tracking_number`. A carrier key maps to a
+  URL template (DHL, FedEx, UPS, DPD, Hermes, etc.) via a
+  small config map. The link opens the carrier's public
+  tracking page. No API integration.
+- **Widerrufsrecht link on every order detail.** German
+  consumer protection requires the customer to have access
+  to the withdrawal policy from their order. Links to
+  /legal/widerruf.
+- Rewire `/account/orders` from the current stub to the real
+  list. Order numbers link to the detail page, not the
+  checkout confirmation URL.
+- 14-day withdrawal-window indicator (informational badge:
+  "Withdrawal available until Oct 12"). Ties into 008H.
 
-**Depends on:** Stage 008E (checkout)
+**Out of scope (later stages):**
+
+- Carrier API polling and auto-updated tracking (010).
+- Split shipments (010).
+- Reorder button (deferred until the cart supports
+  one-click re-add, 008G polish or later).
+- Customer-facing order notes / attachments (012+).
+
+**Depends on:** Stage 008E (checkout, complete).
+
+### Stage 008F.1 - Account Shell & Navigation
+
+**Goal:** Every /account/* page shares one shell. Left sidebar
+navigation, breadcrumbs, consistent header. The pages that
+exist (dashboard, orders, addresses, password) gain a
+shared visual frame. New pages added by later sub-stages
+slot into the same frame automatically.
+
+**Deliverables:**
+
+- `resources/views/storefront/account/_shell.php` partial.
+  Renders the sidebar + breadcrumbs + header.
+- `resources/views/storefront/account/_sidebar.php` partial.
+  Grouped, collapsible sections:
+    My Account (dashboard, addresses, password)
+    My Orders (list, filters)
+    Returns (008H - link until then shows "coming soon")
+    Wishlist (008G.1)
+    Recently Viewed (008G.2)
+    Messages (008G.3, with unread badge)
+- Breadcrumb trail on every /account/* page.
+- Refactor existing account views to render inside the shell.
+  Existing pages: dashboard, orders, addresses, address-form,
+  password.
+- Mobile: sidebar collapses to a horizontal tab strip on
+  narrow viewports (or a drawer; decide at build time).
+- Responsive at 375 / 768 / 1024.
+
+**Not in scope:**
+
+- New account pages themselves. Those land in their own
+  sub-stages. F.1 is only the shell.
+- Notification badge wiring. F.1 places the placeholder;
+  008G.3 fills it.
+
+**Depends on:** Stage 008F (order detail page).
 
 ### Stage 008G - PWA, Search, Storefront Polish
 
@@ -203,7 +294,108 @@ deferred polish items.
 - Attribute-based faceted search (color, size, etc.)
 - Responsive audit at 375 / 768 / 1024
 
-**Depends on:** Stages 008A-008F
+**Depends on:** Stages 008A-008H. Runs after the customer
+account work (F, F.1, G.1, G.2, G.3, H) so the storefront
+polish lands on a stable foundation.
+
+### Stage 008G.1 - Wishlist
+
+**Goal:** Customers can save products for later. Per-customer
+for logged-in customers, per-session for guests. Merge on
+login, same pattern as the cart.
+
+**Deliverables:**
+
+- `commerce_wishlists` table (store_id, customer_id, session_id,
+  created_at, updated_at) or a simpler per-customer table.
+- `WishlistRepository` + `WishlistService`.
+- Add/remove from the product card (heart icon always visible)
+  and the product detail page.
+- `/account/wishlist` page.
+- Optional: "Add all to cart" button on the wishlist page.
+- Merge guest session wishlist into the customer's DB wishlist
+  on login (same pattern as CartService::mergeGuestCartOnLogin).
+
+**Depends on:** Stage 008F.1 (account shell).
+
+### Stage 008G.2 - Recently Viewed
+
+**Goal:** Track products the customer viewed. Show them on
+/account/recent. A returning customer can pick up where they
+left off.
+
+**Deliverables:**
+
+- `commerce_recently_viewed` table. Per-session for guests,
+  per-customer for logged-in. Bounded to N most recent
+  (e.g. 50), oldest rotates out.
+- Record on each product detail page load (deduplicated by
+  product_id within a 24h window).
+- `/account/recent` page with clear history option.
+- Merge guest session history into the customer history on
+  login (same pattern as wishlist).
+
+**Depends on:** Stage 008F.1 (account shell).
+
+### Stage 008G.3 - Message Center
+
+**Goal:** A unified notification surface for the customer.
+System messages, order updates, promotions. Reads from
+`core_notifications` (already exists from Platform).
+
+**Deliverables:**
+
+- `/account/messages` page with tabs:
+    System Message    - platform announcements, policy changes
+    Order Updates     - order status transitions
+    Promotions        - marketing, opt-in only
+- Unread count badge in the account sidebar (F.1 placeholder
+  filled here).
+- Mark as read, bulk mark-all-read.
+- Preferences page: which categories the customer wants by
+  email vs in-app. Ties into the Platform's
+  NotificationRuleService.
+- Email digest stub (real sending is Stage 010).
+
+**Depends on:** Stage 008F (order status events feed the
+Order Updates tab), Stage 008F.1 (shell).
+
+### Stage 008H - Returns & Refunds
+
+**Goal:** Customer-initiated return requests. Integrates the
+German Widerrufsrecht (14-day right of withdrawal) with a
+real workflow.
+
+**Deliverables:**
+
+- `commerce_return_requests` table: order_id, customer_id,
+  line items, reason, status, requested_at, resolved_at.
+- `commerce_return_request_items` table for per-line returns.
+- `/account/returns` page with tabs:
+    Apply           - start a return
+    In Processing   - returns awaiting merchant action
+    Closed          - resolved returns
+- 14-day window enforcement. Requests beyond the window are
+  rejected with a clear message (unless the merchant has
+  configured a longer policy).
+- Reason picker: "Damaged", "Wrong item", "Not as described",
+  "Changed my mind" (the last one is the Widerrufsrecht
+  path, the others are warranty).
+- Admin approval workflow: view requests, approve, generate
+  refund, mark received.
+- Integration with Widerrufsrecht legal text: the Apply form
+  links to /legal/widerruf.
+- Refund tracking: refunded_total on the order updates when
+  a return is resolved. Feeds the payment_status track.
+
+**Out of scope (later):**
+
+- Actual payment provider refunds (Stage 010 - the payment
+  providers land there).
+- Return shipment labels (Stage 010 or 011).
+
+**Depends on:** Stage 008F (order detail page), Stage 008F.1
+(account shell), Stage 008E.1 (Widerrufsrecht content).
 
 ### Stage 009 - Forms & Submissions
 
