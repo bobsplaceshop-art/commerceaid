@@ -1,0 +1,437 @@
+/* =====================================================================
+   Storefront Cart Stylesheet
+   =====================================================================
+   Covers:
+     - The /cart page (line items, summary sidebar, empty state)
+     - The cart page's per-line warnings (price changed, out of stock)
+     - The header badge pulse animation
+     - The add-to-cart toast notification
+
+   Loaded on every storefront page because the toast and the
+   badge pulse are global features. The cart-page-specific
+   styles are inert on other pages.
+
+   Uses the storefront CSS variables from storefront.css.
+
+   See docs/stages/008d_cart-plan.md.
+   ===================================================================== */
+
+/* ---------- Cart page wrapper ----------------------------------- */
+
+.sf-cart-page {
+    padding: 3rem 0 5rem;
+    background: var(--sf-cream);
+}
+
+.sf-cart-heading {
+    margin-bottom: 2.5rem;
+}
+
+.sf-cart-title {
+    font-family: var(--sf-font-display);
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--sf-charcoal);
+    margin: 0;
+}
+
+.sf-cart-count {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+    color: var(--sf-muted);
+}
+
+/* ---------- Two-column layout ------------------------------------ */
+
+.sf-cart-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 900px) {
+    .sf-cart-layout {
+        grid-template-columns: 1fr 360px;
+        gap: 3rem;
+        align-items: start;
+    }
+}
+
+/* ---------- Cart line item --------------------------------------- */
+
+.sf-cart-line {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    grid-template-areas:
+        "media info"
+        "qty   qty"
+        "price subtotal"
+        "remove remove";
+    gap: 1rem;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid rgba(198, 161, 91, 0.2);
+}
+
+.sf-cart-line:last-child {
+    border-bottom: 0;
+}
+
+.sf-cart-line-media {
+    grid-area: media;
+    width: 80px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(198, 161, 91, 0.08);
+    color: var(--sf-muted);
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.sf-cart-line-info {
+    grid-area: info;
+    min-width: 0;
+}
+
+.sf-cart-line-name {
+    font-family: var(--sf-font-display);
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--sf-charcoal);
+    margin: 0 0 0.25rem;
+}
+
+.sf-cart-line-variant {
+    font-size: 0.85rem;
+    color: var(--sf-muted);
+    margin: 0 0 0.25rem;
+}
+
+.sf-cart-line-sku {
+    font-size: 0.8rem;
+    color: var(--sf-muted);
+    margin: 0 0 0.5rem;
+}
+
+.sf-cart-line-sku-label {
+    opacity: 0.7;
+    margin-right: 0.25rem;
+}
+
+.sf-cart-line-warning {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 2px;
+    margin: 0.25rem 0;
+}
+
+.sf-cart-line-warning i {
+    font-size: 0.85rem;
+}
+
+.sf-cart-line-warning-info {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.sf-cart-line-warning-danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+/* ---------- Quantity control ------------------------------------- */
+
+.sf-cart-line-quantity {
+    grid-area: qty;
+}
+
+.sf-cart-quantity-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid #d6cec0;
+    border-radius: 2px;
+    padding: 0.25rem 0.5rem;
+    background: var(--sf-white);
+}
+
+.sf-cart-quantity-label {
+    font-size: 0.8rem;
+    color: var(--sf-muted);
+    margin: 0;
+}
+
+.sf-cart-quantity-input {
+    width: 60px;
+    border: 0;
+    padding: 0.35rem 0.25rem;
+    font-size: 0.95rem;
+    text-align: center;
+    background: transparent;
+    color: var(--sf-charcoal);
+}
+
+.sf-cart-quantity-input:focus {
+    outline: none;
+}
+
+.sf-cart-quantity-update {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    color: var(--sf-muted);
+    padding: 0.25rem;
+    line-height: 1;
+    font-size: 0.9rem;
+}
+
+.sf-cart-quantity-update:hover {
+    color: var(--sf-gold);
+}
+
+/* ---------- Price + subtotal ------------------------------------- */
+
+.sf-cart-line-price {
+    grid-area: price;
+    font-size: 0.9rem;
+    color: var(--sf-muted);
+}
+
+.sf-cart-line-price-value {
+    color: var(--sf-charcoal);
+}
+
+.sf-cart-line-subtotal {
+    grid-area: subtotal;
+    text-align: right;
+    font-family: var(--sf-font-display);
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--sf-charcoal);
+}
+
+/* ---------- Remove button ---------------------------------------- */
+
+.sf-cart-line-remove {
+    grid-area: remove;
+    text-align: right;
+}
+
+.sf-cart-remove-btn {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    color: var(--sf-muted);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    border-radius: 2px;
+    transition: color 120ms ease;
+}
+
+.sf-cart-remove-btn:hover {
+    color: #b91c1c;
+}
+
+/* ---------- Desktop line layout ---------------------------------- */
+
+@media (min-width: 768px) {
+    .sf-cart-line {
+        grid-template-columns: 96px 1fr auto auto auto;
+        grid-template-areas:
+            "media info qty price subtotal"
+            "media info qty price remove";
+        gap: 1.25rem;
+        align-items: center;
+    }
+
+    .sf-cart-line-media {
+        width: 96px;
+        height: 120px;
+    }
+
+    .sf-cart-line-remove {
+        text-align: right;
+        align-self: end;
+    }
+}
+
+/* ---------- Summary sidebar -------------------------------------- */
+
+.sf-cart-summary {
+    background: var(--sf-white);
+    padding: 1.75rem;
+    border: 1px solid rgba(198, 161, 91, 0.25);
+    position: sticky;
+    top: 1rem;
+    align-self: start;
+}
+
+.sf-cart-summary-title {
+    font-family: var(--sf-font-display);
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: var(--sf-charcoal);
+    margin: 0 0 1.25rem;
+}
+
+.sf-cart-summary-list {
+    margin: 0 0 1rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.sf-cart-summary-list dt {
+    color: var(--sf-charcoal);
+}
+
+.sf-cart-summary-list dd {
+    margin: 0;
+    text-align: right;
+    color: var(--sf-charcoal);
+}
+
+.sf-cart-summary-note-label,
+.sf-cart-summary-note-value {
+    color: var(--sf-muted) !important;
+    font-size: 0.85rem;
+}
+
+.sf-cart-summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(198, 161, 91, 0.2);
+    margin-bottom: 1.25rem;
+    font-family: var(--sf-font-display);
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: var(--sf-charcoal);
+}
+
+.sf-cart-summary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sf-cart-summary-actions .sf-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.sf-cart-clear-form {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.sf-cart-clear-btn {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    color: var(--sf-muted);
+    font-size: 0.85rem;
+    text-decoration: underline;
+    padding: 0.25rem;
+}
+
+.sf-cart-clear-btn:hover {
+    color: #b91c1c;
+}
+
+/* ---------- Empty state ------------------------------------------ */
+
+.sf-cart-empty {
+    text-align: center;
+    padding: 4rem 1rem;
+    background: var(--sf-white);
+    border: 1px solid rgba(198, 161, 91, 0.15);
+}
+
+.sf-cart-empty-icon {
+    font-size: 3rem;
+    color: var(--sf-gold);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.sf-cart-empty-heading {
+    font-family: var(--sf-font-display);
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--sf-charcoal);
+    margin: 0 0 0.5rem;
+}
+
+.sf-cart-empty-copy {
+    color: var(--sf-muted);
+    font-size: 0.95rem;
+    margin: 0 0 1.75rem;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+/* ---------- Header badge pulse ----------------------------------- */
+
+@keyframes sf-cart-pulse {
+    0%   { transform: scale(1);    }
+    50%  { transform: scale(1.35); }
+    100% { transform: scale(1);    }
+}
+
+.sf-cart-badge.is-pulse {
+    animation: sf-cart-pulse 600ms ease-out;
+}
+
+/* ---------- Add-to-cart toast ------------------------------------ */
+
+.sf-cart-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    padding: 0.85rem 1.25rem;
+    background: var(--sf-charcoal);
+    color: var(--sf-cream);
+    font-family: var(--sf-font-body);
+    font-size: 0.9rem;
+    border-radius: 2px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(1rem);
+    transition: opacity 250ms ease, transform 250ms ease;
+    max-width: calc(100vw - 3rem);
+    pointer-events: none;
+}
+
+.sf-cart-toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.sf-cart-toast-success {
+    background: var(--sf-charcoal);
+}
+
+.sf-cart-toast-error {
+    background: #991b1b;
+}
+
+@media (max-width: 480px) {
+    .sf-cart-toast {
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+        max-width: none;
+    }
+}

@@ -7,6 +7,7 @@ use CorporateAid\Commerce\Models\Customer;
 use CorporateAid\Commerce\Repositories\CustomerGroupRepository;
 use CorporateAid\Commerce\Repositories\CustomerRepository;
 use CorporateAid\Commerce\Services\CustomerAuthService;
+use CorporateAid\Commerce\Services\CartService;
 use CorporateAid\Commerce\Support\StorefrontController;
 use CorporateAid\Commerce\Support\Validator;
 use CorporateAid\Core\Request;
@@ -136,6 +137,10 @@ final class AuthController extends StorefrontController
         // The checkout gate is enforced by Customer::canCheckout().
         $customerAuth->login($customer);
 
+        // Same merge as in login(). A guest who fills their cart
+        // and then registers an account should not lose the cart.
+        $this->container->get(CartService::class)->mergeGuestCartOnLogin();
+
         $session->clearOldInput();
 
         if ($approvalStatus === 'pending') {
@@ -256,6 +261,17 @@ final class AuthController extends StorefrontController
             $session->flashOldInput(['email' => $email]);
             return Response::redirect('/account/login' . $this->intendedQuery($request));
         }
+
+        // Merge any guest cart items into the customer's DB cart.
+        // The customer is now logged in, so CartService resolves
+        // to the DB-backed cart. Any items added as a guest are
+        // moved into it and the session cart is cleared.
+        //
+        // Called from the controller rather than from
+        // CustomerAuthService::login() to avoid a circular
+        // dependency (CartService already depends on
+        // CustomerAuthService).
+        $this->container->get(CartService::class)->mergeGuestCartOnLogin();
 
         $session->clearOldInput();
 

@@ -94,20 +94,6 @@ $isNavActive = function (string $href) use ($currentPath): bool {
             <i class="bi bi-list" aria-hidden="true"></i>
         </button>
 
-        <nav class="sf-nav" aria-label="Primary" data-sf-nav>
-            <ul class="sf-nav-list">
-                <?php foreach ($navItems as $item): ?>
-                    <?php $active = $isNavActive($item['href']); ?>
-                    <li class="sf-nav-item">
-                        <a href="<?= e($item['href']) ?>"
-                           class="sf-nav-link<?= $active ? ' is-active' : '' ?><?= !empty($item['highlight']) ? ' is-highlight' : '' ?>">
-                            <?= e($item['label']) ?>
-                        </a>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        </nav>
-
         <div class="sf-header-actions">
             <button type="button"
                     class="sf-icon-btn"
@@ -133,6 +119,22 @@ $isNavActive = function (string $href) use ($currentPath): bool {
         </div>
 
     </div>
+
+    <nav class="sf-nav-row" aria-label="Primary" data-sf-nav>
+        <div class="sf-container">
+            <ul class="sf-nav-list">
+                <?php foreach ($navItems as $item): ?>
+                    <?php $active = $isNavActive($item['href']); ?>
+                    <li class="sf-nav-item">
+                        <a href="<?= e($item['href']) ?>"
+                           class="sf-nav-link<?= $active ? ' is-active' : '' ?><?= !empty($item['highlight']) ? ' is-highlight' : '' ?>">
+                            <?= e($item['label']) ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </nav>
 </header>
 
 <script>

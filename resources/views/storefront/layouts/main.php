@@ -73,6 +73,7 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <link href="<?= versioned_asset('css/storefront-catalog.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-product.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-auth.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/storefront-cart.css') ?>" rel="stylesheet">
 </head>
 <body class="sf-body">
 
@@ -107,6 +108,170 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     ]) ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    /* ================================================================
+     * Mini-cart JS
+     * ================================================================
+     * Progressive enhancement for the storefront cart. If this
+     * script fails to load, the cart forms still work as plain
+     * POSTs. Nothing here is required for functionality.
+     *
+     * Behavior:
+     *   - Intercepts form submissions on [data-sf-add-to-cart]
+     *   - POSTs via fetch with Accept: application/json
+     *   - Updates the header badge from the JSON response
+     *   - Shows a small toast notification
+     *   - Dispatches a 'cart:updated' CustomEvent for any other
+     *     script that wants to react
+     *   - On page load, fetches /cart/count to correct a stale
+     *     server-rendered badge (e.g., after the customer edits
+     *     the cart in another tab)
+     *
+     * The server may return either a JSON response (when Accept
+     * is application/json) or an HTML redirect (when it isn't).
+     * This script always sends the JSON Accept header, so it
+     * always gets JSON back.
+     * ================================================================ */
+    (function () {
+        'use strict';
+
+        // ---------- Badge update ----------
+        function updateCartBadge(count) {
+            var badges = document.querySelectorAll('[data-sf-cart-count]');
+            for (var i = 0; i < badges.length; i++) {
+                var el = badges[i];
+                var prev = parseInt(el.getAttribute('data-sf-cart-count'), 10) || 0;
+
+                el.textContent = count;
+                el.setAttribute('data-sf-cart-count', String(count));
+
+                if (count > 0) {
+                    el.classList.remove('is-empty');
+                    el.hidden = false;
+                } else {
+                    el.classList.add('is-empty');
+                    el.hidden = true;
+                }
+
+                // Pulse animation when count increases
+                if (count > prev) {
+                    el.classList.add('is-pulse');
+                    setTimeout(function () {
+                        el.classList.remove('is-pulse');
+                    }, 600);
+                }
+            }
+        }
+
+        // ---------- Toast ----------
+        var toastTimer = null;
+        function showToast(message, kind) {
+            kind = kind || 'success';
+            var existing = document.getElementById('sf-cart-toast');
+            if (existing) existing.remove();
+            if (toastTimer) clearTimeout(toastTimer);
+
+            var toast = document.createElement('div');
+            toast.id = 'sf-cart-toast';
+            toast.className = 'sf-cart-toast sf-cart-toast-' + kind;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // Trigger the entrance animation on the next frame
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    toast.classList.add('is-visible');
+                });
+            });
+
+            toastTimer = setTimeout(function () {
+                toast.classList.remove('is-visible');
+                setTimeout(function () {
+                    if (toast.parentNode) toast.parentNode.removeChild(toast);
+                }, 300);
+            }, 2200);
+        }
+
+        // ---------- Custom event ----------
+        function dispatchCartUpdated(count) {
+            try {
+                document.dispatchEvent(new CustomEvent('cart:updated', {
+                    detail: { count: count }
+                }));
+            } catch (e) {
+                // CustomEvent not supported (very old browsers). Silent.
+            }
+        }
+
+        // ---------- Form interception ----------
+        function interceptForm(form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                var url = form.getAttribute('action') || '/cart/add';
+                var formData = new FormData(form);
+
+                fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'same-origin',
+                })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('Request failed: ' + r.status);
+                    return r.json();
+                })
+                .then(function (data) {
+                    if (data && typeof data.count === 'number') {
+                        updateCartBadge(data.count);
+                        dispatchCartUpdated(data.count);
+                    }
+                    if (data && data.ok) {
+                        showToast(data.message || 'Added to cart', 'success');
+                    } else {
+                        showToast((data && data.message) || 'Something went wrong', 'error');
+                    }
+                })
+                .catch(function () {
+                    showToast('Could not update cart. Try refreshing.', 'error');
+                });
+            });
+        }
+
+        // ---------- Wire up ----------
+        function init() {
+            var forms = document.querySelectorAll('[data-sf-add-to-cart]');
+            for (var i = 0; i < forms.length; i++) {
+                interceptForm(forms[i]);
+            }
+
+            // Refresh the badge on page load to catch drift
+            // (customer edited cart in another tab, etc.)
+            fetch('/cart/count', {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data && typeof data.count === 'number') {
+                    updateCartBadge(data.count);
+                }
+            })
+            .catch(function () {
+                // Server unavailable or endpoint down. Silent -
+                // the server-rendered badge stays as-is.
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
+    </script>
 
     <?php if (function_exists('config') && config('app.debug')): ?>
     <script>

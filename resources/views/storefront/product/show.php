@@ -150,27 +150,6 @@ for ($i = 1; $i <= 4; $i++) {
                 <?php endif; ?>
             </div>
 
-            <?php if ($product->isVariable() && !empty($variants)): ?>
-                <div class="sf-product-variants">
-                    <label for="sf-variant-select" class="sf-filter-label">Choose an option</label>
-                    <select id="sf-variant-select" class="sf-filter-input" disabled>
-                        <option value="">Select&hellip;</option>
-                        <?php foreach ($variants as $v): ?>
-                            <option value="<?= (int) $v->id ?>">
-                                <?php
-                                $label = trim((string) $v->attributeSummary);
-                                if ($label === '') {
-                                    $label = $v->sku ?: 'Variant #' . (int) $v->id;
-                                }
-                                echo e($label);
-                                ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <p class="muted sf-product-variants-note">Interactive variant picker coming soon.</p>
-                </div>
-            <?php endif; ?>
-
             <?php if (!empty($product->minOrderQuantity) && $product->minOrderQuantity > 1): ?>
                 <p class="sf-product-moq muted">
                     Minimum order: <?= (int) $product->minOrderQuantity ?> units
@@ -179,21 +158,51 @@ for ($i = 1; $i <= 4; $i++) {
 
             <div class="sf-product-actions" data-sf-block="add-to-cart">
                 <?php
-                // Variable products need a variant selection step
-                // (Stage 008F-adjacent). Until that UI ships, the
-                // add-to-cart form is only active for simple products.
-                $canAddToCart = $product !== null && !$product->isVariable();
+                // Variable products: the customer picks a variant from
+                // a <select>. Simple products: variant_id stays 0.
+                $isVariableWithVariants = $product !== null
+                    && $product->isVariable()
+                    && !empty($variants);
                 ?>
 
-                <?php if ($canAddToCart): ?>
+                <?php if ($product !== null && (!$product->isVariable() || $isVariableWithVariants)): ?>
                     <form method="POST"
                           action="/cart/add"
                           class="sf-add-to-cart-form"
                           data-sf-add-to-cart>
+
                         <?= csrf_field() ?>
                         <input type="hidden" name="product_id" value="<?= (int) $product->id ?>">
-                        <input type="hidden" name="variant_id" value="0">
                         <input type="hidden" name="quantity" value="1">
+
+                        <?php if ($isVariableWithVariants): ?>
+                            <div class="sf-product-variants">
+                                <label for="sf-variant-select" class="sf-field-label">
+                                    Choose an option <span class="req">*</span>
+                                </label>
+                                <select name="variant_id"
+                                        id="sf-variant-select"
+                                        class="sf-select"
+                                        required>
+                                    <option value="">Select&hellip;</option>
+                                    <?php foreach ($variants as $v): ?>
+                                        <option value="<?= (int) $v->id ?>"
+                                                data-price="<?= e(number_format($v->price, 2, '.', '')) ?>">
+                                            <?php
+                                            $label = trim((string) $v->attributeSummary);
+                                            if ($label === '') {
+                                                $label = $v->sku ?: 'Variant #' . (int) $v->id;
+                                            }
+                                            echo e($label . ' — ' . number_format($v->price, 2));
+                                            ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        <?php else: ?>
+                            <input type="hidden" name="variant_id" value="0">
+                        <?php endif; ?>
+
                         <button type="submit"
                                 class="sf-btn sf-btn-primary sf-btn-lg sf-btn-block">
                             <i class="bi bi-bag-plus me-2" aria-hidden="true"></i>
@@ -204,9 +213,9 @@ for ($i = 1; $i <= 4; $i++) {
                     <button type="button"
                             class="sf-btn sf-btn-primary sf-btn-lg sf-btn-block"
                             disabled
-                            title="Option selection coming soon">
+                            title="This product is not available">
                         <i class="bi bi-bag-plus me-2" aria-hidden="true"></i>
-                        Select options first
+                        Not available
                     </button>
                 <?php endif; ?>
                 <button type="button" class="sf-btn sf-btn-outline sf-btn-lg sf-btn-block" disabled>

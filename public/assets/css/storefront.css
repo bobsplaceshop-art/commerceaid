@@ -22,6 +22,14 @@
     --sf-ink:        #111111;
     --sf-ink-soft:   #2b2b2b;
     --sf-ink-muted:  #777777;
+
+    /* Aliases. These are the same values as the --sf-ink-* family
+     * above but under names that other sheets reference. Kept as
+     * aliases rather than renaming the callers so both naming
+     * styles work. If the palette shifts, change the value here
+     * once and every reference follows. */
+    --sf-charcoal:   #111111;
+    --sf-muted:      #777777;
     --sf-cream:      #F8F1E8;
     --sf-beige:      #EDE1D2;
     --sf-gold:       #C6A15B;
@@ -211,9 +219,23 @@ h1, h2, h3, h4 {
 .sf-header-inner {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 2rem;
     padding: .9rem 1.25rem;
     min-height: 76px;
+}
+
+/* On wide screens, push the actions to the far right and let
+ * the nav row below handle navigation. The middle of the header
+ * is intentionally empty - a search bar can live there later. */
+@media (min-width: 900px) {
+    .sf-header-inner {
+        gap: 3rem;
+    }
+
+    .sf-nav-toggle {
+        display: none;
+    }
 }
 
 @media (min-width: 640px) {
@@ -273,21 +295,60 @@ h1, h2, h3, h4 {
 
 /* ----- Navigation ----- */
 
-.sf-nav {
+/* Navigation row. Sits below the main header row so the
+ * logo, actions, and nav each get their own space. On desktop
+ * the nav is a thin band. On mobile it collapses to an overlay
+ * toggled by the hamburger in the main row. */
+.sf-nav-row {
     display: none;
+    background: var(--sf-white);
+    border-top: 1px solid var(--sf-border);
+}
+
+@media (min-width: 900px) {
+    .sf-nav-row {
+        display: block;
+    }
 }
 
 .sf-nav-list {
     display: flex;
     align-items: center;
-    gap: 1.75rem;
+    justify-content: center;
+    gap: 2rem;
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: .75rem 1.25rem;
 }
 
-@media (min-width: 900px) {
-    .sf-nav { display: block; }
+/* Mobile: when the hamburger toggles, the nav opens as a
+ * full-width dropdown below the header. */
+@media (max-width: 899px) {
+    .sf-nav-row.is-open {
+        display: block;
+        border-top: 1px solid var(--sf-border);
+    }
+
+    .sf-nav-row.is-open .sf-nav-list {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        padding: .5rem 1.25rem 1rem;
+    }
+
+    .sf-nav-row.is-open .sf-nav-item {
+        width: 100%;
+        border-bottom: 1px solid var(--sf-border);
+    }
+
+    .sf-nav-row.is-open .sf-nav-item:last-child {
+        border-bottom: 0;
+    }
+
+    .sf-nav-row.is-open .sf-nav-link {
+        display: block;
+        padding: .85rem 0;
+    }
 }
 
 .sf-nav-link {
