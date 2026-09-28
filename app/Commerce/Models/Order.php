@@ -1,0 +1,179 @@
+<?php
+declare(strict_types=1);
+
+namespace CorporateAid\Commerce\Models;
+
+/**
+ * Order DTO.
+ *
+ * Mirrors commerce_orders. Populated by OrderRepository::fromRow().
+ *
+ * Business helpers answer the questions checkout and the future
+ * admin order flow actually ask:
+ *
+ *   isPendingPayment()  - order created but not yet paid
+ *   isPaid()            - payment_status = 'paid'
+ *   isB2bPurchaseOrder() - payment_provider_key = 'purchase_order'
+ *   hasGuestEmail()     - customer_id is null, guest_email set
+ *   isFromCustomer()    - customer_id is set
+ *   isOverdue()         - net_due_at is in the past and unpaid
+ */
+final class Order
+{
+    public int $id = 0;
+    public int $storeId = 0;
+    public string $orderNumber = '';
+    public ?int $customerId = null;
+    public ?string $guestEmail = null;
+    public string $currencyCode = 'EUR';
+    public float $exchangeRate = 1.0;
+
+    public string $status = 'pending_payment';
+    public string $paymentStatus = 'unpaid';
+    public string $fulfilmentStatus = 'unfulfilled';
+
+    public float $subtotal = 0.0;
+    public float $discountTotal = 0.0;
+    public float $taxTotal = 0.0;
+    public float $shippingTotal = 0.0;
+    public float $grandTotal = 0.0;
+    public float $paidTotal = 0.0;
+    public float $refundedTotal = 0.0;
+
+    public ?string $customerNote = null;
+    public ?string $internalNote = null;
+
+    public ?string $billingAddressJson = null;
+    public ?string $shippingAddressJson = null;
+
+    public ?string $shippingMethodKey = null;
+    public ?string $shippingMethodLabel = null;
+
+    public ?string $paymentProviderKey = null;
+    public ?string $paymentReference = null;
+    public ?string $poNumber = null;
+    public ?string $netDueAt = null;
+
+    public ?string $couponCode = null;
+    public ?string $ip = null;
+    public ?string $userAgent = null;
+
+    public ?string $placedAt = null;
+    public ?string $paidAt = null;
+    public ?string $createdAt = null;
+    public ?string $updatedAt = null;
+
+    /** @param array<string,mixed> $row */
+    public static function fromRow(array $row): self
+    {
+        $o = new self();
+        $o->id                   = (int) $row['id'];
+        $o->storeId              = (int) $row['store_id'];
+        $o->orderNumber          = (string) $row['order_number'];
+        $o->customerId           = isset($row['customer_id']) ? (int) $row['customer_id'] : null;
+        $o->guestEmail           = $row['guest_email'] ?? null;
+        $o->currencyCode         = (string) ($row['currency_code'] ?? 'EUR');
+        $o->exchangeRate         = (float) ($row['exchange_rate'] ?? 1.0);
+        $o->status               = (string) ($row['status'] ?? 'pending_payment');
+        $o->paymentStatus        = (string) ($row['payment_status'] ?? 'unpaid');
+        $o->fulfilmentStatus     = (string) ($row['fulfilment_status'] ?? 'unfulfilled');
+        $o->subtotal             = (float) ($row['subtotal'] ?? 0.0);
+        $o->discountTotal        = (float) ($row['discount_total'] ?? 0.0);
+        $o->taxTotal             = (float) ($row['tax_total'] ?? 0.0);
+        $o->shippingTotal        = (float) ($row['shipping_total'] ?? 0.0);
+        $o->grandTotal           = (float) ($row['grand_total'] ?? 0.0);
+        $o->paidTotal            = (float) ($row['paid_total'] ?? 0.0);
+        $o->refundedTotal        = (float) ($row['refunded_total'] ?? 0.0);
+        $o->customerNote         = $row['customer_note'] ?? null;
+        $o->internalNote         = $row['internal_note'] ?? null;
+        $o->billingAddressJson   = $row['billing_address_json'] ?? null;
+        $o->shippingAddressJson  = $row['shipping_address_json'] ?? null;
+        $o->shippingMethodKey    = $row['shipping_method_key'] ?? null;
+        $o->shippingMethodLabel  = $row['shipping_method_label'] ?? null;
+        $o->paymentProviderKey   = $row['payment_provider_key'] ?? null;
+        $o->paymentReference     = $row['payment_reference'] ?? null;
+        $o->poNumber             = $row['po_number'] ?? null;
+        $o->netDueAt             = $row['net_due_at'] ?? null;
+        $o->couponCode           = $row['coupon_code'] ?? null;
+        $o->ip                   = isset($row['ip']) ? (string) $row['ip'] : null;
+        $o->userAgent            = $row['user_agent'] ?? null;
+        $o->placedAt             = $row['placed_at'] ?? null;
+        $o->paidAt               = $row['paid_at'] ?? null;
+        $o->createdAt            = $row['created_at'] ?? null;
+        $o->updatedAt            = $row['updated_at'] ?? null;
+        return $o;
+    }
+
+    public function isPendingPayment(): bool
+    {
+        return $this->status === 'pending_payment';
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->paymentStatus === 'paid';
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === 'cancelled';
+    }
+
+    public function isB2bPurchaseOrder(): bool
+    {
+        return $this->paymentProviderKey === 'purchase_order';
+    }
+
+    public function hasGuestEmail(): bool
+    {
+        return $this->customerId === null
+            && $this->guestEmail !== null
+            && $this->guestEmail !== '';
+    }
+
+    public function isFromCustomer(): bool
+    {
+        return $this->customerId !== null;
+    }
+
+    public function isOverdue(): bool
+    {
+        if ($this->netDueAt === null || $this->isPaid()) {
+            return false;
+        }
+        return strtotime($this->netDueAt) < time();
+    }
+
+    /**
+     * Decoded billing address. Returns null if the column is
+     * empty or the JSON is malformed.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function billingAddress(): ?array
+    {
+        return $this->decodeAddress($this->billingAddressJson);
+    }
+
+    /**
+     * Decoded shipping address.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function shippingAddress(): ?array
+    {
+        return $this->decodeAddress($this->shippingAddressJson);
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    private function decodeAddress(?string $json): ?array
+    {
+        if ($json === null || $json === '') {
+            return null;
+        }
+        $decoded = json_decode($json, true);
+        return is_array($decoded) ? $decoded : null;
+    }
+}
