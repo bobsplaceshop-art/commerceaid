@@ -159,7 +159,7 @@ final class CheckoutController extends StorefrontController
         $savedAddresses = [];
         if ($customer !== null) {
             $addressRepo = $this->container->get(CustomerAddressRepository::class);
-            $savedAddresses = $addressRepo->forCustomer($customer->id);
+            $savedAddresses = $addressRepo->listForCustomer($customer->id);
         }
 
         return $this->render('storefront.checkout.shipping', [

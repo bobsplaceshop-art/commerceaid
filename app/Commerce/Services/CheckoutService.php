@@ -141,6 +141,24 @@ final class CheckoutService
         }
 
         $customer = $input['customer'] ?? null;
+
+        // Gate: an authenticated customer whose account is not
+        // approved cannot place any order. Pending and rejected
+        // B2B customers can browse and add to cart, but checkout
+        // is blocked regardless of payment method. This mirrors
+        // the design in docs/stages/008e_checkout-plan.md: the
+        // purchase-order method is hidden for them, but so is
+        // every other path to completion.
+        //
+        // Guests (customer === null) are not subject to this
+        // gate - they have no account to be pending.
+        if ($customer instanceof Customer && !$customer->canCheckout()) {
+            throw new CheckoutException(
+                'Your account is pending approval. You will be able '
+                . 'to place orders once it has been reviewed.'
+            );
+        }
+
         $isPurchaseOrder = $paymentKey === 'purchase_order';
 
         if ($isPurchaseOrder) {
