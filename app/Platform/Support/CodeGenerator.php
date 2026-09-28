@@ -24,10 +24,18 @@ final class CodeGenerator
      * recruitment tool with low write volume, it's fine. If we ever need high
      * concurrency, switch to a dedicated sequences table with SELECT ... FOR UPDATE.
      */
-    public function next(string $table, string $prefix, int $padding = 6): string
-    {
-        $sql = "SELECT `code` FROM `{$table}`
-                WHERE `code` LIKE ?
+    public function next(
+        string $table,
+        string $prefix,
+        int $padding = 6,
+        string $column = 'code'
+    ): string {
+        // $column identifies which table column holds the code.
+        // Most tables use 'code' (Recruit Aid heritage). Commerce
+        // tables use domain-specific names: commerce_orders uses
+        // 'order_number'. The caller declares which column to read.
+        $sql = "SELECT `{$column}` FROM `{$table}`
+                WHERE `{$column}` LIKE ?
                 ORDER BY `id` DESC
                 LIMIT 1";
         $like = $prefix . '-%';

@@ -62,8 +62,10 @@ $footerColumns = [
         'heading' => 'Company',
         'links'   => [
             ['label' => 'About ANAYA GLOBAL',  'href' => '/pages/about'],
-            ['label' => 'Privacy Policy',      'href' => '/pages/privacy'],
-            ['label' => 'Terms & Conditions',  'href' => '/pages/terms'],
+            ['label' => 'Impressum',           'href' => '/legal/impressum'],
+            ['label' => 'Terms & Conditions',  'href' => '/legal/agb'],
+            ['label' => 'Withdrawal Policy',   'href' => '/legal/widerruf'],
+            ['label' => 'Privacy Policy',      'href' => '/legal/datenschutz'],
             ['label' => 'Cookie Policy',       'href' => '/pages/cookies'],
         ],
     ],

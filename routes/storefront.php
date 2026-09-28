@@ -11,6 +11,7 @@ use CorporateAid\Commerce\Controllers\Storefront\ProductController;
 use CorporateAid\Commerce\Controllers\Storefront\AuthController;
 use CorporateAid\Commerce\Controllers\Storefront\AccountController;
 use CorporateAid\Commerce\Controllers\Storefront\CartController;
+use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
 
 /** @var Router $router */
 
@@ -145,3 +146,18 @@ $router->post('/cart/update',[CartController::class, 'update'], ['store', 'csrf'
 $router->post('/cart/remove',[CartController::class, 'remove'], ['store', 'csrf']);
 $router->post('/cart/clear', [CartController::class, 'clear'],  ['store', 'csrf']);
 $router->get('/cart/count',  [CartController::class, 'count'],  ['store']);
+
+// Checkout (Stage 008E)
+$router->get('/checkout',                      [CheckoutController::class, 'review'],       ['store']);
+$router->get('/checkout/info',                 [CheckoutController::class, 'info'],         ['store']);
+$router->post('/checkout/info',                [CheckoutController::class, 'saveInfo'],     ['store', 'csrf']);
+$router->get('/checkout/shipping',             [CheckoutController::class, 'shipping'],     ['store']);
+$router->post('/checkout/shipping',            [CheckoutController::class, 'saveShipping'], ['store', 'csrf']);
+$router->get('/checkout/payment',              [CheckoutController::class, 'payment'],      ['store']);
+$router->post('/checkout/payment',             [CheckoutController::class, 'savePayment'],  ['store', 'csrf']);
+$router->get('/checkout/confirm',              [CheckoutController::class, 'confirm'],      ['store']);
+$router->post('/checkout/place',               [CheckoutController::class, 'place'],        ['store', 'csrf']);
+$router->get('/checkout/confirmation/{orderNumber}', [CheckoutController::class, 'confirmation'], ['store']);
+
+// Legal pages (public, one route for all four slugs)
+$router->get('/legal/{slug}', [CheckoutController::class, 'legalPage'], ['store']);

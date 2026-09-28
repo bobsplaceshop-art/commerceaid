@@ -74,6 +74,7 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <link href="<?= versioned_asset('css/storefront-product.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-auth.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-cart.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/storefront-checkout.css') ?>" rel="stylesheet">
 </head>
 <body class="sf-body">
 

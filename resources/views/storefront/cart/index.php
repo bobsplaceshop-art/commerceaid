@@ -80,12 +80,9 @@ $isEmpty  = $isEmpty  ?? true;
                         <a href="/products" class="sf-btn sf-btn-outline sf-btn-block">
                             Continue shopping
                         </a>
-                        <button type="button"
-                                class="sf-btn sf-btn-primary sf-btn-block"
-                                disabled
-                                title="Checkout coming soon">
-                            Checkout &mdash; coming soon
-                        </button>
+                        <a href="/checkout" class="sf-btn sf-btn-primary sf-btn-block">
+                            Proceed to Checkout
+                        </a>
                     </div>
 
                     <form method="POST" action="/cart/clear"

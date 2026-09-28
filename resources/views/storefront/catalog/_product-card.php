@@ -150,13 +150,12 @@ $ratingCount = 0;
             <?= e($stockLabel) ?>
         </div>
 
-        <button type="button"
-                class="sf-product-card-add"
-                data-sf-card-action="add-to-cart"
-                disabled>
+        <a href="<?= e($detailUrl) ?>"
+           class="sf-product-card-add sf-product-card-add-link"
+           data-sf-card-action="view-product">
             <i class="bi bi-bag-plus" aria-hidden="true"></i>
-            <span>Add to Cart</span>
-        </button>
+            <span>View product</span>
+        </a>
 
     </div>
 </article>

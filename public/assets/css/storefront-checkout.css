@@ -1,0 +1,321 @@
+/* =====================================================================
+   Storefront checkout + legal pages.
+   Stage 008E. Loaded after storefront-cart.css.
+   Extends the .sf-form-* and .sf-btn-* classes already defined
+   in storefront-auth.css. Only new classes get new rules here.
+   ===================================================================== */
+
+/* ---- Step indicator ---- */
+.sf-checkout-steps {
+    margin: 2rem 0 2.5rem;
+}
+.sf-checkout-steps-list {
+    display: flex;
+    justify-content: space-between;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+.sf-checkout-step {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .85rem;
+    color: var(--sf-muted, #777);
+    padding: .35rem .25rem;
+}
+.sf-checkout-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--sf-border, #e5e1d8);
+    color: var(--sf-muted, #777);
+    font-weight: 600;
+    font-size: .8rem;
+}
+.sf-checkout-step.is-current .sf-checkout-step-num {
+    background: var(--sf-charcoal, #111);
+    color: #fff;
+}
+.sf-checkout-step.is-current .sf-checkout-step-label {
+    color: var(--sf-charcoal, #111);
+    font-weight: 600;
+}
+.sf-checkout-step.is-complete .sf-checkout-step-num {
+    background: var(--sf-gold, #c6a15b);
+    color: #fff;
+}
+.sf-checkout-step.is-complete .sf-checkout-step-label {
+    color: var(--sf-charcoal, #111);
+}
+
+@media (max-width: 640px) {
+    .sf-checkout-step-label { display: none; }
+    .sf-checkout-steps-list { gap: .25rem; }
+}
+
+/* ---- Page title ---- */
+.sf-checkout-title {
+    font-family: var(--sf-font-display, serif);
+    font-size: 2rem;
+    font-weight: 400;
+    margin: 0 0 1.5rem;
+    color: var(--sf-charcoal, #111);
+}
+.sf-checkout-subtitle {
+    color: var(--sf-muted, #777);
+    margin: -1rem 0 1.5rem;
+}
+
+/* ---- Layout grid: main content + sticky summary ---- */
+.sf-checkout-review-grid,
+.sf-checkout-confirm-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 2.5rem;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .sf-checkout-review-grid,
+    .sf-checkout-confirm-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+/* ---- Line items in review and confirm ---- */
+.sf-checkout-review-lines,
+.sf-checkout-lines {
+    border-top: 1px solid var(--sf-border, #e5e1d8);
+}
+.sf-checkout-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--sf-border, #e5e1d8);
+}
+.sf-checkout-line-info {
+    flex: 1;
+    min-width: 0;
+}
+.sf-checkout-line-name {
+    font-weight: 500;
+    color: var(--sf-charcoal, #111);
+    margin-bottom: .25rem;
+    word-break: break-word;
+}
+.sf-checkout-line-total {
+    font-weight: 600;
+    color: var(--sf-charcoal, #111);
+    white-space: nowrap;
+}
+
+/* ---- Summary card ---- */
+.sf-checkout-summary {
+    background: var(--sf-cream, #f8f1e8);
+    border: 1px solid var(--sf-border, #e5e1d8);
+    padding: 1.5rem;
+    position: sticky;
+    top: 1rem;
+}
+.sf-checkout-summary-wide {
+    max-width: 600px;
+    margin: 2rem auto;
+}
+.sf-checkout-summary-title {
+    font-family: var(--sf-font-display, serif);
+    font-size: 1.25rem;
+    font-weight: 400;
+    margin: 0 0 1rem;
+    color: var(--sf-charcoal, #111);
+}
+.sf-checkout-summary-list {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .5rem 1rem;
+    margin: 0 0 1rem;
+    font-size: .95rem;
+}
+.sf-checkout-summary-list dt {
+    color: var(--sf-charcoal, #111);
+    font-weight: 400;
+}
+.sf-checkout-summary-list dd {
+    margin: 0;
+    text-align: right;
+    color: var(--sf-charcoal, #111);
+}
+.sf-checkout-summary-total {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 2px solid var(--sf-charcoal, #111);
+    font-weight: 600;
+    font-size: 1.15rem;
+    color: var(--sf-charcoal, #111);
+}
+
+/* ---- Forms (extends .sf-form-* from auth) ---- */
+/* Form pages (info, shipping, payment) center a single column.
+   The review and confirm pages use a wider two-column grid via
+   .sf-checkout-review-grid / .sf-checkout-confirm-grid. */
+.sf-checkout-centered {
+    max-width: 720px;
+    margin: 0 auto;
+}
+.sf-checkout-form {
+    max-width: 100%;
+}
+.sf-checkout-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+.sf-checkout-actions .sf-btn {
+    min-width: 140px;
+}
+
+/* ---- Address list (saved) ---- */
+.sf-checkout-addresses {
+    border: 1px solid var(--sf-border, #e5e1d8);
+    padding: 1rem;
+    margin: 0 0 1.5rem;
+}
+.sf-checkout-address-option {
+    display: flex;
+    gap: .75rem;
+    align-items: flex-start;
+    padding: .75rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--sf-border, #e5e1d8);
+}
+.sf-checkout-address-option:last-child {
+    border-bottom: none;
+}
+.sf-checkout-address-body {
+    font-size: .9rem;
+    line-height: 1.5;
+}
+.sf-checkout-address-preview {
+    font-family: inherit;
+    font-size: .95rem;
+    line-height: 1.6;
+    color: var(--sf-charcoal, #111);
+    white-space: pre-wrap;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    padding: 0;
+}
+
+/* ---- Payment methods ---- */
+.sf-checkout-payment-methods {
+    border: 1px solid var(--sf-border, #e5e1d8);
+    padding: 1rem;
+    margin: 0 0 1.5rem;
+}
+.sf-checkout-payment-option {
+    display: flex;
+    gap: .75rem;
+    align-items: flex-start;
+    padding: .85rem .5rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--sf-border, #e5e1d8);
+}
+.sf-checkout-payment-option:last-child {
+    border-bottom: none;
+}
+.sf-checkout-payment-label {
+    display: block;
+    line-height: 1.4;
+}
+
+/* ---- Legal block ---- */
+.sf-checkout-legal {
+    border: 1px solid var(--sf-border, #e5e1d8);
+    background: var(--sf-cream, #f8f1e8);
+    padding: 1.25rem;
+    margin: 0 0 1.5rem;
+}
+.sf-checkout-legal .sf-form-check {
+    padding: .5rem 0;
+    align-items: flex-start;
+}
+
+/* ---- Confirmation hero ---- */
+.sf-checkout-confirmation-hero {
+    text-align: center;
+    padding: 2rem 0 1rem;
+}
+.sf-checkout-confirmation-hero i {
+    font-size: 3rem;
+    color: var(--sf-gold, #c6a15b);
+    display: block;
+    margin-bottom: 1rem;
+}
+.sf-checkout-confirmation-hero .sf-checkout-title {
+    margin-bottom: .5rem;
+}
+
+/* ---- Legal page ---- */
+.sf-legal-article {
+    max-width: 780px;
+    margin: 3rem auto;
+}
+.sf-legal-title {
+    font-family: var(--sf-font-display, serif);
+    font-size: 2rem;
+    font-weight: 400;
+    margin: 0 0 1.5rem;
+    color: var(--sf-charcoal, #111);
+}
+.sf-legal-body {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--sf-charcoal, #111);
+}
+.sf-legal-body h1,
+.sf-legal-body h2,
+.sf-legal-body h3 {
+    font-family: var(--sf-font-display, serif);
+    font-weight: 400;
+    color: var(--sf-charcoal, #111);
+    margin: 2rem 0 .75rem;
+}
+.sf-legal-body p {
+    margin: 0 0 1rem;
+}
+.sf-legal-body a {
+    color: var(--sf-gold, #c6a15b);
+}
+
+/* ---- New helper: block title inside confirm ---- */
+.sf-checkout-block {
+    margin-bottom: 2rem;
+}
+.sf-checkout-block-title {
+    font-family: var(--sf-font-display, serif);
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin: 0 0 .75rem;
+    color: var(--sf-charcoal, #111);
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--sf-border, #e5e1d8);
+}
+
+/* ---- Info alert (bank transfer details on confirmation) ---- */
+.sf-alert-info {
+    background: #eef4fa;
+    border-left: 4px solid #3b82f6;
+    color: #1e3a8a;
+    padding: .85rem 1rem;
+}

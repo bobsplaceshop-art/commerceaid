@@ -239,15 +239,28 @@ final class CheckoutService
             }
 
             // Step 3. Generate the order number.
-            $orderNumber = $this->codeGen->next('commerce_orders', 'ORD', 6);
+            $orderNumber = $this->codeGen->next(
+                'commerce_orders',
+                'ORD',
+                6,
+                'order_number'
+            );
 
             // Step 4. Insert the order header.
-            $billingJson  = !empty($input['billing_address'])
+            // json_encode() returns string|false. The billing_address_json
+            // and shipping_address_json columns are MySQL JSON type, which
+            // rejects the literal `false` value. Guard against encode failure
+            // so a bad address field stores NULL rather than aborting the
+            // whole transaction.
+            $billingEncoded = !empty($input['billing_address'])
                 ? json_encode($input['billing_address'], JSON_UNESCAPED_UNICODE)
                 : null;
-            $shippingJson = !empty($input['shipping_address'])
+            $billingJson = $billingEncoded === false ? null : $billingEncoded;
+
+            $shippingEncoded = !empty($input['shipping_address'])
                 ? json_encode($input['shipping_address'], JSON_UNESCAPED_UNICODE)
                 : null;
+            $shippingJson = $shippingEncoded === false ? null : $shippingEncoded;
 
             $orderId = $this->orders->create([
                 'store_id'              => $this->storeContext->id(),
@@ -293,7 +306,12 @@ final class CheckoutService
                     'store_id'          => $this->storeContext->id(),
                     'order_id'          => $orderId,
                     'product_id'        => $line->item->productId,
-                    'variant_id'        => $line->item->variantId,
+                    // NULL for simple products (variantId = 0).
+                    // The FK to commerce_product_variants has no
+                    // row with id 0. See migration 0303.
+                    'variant_id'        => $line->item->variantId > 0
+                                            ? $line->item->variantId
+                                            : null,
                     'product_name'      => $line->item->productName,
                     'variant_label'     => $line->item->variantLabel,
                     'sku'               => $line->item->sku,
@@ -331,6 +349,13 @@ final class CheckoutService
             $this->db->commit();
         } catch (\Throwable $e) {
             $this->db->rollBack();
+
+            // Log the underlying exception so debugging is
+            // possible without exposing internal details.
+            error_log('[checkout.placeOrder] '
+                . get_class($e) . ': ' . $e->getMessage()
+                . ' at ' . $e->getFile() . ':' . $e->getLine());
+
             if ($e instanceof CheckoutException) {
                 throw $e;
             }
