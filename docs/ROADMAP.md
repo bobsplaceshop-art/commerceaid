@@ -155,6 +155,54 @@ opens.
 These are captured as Open Questions, to be resolved in the
 007C plan document before code is written.
 
+### Stage 008E.1 - German E-Commerce Compliance
+
+**Goal:** Ship the regulatory elements required for the first
+deployment destination (Germany). The gates that block
+checkout ship WITH 008E; the remaining elements land here.
+
+**Why now:** Germany is the first deployment destination.
+Consumer protection law requires specific disclosures before
+an order can be placed. Shipping these late means the first
+deployment is non-compliant, which is not an option.
+
+**Deliverables:**
+
+Legal pages subsystem:
+
+  - Configurable legal pages (Impressum, AGB,
+    Widerrufsbelehrung, Datenschutzerklaerung).
+    Editable from admin without developer involvement.
+  - Maybe reuses a generic pages table if Stage 009 (Forms
+    & Submissions) introduces CMS-lite. Otherwise a small
+    dedicated commerce_legal_pages table with slug, title,
+    body (HTML), updated_at.
+  - Footer links from every storefront page.
+  - One-click reachable from checkout pages.
+
+Cookie consent banner:
+
+  - TTDSG-compliant: accept and reject equally prominent,
+    no pre-checked boxes, no manipulative design.
+  - Essential-only cookies (session, CSRF) do not require
+    consent. Analytics and marketing cookies do.
+  - Records the consent decision with timestamp + version.
+
+Admin settings notices:
+
+  - VerpackG (packaging register) registration reminder.
+  - LUCID number field (once registered with ZSVR).
+
+**Depends on:** Stage 008E (checkout), Stage 008G (PWA
+polish) for the banner to live in the storefront shell.
+
+**Deferred from 008E.1 to a future stage:**
+
+  Grundpreis (unit price per kg / liter / meter) requires
+  a Unit of Measure subsystem (see backlog). Once the UoM
+  subsystem exists, Grundpreis display is a natural
+  follow-up.
+
 ### Stage 008F - Order Lifecycle (Customer-Facing)
 
 **Goal:** Customer can view their orders, order detail, reorder.
@@ -425,6 +473,40 @@ written twice.
 
 Reference: the inventory CSV export (Stage 006G) is the
 pattern the importer should round-trip against.
+
+### Unit of Measure Configuration
+
+Fashion shopping mostly sells by piece, pair, set, or pack,
+so Grundpreis is not currently required. But German law
+(PAngV § 4) requires a base price (per kg, liter, meter,
+square meter) for products sold by weight, volume, or length.
+To support that - and to support future categories that need
+it - the platform needs a Unit of Measure subsystem.
+
+Shape:
+
+  - Store Settings: unit configuration panel. Pre-populated
+    with common units (piece, pair, set, pack, meter, cm,
+    square meter, gram, kg, ml, liter). Editable. Addable.
+  - Each unit has: code, label (singular / plural),
+    symbol (kg, l, m), dimension (count / length / area /
+    volume / mass).
+  - Products carry an optional base_unit and
+    base_unit_quantity (e.g. 500 g). Set on the product
+    pricing tab.
+  - Grundpreis computed as unit_price / (base_unit_quantity
+    in base units). Displayed on product page and cart when
+    set.
+
+Why deferred: no current product needs it. Deferring keeps
+008E focused on the order flow. Building it before it is
+needed risks designing for imagined requirements.
+
+Home stage: not yet scheduled. Could be a sub-stage of
+008E.1 (compliance), a sub-stage of 010 (payments and
+shipping deep), or its own short stage. The compliance
+sub-stage is the natural home because Grundpreis is the
+reason it exists.
 
 ### Storefront-Hosted Hero Asset
 
