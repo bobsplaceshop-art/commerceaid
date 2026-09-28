@@ -39,6 +39,7 @@ Adding a stage or reordering requires updating this document first.
 | 008C  | Customer registration, login, account  | 2026-09-27 |
 | 008D  | Cart                                   | 2026-09-28 |
 | 008D.1| Variant-level inventory                | 2026-09-28 |
+| 008D.2| Per-product inventory page          | 2026-09-28 |
 
 Also completed outside the staged sequence:
 
@@ -56,33 +57,21 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008D.2 - Per-Product Inventory Page
+### Stage 008E - Checkout
 
-**Goal:** Replace the "adjust one item" modal for variable
-products with a dedicated per-product inventory page. Group
-all variants in one table so a merchant can see and adjust
-the full picture at a glance.
+**Goal:** Full checkout flow with B2B purchase order support.
 
 **Deliverables:**
 
-- `InventoryItemController` - shows a per-product page at
-  `/commerce/ca-admin/inventory/item/{product_id}`
-- `resources/views/admin/inventory/item.php` - variant stock
-  table with inline adjust controls and sticky save bar
-- Inline movement history (this product only)
-- Simple products: same page with one row (the product itself)
-- Modal stays for simple-product quick adjust from the list
-
-**Rationale:** The current inventory list shows one row per
-sellable unit. For a T-Shirt with 12 variants that means 12
-rows. Fine at 12; unusable at 50+. A per-product page groups
-by product and lets the merchant adjust several variants at
-once.
+- `Storefront/CheckoutController` - multi-step checkout
+- Order creation (transactional, with inventory reservation)
+- Order confirmation page + email queue
+- B2B path: purchase order / net terms for approved customers
+- Stub payment providers: COD, bank transfer, purchase order
+- Shipping method stub (real engine in 010)
 
 **Depends on:** Stage 008D (cart), Stage 008D.1 (variant
-inventory)
-
----
+inventory), Stage 008D.2 (per-product inventory page)
 
 ## Planned Stages
 
@@ -165,21 +154,6 @@ opens.
 
 These are captured as Open Questions, to be resolved in the
 007C plan document before code is written.
-
-### Stage 008E - Checkout
-
-**Goal:** Full checkout flow with B2B purchase order support.
-
-**Deliverables:**
-
-- `Storefront/CheckoutController` - multi-step checkout
-- Order creation (transactional, with inventory reservation)
-- Order confirmation page + email queue
-- B2B path: purchase order / net terms for approved customers
-- Stub payment providers: COD, bank transfer, purchase order
-- Shipping method stub (real engine in 010)
-
-**Depends on:** Stage 008D (cart)
 
 ### Stage 008F - Order Lifecycle (Customer-Facing)
 
@@ -371,6 +345,48 @@ auto-derived version, 011 for the admin-curated version.
 
 Reference: Kilimall product detail + cart page cross-sell
 pattern, supplied by the customer as a design concept.
+
+### Data Import (CSV / Excel)
+
+A merchant setting up a store needs to bulk-load products,
+categories, brands, attributes, variants, inventory, customers,
+customer groups, and (once 007C ships) suppliers. Today every
+record is entered by hand through the admin UI. For a store
+with 200+ SKUs that is days of manual work; for a store
+migrating from another platform it is not feasible at all.
+
+The export side already exists (inventory CSV, movements CSV).
+Import is the symmetric missing operation.
+
+Shape:
+
+  - Upload: CSV first (universally supported). XLSX later.
+  - Column mapping UI: match uploaded columns to entity fields.
+  - Validation pass: per-row errors, nothing written.
+  - Dry-run preview: show what will be created / updated.
+  - Commit: transactional per chunk, with a batch id.
+  - Idempotency: match on natural key (SKU, slug, email).
+    Re-uploading the same file updates existing rows.
+  - Failed-row export: download a CSV with only the rows that
+    failed and a reason column, fix, re-upload.
+  - Rollback: a batch can be reversed.
+
+Supported entities (dependency order - later entities
+reference earlier ones):
+
+  brands -> categories -> attributes -> attribute values ->
+  products -> variants -> inventory -> customers ->
+  customer groups -> price lists -> suppliers (after 007C)
+
+Home stage: not yet scheduled. Likely 009 (Forms &
+Submissions) as a sub-stage, or a dedicated stage between 010
+and 011 once the catalog and B2B schemas are frozen. Do NOT
+build before 007C and 008E are complete - the schema must be
+stable before an importer writes to it, or the importer gets
+written twice.
+
+Reference: the inventory CSV export (Stage 006G) is the
+pattern the importer should round-trip against.
 
 ### Storefront-Hosted Hero Asset
 

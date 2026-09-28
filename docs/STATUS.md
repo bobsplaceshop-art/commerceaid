@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-09-27
-**Version:** 0.5.0-alpha
-**Stage:** 008D.1 complete. Next: 008D.2 (per-product inventory page)
+**Version:** 0.6.0-alpha
+**Stage:** 008D.2 complete. Next: 008E (checkout)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -96,7 +96,6 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ## What Doesn't Work Yet
 
-- Shopping cart (008D)
 - Checkout flow (008E)
 - Order lifecycle customer view (008F)
 - Search, PWA, attribute facets, category-hiding polish (008G)
