@@ -1013,3 +1013,24 @@
         padding: 1.5rem 1.25rem;
     }
 }
+
+/* ---- Account breadcrumbs (008F.1) ---- */
+.sf-account-breadcrumbs {
+    margin-bottom: 1.25rem;
+    font-size: .85rem;
+    color: var(--sf-muted, #777);
+}
+.sf-account-breadcrumbs a {
+    color: var(--sf-charcoal, #111);
+    text-decoration: none;
+}
+.sf-account-breadcrumbs a:hover {
+    color: var(--sf-gold, #c6a15b);
+}
+.sf-account-breadcrumbs span[aria-current="page"] {
+    color: var(--sf-muted, #777);
+}
+.sf-account-breadcrumbs-sep {
+    margin: 0 .5rem;
+    color: var(--sf-border, #e5e1d8);
+}
