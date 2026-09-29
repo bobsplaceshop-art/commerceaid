@@ -28,6 +28,8 @@ final class Customer
     public ?string $dateOfBirth = null;
     public ?string $emailVerifiedAt = null;
     public bool $acceptsMarketing = false;
+    public bool $notifyOrderUpdates = true;
+    public bool $notifyPromotions = false;
     public ?int $customerGroupId = null;
     public ?int $defaultBillingAddressId = null;
     public ?int $defaultShippingAddressId = null;
@@ -57,6 +59,8 @@ final class Customer
         $c->dateOfBirth              = $row['date_of_birth'] ?? null;
         $c->emailVerifiedAt          = $row['email_verified_at'] ?? null;
         $c->acceptsMarketing         = (bool) ($row['accepts_marketing'] ?? false);
+        $c->notifyOrderUpdates       = (bool) ($row['notify_order_updates'] ?? true);
+        $c->notifyPromotions         = (bool) ($row['notify_promotions'] ?? false);
         $c->customerGroupId          = isset($row['customer_group_id']) ? (int) $row['customer_group_id'] : null;
         $c->defaultBillingAddressId  = isset($row['default_billing_address_id']) ? (int) $row['default_billing_address_id'] : null;
         $c->defaultShippingAddressId = isset($row['default_shipping_address_id']) ? (int) $row['default_shipping_address_id'] : null;
