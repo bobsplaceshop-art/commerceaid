@@ -1400,6 +1400,136 @@ rule, different discovery path.
 
 ---
 
+### Pattern 28 - view_partial() does not inherit outer scope
+
+**Problem:** a partial rendered via view_partial() receives
+only the array passed to it. It does not inherit the scope
+of the calling view. A variable that exists in the outer
+view - even one injected by StorefrontController::render()
+into $data - is invisible inside a partial unless it is
+explicitly passed.
+
+The failure mode is silent. A partial that reads
+`$someVar ?? default` returns the default even when the
+outer view has a real value. The feature appears to work
+but its per-request state is always the default.
+
+**The tell:** a partial's conditional state renders
+correctly in the outer view but not inside the partial. Or
+a value that changes per-request (customer id, cart count,
+wishlist state) is always empty inside a partial while
+being correct outside it.
+
+**Detection:** when a partial reads a variable that is not
+in its explicit parameter array, grep the partial for the
+variable name and grep every caller for whether it passes
+that variable. Any caller that does not pass it will see
+the default.
+
+    # What variables does the partial expect?
+    grep -n '\$[a-zA-Z_]* ?? ' <partial.php>
+
+    # For each, does every caller pass it?
+    grep -rn "view_partial.*<partial-name>" resources/views/
+
+**Rule:** cross-cutting view data that any partial might
+need must come from one of three sources:
+
+  1. A global helper (csrf_token(), wishlist_product_ids(),
+     config(), etc.). Preferred for data that is cheap to
+     resolve once per request and needed in many places.
+     The helper caches the result in a static.
+
+  2. The layout rendering the partial explicitly passes it.
+     Fine when the outer view is the only caller.
+
+  3. A shared() call on the View class before render.
+     Available in this codebase but not used yet.
+
+Never rely on the outer view's scope reaching a partial.
+It does not.
+
+**Where we hit it:** Stage 008G.1. The product card
+partial read `$wishlistProductIds ?? []`. The variable was
+injected by StorefrontController::render() into the outer
+view's $data. But view_partial() only extracts the array
+passed to it, so the partial saw `[]` on every page. Every
+wishlisted product rendered with an empty heart.
+
+The fix was a new helper `wishlist_product_ids()` in
+app/Helpers/functions.php, mirroring the csrf_token()
+pattern. Static-cached, container-resolved, defensive.
+Called directly from the partial. No call sites changed.
+
+**Related:** Pattern 26 (shared partial guards reflect the
+partial's own requirement). Both patterns are about
+partials that need data they do not naturally have. Pattern
+26 is about a guard that fails to fire; Pattern 28 is
+about a variable that fails to reach.
+
+---
+
+### Pattern 29 - AJAX on pages with no forms must read CSRF from the layout meta tag
+
+**Problem:** a progressive-enhancement JS script reads the
+CSRF token from the first `<input name="_csrf">` on the
+page. This works on pages that render a form (product
+detail, cart, checkout) but fails on pages that do not
+(the catalog grid, the home page, the search results page).
+
+The failure is a 403 "Session expired" response. The JS
+swallows it (or logs it). The button appears to do nothing.
+
+**The tell:** clicking an AJAX-only control works on some
+pages and silently fails on others. The pages where it
+fails are the ones with no forms.
+
+**Detection:**
+
+    # In the browser, on a page where the AJAX control fails:
+    document.querySelector('input[name="_csrf"]')
+    // If this returns null, the JS is sending an empty token.
+
+**Rule:** the storefront layout renders
+`<meta name="csrf-token">` in the <head> on every page.
+AJAX scripts MUST read this meta tag, not an input field.
+Fall back to the input only if the meta tag is absent
+(older pages, other codebases).
+
+    function csrfToken() {
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta && meta.content) return meta.content;
+        var input = document.querySelector('input[name="_csrf"]');
+        if (input && input.value) return input.value;
+        return '';
+    }
+
+The meta tag is the canonical source. Inputs are
+form-scoped and only exist where forms exist. The meta tag
+is layout-scoped and exists everywhere.
+
+**Why the input-only pattern survived so long:** the cart's
+add-to-cart AJAX runs on the product detail page, which
+has a form. The input was always there. It only broke when
+the wishlist introduced an AJAX endpoint on the catalog
+page, which has no form. Two features, two call sites, one
+worked and one did not.
+
+**Where we hit it:** Stage 008G.1. The heart button on
+/products returned 403. Fixed by rewriting
+wishlist.js's csrfToken() to read the meta tag first.
+
+**Prevention checklist for any new AJAX endpoint:**
+
+1. Test it on the page with the least form markup that
+   will host the control.
+2. If that page is not the product detail page, verify
+   the CSRF source is the meta tag.
+3. If the script reads the input, migrate to the meta
+   tag.
+
+---
+
 ## 19. Documents to Read First When Joining
 
 If you are new to this project and need to get up to speed

@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-09-28
-**Version:** 0.12.0-alpha
-**Stage:** 008G complete. Next: 008G.1 (wishlist)
+**Version:** 0.12.1-alpha
+**Stage:** 008G.1 complete. Next: 008G.2 (recently viewed)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.

@@ -47,6 +47,7 @@ Adding a stage or reordering requires updating this document first.
 | 008F.1| Account shell & navigation             | 2026-09-28 |
 | 008G  | Search, out-of-stock hiding, gallery,  | 2026-09-28 |
 |       | responsive audit                       |            |
+| 008G.1| Wishlist                               | 2026-09-29 |
 
 Also completed outside the staged sequence:
 
@@ -64,14 +65,14 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G.1 - Wishlist
+### Stage 008G.2 - Recently Viewed
 
-**Goal:** Customers save products for later. Per-customer for
-logged-in, per-session for guests. Merge on login.
+**Goal:** Track products the customer viewed. Show them on
+/account/recent. A returning customer can pick up where they
+left off.
 
-See Planned Stages below for the full scope.
-
-**Depends on:** Stage 008F.1 (account shell).
+**Depends on:** Stage 008F.1 (account shell), 008G.1 (wishlist
+patterns).
 
 ## Planned Stages
 
