@@ -8,6 +8,7 @@ use CorporateAid\Core\Response;
 use CorporateAid\Core\View;
 use CorporateAid\Commerce\Context\StoreContext;
 use CorporateAid\Commerce\Services\CartService;
+use CorporateAid\Commerce\Services\WishlistService;
 
 /**
  * Base controller for every storefront page.
@@ -50,6 +51,7 @@ abstract class StorefrontController
         $data['store']               = $this->resolveStore();
         $data['title']               = $data['title'] ?? '';
         $data['cartCount']           = $this->resolveCartCount();
+        $data['wishlistProductIds']  = $this->resolveWishlistProductIds();
         $data['cookieBannerEnabled'] = $this->resolveCookieBannerEnabled();
 
         return Response::html(
@@ -121,6 +123,26 @@ abstract class StorefrontController
             return $this->container->get(CartService::class)->count();
         } catch (\Throwable $e) {
             return 0;
+        }
+    }
+
+    /**
+     * Wishlist product IDs for the current viewer. Used to pre-
+     * fill the heart state on every product card without an
+     * AJAX round-trip. Guests get their session wishlist;
+     * logged-in customers get their DB wishlist.
+     *
+     * Defensive: if the service fails for any reason, the array
+     * is empty. A broken wishlist should not break the storefront.
+     *
+     * @return array<int, int>
+     */
+    private function resolveWishlistProductIds(): array
+    {
+        try {
+            return $this->container->get(WishlistService::class)->productIds();
+        } catch (\Throwable $e) {
+            return [];
         }
     }
 

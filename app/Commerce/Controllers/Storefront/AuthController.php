@@ -8,6 +8,7 @@ use CorporateAid\Commerce\Repositories\CustomerGroupRepository;
 use CorporateAid\Commerce\Repositories\CustomerRepository;
 use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\CartService;
+use CorporateAid\Commerce\Services\WishlistService;
 use CorporateAid\Commerce\Support\StorefrontController;
 use CorporateAid\Commerce\Support\Validator;
 use CorporateAid\Core\Request;
@@ -140,6 +141,9 @@ final class AuthController extends StorefrontController
         // Same merge as in login(). A guest who fills their cart
         // and then registers an account should not lose the cart.
         $this->container->get(CartService::class)->mergeGuestCartOnLogin();
+        // Same merge for the wishlist. A guest who hearts products
+        // and then logs in or registers keeps their wishlist.
+        $this->container->get(WishlistService::class)->mergeGuestWishlistOnLogin();
 
         $session->clearOldInput();
 
@@ -272,6 +276,9 @@ final class AuthController extends StorefrontController
         // dependency (CartService already depends on
         // CustomerAuthService).
         $this->container->get(CartService::class)->mergeGuestCartOnLogin();
+        // Same merge for the wishlist. A guest who hearts products
+        // and then logs in or registers keeps their wishlist.
+        $this->container->get(WishlistService::class)->mergeGuestWishlistOnLogin();
 
         $session->clearOldInput();
 

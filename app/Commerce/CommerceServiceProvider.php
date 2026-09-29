@@ -36,6 +36,8 @@ use CorporateAid\Commerce\Services\CheckoutService;
 use CorporateAid\Commerce\Repositories\CartItemRepository;
 use CorporateAid\Commerce\Repositories\CartRepository;
 use CorporateAid\Commerce\Services\CartService;
+use CorporateAid\Commerce\Repositories\WishlistRepository;
+use CorporateAid\Commerce\Services\WishlistService;
 use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\StoreService;
 
@@ -130,6 +132,17 @@ final class CommerceServiceProvider
                 $c->get(ProductRepository::class),
                 $c->get(ProductVariantRepository::class),
                 $c->get(InventoryRepository::class),
+                $c->get(CustomerAuthService::class)
+            ));
+
+        // Wishlist uses the customer session for guest state,
+        // mirroring the cart. Same session binding, same merge-
+        // on-login pattern. See docs/stages/008g.1_wishlist-plan.md.
+        $c->singleton(WishlistService::class,
+            fn() => new WishlistService(
+                $c->get('customer_session'),
+                $c->get(WishlistRepository::class),
+                $c->get(ProductRepository::class),
                 $c->get(CustomerAuthService::class)
             ));
 
@@ -232,6 +245,12 @@ final class CommerceServiceProvider
 
         $c->singleton(CartItemRepository::class,
             fn() => new CartItemRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(WishlistRepository::class,
+            fn() => new WishlistRepository(
                 $c->get(Database::class),
                 $c->get(StoreContext::class)
             ));

@@ -13,6 +13,7 @@ use CorporateAid\Commerce\Controllers\Storefront\AuthController;
 use CorporateAid\Commerce\Controllers\Storefront\AccountController;
 use CorporateAid\Commerce\Controllers\Storefront\CustomerClaimController;
 use CorporateAid\Commerce\Controllers\Storefront\CartController;
+use CorporateAid\Commerce\Controllers\Storefront\WishlistController;
 use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
 
 /** @var Router $router */
@@ -154,6 +155,19 @@ $router->post('/cart/update',[CartController::class, 'update'], ['store', 'csrf'
 $router->post('/cart/remove',[CartController::class, 'remove'], ['store', 'csrf']);
 $router->post('/cart/clear', [CartController::class, 'clear'],  ['store', 'csrf']);
 $router->get('/cart/count',  [CartController::class, 'count'],  ['store']);
+
+// Wishlist (Stage 008G.1)
+//
+// The heart button on product cards uses /account/wishlist/toggle
+// (JSON only, called via AJAX). The wishlist page's own remove
+// links use /account/wishlist/remove (form POST, redirect). The
+// /account/wishlist page requires login; the mutation endpoints
+// work for guests via the session wishlist.
+$router->get('/account/wishlist',         [WishlistController::class, 'index'],  ['store']);
+$router->post('/account/wishlist/add',    [WishlistController::class, 'add'],    ['store', 'csrf']);
+$router->post('/account/wishlist/remove', [WishlistController::class, 'remove'], ['store', 'csrf']);
+$router->post('/account/wishlist/toggle', [WishlistController::class, 'toggle'], ['store', 'csrf']);
+$router->get('/account/wishlist/ids',     [WishlistController::class, 'ids'],    ['store']);
 
 // Search (Stage 008G)
 $router->get('/search', [SearchController::class, 'index'], ['store']);
