@@ -55,6 +55,7 @@ Short. 30-80 lines. Five sections, in order:
 |------|---------|-------|
 | 2026-09-28 | 001 | 008G close - search, gallery, responsive audit, four admin button bugs |
 | 2026-09-29 | 002 | 008G.1 Wishlist - full stack, Patterns 28 & 29 added |
+| 2026-09-30 | 003 | 008G.2 Recently Viewed - full stack, no new patterns |
 
 ## Why Not Just git log
 
