@@ -10,6 +10,7 @@ use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\CartService;
 use CorporateAid\Commerce\Services\WishlistService;
 use CorporateAid\Commerce\Services\RecentViewService;
+use CorporateAid\Commerce\Services\CustomerNotificationService;
 use CorporateAid\Commerce\Support\StorefrontController;
 use CorporateAid\Commerce\Support\Validator;
 use CorporateAid\Core\Request;
@@ -147,6 +148,10 @@ final class AuthController extends StorefrontController
         $this->container->get(WishlistService::class)->mergeGuestWishlistOnLogin();
         // Same merge for recently-viewed history.
         $this->container->get(RecentViewService::class)->mergeGuestHistoryOnLogin();
+
+        // Welcome message. Fires only on registration, not on
+        // login. The customer ID is the just-created one.
+        $this->container->get(CustomerNotificationService::class)->welcome($customerId);
 
         $session->clearOldInput();
 

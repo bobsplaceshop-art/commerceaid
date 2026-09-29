@@ -554,6 +554,36 @@ final class CustomerRepository extends CommerceRepository
     }
 
     /**
+     * Update the two notification-preference booleans on a
+     * customer. Used by MessageController::savePreferences().
+     *
+     * Both booleans are set in the same UPDATE. No partial
+     * updates. The caller always passes both values.
+     *
+     * Scoped to the current store. A cross-store customer ID
+     * cannot have their preferences changed through this
+     * method.
+     */
+    public function updateNotificationPrefs(
+        int $customerId,
+        bool $notifyOrderUpdates,
+        bool $notifyPromotions
+    ): void {
+        $this->db->execute(
+            "UPDATE `commerce_customers`
+                SET `notify_order_updates` = ?,
+                    `notify_promotions`    = ?
+              WHERE `id` = ? AND `store_id` = ?",
+            [
+                $notifyOrderUpdates ? 1 : 0,
+                $notifyPromotions ? 1 : 0,
+                $customerId,
+                $this->storeId(),
+            ]
+        );
+    }
+
+    /**
      * Store a password-reset token.
      *
      * The caller generates a random token, hashes it with SHA-256,

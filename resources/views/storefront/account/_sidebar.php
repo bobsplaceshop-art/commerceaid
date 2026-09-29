@@ -15,8 +15,9 @@
  *   $currentPath    string
  *   $claimableCount int
  */
-$currentPath    = $currentPath    ?? '/';
-$claimableCount = (int) ($claimableCount ?? 0);
+$currentPath        = $currentPath        ?? '/';
+$claimableCount     = (int) ($claimableCount     ?? 0);
+$unreadMessageCount = (int) ($unreadMessageCount ?? 0);
 
 /**
  * Return true when $href matches the current path.
@@ -93,7 +94,12 @@ $groups = [
         'id'    => 'messages',
         'label' => 'Messages',
         'items' => [
-            ['label' => 'Messages', 'href' => '#', 'icon' => 'bi-envelope', 'soon' => true],
+            [
+                'label' => 'Messages',
+                'href'  => '/account/messages',
+                'icon'  => 'bi-envelope',
+                'badge' => $unreadMessageCount,
+            ],
         ],
     ],
 ];

@@ -22,6 +22,7 @@ use CorporateAid\Commerce\Repositories\OrderStatusHistoryRepository;
 use CorporateAid\Commerce\Repositories\StoreRepository;
 use CorporateAid\Commerce\Repositories\CustomerRepository;
 use CorporateAid\Commerce\Repositories\StoreSettingsRepository;
+use CorporateAid\Commerce\Services\CustomerNotificationService;
 use CorporateAid\Platform\Support\CodeGenerator;
 
 /**
@@ -71,6 +72,7 @@ final class CheckoutService
         private StoreRepository $storeRepository,
         private CustomerRepository $customerRepository,
         private StoreSettingsRepository $storeSettings,
+        private CustomerNotificationService $customerNotifications,
     ) {
     }
 
@@ -405,6 +407,19 @@ final class CheckoutService
                 null,
                 'Order placed via storefront'
             );
+
+            // Order placed notification. Only for logged-in
+            // customers - guests have no account to receive it
+            // against. Best-effort, never throws. The customer's
+            // notify_order_updates preference gates delivery.
+            // See docs/stages/008g.3_message-center-plan.md.
+            if ($customer instanceof Customer) {
+                $this->customerNotifications->orderPlaced(
+                    $customer->id,
+                    $orderNumber,
+                    $orderId
+                );
+            }
 
             // Step 7. Reserve inventory. One call per line.
             // The FOR UPDATE lock acquired in step 2 is still held

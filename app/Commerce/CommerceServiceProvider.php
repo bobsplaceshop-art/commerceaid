@@ -39,7 +39,9 @@ use CorporateAid\Commerce\Services\CartService;
 use CorporateAid\Commerce\Repositories\WishlistRepository;
 use CorporateAid\Commerce\Services\WishlistService;
 use CorporateAid\Commerce\Repositories\RecentViewRepository;
+use CorporateAid\Commerce\Repositories\CustomerNotificationRepository;
 use CorporateAid\Commerce\Services\RecentViewService;
+use CorporateAid\Commerce\Services\CustomerNotificationService;
 use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\StoreService;
 
@@ -159,6 +161,16 @@ final class CommerceServiceProvider
                 $c->get(CustomerAuthService::class)
             ));
 
+        // Customer notifications. No session dependency -
+        // notifications are per-customer, not per-session.
+        // Guests do not have a message center.
+        // See docs/stages/008g.3_message-center-plan.md.
+        $c->singleton(CustomerNotificationService::class,
+            fn() => new CustomerNotificationService(
+                $c->get(CustomerNotificationRepository::class),
+                $c->get(CustomerRepository::class)
+            ));
+
         // ---------- Services: catalog ----------
         $c->singleton(CatalogService::class,
             fn() => new CatalogService(
@@ -204,7 +216,8 @@ final class CommerceServiceProvider
                 $c->get(StoreContext::class),
                 $c->get(StoreRepository::class),
                 $c->get(CustomerRepository::class),
-                $c->get(StoreSettingsRepository::class)
+                $c->get(StoreSettingsRepository::class),
+                $c->get(CustomerNotificationService::class)
             ));
 
         // ---------- Customers ----------
@@ -270,6 +283,12 @@ final class CommerceServiceProvider
 
         $c->singleton(RecentViewRepository::class,
             fn() => new RecentViewRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(CustomerNotificationRepository::class,
+            fn() => new CustomerNotificationRepository(
                 $c->get(Database::class),
                 $c->get(StoreContext::class)
             ));

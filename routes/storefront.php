@@ -15,6 +15,7 @@ use CorporateAid\Commerce\Controllers\Storefront\CustomerClaimController;
 use CorporateAid\Commerce\Controllers\Storefront\CartController;
 use CorporateAid\Commerce\Controllers\Storefront\WishlistController;
 use CorporateAid\Commerce\Controllers\Storefront\RecentViewController;
+use CorporateAid\Commerce\Controllers\Storefront\MessageController;
 use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
 
 /** @var Router $router */
@@ -177,6 +178,17 @@ $router->get('/account/wishlist/ids',     [WishlistController::class, 'ids'],   
 // clear button.
 $router->get('/account/recent',        [RecentViewController::class, 'index'], ['store']);
 $router->post('/account/recent/clear', [RecentViewController::class, 'clear'], ['store', 'csrf']);
+
+// Message center (Stage 008G.3)
+//
+// Every route requires login. The controller gates on
+// CustomerAuthService::user(). Same shape as the wishlist
+// and recent-view routes.
+$router->get('/account/messages',                [MessageController::class, 'index'],           ['store']);
+$router->post('/account/messages/mark-read',     [MessageController::class, 'markRead'],        ['store', 'csrf']);
+$router->post('/account/messages/mark-all-read', [MessageController::class, 'markAllRead'],     ['store', 'csrf']);
+$router->get('/account/messages/preferences',    [MessageController::class, 'preferences'],     ['store']);
+$router->post('/account/messages/preferences',   [MessageController::class, 'savePreferences'], ['store', 'csrf']);
 
 // Search (Stage 008G)
 $router->get('/search', [SearchController::class, 'index'], ['store']);
