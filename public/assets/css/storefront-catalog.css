@@ -397,15 +397,35 @@ select.sf-filter-input {
     cursor: not-allowed;
 }
 
-/* Wishlist active state. Filled heart, accent color. */
+/* Wishlist active state. Filled red heart on the accent
+   color. Red is the universal liked/hearted affordance and
+   reads clearly against the gold button over any card image. */
 .sf-product-card-action.is-active {
     background: var(--sf-accent, #b8894a);
-    color: var(--sf-white, #fff);
+    color: #e63946;
     border-color: var(--sf-accent, #b8894a);
 }
 .sf-product-card-action.is-active:hover:not(:disabled) {
     background: var(--sf-ink, #1a1a1a);
     border-color: var(--sf-ink, #1a1a1a);
+    color: #e63946;
+}
+.sf-product-card-action.is-active i {
+    color: #e63946;
+}
+
+/* Pop animation. Added on click, removed after the animation
+   completes. A brief scale-up + settle so the customer gets
+   immediate tactile feedback without a page reload. */
+@keyframes sf-wishlist-pop {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.35); }
+    60%  { transform: scale(.92); }
+    100% { transform: scale(1); }
+}
+.sf-product-card-action.is-popping,
+.sf-wishlist-toggle.is-popping {
+    animation: sf-wishlist-pop 380ms cubic-bezier(.34, 1.56, .64, 1);
 }
 
 /* ----- Body ----- */

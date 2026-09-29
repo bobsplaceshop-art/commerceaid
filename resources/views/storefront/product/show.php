@@ -255,7 +255,7 @@ for ($i = 1; $i <= 4; $i++) {
                         Not available
                     </button>
                 <?php endif; ?>
-                <?php $detailIsWished = in_array((int) $product->id, $wishlistProductIds ?? [], true); ?>
+                <?php $detailIsWished = in_array((int) $product->id, wishlist_product_ids(), true); ?>
                 <button type="button"
                         class="sf-btn sf-btn-outline sf-btn-lg sf-btn-block sf-wishlist-toggle<?= $detailIsWished ? ' is-active' : '' ?>"
                         data-sf-card-action="wishlist"

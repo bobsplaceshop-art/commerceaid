@@ -88,7 +88,7 @@ $ratingCount = 0;
         <?php endif; ?>
 
         <div class="sf-product-card-quick-actions">
-            <?php $isWished = in_array((int) $product->id, $wishlistProductIds ?? [], true); ?>
+            <?php $isWished = in_array((int) $product->id, wishlist_product_ids(), true); ?>
             <button type="button"
                     class="sf-product-card-action<?= $isWished ? ' is-active' : '' ?>"
                     data-sf-card-action="wishlist"

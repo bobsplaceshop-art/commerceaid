@@ -107,6 +107,45 @@ if (!function_exists('method_field')) {
     }
 }
 
+if (!function_exists('wishlist_product_ids')) {
+    /**
+     * The current viewer's wishlist product IDs.
+     *
+     * Resolved once per request and cached in a static. Views
+     * that render many product cards (a 24-item catalog grid,
+     * a home page with three product sections) call this once
+     * per card - the static cache means the container resolve
+     * and the DB query happen once total, not once per card.
+     *
+     * Guests read from their customer session wishlist.
+     * Logged-in customers read from commerce_wishlists.
+     *
+     * Returns an empty array on any failure. A broken wishlist
+     * read must not break a storefront page.
+     *
+     * @return array<int, int>
+     */
+    function wishlist_product_ids(): array
+    {
+        /** @var array<int, int>|null $cache */
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        try {
+            $svc = \CorporateAid\Core\App::instance()
+                ->container()
+                ->get(\CorporateAid\Commerce\Services\WishlistService::class);
+            $cache = $svc->productIds();
+        } catch (\Throwable) {
+            $cache = [];
+        }
+
+        return $cache;
+    }
+}
+
 if (!function_exists('flash')) {
     function flash(string $key, mixed $default = null): mixed
     {

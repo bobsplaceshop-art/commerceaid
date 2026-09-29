@@ -36,16 +36,32 @@
     var ENDPOINT = '/account/wishlist/toggle';
 
     /**
-     * CSRF token. The storefront uses a hidden _csrf input on
-     * every form. We read the first one on the page. If none
-     * exists (a page with no forms), the toggle will still send
-     * the request - the server rejects with 419 if CSRF is
-     * enforced. In practice, every storefront page that renders
-     * a heart button also renders a form somewhere with a token.
+     * CSRF token.
+     *
+     * Priority order:
+     *   1. <meta name="csrf-token"> - present on every storefront
+     *      page (in the layout <head>). This is the canonical
+     *      source and the one to trust.
+     *   2. The first <input name="_csrf"> on the page - present
+     *      on pages that render a form (product detail, cart,
+     *      checkout). A fallback for pages that predate the meta
+     *      tag.
+     *   3. Empty string - the server rejects, the button stays
+     *      in its previous state, and the console logs the 403.
+     *
+     * The meta tag always wins when present. Reading the input
+     * first was the bug that made the catalog page 403: the
+     * catalog has no form, so no _csrf input, so the request
+     * went out with an empty token.
      */
     function csrfToken() {
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta && meta.content) return meta.content;
+
         var input = document.querySelector('input[name="_csrf"]');
-        return input ? input.value : '';
+        if (input && input.value) return input.value;
+
+        return '';
     }
 
     /**
@@ -79,9 +95,30 @@
      * Send the toggle. On success, apply the returned state.
      * On failure, leave the button unchanged.
      */
+    /**
+     * Fire the pop animation on the button. Removes the class
+     * when the animation ends so it can fire again on the next
+     * click. No state change here - the pop is purely tactile
+     * feedback.
+     */
+    function pop(btn) {
+        btn.classList.remove('is-popping');
+        // Force reflow so the browser sees the class removal and
+        // will replay the animation when we add it back.
+        void btn.offsetWidth;
+        btn.classList.add('is-popping');
+        setTimeout(function () {
+            btn.classList.remove('is-popping');
+        }, 450);
+    }
+
     function toggle(btn) {
         var productId = parseInt(btn.getAttribute('data-product-id'), 10) || 0;
         if (productId <= 0) return;
+
+        // Fire the pop immediately for tactile feedback, before
+        // the server responds. Optimistic.
+        pop(btn);
 
         // Prevent double-clicks while the request is in flight.
         if (btn.getAttribute('data-sf-wishlist-busy') === '1') return;
