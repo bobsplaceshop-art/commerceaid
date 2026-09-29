@@ -1050,3 +1050,351 @@ select.sf-filter-input {
         padding: .4rem .55rem;
     }
 }
+
+/* =====================================================================
+   Message Center (/account/messages)
+   =====================================================================
+   Tabs, message list, per-row state, preferences form. Built
+   on the same account-shell grid as the wishlist and recent
+   pages.
+   ===================================================================== */
+
+/* ----- Tabs ----- */
+
+.sf-messages-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0 1rem;
+    border-bottom: 1px solid var(--sf-border, #e5e1d8);
+}
+
+.sf-messages-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .65rem .9rem;
+    color: var(--sf-muted, #8a7d6b);
+    text-decoration: none;
+    font-size: .9rem;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color .15s ease, border-color .15s ease;
+}
+
+.sf-messages-tab:hover {
+    color: var(--sf-ink, #1a1a1a);
+}
+
+.sf-messages-tab.is-active {
+    color: var(--sf-ink, #1a1a1a);
+    border-bottom-color: var(--sf-accent, #b8894a);
+}
+
+.sf-messages-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 .4rem;
+    background: var(--sf-accent, #b8894a);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 600;
+    border-radius: 999px;
+    line-height: 1;
+}
+
+/* ----- Mark all read (small utility button) ----- */
+
+.sf-messages-mark-all {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 .75rem;
+}
+
+/* ----- Message list ----- */
+
+.sf-messages-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.sf-message-row {
+    display: flex;
+    gap: .85rem;
+    padding: 1rem;
+    background: var(--sf-white, #fff);
+    border: 1px solid var(--sf-border, #e5e1d8);
+    border-radius: 8px;
+}
+
+.sf-message-row.is-unread {
+    border-left: 3px solid var(--sf-accent, #b8894a);
+}
+
+.sf-message-icon {
+    flex: 0 0 auto;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sf-bg-soft, #f4f1ea);
+    border-radius: 50%;
+    color: var(--sf-muted, #8a7d6b);
+    font-size: 1rem;
+}
+
+.sf-message-row.is-unread .sf-message-icon {
+    background: rgba(184, 137, 74, 0.15);
+    color: var(--sf-accent, #b8894a);
+}
+
+.sf-message-body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sf-message-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .25rem;
+}
+
+.sf-message-title {
+    font-size: .95rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--sf-ink, #1a1a1a);
+    line-height: 1.3;
+}
+
+.sf-message-time {
+    flex: 0 0 auto;
+    font-size: .75rem;
+    color: var(--sf-muted, #8a7d6b);
+    white-space: nowrap;
+}
+
+.sf-message-text {
+    font-size: .88rem;
+    color: var(--sf-ink-soft, #4a4a4a);
+    margin: 0 0 .5rem;
+    line-height: 1.5;
+}
+
+.sf-message-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.sf-message-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .85rem;
+    font-weight: 500;
+    color: var(--sf-accent, #b8894a);
+    text-decoration: none;
+}
+
+.sf-message-link:hover {
+    text-decoration: underline;
+}
+
+.sf-message-mark-form {
+    margin: 0;
+}
+
+.sf-message-mark-btn {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font-size: .82rem;
+    color: var(--sf-muted, #8a7d6b);
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.sf-message-mark-btn:hover {
+    color: var(--sf-ink, #1a1a1a);
+}
+
+/* ----- Preferences page ----- */
+
+.sf-message-prefs {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 1.5rem;
+    border: 1px solid var(--sf-border, #e5e1d8);
+    border-radius: 8px;
+    background: var(--sf-white, #fff);
+    overflow: hidden;
+}
+
+.sf-pref-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--sf-border, #e5e1d8);
+}
+
+.sf-pref-row:last-of-type {
+    border-bottom: 0;
+}
+
+.sf-pref-row-static {
+    background: var(--sf-bg-soft, #f4f1ea);
+}
+
+.sf-pref-info {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sf-pref-title {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .95rem;
+    font-weight: 600;
+    margin: 0 0 .25rem;
+    color: var(--sf-ink, #1a1a1a);
+}
+
+.sf-pref-title i {
+    color: var(--sf-accent, #b8894a);
+}
+
+.sf-pref-desc {
+    font-size: .85rem;
+    color: var(--sf-muted, #8a7d6b);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Toggle switch */
+
+.sf-pref-toggle {
+    flex: 0 0 auto;
+    position: relative;
+    display: inline-block;
+    width: 2.75rem;
+    height: 1.5rem;
+    cursor: pointer;
+    margin: .25rem 0 0;
+}
+
+.sf-pref-toggle input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.sf-pref-toggle-track {
+    position: absolute;
+    inset: 0;
+    background: #cbd0d8;
+    border-radius: 999px;
+    transition: background .15s ease;
+}
+
+.sf-pref-toggle-track::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 1.125rem;
+    height: 1.125rem;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform .15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+
+.sf-pref-toggle input:checked + .sf-pref-toggle-track {
+    background: var(--sf-accent, #b8894a);
+}
+
+.sf-pref-toggle input:checked + .sf-pref-toggle-track::before {
+    transform: translateX(1.25rem);
+}
+
+.sf-pref-toggle input:focus-visible + .sf-pref-toggle-track {
+    outline: 2px solid var(--sf-accent, #b8894a);
+    outline-offset: 2px;
+}
+
+.sf-pref-locked {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 1.5rem;
+    color: var(--sf-muted, #8a7d6b);
+    margin: .25rem 0 0;
+}
+
+.sf-message-prefs-actions {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--sf-border, #e5e1d8);
+    display: flex;
+    justify-content: flex-end;
+    background: var(--sf-white, #fff);
+}
+
+.sf-message-prefs-note {
+    margin: 1rem 0 0;
+    font-size: .82rem;
+    color: var(--sf-muted, #8a7d6b);
+    display: flex;
+    align-items: flex-start;
+    gap: .4rem;
+    line-height: 1.5;
+}
+
+/* ----- Flash ----- */
+
+.sf-account-flash {
+    padding: .75rem 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    font-size: .9rem;
+}
+
+.sf-account-flash-ok {
+    background: rgba(34, 139, 34, 0.08);
+    border: 1px solid rgba(34, 139, 34, 0.2);
+    color: #1f6f1f;
+}
+
+/* Screen-reader-only utility, used by the toggle labels */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

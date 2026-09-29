@@ -26,6 +26,26 @@ if ($innerView === null || $innerView === '') {
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $claimableCount = (int) ($claimableCount ?? 0);
 
+// Unread message count for the sidebar badge. Resolved once
+// per request. Defensive: a broken notification read returns
+// 0 rather than crashing the account page.
+$unreadMessageCount = 0;
+try {
+    $__container = \CorporateAid\Core\App::instance()->container();
+    $__customerAuth = $__container->get(
+        \CorporateAid\Commerce\Services\CustomerAuthService::class
+    );
+    $__customer = $__customerAuth->user();
+    if ($__customer !== null) {
+        $__unreadSvc = $__container->get(
+            \CorporateAid\Commerce\Services\CustomerNotificationService::class
+        );
+        $unreadMessageCount = $__unreadSvc->unreadCount($__customer->id);
+    }
+} catch (\Throwable) {
+    $unreadMessageCount = 0;
+}
+
 // ---------------------------------------------------------------------
 // Breadcrumbs
 // ---------------------------------------------------------------------
@@ -83,8 +103,9 @@ if (count($crumbs) > 1) {
 
         <aside class="sf-account-sidebar">
             <?= view_partial('storefront.account._sidebar', [
-                'currentPath'    => $currentPath,
-                'claimableCount' => $claimableCount,
+                'currentPath'        => $currentPath,
+                'claimableCount'     => $claimableCount,
+                'unreadMessageCount' => $unreadMessageCount,
             ]) ?>
         </aside>
 
