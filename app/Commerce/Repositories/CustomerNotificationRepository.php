@@ -189,6 +189,33 @@ final class CustomerNotificationRepository extends CommerceRepository
     }
 
     /**
+     * Most recent unread notifications for the customer. Used
+     * by the header bell dropdown. Ordered newest first.
+     *
+     * @return array<int, CustomerNotification>
+     */
+    public function unreadFor(int $customerId, int $limit = 5): array
+    {
+        if ($customerId <= 0) {
+            return [];
+        }
+
+        $limit = max(1, min($limit, 20));
+
+        $rows = $this->db->select(
+            "SELECT * FROM `commerce_customer_notifications`
+              WHERE `store_id` = ?
+                AND `customer_id` = ?
+                AND `read_at` IS NULL
+              ORDER BY `created_at` DESC, `id` DESC
+              LIMIT {$limit}",
+            [$this->storeId(), $customerId]
+        );
+
+        return array_map(fn ($r) => CustomerNotification::fromRow($r), $rows);
+    }
+
+    /**
      * Count of unread notifications for the customer. Used by
      * the account sidebar badge.
      */

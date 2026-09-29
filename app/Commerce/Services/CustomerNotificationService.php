@@ -186,6 +186,20 @@ final class CustomerNotificationService
     }
 
     /**
+     * Most recent unread notifications for the customer. Used
+     * by the header bell dropdown for a quick snapshot.
+     *
+     * @return array<int, CustomerNotification>
+     */
+    public function unreadFor(int $customerId, int $limit = 5): array
+    {
+        if ($customerId <= 0) {
+            return [];
+        }
+        return $this->notifications->unreadFor($customerId, $limit);
+    }
+
+    /**
      * @return array<string, int>
      */
     public function unreadCountsByCategory(int $customerId): array

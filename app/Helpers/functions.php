@@ -144,6 +144,148 @@ if (!function_exists('recently_viewed_product_ids')) {
     }
 }
 
+if (!function_exists('customer_recent_messages')) {
+    /**
+     * Recent unread messages for the current customer, newest
+     * first. Used by the header bell dropdown to show a quick
+     * snapshot without leaving the current page.
+     *
+     * Returns an empty array for guests, and an empty array
+     * when the customer has no unread messages.
+     *
+     * Static-cached per request. The header renders on every
+     * storefront page.
+     *
+     * Each item is a small associative array:
+     *   [
+     *     'id'        => int,
+     *     'title'     => string,
+     *     'category'  => 'system' | 'order' | 'promotion',
+     *     'icon'      => string   Bootstrap icon class,
+     *     'time'      => string   relative time,
+     *     'link'      => ?string  optional URL,
+     *   ]
+     *
+     * Using a plain array rather than the full
+     * CustomerNotification model keeps the header light and
+     * avoids coupling the view to the model.
+     *
+     * @return array<int, array{id:int,title:string,category:string,icon:string,time:string,link:?string}>
+     */
+    function customer_recent_messages(int $limit = 5): array
+    {
+        /** @var array<int, array<string,mixed>>|null $cache */
+        static $cache = null;
+        static $resolved = false;
+        static $cachedLimit = 5;
+
+        // If the limit changes between calls on the same
+        // request, do not reuse a stale cache.
+        if ($resolved && $cachedLimit === $limit) {
+            /** @var array<int, array{id:int,title:string,category:string,icon:string,time:string,link:?string}> $c */
+            $c = $cache ?? [];
+            return $c;
+        }
+
+        try {
+            $container = \CorporateAid\Core\App::instance()->container();
+            $customerAuth = $container->get(
+                \CorporateAid\Commerce\Services\CustomerAuthService::class
+            );
+            $customer = $customerAuth->user();
+            if ($customer === null) {
+                $cache = [];
+                $resolved = true;
+                $cachedLimit = $limit;
+                return [];
+            }
+
+            $svc = $container->get(
+                \CorporateAid\Commerce\Services\CustomerNotificationService::class
+            );
+            $list = $svc->unreadFor($customer->id, $limit);
+
+            $out = [];
+            foreach ($list as $n) {
+                /** @var array{id:int,title:string,category:string,icon:string,time:string,link:?string} $row */
+                $row = [
+                    'id'       => (int) $n->id,
+                    'title'    => (string) $n->title,
+                    'category' => (string) $n->category,
+                    'icon'     => (string) $n->icon(),
+                    'time'     => (string) $n->relativeTime(),
+                    'link'     => $n->link !== null ? (string) $n->link : null,
+                ];
+                $out[] = $row;
+            }
+
+            /** @var array<int, array{id:int,title:string,category:string,icon:string,time:string,link:?string}> $out */
+            $cache = $out;
+            $resolved = true;
+            $cachedLimit = $limit;
+            return $out;
+        } catch (\Throwable) {
+            $cache = [];
+            $resolved = true;
+            $cachedLimit = $limit;
+            return [];
+        }
+    }
+}
+
+if (!function_exists('customer_unread_message_count')) {
+    /**
+     * Unread message count for the currently logged-in customer.
+     *
+     * Returns null when no customer is logged in. Returns an
+     * int (possibly 0) when a customer is logged in.
+     *
+     * The null-vs-int distinction matters for the header bell:
+     * a logged-in customer with zero unread messages shows the
+     * bell with no badge; a guest shows no bell at all. Both
+     * would return 0 if we did not distinguish.
+     *
+     * Static-cached per request. The header renders on every
+     * storefront page, so this helper is called on every page.
+     * Caching avoids a redundant container resolve and DB
+     * query if anything else on the same page also needs the
+     * count.
+     *
+     * Defensive: any failure returns null. A broken read hides
+     * the bell rather than crashing the page.
+     */
+    function customer_unread_message_count(): ?int
+    {
+        static $cache = null;
+        static $resolved = false;
+        if ($resolved) {
+            return $cache;
+        }
+        $resolved = true;
+
+        try {
+            $container = \CorporateAid\Core\App::instance()->container();
+            $customerAuth = $container->get(
+                \CorporateAid\Commerce\Services\CustomerAuthService::class
+            );
+            $customer = $customerAuth->user();
+            if ($customer === null) {
+                $cache = null;
+                return null;
+            }
+
+            $svc = $container->get(
+                \CorporateAid\Commerce\Services\CustomerNotificationService::class
+            );
+            $cache = $svc->unreadCount($customer->id);
+            return $cache;
+        } catch (\Throwable) {
+            $cache = null;
+            return null;
+        }
+    }
+}
+
 if (!function_exists('wishlist_product_ids')) {
     /**
      * The current viewer's wishlist product IDs.
