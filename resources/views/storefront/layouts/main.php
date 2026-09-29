@@ -341,6 +341,8 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     })();
     </script>
     <?php endif; ?>
+<script src="<?= versioned_asset('js/wishlist.js') ?>" defer></script>
+
 <?php if (!empty($cookieBannerEnabled)): ?>
     <?= view_partial('storefront.partials._cookie-banner', ['store' => $store]) ?>
     <link href="<?= versioned_asset('css/storefront-cookie-banner.css') ?>" rel="stylesheet">

@@ -397,6 +397,17 @@ select.sf-filter-input {
     cursor: not-allowed;
 }
 
+/* Wishlist active state. Filled heart, accent color. */
+.sf-product-card-action.is-active {
+    background: var(--sf-accent, #b8894a);
+    color: var(--sf-white, #fff);
+    border-color: var(--sf-accent, #b8894a);
+}
+.sf-product-card-action.is-active:hover:not(:disabled) {
+    background: var(--sf-ink, #1a1a1a);
+    border-color: var(--sf-ink, #1a1a1a);
+}
+
 /* ----- Body ----- */
 
 .sf-product-card-body {
@@ -820,4 +831,132 @@ select.sf-filter-input {
     .sf-product-card-action-desktop {
         display: none;
     }
+}
+
+/* =====================================================================
+   Wishlist page (/account/wishlist)
+   =====================================================================
+   Rendered inside the account shell. Uses the same grid shape as
+   the catalog product grid, one column on mobile, up to three on
+   desktop. Not a direct reuse of .sf-product-grid because the
+   wishlist cards carry a remove button and a possible
+   "unavailable" state instead of the add-to-cart CTA.
+   ===================================================================== */
+
+.sf-wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+@media (min-width: 768px) {
+    .sf-wishlist-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.25rem;
+    }
+}
+
+.sf-wishlist-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--sf-white, #fff);
+    border: 1px solid var(--sf-border, #e5e1d8);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.sf-wishlist-card-media {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: var(--sf-bg-soft, #f4f1ea);
+}
+.sf-wishlist-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.sf-wishlist-card-badge {
+    position: absolute;
+    top: .6rem;
+    left: .6rem;
+    font-size: .7rem;
+    padding: .2rem .5rem;
+    border-radius: 4px;
+}
+
+.sf-wishlist-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding: .85rem;
+}
+
+.sf-wishlist-card-name {
+    font-size: .95rem;
+    margin: 0;
+    line-height: 1.3;
+}
+.sf-wishlist-card-name a {
+    color: inherit;
+    text-decoration: none;
+}
+.sf-wishlist-card-name a:hover {
+    text-decoration: underline;
+}
+
+.sf-wishlist-card-pricing {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+}
+.sf-wishlist-card-price {
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+.sf-wishlist-card-compare {
+    font-size: .85rem;
+    text-decoration: line-through;
+    opacity: .6;
+}
+
+.sf-wishlist-card-actions {
+    display: flex;
+    gap: .5rem;
+    align-items: stretch;
+    margin-top: auto;
+    padding-top: .5rem;
+}
+.sf-wishlist-card-view {
+    flex: 1;
+    text-align: center;
+}
+.sf-wishlist-card-remove-form {
+    margin: 0;
+}
+
+/* Unavailable state: product archived or deleted since the
+   customer hearted it. Row carries no image, no link. Just an
+   icon, a label, and a remove button. */
+.sf-wishlist-card-unavailable {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: 1rem;
+    grid-column: 1 / -1;
+    flex-direction: column;
+    text-align: center;
+}
+.sf-wishlist-card-unavailable-icon {
+    font-size: 1.75rem;
+    color: var(--sf-muted, #999);
+}
+.sf-wishlist-card-unavailable-body {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
 }

@@ -79,7 +79,7 @@ $groups = [
         'id'    => 'wishlist',
         'label' => 'Wishlist',
         'items' => [
-            ['label' => 'Wishlist', 'href' => '#', 'icon' => 'bi-heart', 'soon' => true],
+            ['label' => 'Wishlist', 'href' => '/account/wishlist', 'icon' => 'bi-heart'],
         ],
     ],
     [

@@ -88,12 +88,14 @@ $ratingCount = 0;
         <?php endif; ?>
 
         <div class="sf-product-card-quick-actions">
+            <?php $isWished = in_array((int) $product->id, $wishlistProductIds ?? [], true); ?>
             <button type="button"
-                    class="sf-product-card-action"
+                    class="sf-product-card-action<?= $isWished ? ' is-active' : '' ?>"
                     data-sf-card-action="wishlist"
-                    aria-label="Add to wishlist"
-                    disabled>
-                <i class="bi bi-heart" aria-hidden="true"></i>
+                    data-product-id="<?= (int) $product->id ?>"
+                    aria-label="<?= $isWished ? 'Remove from wishlist' : 'Add to wishlist' ?>"
+                    aria-pressed="<?= $isWished ? 'true' : 'false' ?>">
+                <i class="bi <?= $isWished ? 'bi-heart-fill' : 'bi-heart' ?>" aria-hidden="true"></i>
             </button>
             <button type="button"
                     class="sf-product-card-action sf-product-card-action-desktop"

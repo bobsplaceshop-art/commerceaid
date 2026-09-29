@@ -250,6 +250,19 @@
     padding-top: .75rem;
 }
 
+/* Wishlist button on the product detail page. Filled heart and
+   accent color when the product is on the customer's wishlist. */
+.sf-wishlist-toggle.is-active {
+    background: var(--sf-accent, #b8894a);
+    border-color: var(--sf-accent, #b8894a);
+    color: var(--sf-white, #fff);
+}
+.sf-wishlist-toggle.is-active:hover:not(:disabled) {
+    background: var(--sf-ink, #1a1a1a);
+    border-color: var(--sf-ink, #1a1a1a);
+    color: var(--sf-white, #fff);
+}
+
 /* ----- Trust line ----- */
 
 .sf-product-trust {

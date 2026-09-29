@@ -255,9 +255,14 @@ for ($i = 1; $i <= 4; $i++) {
                         Not available
                     </button>
                 <?php endif; ?>
-                <button type="button" class="sf-btn sf-btn-outline sf-btn-lg sf-btn-block" disabled>
-                    <i class="bi bi-heart me-2" aria-hidden="true"></i>
-                    Add to Wishlist
+                <?php $detailIsWished = in_array((int) $product->id, $wishlistProductIds ?? [], true); ?>
+                <button type="button"
+                        class="sf-btn sf-btn-outline sf-btn-lg sf-btn-block sf-wishlist-toggle<?= $detailIsWished ? ' is-active' : '' ?>"
+                        data-sf-card-action="wishlist"
+                        data-product-id="<?= (int) $product->id ?>"
+                        aria-pressed="<?= $detailIsWished ? 'true' : 'false' ?>">
+                    <i class="bi <?= $detailIsWished ? 'bi-heart-fill' : 'bi-heart' ?> me-2" aria-hidden="true"></i>
+                    <span class="sf-wishlist-label"><?= $detailIsWished ? 'Saved to Wishlist' : 'Add to Wishlist' ?></span>
                 </button>
             </div>
 
