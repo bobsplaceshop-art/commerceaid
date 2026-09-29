@@ -762,6 +762,87 @@ End of REMEMBER.md
 
 ## 17. Permanent Fixes Applied
 
+### Pattern 13 - Inline onclick with dynamic data breaks on quote collisions
+
+**Problem:** an inline `onclick` attribute passes dynamically-
+generated data (a name, a title, a description) through a
+PHP-to-HTML-to-JS boundary. The data contains a character
+that is valid in one layer but breaks another.
+
+The classic case: `onclick='foo("<?= $name ?>")'` where
+`$name` contains a double quote. It breaks the JS string
+first. Or `onclick='foo(<?= json_encode($name) ?>)'` where
+`$name` contains a single quote. It breaks the outer HTML
+attribute first, then the JS parse.
+
+**The tell:** clicking a button throws
+`Invalid or unexpected token` at the JS console, or the
+page's HTML parse is subtly wrong after the button. The
+error location is inside a `<script>` block or an inline
+attribute. The failing line contains user-entered data.
+
+**Rule:** never pass data to inline `onclick` attributes.
+Always use `data-*` attributes plus a delegated click
+listener. The data is HTML-escaped by `e()` at render time
+and read back at click time via `getAttribute()`.
+
+**Before:**
+
+    <button onclick='RA_DeleteProduct.open(<?= (int) $product->id ?>, <?= json_encode($product->name) ?>) '>
+
+**After:**
+
+    <button data-ra-delete-product
+            data-product-id="<?= (int) $product->id ?>"
+            data-product-name="<?= e($product->name) ?>">
+
+**And in the JS file:**
+
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-ra-delete-product]');
+        if (!btn) return;
+        e.preventDefault();
+        RA_DeleteProduct.open(
+            btn.getAttribute('data-product-id'),
+            btn.getAttribute('data-product-name')
+        );
+    });
+
+**Why `json_encode` is not safe here:** `json_encode` escapes
+`"`, `\`, `/`, and control characters. It does NOT escape
+`'`. A product name like `Men's Shorts` produces
+`"Men's Shorts"` - valid JSON, but the `'` in `Men's`
+closes the single-quoted HTML attribute early. The browser
+then parses the rest of the name as HTML. Any `<` or `>` in
+the name is treated as a tag.
+
+**Where we hit it:**
+
+  - Stage 007B - the approval queue reject button. The
+    customer name contained an apostrophe. First
+    manifestation.
+  - Stage 008G audit - the product delete button. Product
+    id=4 name contained two apostrophes. The browser
+    closed the single-quoted onclick early, the HTML
+    parser recovery swallowed the next form tag, and the
+    Publish button null-submit error was the symptom.
+    Second manifestation, in a completely different
+    feature.
+
+**Prevention checklist:**
+
+1. Grep for `onclick=` in views. Every match with a PHP
+   echo inside is a candidate.
+2. If the data being echoed is user-entered (name, title,
+   description, email), it is a bug. Convert to data
+   attributes.
+3. If the data is a numeric id or a fixed enum, it is safe.
+   Keep it inline if you prefer.
+4. After conversion, verify the button works with a value
+   that contains `'`, `"`, and `<`.
+
+---
+
 ### Pattern 15 - snake_case / camelCase mismatch in views
 
 **Problem:** Views called $val('manage_stock') and $valBool('is_b2b'),
@@ -1054,6 +1135,41 @@ would have been caught by this rule:
 
 ---
 
+### Pattern 24 - PHPStan annotation conventions
+
+**Context:** during the level 6-8 PHPStan pass (2026-09-27),
+four rules emerged from specific misses. Each cost a
+round-trip. They are locked now.
+
+**The conventions:**
+
+    Route params:           array<string,string>
+    PDO-bound params:       array<int|string,mixed>
+    Controller render data: array<string,mixed>
+    Filter builders:        array{0:string,1:array<int,mixed>}
+    Model fromRow rows:     array<string,mixed>
+    Logger context:         array<string,mixed>
+    Constraints / options:  array<string,mixed>
+
+**Why `array<int|string,mixed>` for PDO:** PDO execute()
+accepts positional and named bindings. Annotating a method
+that feeds PDO as `array<int,mixed>` breaks every caller
+that passes named bindings.
+
+**Why methods that take AND return arrays need both
+annotations in one patch:** PHPStan reports the param error
+first and suppresses the return error until the param is
+fixed. Patching only the param produces a second
+round-trip.
+
+**Anchoring rule:** existence checks must be anchored to
+the specific method signature, not the file. Use a two-line
+sequence that uniquely identifies the target method.
+
+**See also:** Pattern 25 documents the pass itself.
+
+---
+
 ### Pattern 25 - PHPStan level 8 is the baseline
 
 **Context:** On 2026-09-27 the codebase moved from PHPStan
@@ -1077,7 +1193,7 @@ Zero errors, zero baseline, zero stale ignores. Any error at
 level 8 in new code is a real finding, not a documentation gap.
 The annotation pass is done; the discipline is now write-time.
 
-**Annotation conventions (recap from Pattern 24):**
+**Annotation conventions (see Pattern 24):**
 
     Route params:           array<string,string>
     PDO-bound params:       array<int|string,mixed>
@@ -1117,6 +1233,144 @@ and 8 do.
 
 **See also:** docs/DEBUGGING.md for the annotation rules and
 docs/baseline for the codebase conventions.
+
+---
+
+### Pattern 26 - Shared partial guards must reflect the partial's own requirement, not one caller's shape
+
+**Problem:** a shared partial (or a shared wrapper around it)
+guards on a variable that only some callers provide. The
+guard silently no-ops on the callers that do not set it. The
+feature appears to work on the caller it was developed
+against, and silently fails on every other caller.
+
+The failure is invisible until someone uses the second
+caller. Then the symptom shows up far from the cause: a
+button does nothing, a form does not submit, a modal never
+opens.
+
+**Rule:** when writing a guard at the top of a shared
+partial, ask three questions:
+
+1. What does this partial actually need to render?
+2. Is that need expressed by a variable every caller will
+   set, or by a proxy for "which page am I on?"
+3. If it is a proxy, refactor. Guards are about the
+   partial's requirements, not its callers' context.
+
+**The tell:** the guard condition references a variable
+(`$mode`, `$context`, `$page`) that is not naturally part of
+the partial's data. If a caller has to be told to pass a
+value they do not otherwise use, the guard is wrong.
+
+**Detection:** after adding a shared partial with a guard,
+grep for every view_partial() call to it. For each caller,
+confirm the guard's variable is set and has the expected
+value in that caller's context. If any caller lacks it,
+the guard is a latent bug.
+
+**Where we hit it:** Stage 008G audit, `_action-forms.php`.
+
+The partial guarded on `$mode !== 'edit'`. Its two
+callers: `_sidebar.php` (via `edit.php`, where `$mode` was
+`'edit'`) and `variants.php` (which has no `$mode` - it
+defaulted to `'create'`). The guard fired on
+`variants.php` and the four hidden action forms never
+rendered. The Publish button called
+`document.getElementById('ra-action-publish').submit()`
+on a null element and threw
+`Cannot read properties of null (reading 'submit')`.
+
+The fix: loosened the guard to `$product === null` only.
+The partial's real requirement is a product to act on.
+`$mode` was a proxy for "is this an edit page?" that broke
+on the second caller.
+
+**Related patterns:**
+
+  - Pattern 3 in this document (Nested Forms) - same
+    family: markup context changes behaviour.
+  - Pattern 27 in this document (Nested forms: the first
+    inner form is silently discarded) - a specific
+    manifestation of the same class.
+  - Pattern 23 in this document (Cascade check before
+    every patch) - the discipline that catches this class
+    before it ships.
+
+---
+
+### Pattern 27 - Nested forms: the first inner form is silently discarded
+
+**Problem:** a `<form>` element rendered inside another
+`<form>` element. HTML disallows this. The browser does not
+error. It does not warn. It silently discards the inner
+`<form>` opening tag and closes the outer form on the inner
+`</form>`.
+
+If there are multiple nested forms, only the first one is
+sacrificed. The rest survive, because by the time they
+render, the outer form has already been closed.
+
+**The tell:** the first of a series of sibling forms is
+missing from the DOM. `document.getElementById('first-form')`
+returns null. The second, third, fourth forms all exist.
+Console shows null only for the first.
+
+If the buttons that target the first form are still wired
+up (they usually are), clicking them throws
+`Cannot read properties of null (reading 'submit')`.
+
+**Why it is the first one:** the browser is doing
+HTML5-compliant form recovery. On encountering a `<form>`
+inside an open `<form>`, the parser closes the outer form
+implicitly. Everything after the first inner `<form>` tag
+is now top-level HTML. The second, third, and later forms
+are accepted normally.
+
+**Detection:** if a set of forms is missing exactly one -
+always the first - suspect this pattern. Check the DOM
+structure in DevTools.
+
+    var outer = document.getElementById('your-outer-form');
+    var inner = document.getElementById('your-inner-form');
+    if (outer && inner) {
+        console.log('inner is inside outer?', outer.contains(inner));
+    }
+
+If `contains` returns true, or inner is null while siblings
+survive, this pattern is active.
+
+**The fix:** move the inner form (or forms) out of the outer
+form. They become siblings. Buttons that reference them by
+ID still work - `document.getElementById()` does not care
+about nesting.
+
+The alternative, HTML5 form attribute (`form="form-id"` on
+a button outside a form), also works but requires editing
+every button. Moving the forms is usually simpler.
+
+**Where we hit it:** Stage 008G audit, `edit.php` plus
+`_sidebar.php`.
+
+The four hidden action forms (`ra-action-publish`,
+`ra-action-unpublish`, `ra-action-archive`,
+`ra-action-restore`) were rendered from `_sidebar.php`,
+which is included inside `edit.php`'s
+`<form id="ra-product-form">`. They were nested forms.
+`ra-action-publish` was silently discarded. The Publish
+button called `.submit()` on a null element.
+
+The fix: removed the action-forms include from
+`_sidebar.php`. Added it to `edit.php` after `</form>`, as
+a sibling of the outer form. All four forms render as
+top-level elements.
+
+**Relationship to Pattern 3 in this document:** Pattern 3
+covers the case where a developer deliberately nested a
+form and expected it to work. Pattern 27 covers the case
+where a shared partial is included from multiple contexts
+and accidentally ends up nested in one of them. Same HTML
+rule, different discovery path.
 
 ---
 
