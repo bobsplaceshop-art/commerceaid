@@ -30,6 +30,24 @@ $brandName = $brandName ?? 'Anaya Global';
 // if the layout doesn't provide it (defensive).
 $cartCount = $cartCount ?? 0;
 
+// Current customer, resolved once for both the bell and the
+// account dropdown. Guests get null. Any resolution failure
+// also yields null so the header still renders.
+$__customer = null;
+try {
+    $__auth = \CorporateAid\Core\App::instance()
+        ->container()
+        ->get(\CorporateAid\Commerce\Services\CustomerAuthService::class);
+    $__customer = $__auth->user();
+} catch (\Throwable) {
+    $__customer = null;
+}
+
+// Unread message count for the bell. Returns null for guests
+// (bell is hidden), int for customers (bell shows only when
+// count > 0).
+$__unread = customer_unread_message_count();
+
 // Navigation items.
 //
 // Contract: eventually populated from `commerce_navigation_menu_items`
@@ -118,10 +136,6 @@ $isNavActive = function (string $href) use ($currentPath): bool {
                 <i class="bi bi-search" aria-hidden="true"></i>
             </a>
 
-            <a href="/account/login" class="sf-icon-btn" aria-label="Account">
-                <i class="bi bi-person" aria-hidden="true"></i>
-            </a>
-
             <a href="/cart" class="sf-icon-btn sf-icon-btn-cart" aria-label="Cart">
                 <i class="bi bi-bag" aria-hidden="true"></i>
                 <?php if ($cartCount > 0): ?>
@@ -132,6 +146,132 @@ $isNavActive = function (string $href) use ($currentPath): bool {
                     <span class="sf-cart-badge is-empty" data-sf-cart-count="0" hidden>0</span>
                 <?php endif; ?>
             </a>
+
+            <?php if ($__unread !== null && $__unread > 0): ?>
+                <?php
+                // Bell dropdown. Shows the most recent unread
+                // messages as a quick snapshot. Renders only
+                // when the customer has at least one unread
+                // message - an empty bell has nothing to show.
+                $__previewMessages = customer_recent_messages(5);
+                ?>
+                <div class="sf-bell-menu" data-sf-bell-menu>
+                    <button type="button"
+                            class="sf-icon-btn sf-icon-btn-bell sf-bell-menu-toggle"
+                            aria-label="Notifications (<?= (int) $__unread ?> unread)"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            data-sf-bell-toggle>
+                        <i class="bi bi-bell" aria-hidden="true"></i>
+                        <span class="sf-cart-badge sf-bell-badge"><?= (int) $__unread ?></span>
+                    </button>
+
+                    <div class="sf-bell-menu-panel" role="menu" hidden>
+                        <div class="sf-bell-menu-header">
+                            <span>Notifications</span>
+                            <a href="/account/messages" class="sf-bell-menu-see-all">See all</a>
+                        </div>
+
+                        <?php if ($__previewMessages === []): ?>
+                            <div class="sf-bell-menu-empty">
+                                You're all caught up.
+                            </div>
+                        <?php else: ?>
+                            <ul class="sf-bell-menu-list" role="none">
+                                <?php foreach ($__previewMessages as $msg): ?>
+                                    <li role="none">
+                                        <a href="<?= e($msg['link'] ?? '/account/messages') ?>"
+                                           class="sf-bell-menu-item"
+                                           role="menuitem">
+                                            <span class="sf-bell-menu-icon" aria-hidden="true">
+                                                <i class="bi <?= e($msg['icon']) ?>"></i>
+                                            </span>
+                                            <span class="sf-bell-menu-body">
+                                                <span class="sf-bell-menu-title"><?= e($msg['title']) ?></span>
+                                                <span class="sf-bell-menu-time"><?= e($msg['time']) ?></span>
+                                            </span>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+
+                        <div class="sf-bell-menu-footer">
+                            <a href="/account/messages" class="sf-bell-menu-footer-link">
+                                View all messages
+                                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($__customer === null): ?>
+                <a href="/account/login" class="sf-icon-btn sf-icon-btn-labeled" aria-label="Sign in">
+                    <i class="bi bi-person" aria-hidden="true"></i>
+                    <span class="sf-icon-btn-label">Sign in</span>
+                </a>
+            <?php else: ?>
+                <?php
+                $__displayName = $__customer->fullName();
+                if ($__displayName === '') {
+                    $__displayName = $__customer->email;
+                }
+
+                $__accountItems = [
+                    ['label' => 'Dashboard',       'href' => '/account',          'icon' => 'bi-house'],
+                    ['label' => 'Orders',          'href' => '/account/orders',   'icon' => 'bi-receipt'],
+                    ['label' => 'Messages',        'href' => '/account/messages', 'icon' => 'bi-envelope', 'badge' => $__unread],
+                    ['label' => 'Wishlist',        'href' => '/account/wishlist', 'icon' => 'bi-heart'],
+                    ['label' => 'Recently Viewed', 'href' => '/account/recent',   'icon' => 'bi-clock-history'],
+                    ['label' => 'Addresses',       'href' => '/account/addresses','icon' => 'bi-geo-alt'],
+                ];
+                ?>
+                <div class="sf-account-menu" data-sf-account-menu>
+                    <button type="button"
+                            class="sf-icon-btn sf-account-menu-toggle"
+                            aria-label="Account menu"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            data-sf-account-toggle>
+                        <i class="bi bi-person" aria-hidden="true"></i>
+                    </button>
+
+                    <div class="sf-account-menu-panel" role="menu" hidden>
+                        <div class="sf-account-menu-header">
+                            <div class="sf-account-menu-name"><?= e($__displayName) ?></div>
+                            <div class="sf-account-menu-email muted"><?= e($__customer->email) ?></div>
+                        </div>
+
+                        <ul class="sf-account-menu-list" role="none">
+                            <?php foreach ($__accountItems as $item): ?>
+                                <?php $badge = (int) ($item['badge'] ?? 0); ?>
+                                <li role="none">
+                                    <a href="<?= e($item['href']) ?>"
+                                       class="sf-account-menu-link"
+                                       role="menuitem">
+                                        <i class="bi <?= e($item['icon']) ?>" aria-hidden="true"></i>
+                                        <span><?= e($item['label']) ?></span>
+                                        <?php if ($badge > 0): ?>
+                                            <span class="sf-account-menu-badge"><?= $badge ?></span>
+                                        <?php endif; ?>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+
+                        <div class="sf-account-menu-divider" role="separator"></div>
+
+                        <form method="POST" action="/account/logout" style="margin:0;">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="sf-account-menu-link sf-account-menu-logout" role="menuitem">
+                                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                                <span>Sign out</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
 
     </div>
@@ -177,6 +317,120 @@ $isNavActive = function (string $href) use ($currentPath): bool {
         if (n <= 0) {
             badge.hidden = true;
         }
+    }
+
+    // Account dropdown. Same pattern as the admin topbar: a
+    // click toggles the panel, click-outside and Escape close it.
+    var accountMenu = document.querySelector('[data-sf-account-menu]');
+    if (accountMenu) {
+        var toggle = accountMenu.querySelector('[data-sf-account-toggle]');
+        var panel  = accountMenu.querySelector('.sf-account-menu-panel');
+
+        function openPanel() {
+            if (!panel || !toggle) return;
+            panel.hidden = false;
+            toggle.setAttribute('aria-expanded', 'true');
+            // Small delay so the panel can transition in.
+            requestAnimationFrame(function () {
+                accountMenu.classList.add('is-open');
+            });
+        }
+
+        function closePanel() {
+            if (!panel || !toggle) return;
+            accountMenu.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+            // Wait for transition before hiding (or hide immediately
+            // if there is no transition).
+            setTimeout(function () {
+                panel.hidden = true;
+            }, 120);
+        }
+
+        if (toggle) {
+            toggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (accountMenu.classList.contains('is-open')) {
+                    closePanel();
+                } else {
+                    openPanel();
+                }
+            });
+        }
+
+        // Click outside closes
+        document.addEventListener('click', function (e) {
+            if (!accountMenu.classList.contains('is-open')) return;
+            if (e.target.closest('[data-sf-account-menu]')) return;
+            closePanel();
+        });
+
+        // Escape closes
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            if (!accountMenu.classList.contains('is-open')) return;
+            closePanel();
+        });
+    }
+
+    // Bell dropdown. Same open/close pattern as the account
+    // menu. Only one dropdown open at a time - opening the
+    // bell closes the account menu and vice versa.
+    var bellMenu = document.querySelector('[data-sf-bell-menu]');
+    if (bellMenu) {
+        var bellToggle = bellMenu.querySelector('[data-sf-bell-toggle]');
+        var bellPanel  = bellMenu.querySelector('.sf-bell-menu-panel');
+
+        function bellOpen() {
+            if (!bellPanel || !bellToggle) return;
+
+            // Close the account menu if it is open.
+            if (accountMenu && accountMenu.classList.contains('is-open')) {
+                var accPanel  = accountMenu.querySelector('.sf-account-menu-panel');
+                var accToggle = accountMenu.querySelector('[data-sf-account-toggle]');
+                accountMenu.classList.remove('is-open');
+                if (accToggle) accToggle.setAttribute('aria-expanded', 'false');
+                if (accPanel) setTimeout(function () { accPanel.hidden = true; }, 120);
+            }
+
+            bellPanel.hidden = false;
+            bellToggle.setAttribute('aria-expanded', 'true');
+            requestAnimationFrame(function () {
+                bellMenu.classList.add('is-open');
+            });
+        }
+
+        function bellClose() {
+            if (!bellPanel || !bellToggle) return;
+            bellMenu.classList.remove('is-open');
+            bellToggle.setAttribute('aria-expanded', 'false');
+            setTimeout(function () {
+                bellPanel.hidden = true;
+            }, 120);
+        }
+
+        if (bellToggle) {
+            bellToggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (bellMenu.classList.contains('is-open')) {
+                    bellClose();
+                } else {
+                    bellOpen();
+                }
+            });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!bellMenu.classList.contains('is-open')) return;
+            if (e.target.closest('[data-sf-bell-menu]')) return;
+            bellClose();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            if (!bellMenu.classList.contains('is-open')) return;
+            bellClose();
+        });
     }
 })();
 </script>
