@@ -97,3 +97,14 @@ an admin in the customer approvals queue.
 - docs/RESPONSIVENESS.md - mandatory responsive directive
 - docs/git-workflow.md - branching model + commit environment
 - docs/STATUS.md - current state at a glance
+
+---
+
+## See Also
+
+- `docs/sessions/` - per-session log. Every session writes one
+  file. The stage log here answers "what shipped." The session
+  log answers "what happened, why, and what next."
+- `docs/ROADMAP.md` - canonical build sequence
+- `docs/REMEMBER.md` - patterns and current state
+- `docs/STATUS.md` - one-page snapshot

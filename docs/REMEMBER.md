@@ -4,7 +4,33 @@
 **Path (Windows):** C:\projects\commerceaid
 **Path (WSL):** /mnt/c/projects/commerceaid
 **Document date:** 2026-09-28
-**Current status:** Stage 008D.2 (Per-Product Inventory Page) complete; ready to open Stage 008E (Checkout).
+**Current status:** Stage 008G complete. Next: 008G.1 (wishlist).
+
+---
+
+## Session Close Protocol
+
+Every session ends the same way. No exceptions. Short session,
+short entry.
+
+Five steps:
+
+1. Write `docs/sessions/YYYY-MM-DD.md`. Copy the template in
+   `docs/sessions/README.md`.
+2. Update the distilled docs: patterns in this file, stage in
+   `docs/STATUS.md`, sequence in `docs/ROADMAP.md`, stage
+   plan in `docs/stages/`.
+3. Commit the session file. Its own docs commit.
+4. `git push backup main`. Then `git push backup --tags` if
+   any tags were created.
+5. Leave the working tree clean.
+
+The session file answers three questions that git cannot:
+what was tried and rejected, what decisions were made and
+why, and what the next session should open with. Keep it
+short - it links to sources, it does not duplicate them.
+
+Full protocol: `docs/sessions/README.md`.
 
 ---
 
@@ -1385,7 +1411,8 @@ quickly, read in this order:
 4. `docs/RESPONSIVENESS.md` - mandatory responsive directive
 5. This document (REMEMBER.md) - current state and patterns
 6. `docs/stages/*.md` - what shipped and why
-7. `docs/STATUS.md` - current state at a glance
+7. `docs/sessions/*.md` - what happened each session, in order
+8. `docs/STATUS.md` - current state at a glance
 
 Then to run locally:
 
