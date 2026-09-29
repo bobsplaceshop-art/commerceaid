@@ -10,6 +10,7 @@ use CorporateAid\Commerce\Repositories\CategoryRepository;
 use CorporateAid\Commerce\Repositories\InventoryRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
 use CorporateAid\Commerce\Repositories\ProductVariantRepository;
+use CorporateAid\Commerce\Services\RecentViewService;
 use CorporateAid\Commerce\Support\StorefrontController;
 
 /**
@@ -143,6 +144,12 @@ final class ProductController extends StorefrontController
                 }
             }
         }
+
+        // ----- Record the view (best-effort, never throws) -----
+        // Side effect of viewing. The service swallows all
+        // failures so a broken recorder cannot break the page.
+        // See docs/stages/008g.2_recently-viewed-plan.md.
+        $this->container->get(RecentViewService::class)->record($product->id);
 
         // ----- SEO title fallback -----
         $title = $product->seoTitle ?: $product->name;

@@ -107,6 +107,43 @@ if (!function_exists('method_field')) {
     }
 }
 
+if (!function_exists('recently_viewed_product_ids')) {
+    /**
+     * The current viewer's recently-viewed product IDs.
+     *
+     * Resolved once per request and cached in a static,
+     * mirroring wishlist_product_ids(). Used by views that
+     * want to render a "recently viewed" strip or highlight
+     * already-viewed products.
+     *
+     * Guests read from their customer session history.
+     * Logged-in customers read from commerce_recently_viewed.
+     *
+     * Returns an empty array on any failure.
+     *
+     * @return array<int, int>
+     */
+    function recently_viewed_product_ids(): array
+    {
+        /** @var array<int, int>|null $cache */
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        try {
+            $svc = \CorporateAid\Core\App::instance()
+                ->container()
+                ->get(\CorporateAid\Commerce\Services\RecentViewService::class);
+            $cache = $svc->productIds();
+        } catch (\Throwable) {
+            $cache = [];
+        }
+
+        return $cache;
+    }
+}
+
 if (!function_exists('wishlist_product_ids')) {
     /**
      * The current viewer's wishlist product IDs.

@@ -9,6 +9,7 @@ use CorporateAid\Commerce\Repositories\CustomerRepository;
 use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\CartService;
 use CorporateAid\Commerce\Services\WishlistService;
+use CorporateAid\Commerce\Services\RecentViewService;
 use CorporateAid\Commerce\Support\StorefrontController;
 use CorporateAid\Commerce\Support\Validator;
 use CorporateAid\Core\Request;
@@ -144,6 +145,8 @@ final class AuthController extends StorefrontController
         // Same merge for the wishlist. A guest who hearts products
         // and then logs in or registers keeps their wishlist.
         $this->container->get(WishlistService::class)->mergeGuestWishlistOnLogin();
+        // Same merge for recently-viewed history.
+        $this->container->get(RecentViewService::class)->mergeGuestHistoryOnLogin();
 
         $session->clearOldInput();
 
@@ -279,6 +282,8 @@ final class AuthController extends StorefrontController
         // Same merge for the wishlist. A guest who hearts products
         // and then logs in or registers keeps their wishlist.
         $this->container->get(WishlistService::class)->mergeGuestWishlistOnLogin();
+        // Same merge for recently-viewed history.
+        $this->container->get(RecentViewService::class)->mergeGuestHistoryOnLogin();
 
         $session->clearOldInput();
 

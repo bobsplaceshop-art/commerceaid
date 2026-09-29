@@ -38,6 +38,8 @@ use CorporateAid\Commerce\Repositories\CartRepository;
 use CorporateAid\Commerce\Services\CartService;
 use CorporateAid\Commerce\Repositories\WishlistRepository;
 use CorporateAid\Commerce\Services\WishlistService;
+use CorporateAid\Commerce\Repositories\RecentViewRepository;
+use CorporateAid\Commerce\Services\RecentViewService;
 use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\StoreService;
 
@@ -146,6 +148,17 @@ final class CommerceServiceProvider
                 $c->get(CustomerAuthService::class)
             ));
 
+        // Recently-viewed uses the customer session for guest
+        // state, mirroring the cart and wishlist. Called on
+        // every product detail page load.
+        // See docs/stages/008g.2_recently-viewed-plan.md.
+        $c->singleton(RecentViewService::class,
+            fn() => new RecentViewService(
+                $c->get('customer_session'),
+                $c->get(RecentViewRepository::class),
+                $c->get(CustomerAuthService::class)
+            ));
+
         // ---------- Services: catalog ----------
         $c->singleton(CatalogService::class,
             fn() => new CatalogService(
@@ -251,6 +264,12 @@ final class CommerceServiceProvider
 
         $c->singleton(WishlistRepository::class,
             fn() => new WishlistRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(RecentViewRepository::class,
+            fn() => new RecentViewRepository(
                 $c->get(Database::class),
                 $c->get(StoreContext::class)
             ));

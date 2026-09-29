@@ -86,7 +86,7 @@ $groups = [
         'id'    => 'recent',
         'label' => 'Recently Viewed',
         'items' => [
-            ['label' => 'Recently Viewed', 'href' => '#', 'icon' => 'bi-clock-history', 'soon' => true],
+            ['label' => 'Recently Viewed', 'href' => '/account/recent', 'icon' => 'bi-clock-history'],
         ],
     ],
     [

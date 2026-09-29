@@ -14,6 +14,7 @@ use CorporateAid\Commerce\Controllers\Storefront\AccountController;
 use CorporateAid\Commerce\Controllers\Storefront\CustomerClaimController;
 use CorporateAid\Commerce\Controllers\Storefront\CartController;
 use CorporateAid\Commerce\Controllers\Storefront\WishlistController;
+use CorporateAid\Commerce\Controllers\Storefront\RecentViewController;
 use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
 
 /** @var Router $router */
@@ -168,6 +169,14 @@ $router->post('/account/wishlist/add',    [WishlistController::class, 'add'],   
 $router->post('/account/wishlist/remove', [WishlistController::class, 'remove'], ['store', 'csrf']);
 $router->post('/account/wishlist/toggle', [WishlistController::class, 'toggle'], ['store', 'csrf']);
 $router->get('/account/wishlist/ids',     [WishlistController::class, 'ids'],    ['store']);
+
+// Recently viewed (Stage 008G.2)
+//
+// Recording happens inside ProductController::show(), not via
+// a route. These two routes serve the account page and the
+// clear button.
+$router->get('/account/recent',        [RecentViewController::class, 'index'], ['store']);
+$router->post('/account/recent/clear', [RecentViewController::class, 'clear'], ['store', 'csrf']);
 
 // Search (Stage 008G)
 $router->get('/search', [SearchController::class, 'index'], ['store']);
