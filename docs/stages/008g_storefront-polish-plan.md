@@ -330,17 +330,137 @@ if it does not fit. Item 6 is the closing audit.
 | # | Item | Status |
 |---|---|---|
 | 1 | Plan document | This file |
-| 2 | Search: route + controller + view | Pending |
-| 3 | Header search form | Pending |
-| 4 | Search CSS | Pending |
-| 5 | Out-of-stock toggle | Pending |
-| 6 | Out-of-stock filter in ProductRepository | Pending |
-| 7 | Product detail "Sold out" state | Pending |
-| 8 | Empty-category hiding | Pending |
-| 9 | Header nav filtered by category visibility | Pending |
-| 10 | Product image gallery | Pending |
-| 11 | Responsive audit | Pending |
-| 12 | Commit + close sub-stage | Pending |
+| 2 | Search: route + controller + view | Done |
+| 3 | Header search form | Done |
+| 4 | Search CSS | Done |
+| 5 | Out-of-stock toggle | Done |
+| 6 | Out-of-stock filter in ProductRepository | Done |
+| 7 | Product detail "Sold out" state | Done |
+| 8 | Empty-category hiding | Done |
+| 9 | Header nav filtered by category visibility | Done |
+| 10 | Product image gallery | Done |
+| 11 | Responsive audit | Done |
+| 12 | Commit + close sub-stage | Done |
+
+### Deferred to 008G.4 (future sub-stage)
+
+- PWA manifest and service worker
+- Offline shell
+- Install prompt
+- Push notifications
+
+These items were in the original 008G scope but are large
+enough to warrant their own sub-stage. Logged in ROADMAP
+under Planned Stages as 008G.4.
+
+## Bugs Caught During Audit
+
+Four bugs, one session, all surfaced by walking the product
+editor at 375px in Chrome DevTools. None was caught by lint,
+PHPStan, or the earlier smoke pass. Each traced back to the
+same family of failure: shared markup whose behaviour
+depended on one caller's context and broke when a second
+caller differed.
+
+### Bug 1 - Publish button threw null-submit on variants page
+
+**Symptom:** Clicking Publish threw
+`Cannot read properties of null (reading 'submit')`. The
+button appeared but did nothing.
+
+**Root cause:** `_action-forms.php` guarded on
+`$mode !== 'edit'`. Its two callers were `_sidebar.php`
+(via `edit.php`, where `$mode === 'edit'`) and
+`variants.php` (which has no `$mode`). The guard fired on
+`variants.php` and the four hidden action forms never
+rendered. The Publish button called `.submit()` on a form
+that was not in the DOM.
+
+**Fix:** guard loosened to `$product === null` only. The
+partial's real requirement is a product to act on. `$mode`
+was a proxy for "is this an edit page?".
+
+**Documented as:** Pattern 26 in docs/REMEMBER.md.
+
+### Bug 2 - Delete button threw "RA_DeleteProduct is not defined" on variants page
+
+**Symptom:** Clicking Delete threw a JS reference error.
+
+**Root cause:** `_delete-modal.php` was included in
+`edit.php` but not in `variants.php`. The delete button's
+onclick called a JS function that was never loaded on that
+page.
+
+**Fix:** modal include added to `variants.php`, alongside
+the action-forms include.
+
+**Documented as:** a specific case of Pattern 26.
+
+### Bug 3 - Delete button threw "Invalid or unexpected token" with apostrophe in product name
+
+**Symptom:** Product id=4 had a name containing two
+apostrophes (`Men's Clothing ... Men's Fashion ...`). Clicking
+Delete threw a JS parse error. The HTML parser's recovery
+from the broken attribute swallowed the next `<form>` tag,
+which is what caused Bug 4's null-submit symptom on the
+main edit page.
+
+**Root cause:** the button used inline onclick with
+`json_encode($product->name)` inside a single-quoted HTML
+attribute. `json_encode` does not escape apostrophes. The
+`'` in `Men's` closed the HTML attribute early.
+
+**Fix:** replaced inline onclick with `data-*` attributes
+plus a delegated click listener in `_delete-modal.php`. The
+name is HTML-escaped by `e()` and read back via
+`getAttribute()`.
+
+**Documented as:** Pattern 13 in docs/REMEMBER.md.
+
+### Bug 4 - Publish button threw null-submit on the main edit page
+
+**Symptom:** After Bug 3's fix, Publish still threw
+null-submit on `/products/{id}/edit` (no tab query).
+
+**Root cause:** the four action forms were rendered inside
+`_sidebar.php`, which is included inside `edit.php`'s
+`<form id="ra-product-form">`. Nested forms are invalid HTML.
+The browser silently discards the first inner `<form>` tag
+and closes the outer form on the inner `</form>`. The first
+nested form (`ra-action-publish`) was consumed; the three
+after it survived because the outer form was already closed
+by the time they rendered.
+
+**Fix:** removed the action-forms include from
+`_sidebar.php`. Added it to `edit.php` after `</form>`, as
+a sibling of the outer form. All four forms now render as
+top-level elements.
+
+**Documented as:** Pattern 27 in docs/REMEMBER.md. Related
+to existing Pattern 3.
+
+### Root cause summary
+
+| # | Shared thing | Broke on | Why |
+|---|---|---|---|
+| 1 | `_action-forms.php` guard | variants.php | Guard written for one caller's shape |
+| 2 | `_delete-modal.php` include | variants.php | Include forgotten on second caller |
+| 3 | Inline onclick + json_encode | Product name with `'` | json_encode does not escape apostrophes |
+| 4 | Action forms + nested form | edit.php | HTML disallows form-in-form |
+
+Every audit finding was a real, reproducible bug at 375px.
+None would have surfaced without walking the product editor
+at actual phone width and clicking every button.
+
+### Commits
+
+    20827bf  fix(storefront): 008G audit fixes - product
+             pages + admin actions
+    4ce7699  fix(admin): unblock product action buttons on
+             edit page
+    6c67ffc  docs(patterns): add 13, 24, 26, 27 to
+             REMEMBER.md
+
 
 ---
 

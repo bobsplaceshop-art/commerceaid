@@ -45,6 +45,8 @@ Adding a stage or reordering requires updating this document first.
 | 008E.2| Guest order claim                     | 2026-09-28 |
 | 008F  | Order lifecycle (customer-facing)      | 2026-09-28 |
 | 008F.1| Account shell & navigation             | 2026-09-28 |
+| 008G  | Search, out-of-stock hiding, gallery,  | 2026-09-28 |
+|       | responsive audit                       |            |
 
 Also completed outside the staged sequence:
 
@@ -62,16 +64,14 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G - PWA, Search, Storefront Polish
+### Stage 008G.1 - Wishlist
 
-**Goal:** Close the storefront loop with PWA, search, and the
-deferred polish items.
+**Goal:** Customers save products for later. Per-customer for
+logged-in, per-session for guests. Merge on login.
 
-See the full scope in the Planned Stages section below.
+See Planned Stages below for the full scope.
 
-**Depends on:** Stages 008A-008H. Runs after the customer
-account work (F, F.1, G.1, G.2, G.3, H) so the storefront
-polish lands on a stable foundation.
+**Depends on:** Stage 008F.1 (account shell).
 
 ## Planned Stages
 

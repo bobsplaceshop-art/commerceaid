@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-09-28
-**Version:** 0.11.0-alpha
-**Stage:** 008F.1 complete. Next: 008G (storefront polish)
+**Version:** 0.12.0-alpha
+**Stage:** 008G complete. Next: 008G.1 (wishlist)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -125,17 +125,15 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008D
+## Current Focus — Stage 008G.1
 
-**Deliverable:** Shopping cart.
+**Deliverable:** Wishlist.
 
-Session-based cart for guests, database-persisted cart for
-logged-in customers. Cart merge on login. Mini-cart in the
-header. AJAX add-to-cart endpoint.
+Customers can save products for later. Per-customer for
+logged-in customers, per-session for guests. Merge on login,
+same pattern as the cart.
 
-~10 new files: two migrations (commerce_carts,
-commerce_cart_items), a CartService, a CartController, and
-the cart views.
+Scope in docs/ROADMAP.md under Planned Stages -> 008G.1.
 
 ---
 
@@ -233,9 +231,9 @@ new code.
 
 ## Next 3 Stages
 
-- **008C** (now): Customer auth + account
-- **008D**: Cart
-- **008E**: Checkout + order creation
+- **008G.1** (now): Wishlist
+- **008G.2**: Recently Viewed
+- **008G.3**: Message Center
 
 ---
 
