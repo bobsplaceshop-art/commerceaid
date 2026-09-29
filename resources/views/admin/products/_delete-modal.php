@@ -86,4 +86,24 @@ window.RA_DeleteProduct = (function () {
 
     return { open: open, close: close };
 })();
+
+// =====================================================================
+// Delegated click handler for any element with [data-ra-delete-product].
+// Replaces the previous inline onclick='RA_DeleteProduct.open(id, name)'
+// pattern, which broke whenever the product name contained an apostrophe.
+// json_encode() does not escape single quotes, so a name like
+// "Men's Shorts" closed the single-quoted HTML attribute early and
+// corrupted the rest of the page's HTML parse.
+//
+// With data attributes, the name is HTML-escaped by e() and read back
+// out via getAttribute() - no quoting rules to violate.
+// =====================================================================
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-ra-delete-product]');
+    if (!btn) return;
+    e.preventDefault();
+    var id   = btn.getAttribute('data-product-id');
+    var name = btn.getAttribute('data-product-name') || 'this product';
+    RA_DeleteProduct.open(id, name);
+});
 </script>

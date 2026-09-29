@@ -123,6 +123,15 @@ $status = (string) $val('status', 'draft');
 </form>
 
 <?php if ($product !== null): ?>
+    <?php /* Action forms live OUTSIDE ra-product-form. Nested forms
+             are invalid HTML - the browser discards the inner <form>
+             tag and closes the outer form on the inner </form>. The
+             first nested form (ra-action-publish) was getting eaten,
+             breaking the Publish button. See _action-forms.php. */ ?>
+    <?= view_partial('admin.products._action-forms', [
+        'product' => $product,
+    ]) ?>
+
     <?= view_partial('admin/products/_delete-modal') ?>
 <?php endif; ?>
 

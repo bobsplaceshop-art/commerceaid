@@ -257,7 +257,9 @@ $statusBadge = function (string $status): string {
                                 </form>
                             <?php endif; ?>
                             <button type="button" class="ra-icon-btn"
-                                    onclick='RA_DeleteProduct.open(<?= (int) $product->id ?>, <?= json_encode($product->name) ?>)'
+                                    data-ra-delete-product
+                                    data-product-id="<?= (int) $product->id ?>"
+                                    data-product-name="<?= e($product->name) ?>"
                                     title="Delete">
                                 <i class="bi bi-trash"></i>
                             </button>

@@ -110,16 +110,13 @@ $isArchived    = $currentStatus === 'archived';
         <?php endif; ?>
 
         <button type="button" class="ra-btn ra-btn-danger"
-                onclick='RA_DeleteProduct.open(<?= (int) $product->id ?>, <?= json_encode($product->name) ?>)'>
+                data-ra-delete-product
+                data-product-id="<?= (int) $product->id ?>"
+                data-product-name="<?= e($product->name) ?>">
             <i class="bi bi-trash me-1"></i> Delete
         </button>
 
     </div>
 </div>
 
-<!-- Hidden action forms (posted via the buttons above) -->
-        <?= view_partial('admin.products._action-forms', [
-            'product' => $product ?? null,
-            'mode'    => $mode    ?? 'create',
-        ]) ?>
 <?php endif; ?>
