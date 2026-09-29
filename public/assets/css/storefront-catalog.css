@@ -17,7 +17,7 @@
  * ===================================================================== */
 
 .sf-catalog {
-    padding: 0 0 3rem;
+    padding-bottom: 3rem;  /* horizontal comes from .sf-container */
 }
 
 .sf-catalog-header {

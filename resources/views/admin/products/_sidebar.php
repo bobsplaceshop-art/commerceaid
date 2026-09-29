@@ -118,8 +118,8 @@ $isArchived    = $currentStatus === 'archived';
 </div>
 
 <!-- Hidden action forms (posted via the buttons above) -->
-<form id="ra-action-publish" method="POST" action="/commerce/ca-admin/products/<?= (int) $product->id ?>/publish" style="display:none;"><?= csrf_field() ?></form>
-<form id="ra-action-unpublish" method="POST" action="/commerce/ca-admin/products/<?= (int) $product->id ?>/unpublish" style="display:none;"><?= csrf_field() ?></form>
-<form id="ra-action-archive" method="POST" action="/commerce/ca-admin/products/<?= (int) $product->id ?>/archive" style="display:none;"><?= csrf_field() ?></form>
-<form id="ra-action-restore" method="POST" action="/commerce/ca-admin/products/<?= (int) $product->id ?>/restore" style="display:none;"><?= csrf_field() ?></form>
+        <?= view_partial('admin.products._action-forms', [
+            'product' => $product ?? null,
+            'mode'    => $mode    ?? 'create',
+        ]) ?>
 <?php endif; ?>

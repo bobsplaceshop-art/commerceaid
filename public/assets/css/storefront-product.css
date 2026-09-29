@@ -14,7 +14,18 @@
  * ===================================================================== */
 
 .sf-product-detail {
-    padding: 0 0 3rem;
+    /* Padding fix (008G audit): this rule previously set
+       `padding: 0 0 3rem` which zeroed out the horizontal
+       padding from .sf-container. The product pages rendered
+       flush against the viewport edges. Now we keep the
+       container's horizontal padding and only add vertical. */
+    padding: 0 1.25rem 3rem;
+}
+
+@media (min-width: 640px) {
+    .sf-product-detail {
+        padding: 0 2rem 3rem;
+    }
 }
 
 /* =====================================================================
@@ -393,5 +404,30 @@
     }
     .sf-product-detail {
         padding-bottom: 2rem;
+    }
+}
+
+/* =====================================================================
+   Mobile typography scale (008G audit)
+   Product titles, prices, and description render at desktop
+   sizes at phone widths. Scale down at <640px.
+   ===================================================================== */
+
+@media (max-width: 639px) {
+    .sf-product-title {
+        font-size: 1.5rem;
+        line-height: 1.25;
+    }
+    .sf-product-price {
+        font-size: 1.5rem;
+    }
+    .sf-product-short {
+        font-size: .9rem;
+    }
+    .sf-product-description {
+        font-size: .95rem;
+    }
+    .sf-product-section-title {
+        font-size: 1.1rem;
     }
 }

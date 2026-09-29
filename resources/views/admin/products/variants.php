@@ -485,6 +485,15 @@ $clearUrl = function (string $key) use ($filters, $baseUrl): string {
     </div>
 </div>
 
+<?= view_partial('admin.products._action-forms', [
+    'product' => $product ?? null,
+    'mode'    => $mode    ?? 'create',
+]) ?>
+
+<?php if ($product !== null): ?>
+    <?= view_partial('admin.products._delete-modal') ?>
+<?php endif; ?>
+
 <script>
 // ============ Regenerate modal ============
 window.RA_RegenerateVariants = (function () {

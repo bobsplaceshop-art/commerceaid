@@ -122,7 +122,7 @@ $status = (string) $val('status', 'draft');
     </div>
 </form>
 
-<?php if ($mode === 'edit' && $product !== null): ?>
+<?php if ($product !== null): ?>
     <?= view_partial('admin/products/_delete-modal') ?>
 <?php endif; ?>
 
