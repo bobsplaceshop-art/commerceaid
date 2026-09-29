@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-09-28
-**Version:** 0.12.2-alpha
-**Stage:** 008G.2 complete. Next: 008G.3 (message center)
+**Version:** 0.12.3-alpha
+**Stage:** 008G.3 complete. Next: 008G.4 (PWA)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.

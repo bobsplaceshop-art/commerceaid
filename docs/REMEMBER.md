@@ -1530,6 +1530,87 @@ wishlist.js's csrfToken() to read the meta tag first.
 
 ---
 
+### Pattern 30 - view_partial() swallows PHP fatals and returns an empty string
+
+**Problem:** a PHP fatal or undefined-variable error inside a
+partial rendered via view_partial() does not crash the page.
+It is caught by the wrapper, logged, and the wrapper returns
+an empty string in place of the partial. The page renders
+with a gap where the partial should be.
+
+This is dangerous because the failure is silent to the user
+and only surfaces if you are watching the log or notice a
+missing UI element.
+
+**The tell:** an entire block of a page is missing. Not one
+element gone, not a style broken - a whole section, header,
+or panel absent. The rest of the page renders correctly.
+
+**Detection:**
+
+    # The log watcher shows it directly:
+    tail -f storage/logs/app.log | grep view_partial
+
+    # Or if you are not watching:
+    grep 'view_partial' storage/logs/app.log | tail -20
+
+If nothing is in the log but a partial is missing, the
+partial itself did not throw - something upstream (a
+controller) returned early or the view call was not reached.
+
+**The trigger case:** a patch removes the block at the top of
+a partial that resolves variables. The rest of the partial
+still references those variables. Every render throws
+"Undefined variable X" on the first reference, is caught
+by the wrapper, and returns "".
+
+**Rule:** when patching a partial, always verify the
+top-of-file variable resolution block is intact after the
+patch. If a patch removes code from a partial, immediately
+check that the partial still references only variables that
+are defined somewhere.
+
+Concrete check after any patch to a partial:
+
+    # What variables does the partial reference?
+    grep -o '\$[a-zA-Z_][a-zA-Z0-9_]*' <partial.php> | sort -u
+
+    # Which are defined at the top of the partial?
+    head -50 <partial.php> | grep -o '\$[a-zA-Z_][a-zA-Z0-9_]*' | sort -u
+
+    # Any variable referenced but not defined at the top is
+    # either a caller-provided variable (check callers) or a
+    # bug.
+
+**Why we hit it:** Stage 008G.3, header partial. An earlier
+patch that restructured the header action cluster removed
+the block that resolved `$__customer` and `$__unread`. The
+bell conditional still referenced `$__unread`. Every
+storefront page rendered without a header - the logo, the
+search, the nav, the action cluster, all gone.
+
+The log line:
+
+    ERROR: view_partial(storefront/partials/header) failed:
+    Undefined variable $__unread
+
+The fix was to restore the resolution block at the top of the
+partial.
+
+**See also:**
+
+  - Pattern 26 (shared partial guards reflect the partial\'s
+    own requirement) - a related failure mode where a guard
+    silently no-ops on a partial.
+  - Pattern 28 (view_partial does not inherit outer scope) -
+    the other direction: variables that should exist in the
+    partial but do not because they were never passed.
+  - Pattern 30 is the third leg of the same stool: a partial
+    that assumes a variable exists but the variable was
+    removed by a patch.
+
+---
+
 ## 19. Documents to Read First When Joining
 
 If you are new to this project and need to get up to speed

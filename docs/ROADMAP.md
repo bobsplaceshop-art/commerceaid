@@ -49,6 +49,7 @@ Adding a stage or reordering requires updating this document first.
 |       | responsive audit                       |            |
 | 008G.1| Wishlist                               | 2026-09-29 |
 | 008G.2| Recently Viewed                        | 2026-09-30 |
+| 008G.3| Message Center                         | 2026-10-01 |
 
 Also completed outside the staged sequence:
 
@@ -66,14 +67,12 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G.3 - Message Center
+### Stage 008G.4 - PWA (deferred from 008G)
 
-**Goal:** A unified notification surface for the customer.
-System messages, order updates, promotions. Reads from
-core_notifications (already exists from Platform).
+**Goal:** Progressive Web App support for the storefront.
+Manifest, service worker, offline shell, install prompt.
 
-**Depends on:** Stage 008F (order status events feed the Order
-Updates tab), Stage 008F.1 (account shell).
+**Depends on:** Stage 008G (storefront polish complete).
 
 ## Planned Stages
 
