@@ -48,6 +48,7 @@ Adding a stage or reordering requires updating this document first.
 | 008G  | Search, out-of-stock hiding, gallery,  | 2026-09-28 |
 |       | responsive audit                       |            |
 | 008G.1| Wishlist                               | 2026-09-29 |
+| 008G.2| Recently Viewed                        | 2026-09-30 |
 
 Also completed outside the staged sequence:
 
@@ -65,14 +66,14 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G.2 - Recently Viewed
+### Stage 008G.3 - Message Center
 
-**Goal:** Track products the customer viewed. Show them on
-/account/recent. A returning customer can pick up where they
-left off.
+**Goal:** A unified notification surface for the customer.
+System messages, order updates, promotions. Reads from
+core_notifications (already exists from Platform).
 
-**Depends on:** Stage 008F.1 (account shell), 008G.1 (wishlist
-patterns).
+**Depends on:** Stage 008F (order status events feed the Order
+Updates tab), Stage 008F.1 (account shell).
 
 ## Planned Stages
 
