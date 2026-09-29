@@ -980,3 +980,73 @@ select.sf-filter-input {
     flex-direction: column;
     gap: .2rem;
 }
+
+/* =====================================================================
+   Recently Viewed page header (/account/recent)
+   =====================================================================
+   The Clear history button is a destructive action. It sits
+   quietly in the top-right of the page header, muted by
+   default, tinted red on hover. On narrow screens the label
+   collapses and only the trash icon remains.
+   ===================================================================== */
+
+.sf-recent-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.sf-recent-header-text {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.sf-recent-clear-form {
+    margin: 0;
+    flex: 0 0 auto;
+}
+
+.sf-recent-clear-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .4rem .75rem;
+    background: transparent;
+    color: var(--sf-muted, #8a7d6b);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: .85rem;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    transition: color .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.sf-recent-clear-btn:hover,
+.sf-recent-clear-btn:focus-visible {
+    color: #b3261e;
+    background: rgba(179, 38, 30, 0.06);
+    border-color: rgba(179, 38, 30, 0.18);
+    outline: none;
+}
+
+.sf-recent-clear-btn:active {
+    background: rgba(179, 38, 30, 0.12);
+}
+
+.sf-recent-clear-btn i {
+    font-size: 1rem;
+}
+
+/* On narrow screens the button collapses to icon-only so it
+   does not fight the page title for horizontal space. */
+@media (max-width: 480px) {
+    .sf-recent-clear-btn span {
+        display: none;
+    }
+    .sf-recent-clear-btn {
+        padding: .4rem .55rem;
+    }
+}

@@ -28,8 +28,8 @@ $flashOk = $flashOk ?? null;
 ?>
 
 <div class="sf-account-page-header">
-    <div class="sf-account-page-header-row">
-        <div>
+    <div class="sf-recent-header-row">
+        <div class="sf-recent-header-text">
             <h1 class="sf-account-page-title">Recently Viewed</h1>
             <p class="sf-account-page-subtitle">
                 <?php if ($count > 0): ?>
@@ -45,12 +45,14 @@ $flashOk = $flashOk ?? null;
         <?php if ($count > 0): ?>
             <form method="POST"
                   action="/account/recent/clear"
-                  class="sf-account-page-header-action"
+                  class="sf-recent-clear-form"
                   onsubmit="return confirm('Clear your entire recently-viewed history? This cannot be undone.');">
                 <?= csrf_field() ?>
-                <button type="submit" class="sf-btn sf-btn-outline sf-btn-sm">
-                    <i class="bi bi-trash me-1" aria-hidden="true"></i>
-                    Clear history
+                <button type="submit"
+                        class="sf-recent-clear-btn"
+                        aria-label="Clear recently-viewed history">
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                    <span>Clear history</span>
                 </button>
             </form>
         <?php endif; ?>
