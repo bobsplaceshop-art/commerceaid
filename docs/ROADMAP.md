@@ -563,6 +563,140 @@ Where: `public/assets/css/storefront-catalog.css`, one rule.
 
 Likely stage: 008G (storefront polish). Small.
 
+### Responsive Image Templates (008G.4a.3)
+
+The variant pipeline (008G.4a) generates WebP and JPEG
+variants at multiple sizes per media context. The
+storefront templates do not yet request them. They still
+render the source image path directly.
+
+This sub-stage wires the templates to the variants:
+
+  - Product cards request /media/{uuid}/card.webp and
+    /media/{uuid}/card.jpg with <picture> fallback.
+  - Product detail requests /media/{uuid}/lg.webp with
+    <picture> fallback and a srcset for 1200w / 800w /
+    400w.
+  - Category banners request /media/{uuid}/md.webp and
+    /media/{uuid}/lg.webp with srcset.
+  - Store logos request /media/{uuid}/md.webp with the
+    PNG fallback already served by the variant pipeline.
+  - Lazy loading on all product and category images
+    (loading="lazy" attribute plus a native fallback for
+    browsers without it).
+
+Deliberately deferred from 008G.4a so the upload pipeline
+ships first and the template rewrite is its own reviewable
+change.
+
+**Why:** a 400x500 WebP card variant is 20-40 KB. Twelve
+cards is ~360 KB. The same grid from 5 MB source images
+is 60 MB and unshippable on mobile.
+
+**Likely stage:** 008G.4a.3, after the upload pipeline and
+store settings integration are complete.
+
+### Self-Hosted Font Manager (008G.4c)
+
+Google Fonts and other external font services transmit
+the visitor's IP address to a third-party server. Under
+DSGVO, this requires explicit consent. The Bavarian data
+protection authority has stated this position, and German
+courts have issued rulings ordering damages for embedding
+Google Fonts without consent (LG München, ~€100 per case).
+The IHK warns of Abmahnungen (cease-and-desist letters).
+
+The fix is self-hosting: download the font files, serve
+them from the store's own domain, no external request.
+
+Scope:
+
+  - A Font Manager page in the admin under Settings.
+  - A curated catalog of open-source fonts, all OFL or
+    Apache 2.0 licensed. Full Google Fonts catalog is
+    available; Fontsource publishes the same fonts
+    specifically for self-hosting; Bunny Fonts and
+    Fontshare provide alternatives without tracking.
+  - The merchant picks display and body fonts.
+  - On save, the platform downloads the WOFF2 files
+    locally to storage/uploads/fonts/.
+  - The storefront serves them via /assets/fonts/ with
+    font-display: swap.
+  - No external font requests anywhere in the rendered
+    page. CSP style-src and font-src drop the Google
+    Fonts origins.
+  - A font stack fallback in case the WOFF2 fails to
+    load.
+
+Font Awesome Free is bundled alongside this stage. MIT
+for non-font files, SIL OFL 1.1 for the icon fonts,
+CC BY 3.0 for documentation. Commercially usable with
+attribution already embedded in the files. Self-hosted,
+no external CDN.
+
+**Why:** the current storefront loads Google Fonts from
+fonts.googleapis.com. That is a DSGVO liability for any
+German customer. The fix is not optional for a German
+deployment.
+
+**Likely stage:** 008G.4c, after the upload pipeline and
+PWA are done.
+
+### Page Builder: Animations, Mosaic, Carousel (Stage 012)
+
+The eventual Store Builder (Stage 012) grows a block
+registry with these block types:
+
+  Existing plan (from Stage 012):
+    hero, product grid, category grid, testimonials,
+    rich text, video, banner, newsletter, FAQ, form,
+    spacer
+
+  Additions requested 2026-10-02:
+    - Mosaic grid: a grid block with configurable column
+      spans. A 3-column layout can render one tall image
+      next to two stacked short ones. Config per block:
+      column count, image aspect per cell.
+    - Carousel: a product-grid block with
+      mode: carousel. Config: items per slide, autoplay
+      interval, dots/arrows, loop. Built as a native
+      scroll-snap carousel, no JS library.
+    - Animated text: a rich-text block with per-element
+      animation. Headline fades in on scroll, subtitle
+      slides up, accent script enters from the side.
+      CSS-only via scroll-driven animations or
+      IntersectionObserver. Config: animation type per
+      element, delay, duration.
+    - Fancy typography: the block registry exposes the
+      font pairing (display + body from 008G.4c) plus
+      per-block overrides. A hero block can use Playfair
+      Display for its headline while the rest of the
+      page uses Inter. The merchant picks from a curated
+      list, not a free-form font input.
+    - Fancy headers: preset header layouts (centered,
+      left-aligned with a rule, script above serif,
+      underline accent) that a merchant picks per block.
+      Each preset is a CSS class, not a template.
+
+Foundation already in place:
+
+  - Every storefront element carries data-sf-* attributes
+    (the store builder contract from 008A).
+  - Homepage sections are block-structured with
+    data-sf-section attributes.
+  - Block-based templates avoid per-page PHP edits.
+
+The editor UI (drag-and-drop, live preview) is the big
+piece. The blocks themselves are incremental.
+
+**Why it belongs here:** every one of these features
+depends on the block registry, the font manager, and the
+image variant pipeline. None of them is standalone.
+
+**Likely stage:** Stage 012, extending the existing
+"Page builder: section registry, drag-drop ordering"
+scope.
+
 ### Variant Image Preview
 
 Colour swatches on the product page show a small preview
