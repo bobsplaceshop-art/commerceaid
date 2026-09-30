@@ -61,6 +61,7 @@ Status values:
 | 17 | Copyright attribution (UrhG § 13) | Partial | 008G.4a |
 | 18 | Font Awesome attribution (OFL, MIT, CC BY) | Deferred | 008G.4c |
 | 19 | Sub-processor disclosure for external services | Ongoing | - |
+| 20 | Hosting provider processor agreement (Art. 28) | Not started | - |
 
 ---
 
@@ -700,6 +701,138 @@ for disclosing what remains.
 
 **Status:** Ongoing. Every new integration must audit
 this entry and update the CSP if needed.
+
+---
+
+## 20. Hosting Provider Processor Agreement (Art. 28)
+
+**Requirement:** Under DSGVO Art. 28, a hosting provider
+that processes personal data on behalf of the controller
+is a processor. The controller must have a written
+Data Processing Agreement (DPA / Auftragsverarbeitungs-
+vertrag) with the processor before any personal data is
+stored on the processor's systems.
+
+The DPA must specify:
+  - The subject matter and duration of the processing
+  - The nature and purpose of the processing
+  - The type of personal data and categories of data
+    subjects
+  - The obligations and rights of the controller
+  - Technical and organisational security measures
+  - Sub-processor authorisation and the current list
+  - Audit rights
+  - Deletion or return of data on termination
+
+**What server location does and does not determine:**
+
+  Server location is not the compliance determinant. A
+  German-facing store can be hosted anywhere. What
+  matters is:
+
+    1. Where the personal data is stored.
+    2. Who can access it (support staff, sub-processors,
+       third-party services).
+    3. What contractual relationship binds the parties.
+    4. What transfer mechanisms apply if data crosses
+       the EEA border.
+
+  Hosting inside the EU/EEA removes the international-
+  transfer question entirely. The usual requirements
+  still apply: processor agreement, security measures,
+  privacy notice.
+
+  Hosting outside the EU/EEA requires an approved
+  transfer mechanism: an adequacy decision, Standard
+  Contractual Clauses, or one of the Article 49
+  derogations, plus a Transfer Impact Assessment.
+
+  German consumer-protection and e-commerce requirements
+  (Impressum, AGB, Widerrufsrecht, TTDSG, UWG) attach
+  based on how the store operates and whom it serves,
+  not on where it is hosted. A store selling to German
+  consumers must comply whether hosted in Frankfurt or
+  Nairobi.
+
+**Exposure:** Without a DPA, the controller has no legal
+basis for the processing relationship and no contractual
+recourse if the processor suffers a breach or acts on
+their own instructions. Fines up to €10 million or 2% of
+global annual turnover (DSGVO Art. 83(4)(a)).
+
+**How we address it:** Not a code change. The operator
+signs the DPA with their chosen hosting provider before
+publishing the store to real customers. The platform's
+responsibility is:
+
+  1. Document the requirement so the operator knows to
+     ask for it.
+  2. Provide a template DPA in this document's appendix
+     that the operator can send to their host.
+  3. Provide a summary of what the platform itself does
+     with personal data, so the operator can accurately
+     describe the processing in their privacy notice
+     and in the DPA.
+
+**Checklist for the operator:**
+
+  [ ] Ask the hosting provider for a signed DPA under
+      Article 28 DSGVO.
+  [ ] Confirm the DPA lists all sub-processors.
+  [ ] Confirm where the physical servers are, and where
+      backup and disaster-recovery data lives.
+  [ ] If any processing happens outside the EEA,
+      confirm the transfer mechanism (adequacy decision
+      or SCCs plus a Transfer Impact Assessment).
+  [ ] Confirm which legal entity signs the contract
+      (this determines which jurisdiction governs).
+  [ ] Confirm the provider's support access: do their
+      staff view customer data? Are they subject to
+      confidentiality obligations?
+  [ ] Confirm deletion and return of data on
+      termination.
+  [ ] Record all of the above in the operator's own
+      processing register (Verzeichnis von
+      Verarbeitungstätigkeiten, DSGVO Art. 30).
+
+**What the platform does with personal data (for the
+operator's processing register):**
+
+  - Stores customer email addresses, names, addresses,
+    phone numbers, hashed passwords, order history,
+    and (for B2B customers) company and tax details,
+    in the store's own MySQL database on the hosting
+    provider's infrastructure.
+  - Does not transmit customer personal data to any
+    external service. No analytics, no marketing
+    processor, no third-party CRM.
+  - Uses the operator's SMTP provider to send
+    transactional emails (order confirmations,
+    password resets). That SMTP provider is a separate
+    processor requiring its own DPA.
+  - Uses Google Fonts (fonts.googleapis.com) in the
+    current storefront, which transmits the visitor's
+    IP address to Google. This is a known DSGVO
+    exposure. Fix scheduled for 008G.4c.
+  - Uses Bootstrap CDN (cdn.jsdelivr.net) to load CSS
+    and JS. This transmits the visitor's IP address to
+    the CDN operator.
+  - Uses Picsum Photos (picsum.photos) as a development
+    placeholder for product images. To be removed when
+    real product media ships.
+
+**Where the code lives:** Not in code. It is a contract
+between the operator and the host. The platform's
+responsibility is documentation and a template.
+
+**Stage:** Not a platform stage. An operator
+prerequisite before going live.
+
+**Status:** Not started. The operator must complete the
+DPA before publishing to real customers.
+
+**See also:** Entry 14 (no third-party marketing
+processor) for the newsletter equivalent.
 
 ---
 

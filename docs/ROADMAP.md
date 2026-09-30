@@ -305,8 +305,16 @@ infrastructure all live inside the store's own deployment.
     subscriber. Audit trail for DSGVO Art. 7(1).
   - Unsubscribe link mandatory in every email. UWG § 7,
     DSGVO Art. 21.
-  - No external processor. DSGVO Art. 28 does not apply
-    to a service the operator runs on their own hardware.
+  - No external marketing processor. The subscriber list
+    stays inside the store's own infrastructure.
+  - The operator's SMTP provider is a separate processor
+    under DSGVO Art. 28. A Data Processing Agreement is
+    required. The platform does not pick the SMTP
+    provider; the operator does, and the operator signs
+    the DPA.
+  - See docs/COMPLIANCE-DE.md entry 20 (hosting provider
+    processor agreement) for the general framework. The
+    SMTP provider fits the same pattern.
 
 **Depends on:** 008E.1 (German compliance), 008G.3 (account
 preferences page).
