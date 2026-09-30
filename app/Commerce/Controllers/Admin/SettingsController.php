@@ -7,7 +7,11 @@ use CorporateAid\Core\Auth;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\Session;
+use CorporateAid\Commerce\Repositories\StoreRepository;
 use CorporateAid\Commerce\Repositories\StoreSettingsRepository;
+use CorporateAid\Commerce\Context\StoreContext;
+use CorporateAid\Commerce\Repositories\MediaRepository;
+use CorporateAid\Commerce\Support\MediaVariantSet;
 use CorporateAid\Commerce\Support\StoreSettingDefinitions;
 
 /**
@@ -85,10 +89,17 @@ final class SettingsController extends AdminController
         }
 
         foreach ($definitions as $key => $def) {
+            $target = (string) ($def['target'] ?? 'key_value');
+
+            if ($target === 'column') {
+                $this->saveColumnSetting($key, $def, $request);
+                continue;
+            }
+
             $field = $this->fieldName($key);
             $posted = $request->input($field, null);
 
-            if ($def['type'] === 'boolean') {
+            if (($def['type'] ?? 'string') === 'boolean') {
                 // Unchecked checkbox sends nothing. Absence means
                 // false. Presence (any value) means true.
                 $settings->set($key, $posted === null ? '0' : '1', $userId);
@@ -166,5 +177,127 @@ final class SettingsController extends AdminController
     private function fieldName(string $key): string
     {
         return str_replace('.', '__', $key);
+    }
+
+    /**
+     * Save a setting whose target is a column on
+     * commerce_stores rather than the key-value settings
+     * table.
+     *
+     * Handles three field shapes:
+     *   file      - multipart upload via MediaRepository
+     *   boolean   - hidden input + checkbox pattern
+     *   string    - plain text or hex color
+     *
+     * @param array<string,mixed> $def
+     */
+    private function saveColumnSetting(
+        string $key,
+        array $def,
+        Request $request
+    ): void {
+        $column = (string) ($def['column'] ?? '');
+        if ($column === '') {
+            return;
+        }
+
+        $storeContext = $this->container->get(StoreContext::class);
+        if (!$storeContext->has()) {
+            return;
+        }
+        $storeId = $storeContext->id();
+
+        $type = (string) ($def['type'] ?? 'string');
+
+        // ---- File field ----
+        if ($type === 'file') {
+            $this->saveFileColumn($storeId, $column, $def, $key, $request);
+            return;
+        }
+
+        // ---- Scalar (string, boolean) ----
+        $field = $this->fieldName($key);
+        $posted = $request->input($field, null);
+        if ($posted === null) {
+            return;
+        }
+
+        $value = trim((string) $posted);
+        $this->container->get(StoreRepository::class)
+            ->updateColumn($storeId, $column, $value === '' ? null : $value);
+    }
+
+    /**
+     * Handle the upload flow for a file-typed column setting.
+     *
+     * Three possible actions based on the POST:
+     *   - A new file was uploaded: process via MediaRepository,
+     *     set the column to the new file ID.
+     *   - The remove flag was set: clear the column.
+     *   - Neither: leave the column unchanged.
+     *
+     * @param array<string,mixed> $def
+     */
+    private function saveFileColumn(
+        int $storeId,
+        string $column,
+        array $def,
+        string $key,
+        Request $request
+    ): void {
+        $field     = $this->fieldName($key);
+        $removeKey = $field . '__remove';
+        $uploadKey = $field . '__upload';
+
+        // Removal takes priority. If the operator clicks Remove,
+        // they are not uploading a replacement in the same
+        // request.
+        if ($request->input($removeKey, null) !== null) {
+            $this->container->get(StoreRepository::class)
+                ->updateColumn($storeId, $column, null);
+            return;
+        }
+
+        $file = $request->file($uploadKey);
+        if ($file === null) {
+            // Nothing to do.
+            return;
+        }
+
+        $context = (string) ($def['media_context'] ?? MediaVariantSet::CONTEXT_GENERAL);
+        $maxMb   = (int) ($def['max_mb'] ?? 5);
+
+        $auth   = $this->container->get(\CorporateAid\Core\Auth::class);
+        $userId = $auth->user()?->id;
+
+        $media = $this->container->get(MediaRepository::class);
+
+        // Category mapping. Store logo and favicon go to the
+        // 'store-branding' bucket. Other contexts get their
+        // context name.
+        $category = match ($context) {
+            MediaVariantSet::CONTEXT_STORE_LOGO,
+            MediaVariantSet::CONTEXT_STORE_FAVICON => 'store-branding',
+            default => 'general',
+        };
+
+        $result = $media->storeFromUpload(
+            $file,
+            $category,
+            $context,
+            $maxMb,
+            $userId
+        );
+
+        if (is_array($result)) {
+            // Validation or processing failed. Flash the errors
+            // and leave the column unchanged.
+            $session = $this->container->get(\CorporateAid\Core\Session::class);
+            $session->flash('error', implode(' ', $result));
+            return;
+        }
+
+        $this->container->get(StoreRepository::class)
+            ->updateColumn($storeId, $column, $result->file->id);
     }
 }

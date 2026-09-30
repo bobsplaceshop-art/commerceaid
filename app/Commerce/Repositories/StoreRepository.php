@@ -150,6 +150,48 @@ final class StoreRepository
         return $this->db->execute($sql, $params);
     }
 
+    /**
+     * Update a single column on the store row.
+     *
+     * Whitelisted to a fixed set of columns. Never accepts an
+     * arbitrary column name from the caller - the whitelist is
+     * the security boundary.
+     *
+     * Used by the Store Settings page for fields that write to
+     * commerce_stores columns (logo_file_id, favicon_file_id,
+     * pwa_name, pwa_short_name, pwa_theme_color,
+     * pwa_background_color) rather than to the key-value
+     * settings table.
+     *
+     * @param mixed $value null clears a nullable column
+     */
+    public function updateColumn(int $storeId, string $column, mixed $value): void
+    {
+        $allowed = [
+            'logo_file_id',
+            'favicon_file_id',
+            'pwa_name',
+            'pwa_short_name',
+            'pwa_theme_color',
+            'pwa_background_color',
+        ];
+
+        if (!in_array($column, $allowed, true)) {
+            throw new \InvalidArgumentException(
+                "Column {$column} is not updatable via updateColumn()."
+            );
+        }
+
+        if ($storeId <= 0) {
+            return;
+        }
+
+        $this->db->execute(
+            "UPDATE `commerce_stores` SET `{$column}` = ? WHERE `id` = ?",
+            [$value, $storeId]
+        );
+    }
+
     /** Attach a hostname to a store. Returns the new id. */
     public function addDomain(int $storeId, string $hostname, bool $isPrimary = false): int
     {

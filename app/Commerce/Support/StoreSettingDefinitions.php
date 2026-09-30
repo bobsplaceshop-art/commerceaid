@@ -12,11 +12,21 @@ namespace CorporateAid\Commerce\Support;
  *
  * Each definition declares:
  *   label    - human-readable name for the admin form
- *   type     - boolean | string | text | number | select
+ *   type     - boolean | string | text | number | select | file
  *   default  - fallback when the row is missing
  *   group    - which settings tab it renders on
  *   hint     - optional help text under the field
  *   options  - for type = select, [value => label]
+ *
+ * File fields (type = file) and any field that writes to a
+ * column on commerce_stores instead of the key-value store
+ * declare:
+ *   target   - 'key_value' (default) | 'column'
+ *   column   - the column name on commerce_stores, required
+ *              when target = 'column'
+ *   accept   - file input accept attribute, type = file only
+ *   max_mb   - file size cap, type = file only
+ *   media_context - MediaVariantSet context, type = file only
  *
  * The 'type' drives the input renderer in
  * resources/views/admin/settings/_field.php.
@@ -26,6 +36,7 @@ namespace CorporateAid\Commerce\Support;
 final class StoreSettingDefinitions
 {
     public const GROUP_GENERAL    = 'general';
+    public const GROUP_BRANDING   = 'branding';
     public const GROUP_COMPLIANCE = 'compliance';
 
     /**
@@ -64,6 +75,80 @@ final class StoreSettingDefinitions
             'default' => '',
             'group'   => self::GROUP_GENERAL,
             'hint'    => 'Short tagline shown in the storefront footer.',
+        ],
+
+        // -------------------------------------------------------------
+        // Branding (Stage 008G.4a)
+        // -------------------------------------------------------------
+        //
+        // These fields write to columns on commerce_stores, not
+        // to the key-value store. A logo is a relationship to a
+        // file, not a string. The target/column pair tells the
+        // SettingsController to route the save accordingly.
+        'store.logo_file_id' => [
+            'label'         => 'Store logo',
+            'type'          => 'file',
+            'default'       => null,
+            'group'         => self::GROUP_BRANDING,
+            'target'        => 'column',
+            'column'        => 'logo_file_id',
+            'accept'        => 'image/png,image/jpeg,image/webp,image/gif',
+            'max_mb'        => 1,
+            'media_context' => MediaVariantSet::CONTEXT_STORE_LOGO,
+            'hint'          => 'Shown in the storefront header. ' .
+                               'PNG or WebP recommended. Max 1 MB.',
+        ],
+        'store.favicon_file_id' => [
+            'label'         => 'Favicon',
+            'type'          => 'file',
+            'default'       => null,
+            'group'         => self::GROUP_BRANDING,
+            'target'        => 'column',
+            'column'        => 'favicon_file_id',
+            'accept'        => 'image/png',
+            'max_mb'        => 1,
+            'media_context' => MediaVariantSet::CONTEXT_STORE_FAVICON,
+            'hint'          => 'Browser tab icon. PNG only. ' .
+                               '32x32 or 64x64 recommended.',
+        ],
+        'store.pwa_name' => [
+            'label'   => 'PWA app name',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_BRANDING,
+            'target'  => 'column',
+            'column'  => 'pwa_name',
+            'hint'    => 'Full name shown when the app is installed. ' .
+                         'Falls back to the store name.',
+        ],
+        'store.pwa_short_name' => [
+            'label'   => 'PWA short name',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_BRANDING,
+            'target'  => 'column',
+            'column'  => 'pwa_short_name',
+            'hint'    => 'Home screen label. 12 characters max recommended.',
+        ],
+        'store.pwa_theme_color' => [
+            'label'   => 'PWA theme color',
+            'type'    => 'string',
+            'default' => '#1a1a1a',
+            'group'   => self::GROUP_BRANDING,
+            'target'  => 'column',
+            'column'  => 'pwa_theme_color',
+            'hint'    => 'Hex color (#RRGGBB). Used for the browser ' .
+                         'chrome and PWA title bar.',
+        ],
+        'store.pwa_background_color' => [
+            'label'   => 'PWA background color',
+            'type'    => 'string',
+            'default' => '#ffffff',
+            'group'   => self::GROUP_BRANDING,
+            'target'  => 'column',
+            'column'  => 'pwa_background_color',
+            'hint'    => 'Hex color (#RRGGBB). Shown briefly while ' .
+                         'the app is loading.',
         ],
 
         // -------------------------------------------------------------
@@ -181,6 +266,7 @@ final class StoreSettingDefinitions
     {
         return match ($group) {
             self::GROUP_GENERAL    => 'General',
+            self::GROUP_BRANDING   => 'Branding',
             self::GROUP_COMPLIANCE => 'Compliance',
             default                => ucfirst($group),
         };
