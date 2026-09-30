@@ -24,9 +24,9 @@
  *   store.
  *
  * Images:
- *   picsum.photos seeded by product slug, deterministic per
- *   product. Replaced by real product media when the media
- *   library ships.
+ *   The product's primary image, via product_picture_url().
+ *   Falls back to a local placeholder SVG when the product
+ *   has no uploaded image. Never null.
  *
  * Rating:
  *   The reviews system does not exist yet. When $ratingCount is
@@ -57,7 +57,7 @@ if ($product->isOutOfStock()) {
     $stockLabel = 'On backorder';
 }
 
-$imageUrl  = 'https://picsum.photos/seed/' . rawurlencode($product->slug) . '/600/750';
+$imageUrl  = product_picture_url($product, 'card');
 $detailUrl = '/products/' . rawurlencode($product->slug);
 
 // Rating stub. Replace with real data when reviews ship. When
