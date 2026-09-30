@@ -112,6 +112,184 @@ final class ProductVariantRepository extends CommerceRepository
     }
 
     /**
+     * Variant axes for a product, with values and the variant
+     * ids per value.
+     *
+     * Used by the storefront swatch selector and the admin
+     * variant-images card. Both read the same shape.
+     *
+     * Excludes archived variants. Only attributes with
+     * is_variant_axis = 1 are returned. Only values that are
+     * actually in use by at least one active variant are
+     * returned.
+     *
+     * @return array<int, array{
+     *     attribute_id: int,
+     *     slug: string,
+     *     name: string,
+     *     is_color_axis: bool,
+     *     values: array<int, array{
+     *         attribute_value_id: int,
+     *         value: string,
+     *         color_hex: ?string,
+     *         sort_order: int,
+     *         variant_ids: array<int, int>
+     *     }>
+     * }>
+     */
+    public function swatchAxesFor(int $productId): array
+    {
+        if ($productId <= 0) {
+            return [];
+        }
+
+        $rows = $this->db->select(
+            "SELECT
+                ad.`id`              AS attribute_id,
+                ad.`slug`            AS attribute_slug,
+                ad.`name`            AS attribute_name,
+                ad.`input_type`      AS input_type,
+                av.`id`              AS value_id,
+                av.`value`           AS value_label,
+                av.`color_hex`       AS value_color_hex,
+                av.`sort_order`      AS value_sort_order,
+                vav.`variant_id`     AS variant_id
+               FROM `commerce_variant_attribute_values` vav
+               JOIN `commerce_attribute_definitions` ad
+                    ON ad.`id` = vav.`attribute_id`
+               JOIN `commerce_attribute_values` av
+                    ON av.`id` = vav.`attribute_value_id`
+               JOIN `commerce_product_variants` pv
+                    ON pv.`id` = vav.`variant_id`
+              WHERE vav.`store_id` = ?
+                AND pv.`product_id` = ?
+                AND pv.`status` = 'active'
+                AND ad.`is_variant_axis` = 1
+              ORDER BY ad.`sort_order` ASC,
+                       ad.`name` ASC,
+                       av.`sort_order` ASC,
+                       av.`id` ASC",
+            [$this->storeId(), $productId]
+        );
+
+        // Group rows into axes and values.
+        $axes = [];
+        foreach ($rows as $row) {
+            $attrId  = (int) $row['attribute_id'];
+            $valueId = (int) $row['value_id'];
+
+            if (!isset($axes[$attrId])) {
+                $axes[$attrId] = [
+                    'attribute_id'  => $attrId,
+                    'slug'          => (string) $row['attribute_slug'],
+                    'name'          => (string) $row['attribute_name'],
+                    'is_color_axis' => $this->isColorAxis(
+                        (string) $row['attribute_slug'],
+                        (string) $row['attribute_name'],
+                        (string) ($row['input_type'] ?? '')
+                    ),
+                    'values'        => [],
+                ];
+            }
+
+            if (!isset($axes[$attrId]['values'][$valueId])) {
+                $axes[$attrId]['values'][$valueId] = [
+                    'attribute_value_id' => $valueId,
+                    'value'              => (string) $row['value_label'],
+                    'color_hex'          => $row['value_color_hex'] !== null
+                        ? (string) $row['value_color_hex']
+                        : null,
+                    'sort_order'         => (int) $row['value_sort_order'],
+                    'variant_ids'        => [],
+                ];
+            }
+
+            $axes[$attrId]['values'][$valueId]['variant_ids'][] = (int) $row['variant_id'];
+        }
+
+        // Re-index values so the result is a list (safe for
+        // JSON encoding and simple iteration).
+        $out = [];
+        foreach ($axes as $axis) {
+            $axis['values'] = array_values($axis['values']);
+            $out[] = $axis;
+        }
+        return $out;
+    }
+
+    /**
+     * Combination map for the swatch selector JS.
+     *
+     * Keys are sorted attribute_value_id lists joined by ":".
+     *   Single-axis:  "12"      => variant_id
+     *   Two-axis:     "12:34"   => variant_id
+     *   Three-axis:   "12:34:56"=> variant_id
+     *
+     * Sorted ascending so the JS can build the key from the
+     * selected values in any order.
+     *
+     * Excludes archived variants.
+     *
+     * @return array<string, int>
+     */
+    public function combinationsFor(int $productId): array
+    {
+        if ($productId <= 0) {
+            return [];
+        }
+
+        $rows = $this->db->select(
+            "SELECT vav.`variant_id`, vav.`attribute_value_id`
+               FROM `commerce_variant_attribute_values` vav
+               JOIN `commerce_product_variants` pv
+                    ON pv.`id` = vav.`variant_id`
+              WHERE vav.`store_id` = ?
+                AND pv.`product_id` = ?
+                AND pv.`status` = 'active'",
+            [$this->storeId(), $productId]
+        );
+
+        // Group values per variant_id.
+        $byVariant = [];
+        foreach ($rows as $row) {
+            $vid = (int) $row['variant_id'];
+            $byVariant[$vid][] = (int) $row['attribute_value_id'];
+        }
+
+        // Build the combination map.
+        $out = [];
+        foreach ($byVariant as $vid => $valueIds) {
+            sort($valueIds, SORT_NUMERIC);
+            $key = implode(':', $valueIds);
+            $out[$key] = $vid;
+        }
+        return $out;
+    }
+
+    /**
+     * Best-effort color-axis detection.
+     *
+     * The strongest signal is the attribute's input_type.
+     * Falls back to a slug or name match. Kept deliberately
+     * permissive: a false positive renders a swatch that uses
+     * the value's color_hex as a fill; a false negative hides
+     * the swatch row. A miss on the color axis is worse than
+     * a miss on a generic axis.
+     */
+    private function isColorAxis(string $slug, string $name, string $inputType): bool
+    {
+        if ($inputType === 'color') {
+            return true;
+        }
+        $slugLower = strtolower($slug);
+        $nameLower = strtolower($name);
+        return str_contains($slugLower, 'color')
+            || str_contains($slugLower, 'colour')
+            || str_contains($nameLower, 'color')
+            || str_contains($nameLower, 'colour');
+    }
+
+    /**
      * Return existing variant combinations as a hashmap, so we can
      * skip regenerating ones that already exist.
      *
