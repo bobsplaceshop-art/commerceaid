@@ -50,6 +50,7 @@ Adding a stage or reordering requires updating this document first.
 | 008G.1| Wishlist                               | 2026-09-29 |
 | 008G.2| Recently Viewed                        | 2026-09-30 |
 | 008G.3| Message Center                         | 2026-10-01 |
+| 008G.4a| Upload Core + Store Branding          | 2026-09-30 |
 
 Also completed outside the staged sequence:
 
@@ -67,12 +68,38 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G.4 - PWA (deferred from 008G)
+### Stage 008G.4a.1 - Media Library Page
 
-**Goal:** Progressive Web App support for the storefront.
-Manifest, service worker, offline shell, install prompt.
+**Goal:** An admin page at /commerce/ca-admin/media for
+browsing, filtering, and managing uploaded files.
 
-**Depends on:** Stage 008G (storefront polish complete).
+**Scope:**
+
+- Grid view with thumbnails.
+- File size, dimensions, upload date, usage count.
+- Search by filename, filter by mime type, sort by
+  date/size/name.
+- Delete (blocked if in use, or warned with a link to
+  the referencing entity).
+- Replace in place (new upload swaps the file behind an
+  existing media ID, no re-linking).
+- Pagination.
+
+**Store scoping:**
+
+Each upload will write a core_entity_files link with
+entity_type='store', entity_id=<current store>,
+file_category=<context>. That link is how the media page
+scopes its listing to the current store without a schema
+change. Uses the existing polymorphic link table from
+Platform.
+
+A cleanup routine (later) handles the case where a store
+is deleted: remove the entity_files links for that store,
+and soft-delete any file that is no longer referenced by
+any entity.
+
+**Depends on:** 008G.4a (upload pipeline).
 
 ## Planned Stages
 
