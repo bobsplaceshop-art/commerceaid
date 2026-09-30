@@ -65,9 +65,8 @@ $mediaLibrary = $mediaLibrary ?? [];
 
             <?php else: ?>
 
-                <div class="mb-2 muted small">
-                    Click an image to select it. Selected images
-                    are added to the gallery when you confirm.
+                <div class="mb-2 muted small" data-ra-picker-hint>
+                    Click an image to select it.
                 </div>
 
                 <ul class="ra-media-grid ra-picker-grid">
@@ -132,7 +131,7 @@ $mediaLibrary = $mediaLibrary ?? [];
                     class="ra-btn ra-btn-primary"
                     data-ra-picker-confirm
                     disabled>
-                Add to gallery
+                <span data-ra-picker-confirm-label>Add to gallery</span>
             </button>
         </div>
 

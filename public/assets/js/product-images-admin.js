@@ -367,6 +367,14 @@
     var pickerModal   = null;
     var pickerCount   = null;
     var pickerConfirm = null;
+    var pickerConfirmLabel = null;
+    var pickerHint    = null;
+
+    // Picker mode. 'gallery' (default, multi-select) or
+    // 'variant' (single-select, sets the slot's hidden
+    // variant_images[<valueId>] input).
+    var pickerMode    = 'gallery';
+    var pickerTarget  = 0;
 
     function initPicker() {
         pickerModal = qs('[data-ra-picker-modal]');
@@ -374,10 +382,18 @@
 
         pickerCount   = qs('[data-ra-picker-count]', pickerModal);
         pickerConfirm = qs('[data-ra-picker-confirm]', pickerModal);
+        pickerConfirmLabel = qs('[data-ra-picker-confirm-label]', pickerModal);
+        pickerHint    = qs('[data-ra-picker-hint]', pickerModal);
 
-        // Checkbox change -> recount, toggle confirm button.
+        // Checkbox change -> enforce single-select in variant
+        // mode, then recount and toggle confirm button.
         pickerModal.addEventListener('change', function (e) {
             if (!e.target.matches('[data-ra-picker-checkbox]')) return;
+            if (pickerMode === 'variant' && e.target.checked) {
+                qsa('[data-ra-picker-checkbox]', pickerModal).forEach(function (other) {
+                    if (other !== e.target) other.checked = false;
+                });
+            }
             recountPicker();
         });
 
@@ -389,6 +405,11 @@
             var cb = label.querySelector('[data-ra-picker-checkbox]');
             if (cb) {
                 cb.checked = !cb.checked;
+                if (pickerMode === 'variant' && cb.checked) {
+                    qsa('[data-ra-picker-checkbox]', pickerModal).forEach(function (other) {
+                        if (other !== cb) other.checked = false;
+                    });
+                }
                 recountPicker();
             }
         });
@@ -417,10 +438,24 @@
         });
     }
 
-    function openPicker() {
+    function openPicker(mode, target) {
         if (!pickerModal) return;
+
+        pickerMode = (mode === 'variant') ? 'variant' : 'gallery';
+        pickerTarget = (pickerMode === 'variant') ? parseInt(target, 10) || 0 : 0;
+
+        if (pickerConfirmLabel) {
+            pickerConfirmLabel.textContent = (pickerMode === 'variant')
+                ? 'Use this image'
+                : 'Add to gallery';
+        }
+        if (pickerHint) {
+            pickerHint.textContent = (pickerMode === 'variant')
+                ? 'Click an image to use it for this color value.'
+                : 'Click an image to select it.';
+        }
+
         pickerModal.style.display = 'flex';
-        // Reset selection on open.
         qsa('[data-ra-picker-checkbox]', pickerModal).forEach(function (cb) {
             cb.checked = false;
         });
@@ -438,7 +473,9 @@
         var n = selected.length;
 
         if (pickerCount) {
-            pickerCount.textContent = n + ' selected';
+            pickerCount.textContent = (pickerMode === 'variant')
+                ? (n > 0 ? '1 selected' : '')
+                : (n + ' selected');
         }
         if (pickerConfirm) {
             pickerConfirm.disabled = (n === 0);
@@ -449,12 +486,17 @@
         var selected = qsa('[data-ra-picker-checkbox]:checked', pickerModal);
         if (!selected.length) return;
 
+        if (pickerMode === 'variant') {
+            confirmVariantPicker(selected[0]);
+            closePicker();
+            return;
+        }
+
+        // Gallery mode (multi-select).
         selected.forEach(function (cb) {
             var id = parseInt(cb.value, 10);
             if (!id || id <= 0) return;
 
-            // Read the tile's data attributes for uuid / name /
-            // alt. These are set by _image-picker-modal.php.
             var tile = cb.closest('[data-ra-picker-tile]');
             var uuid = tile ? (tile.getAttribute('data-file-uuid') || '') : '';
             var name = tile ? (tile.getAttribute('data-file-name') || '') : '';
@@ -469,6 +511,58 @@
         });
 
         closePicker();
+    }
+
+    /**
+     * Variant mode confirm. Updates the slot in place:
+     *   1. Hidden input variant_images[<target>] = <fileId>
+     *   2. Thumbnail swapped to the picked image
+     *   3. Remove button revealed
+     *   4. Assign button label -> "Change"
+     */
+    function confirmVariantPicker(cb) {
+        var fileId = parseInt(cb.value, 10);
+        if (!fileId || fileId <= 0 || pickerTarget <= 0) return;
+
+        var tile = cb.closest('[data-ra-picker-tile]');
+        if (!tile) return;
+        var uuid = tile.getAttribute('data-file-uuid') || '';
+        if (!uuid) return;
+
+        var slot = document.querySelector(
+            '[data-ra-variant-slot][data-attribute-value-id="' + pickerTarget + '"]'
+        );
+        if (!slot) return;
+
+        var input = slot.querySelector('[data-ra-variant-file-input]');
+        if (input) input.value = String(fileId);
+
+        var thumb = slot.querySelector('[data-ra-variant-slot-thumb]');
+        if (thumb) {
+            var img = document.createElement('img');
+            img.src = '/media/' + encodeURIComponent(uuid) + '/md.webp';
+            img.alt = '';
+            img.loading = 'lazy';
+            thumb.innerHTML = '';
+            thumb.appendChild(img);
+        }
+
+        slot.classList.add('has-image');
+
+        var removeBtn = slot.querySelector('[data-ra-variant-remove]');
+        if (removeBtn) removeBtn.hidden = false;
+
+        var assignBtn = slot.querySelector('[data-ra-variant-assign]');
+        if (assignBtn) {
+            // Update the trailing text node inside the button.
+            var nodes = assignBtn.childNodes;
+            for (var i = nodes.length - 1; i >= 0; i--) {
+                if (nodes[i].nodeType === 3 && nodes[i].textContent.trim() !== '') {
+                    nodes[i].textContent = 'Change';
+                    break;
+                }
+            }
+        }
     }
 
     // ---------- Tile removal ----------
@@ -606,11 +700,68 @@
         initDragReorder();
         initPrimaryRadio();
 
-        // Picker open trigger.
+        // Picker open trigger (gallery mode - default).
         qsa('[data-ra-open-picker]').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
-                openPicker();
+                openPicker('gallery');
+            });
+        });
+
+        // Variant slot assign buttons (variant mode).
+        qsa('[data-ra-variant-assign]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var valueId = parseInt(btn.getAttribute('data-attribute-value-id'), 10);
+                if (valueId > 0) openPicker('variant', valueId);
+            });
+        });
+
+        // Variant slot remove buttons. The buttons are in the
+        // initial DOM (rendered server-side, hidden when no
+        // image). Bind directly - no delegation needed.
+        qsa('[data-ra-variant-remove]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var valueId = parseInt(btn.getAttribute('data-attribute-value-id'), 10);
+                if (valueId <= 0) return;
+
+                var slot = btn.closest('[data-ra-variant-slot]');
+                if (!slot) return;
+
+                var input = slot.querySelector('[data-ra-variant-file-input]');
+                if (input) input.value = '0';
+
+                var thumb = slot.querySelector('[data-ra-variant-slot-thumb]');
+                if (thumb) {
+                    var hex = thumb.getAttribute('data-hex') || '';
+                    thumb.innerHTML = '';
+                    if (hex) {
+                        var fill = document.createElement('span');
+                        fill.className = 'ra-variant-slot-fill';
+                        fill.style.backgroundColor = hex;
+                        thumb.appendChild(fill);
+                    } else {
+                        var empty = document.createElement('div');
+                        empty.className = 'ra-variant-slot-empty';
+                        empty.innerHTML = '<i class="bi bi-image" aria-hidden="true"></i>';
+                        thumb.appendChild(empty);
+                    }
+                }
+
+                slot.classList.remove('has-image');
+                btn.hidden = true;
+
+                var assignBtn = slot.querySelector('[data-ra-variant-assign]');
+                if (assignBtn) {
+                    var nodes = assignBtn.childNodes;
+                    for (var i = nodes.length - 1; i >= 0; i--) {
+                        if (nodes[i].nodeType === 3 && nodes[i].textContent.trim() !== '') {
+                            nodes[i].textContent = 'Assign';
+                            break;
+                        }
+                    }
+                }
             });
         });
     }

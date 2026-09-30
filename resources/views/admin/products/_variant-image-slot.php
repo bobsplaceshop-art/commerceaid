@@ -49,7 +49,8 @@ $imageUrl = $hasImage
      data-ra-variant-slot
      data-attribute-value-id="<?= $valueId ?>">
 
-    <div class="ra-variant-slot-thumb">
+    <div class="ra-variant-slot-thumb" data-ra-variant-slot-thumb
+         data-hex="<?= e((string) ($hex ?? '')) ?>">
         <?php if ($hasImage): ?>
             <img src="<?= e($imageUrl) ?>" alt="" loading="lazy">
         <?php elseif ($hex !== null && $hex !== ''): ?>
@@ -84,15 +85,14 @@ $imageUrl = $hasImage
                 <?= $hasImage ? 'Change' : 'Assign' ?>
             </button>
 
-            <?php if ($hasImage): ?>
-                <button type="button"
-                        class="ra-btn ra-btn-outline ra-btn-sm"
-                        data-ra-variant-remove
-                        data-attribute-value-id="<?= $valueId ?>">
-                    <i class="bi bi-x-lg me-1" aria-hidden="true"></i>
-                    Remove
-                </button>
-            <?php endif; ?>
+            <button type="button"
+                    class="ra-btn ra-btn-outline ra-btn-sm"
+                    data-ra-variant-remove
+                    data-attribute-value-id="<?= $valueId ?>"
+                    <?= $hasImage ? '' : 'hidden' ?>>
+                <i class="bi bi-x-lg me-1" aria-hidden="true"></i>
+                Remove
+            </button>
         </div>
     </div>
 </div>
