@@ -18,8 +18,11 @@
  *   Block    data-sf-block="add-to-cart"
  *
  * Images:
- *   Main image  picsum.photos/seed/{slug}/900/1125
- *   Thumbnails  picsum.photos/seed/{slug}-N/300/375 for N = 1..4
+ *   Main image  $gallery[0] as a lg WebP variant, or
+ *               /assets/img/product-placeholder.svg when
+ *               the product has no images.
+ *   Thumbnails  every gallery image as a card WebP
+ *               thumbnail with a lg WebP swap target.
  *   Replaced by real product media when uploads land.
  *
  * Variants:
@@ -64,14 +67,32 @@ if ($isLiveSoldOut) {
     $stockLabel = 'Available on backorder';
 }
 
-$mainImage  = 'https://picsum.photos/seed/' . rawurlencode($product->slug) . '/900/1125';
+// Product gallery. The controller passes $gallery as an
+// array of ['image' => ProductImage, 'media' => MediaItem]
+// pairs, ordered by sort_order (primary first when set).
+//
+// Hero:    the first gallery image as a lg WebP variant.
+//          Falls back to the local placeholder SVG.
+// Thumbs:  every gallery image as a card WebP thumbnail
+//          with a lg WebP swap target.
+//
+// When the gallery is empty, $thumbnails stays empty and
+// the thumbnail strip renders nothing - correct for a
+// product with no images.
+$gallery = $gallery ?? [];
+
+$mainImage  = '/assets/img/product-placeholder.svg';
 $thumbnails = [];
-for ($i = 1; $i <= 4; $i++) {
-    $seed = rawurlencode($product->slug . '-' . $i);
-    $thumbnails[] = [
-        'thumb' => 'https://picsum.photos/seed/' . $seed . '/300/375',
-        'large' => 'https://picsum.photos/seed/' . $seed . '/900/1125',
-    ];
+
+if ($gallery !== []) {
+    $mainImage = $gallery[0]['media']->variantUrl('lg', 'webp');
+
+    foreach ($gallery as $entry) {
+        $thumbnails[] = [
+            'thumb' => $entry['media']->variantUrl('card', 'webp'),
+            'large' => $entry['media']->variantUrl('lg', 'webp'),
+        ];
+    }
 }
 ?>
 

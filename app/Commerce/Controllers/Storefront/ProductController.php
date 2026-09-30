@@ -9,6 +9,8 @@ use CorporateAid\Commerce\Repositories\BrandRepository;
 use CorporateAid\Commerce\Repositories\CategoryRepository;
 use CorporateAid\Commerce\Repositories\InventoryRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
+use CorporateAid\Commerce\Repositories\ProductImageRepository;
+use CorporateAid\Commerce\Repositories\MediaRepository;
 use CorporateAid\Commerce\Repositories\ProductVariantRepository;
 use CorporateAid\Commerce\Services\RecentViewService;
 use CorporateAid\Commerce\Support\StorefrontController;
@@ -145,6 +147,38 @@ final class ProductController extends StorefrontController
             }
         }
 
+        // ----- Product gallery -----
+        // Read the product's images (all rows, ordered by
+        // sort_order) and pair each with its MediaItem. The
+        // view renders the first as the hero and every image
+        // as a thumbnail. Products with no images pass an
+        // empty array; the view falls back to the placeholder.
+        $gallery = [];
+        $imageRepo = $this->container->get(ProductImageRepository::class);
+        $mediaRepo = $this->container->get(MediaRepository::class);
+
+        $rows = $imageRepo->listForProduct($product->id);
+        if ($rows !== []) {
+            $fileIds = [];
+            foreach ($rows as $row) {
+                $fileIds[] = $row->fileId;
+            }
+            $mediaById = [];
+            foreach ($mediaRepo->findByIds($fileIds) as $item) {
+                $mediaById[$item->file->id] = $item;
+            }
+            foreach ($rows as $row) {
+                $media = $mediaById[$row->fileId] ?? null;
+                if ($media === null) {
+                    continue;
+                }
+                $gallery[] = [
+                    'image' => $row,
+                    'media' => $media,
+                ];
+            }
+        }
+
         // ----- Record the view (best-effort, never throws) -----
         // Side effect of viewing. The service swallows all
         // failures so a broken recorder cannot break the page.
@@ -164,6 +198,7 @@ final class ProductController extends StorefrontController
             'isLiveSoldOut'   => $isLiveSoldOut,
             'variants'        => $variantList,
             'related'         => $related,
+            'gallery'         => $gallery,
         ]);
     }
 }
