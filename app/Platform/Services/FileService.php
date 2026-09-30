@@ -98,7 +98,7 @@ final class FileService
 
         // 5. Choose destination and create directories
         $subdir       = $this->directoryFor($category);
-        $uuid         = $this->generateUuid();
+        $uuid         = generate_uuid();
         $storedName   = $uuid . '.' . $ext;
         $relativePath = $subdir . '/' . $storedName;
         $absolutePath = $this->basePath . '/' . $relativePath;
@@ -201,14 +201,4 @@ final class FileService
         return is_string($mime) && $mime !== '' ? $mime : null;
     }
 
-    /**
-     * RFC 4122 v4 UUID.
-     */
-    private function generateUuid(): string
-    {
-        $data = random_bytes(16);
-        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40); // version 4
-        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80); // variant
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-    }
 }
