@@ -60,8 +60,66 @@ $categoryId = $category !== null ? (int) $category->id : 0;
     </a>
 </div>
 
-<form method="POST" action="<?= e($actionUrl) ?>" novalidate id="ra-category-main-form">
+<form method="POST"
+      action="<?= e($actionUrl) ?>"
+      novalidate
+      id="ra-category-main-form"
+      enctype="multipart/form-data">
     <?= csrf_field() ?>
+
+    <?php
+    // Category image preview. $imageMediaItem is passed by
+    // the controller when the category has an image.
+    // Null when creating a new category or when no image
+    // is set.
+    $imageMediaItem = $imageMediaItem ?? null;
+    $currentImageUrl = null;
+    if ($imageMediaItem !== null) {
+        $currentImageUrl = $imageMediaItem->variantUrl('md', 'webp');
+    }
+    ?>
+
+    <div class="ra-card mb-4">
+        <div class="ra-card-header">
+            <h2 class="h6 mb-0">Category image</h2>
+        </div>
+        <div class="ra-card-body">
+            <p class="muted small mb-3">
+                Shown on the category index page, on this category's
+                detail page header, and in the home page category grid.
+            </p>
+
+            <div class="ra-file-field">
+                <div class="ra-file-preview">
+                    <?php if ($currentImageUrl !== null): ?>
+                        <img src="<?= e($currentImageUrl) ?>"
+                             alt="<?= e($category !== null ? $category->name : 'Category') ?>"
+                             class="ra-file-preview-img"
+                             loading="lazy">
+                    <?php else: ?>
+                        <div class="ra-file-preview-empty" aria-hidden="true">
+                            <i class="bi bi-image"></i>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="ra-file-controls">
+                    <input type="file"
+                           id="category-image"
+                           name="image"
+                           accept="image/png,image/jpeg,image/webp,image/gif"
+                           class="ra-file-input">
+
+                    <div class="ra-file-meta">
+                        <span class="ra-file-hint">
+                            PNG, JPEG, WebP, or GIF. Max 5 MB.
+                            Landscape or square recommended.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="ra-card mb-4">
         <div class="ra-card-header">
