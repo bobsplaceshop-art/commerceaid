@@ -41,7 +41,13 @@
 
 @media (min-width: 900px) {
     .sf-product-layout {
-        grid-template-columns: 5fr 7fr;
+        /* Media column: bounded. Hero image sits at ~420px
+           wide regardless of viewport. The 4:5 aspect makes
+           the hero 420x525. Info column takes the rest.
+           Before: 5fr / 7fr, which at a 1360px container
+           gave media ~543px and pushed info below the fold
+           on mid-range desktops. */
+        grid-template-columns: minmax(360px, 420px) 1fr;
         gap: 3.5rem;
         align-items: start;
     }
@@ -56,6 +62,13 @@
     flex-direction: column;
     gap: .75rem;
     position: relative;
+    /* Center the media column in its grid cell. On wide
+       viewports the info column is very tall, so a
+       centered media block reads as deliberate rather
+       than top-aligned with empty space below. */
+    margin: 0 auto;
+    width: 100%;
+    max-width: 420px;
 }
 
 .sf-product-image-large {
@@ -89,12 +102,44 @@
 /* ----- Thumbnails ----- */
 
 .sf-product-thumbnails {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    /* Horizontal scroll strip. One row, always. Products
+       with 6-12 images scroll; products with 1-4 fill the
+       visible width. Scroll-snap keeps thumbs aligned when
+       the user stops scrolling. */
+    display: flex;
+    flex-wrap: nowrap;
     gap: .5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+    padding-bottom: .35rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, .15) transparent;
+}
+
+/* Thin scrollbar styling for WebKit browsers. Firefox uses
+   the scrollbar-width/scrollbar-color shorthand above. */
+.sf-product-thumbnails::-webkit-scrollbar {
+    height: 6px;
+}
+.sf-product-thumbnails::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sf-product-thumbnails::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, .15);
+    border-radius: 3px;
+}
+.sf-product-thumbnails::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, .3);
 }
 
 .sf-product-thumb {
+    /* Fixed 72px width. flex: 0 0 auto means the button
+       never shrinks or grows; the strip scrolls when the
+       total exceeds the visible width. */
+    flex: 0 0 auto;
+    width: 72px;
     aspect-ratio: 4 / 5;
     overflow: hidden;
     border: 1px solid var(--sf-border);
@@ -102,6 +147,7 @@
     background: var(--sf-cream);
     cursor: pointer;
     transition: border-color var(--sf-t-base) var(--sf-ease);
+    scroll-snap-align: start;
 }
 
 .sf-product-thumb.is-active {
@@ -146,16 +192,28 @@
 
 .sf-product-title {
     font-family: var(--sf-font-display);
-    font-size: 1.85rem;
+    font-size: 1.5rem;
     font-weight: 500;
     line-height: 1.15;
     color: var(--sf-ink);
     margin: 0;
     letter-spacing: -.005em;
+    /* Cap at 3 lines. Most product names fit. Extremely long
+       imports (100+ chars) truncate with an ellipsis rather
+       than dominating the fold. The full name is still
+       visible in the breadcrumb above and in the browser
+       tab title. */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 @media (min-width: 640px) {
-    .sf-product-title { font-size: 2.15rem; }
+    .sf-product-title {
+        font-size: 1.75rem;
+        line-height: 1.1;
+    }
 }
 
 .sf-product-short {
@@ -410,14 +468,17 @@
 }
 .sf-product-thumbnails {
     max-width: 100%;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 @media (max-width: 640px) {
-    /* Slightly tighter thumbs on small screens. The grid stays
-       4-up because each thumb is already aspect-ratio locked. */
+    /* Tighter thumbs on small screens. The strip still
+       scrolls horizontally. Thumbs shrink to 64px so 5-6
+       fit visible width on a typical phone. */
     .sf-product-thumbnails {
         gap: .35rem;
+    }
+    .sf-product-thumb {
+        width: 64px;
     }
     .sf-product-detail {
         padding-bottom: 2rem;
@@ -432,8 +493,8 @@
 
 @media (max-width: 639px) {
     .sf-product-title {
-        font-size: 1.5rem;
-        line-height: 1.25;
+        font-size: 1.3rem;
+        line-height: 1.2;
     }
     .sf-product-price {
         font-size: 1.5rem;
