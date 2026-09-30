@@ -96,10 +96,11 @@ final class ProductController extends AdminController
             'inventory'     => null,
             'variants'      => [],
             'attributes'    => [],
-            'productImages' => [],
-            'mediaLibrary'  => $this->resolveMediaLibrary(),
-            'variantAxes'   => [],
-            'activeTab'     => (string) $request->query('tab', 'basic'),
+            'productImages'  => [],
+            'mediaLibrary'   => $this->resolveMediaLibrary(),
+            'variantAxes'    => [],
+            'variantImages'  => [],
+            'activeTab'      => (string) $request->query('tab', 'basic'),
         ]);
     }
 
@@ -140,10 +141,11 @@ final class ProductController extends AdminController
             'categoryIds'   => $repo->categoryIdsFor($product->id),
             'tagIds'        => $repo->tagIdsFor($product->id),
             'inventory'     => $productInventory,
-            'productImages' => $productImages,
-            'mediaLibrary'  => $mediaItems,
-            'variantAxes'   => $this->categoryVariantAxes($product->id),
-            'activeTab'     => (string) $request->query('tab', 'basic'),
+            'productImages'  => $productImages,
+            'mediaLibrary'   => $mediaItems,
+            'variantAxes'    => $this->categoryVariantAxes($product->id),
+            'variantImages'  => $this->resolveVariantImages($product->id),
+            'activeTab'      => (string) $request->query('tab', 'basic'),
         ]);
     }
 
@@ -1151,6 +1153,58 @@ final class ProductController extends AdminController
         }
     }
 
+    /**
+     * Resolve the product's variant images (swatch previews)
+     * to MediaItem pairs, keyed by attribute_value_id.
+     *
+     * Used by the Images tab's "Variant images" card. Each
+     * Color value (Red, Blue, ...) has at most one image
+     * assigned. Rows with attribute_value_id set are read by
+     * swatchPreviewsFor(); the gallery's listForProduct()
+     * excludes them.
+     *
+     * @return array<int, array{image: \CorporateAid\Commerce\Models\ProductImage,
+     *                          media: \CorporateAid\Commerce\Models\MediaItem}>
+     *               keyed by attribute_value_id
+     */
+    private function resolveVariantImages(int $productId): array
+    {
+        if ($productId <= 0) {
+            return [];
+        }
+
+        $imageRepo = $this->container->get(ProductImageRepository::class);
+        $mediaRepo = $this->container->get(MediaRepository::class);
+
+        $rows = $imageRepo->swatchPreviewsFor($productId);
+        if ($rows === []) {
+            return [];
+        }
+
+        // Bulk-load MediaItems in one query.
+        $fileIds = [];
+        foreach ($rows as $row) {
+            $fileIds[] = $row->fileId;
+        }
+        $mediaById = [];
+        foreach ($mediaRepo->findByIds($fileIds) as $item) {
+            $mediaById[$item->file->id] = $item;
+        }
+
+        $out = [];
+        foreach ($rows as $attributeValueId => $row) {
+            $media = $mediaById[$row->fileId] ?? null;
+            if ($media === null) {
+                continue;
+            }
+            $out[(int) $attributeValueId] = [
+                'image' => $row,
+                'media' => $media,
+            ];
+        }
+        return $out;
+    }
+
     // =================================================================
     // Image sync
     // =================================================================
@@ -1304,6 +1358,55 @@ final class ProductController extends AdminController
                 }
                 if (!$hasPrimary) {
                     $repo->setPrimary($productId, $all[0]->id);
+                }
+            }
+
+            // 5. Variant images. One per attribute value. The
+            // POST carries variant_images[<attribute_value_id>]
+            // = <file_id>. A value of "" or 0 clears the
+            // assignment; a positive value sets it.
+            //
+            // Because listForProduct() now filters on
+            // attribute_value_id IS NULL, the existing
+            // swatchPreviewsFor() is the source of truth for
+            // what is currently assigned.
+            $variantImages = $_POST['variant_images'] ?? [];
+            if (is_array($variantImages)) {
+                $existing = $repo->swatchPreviewsFor($productId);
+
+                foreach ($variantImages as $attributeValueId => $fileId) {
+                    $attributeValueId = (int) $attributeValueId;
+                    $fileId = (int) $fileId;
+
+                    if ($attributeValueId <= 0) {
+                        continue;
+                    }
+
+                    $current = $existing[$attributeValueId] ?? null;
+
+                    if ($fileId <= 0) {
+                        // Clear the assignment. Delete the
+                        // existing swatch row if there was one.
+                        if ($current !== null) {
+                            $repo->remove($current->id);
+                        }
+                        continue;
+                    }
+
+                    if ($current !== null) {
+                        // Update the file id in place.
+                        if ($current->fileId !== $fileId) {
+                            $repo->update($current->id, ['file_id' => $fileId]);
+                        }
+                    } else {
+                        // Insert a new swatch row.
+                        $repo->add(
+                            $productId,
+                            $fileId,
+                            null,
+                            $attributeValueId
+                        );
+                    }
                 }
             }
         } catch (\Throwable $e) {

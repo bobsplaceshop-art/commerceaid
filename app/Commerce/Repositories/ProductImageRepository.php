@@ -263,8 +263,9 @@ final class ProductImageRepository extends CommerceRepository
      * Update an existing image row. Only the fields provided
      * are updated. Missing keys are left unchanged.
      *
-     * @param array{alt_text?:?string, sort_order?:int, is_primary?:bool,
-     *              variant_id?:?int, attribute_value_id?:?int} $fields
+     * @param array{file_id?:int, alt_text?:?string, sort_order?:int,
+     *              is_primary?:bool, variant_id?:?int,
+     *              attribute_value_id?:?int} $fields
      */
     public function update(int $id, array $fields): void
     {
@@ -275,6 +276,10 @@ final class ProductImageRepository extends CommerceRepository
         $sets   = [];
         $params = [];
 
+        if (array_key_exists('file_id', $fields)) {
+            $sets[]   = "`file_id` = ?";
+            $params[] = (int) $fields['file_id'];
+        }
         if (array_key_exists('alt_text', $fields)) {
             $sets[]   = "`alt_text` = ?";
             $params[] = $fields['alt_text'];
