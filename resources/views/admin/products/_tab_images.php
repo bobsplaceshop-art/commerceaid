@@ -206,15 +206,12 @@ $isEmpty = count($productImages) === 0;
         </div>
 
         <?php /* ============================================================
-               The picker modal is included here. It is a sibling of
-               the main product form, NOT a nested form. The modal
-               body renders the store's media library as a selectable
-               grid. On confirm, the JS appends file ids to
-               new_images_order[] and closes the modal.
+               The picker modal is NOT included here. It renders in
+               edit.php, after </form>, alongside the action forms
+               and the delete modal. The pattern is uniform: every
+               modal renders at the document level, never inside a
+               form. See edit.php's tail.
                ============================================================ */ ?>
-        <?= view_partial('admin.products._image-picker-modal', [
-            'mediaLibrary' => $mediaLibrary,
-        ]) ?>
 
         <?php /* ============================================================
                Hidden inputs appended by JS.

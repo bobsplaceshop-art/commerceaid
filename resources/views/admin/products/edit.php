@@ -82,6 +82,7 @@ $status = (string) $val('status', 'draft');
                 <?php
                 $tabs = [
                     'basic'     => ['label' => 'Basic',     'icon' => 'bi-info-circle'],
+                    'images'    => ['label' => 'Images',    'icon' => 'bi-images'],
                     'pricing'   => ['label' => 'Pricing',   'icon' => 'bi-currency-dollar'],
                     'inventory' => ['label' => 'Inventory', 'icon' => 'bi-boxes'],
                     'shipping'  => ['label' => 'Shipping',  'icon' => 'bi-truck'],
@@ -108,6 +109,7 @@ $status = (string) $val('status', 'draft');
 
             <div class="tab-content ra-product-tab-content">
                 <?php require __DIR__ . '/_tab_basic.php'; ?>
+                <?php require __DIR__ . '/_tab_images.php'; ?>
                 <?php require __DIR__ . '/_tab_pricing.php'; ?>
                 <?php require __DIR__ . '/_tab_inventory.php'; ?>
                 <?php require __DIR__ . '/_tab_shipping.php'; ?>
@@ -134,6 +136,19 @@ $status = (string) $val('status', 'draft');
 
     <?= view_partial('admin/products/_delete-modal') ?>
 <?php endif; ?>
+
+<?php /* Picker modal. Rendered at the edit.php level,
+         OUTSIDE #ra-product-form. It renders on edit pages
+         for any product; on create pages the mediaLibrary
+         array is passed by showCreate() and the picker works
+         the same way, but its confirm button appends to
+         new_images_order[] which only reaches syncImages()
+         after the product row exists. That is why the tab
+         body suppresses the whole gallery + picker in create
+         mode. */ ?>
+<?= view_partial('admin.products._image-picker-modal', [
+    'mediaLibrary' => $mediaLibrary ?? [],
+]) ?>
 
 <style>
 .ra-product-tabs {
