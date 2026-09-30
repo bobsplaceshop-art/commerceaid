@@ -97,6 +97,7 @@ $groups = [
             ['label' => 'Brands',     'href' => '/commerce/ca-admin/brands',     'icon' => 'bi-bookmark-star'],
             ['label' => 'Inventory',  'href' => '/commerce/ca-admin/inventory',  'icon' => 'bi-boxes'],
             ['label' => 'Attributes', 'href' => '/commerce/ca-admin/attributes', 'icon' => 'bi-input-cursor-text'],
+            ['label' => 'Media',      'href' => '/commerce/ca-admin/media',      'icon' => 'bi-images'],
         ],
     ],
     [

@@ -13,18 +13,23 @@ use CorporateAid\Core\Response;
 /**
  * Admin media controller.
  *
- * Two endpoints:
+ * One endpoint:
  *
- *   POST /commerce/ca-admin/media/upload   upload
- *   POST /commerce/ca-admin/media/delete   delete
+ *   POST /commerce/ca-admin/media/upload   JSON upload
  *
- * Both respond with JSON. The upload endpoint is designed
- * to be called from an AJAX widget, not a full page POST.
+ * Designed to be called from an AJAX widget, not a full
+ * page POST. Responds with JSON.
  *
- * The full upload flow lives in MediaRepository::storeFromUpload().
- * This controller is a thin request/response adapter.
+ * The full upload flow lives in
+ * MediaRepository::storeFromUpload(). This controller is a
+ * thin request/response adapter.
  *
- * See docs/stages/008g.4a_upload-core-plan.md.
+ * The old /media/delete action was removed in 008G.4a.1.
+ * The media library page's {id}/delete route is the single
+ * delete path.
+ *
+ * See docs/stages/008g.4a_upload-core-plan.md and
+ * docs/stages/008g.4a.1_media-library-plan.md.
  */
 final class MediaController extends AdminController
 {
@@ -121,23 +126,4 @@ final class MediaController extends AdminController
         ]);
     }
 
-    /**
-     * Soft-delete a file by numeric ID.
-     *
-     * @param array<string,string> $params
-     */
-    public function delete(Request $request, array $params = []): Response
-    {
-        $id = (int) $request->input('id', 0);
-        if ($id <= 0) {
-            return Response::json([
-                'ok'     => false,
-                'errors' => ['Missing file id.'],
-            ], 400);
-        }
-
-        $this->container->get(MediaRepository::class)->softDelete($id);
-
-        return Response::json(['ok' => true, 'id' => $id]);
-    }
 }

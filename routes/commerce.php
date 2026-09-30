@@ -4,6 +4,7 @@ declare(strict_types=1);
 use CorporateAid\Core\Router;
 use CorporateAid\Commerce\Controllers\Pwa\ManifestController;
 use CorporateAid\Commerce\Controllers\Admin\MediaController;
+use CorporateAid\Commerce\Controllers\Admin\MediaLibraryController;
 use CorporateAid\Commerce\Controllers\MediaServeController;
 use CorporateAid\Commerce\Controllers\Admin\DashboardController;
 use CorporateAid\Commerce\Controllers\Admin\SettingsController;
@@ -55,16 +56,28 @@ $router->get('/commerce/ca-admin',
 // Admin - media library
 // =====================================================================
 //
-// AJAX endpoints. Both return JSON, not HTML.
+//   GET  /commerce/ca-admin/media              grid page
+//   POST /commerce/ca-admin/media/upload       JSON upload (AJAX)
+//   POST /commerce/ca-admin/media/{id}/delete  delete with usage guard
+//   POST /commerce/ca-admin/media/{id}/meta    update alt text and credit
 //
-//   POST /commerce/ca-admin/media/upload   multipart
-//   POST /commerce/ca-admin/media/delete   form data
+// The /delete route from 008G.4a (POST /commerce/ca-admin/media/delete)
+// was retired. It was unused - no view posted to it. The
+// {id}/delete form is the single delete path.
+$router->get('/commerce/ca-admin/media',
+    [MediaLibraryController::class, 'index'],
+    ['store', 'auth']);
+
 $router->post('/commerce/ca-admin/media/upload',
     [MediaController::class, 'upload'],
     ['store', 'auth', 'csrf']);
 
-$router->post('/commerce/ca-admin/media/delete',
-    [MediaController::class, 'delete'],
+$router->post('/commerce/ca-admin/media/{id}/delete',
+    [MediaLibraryController::class, 'delete'],
+    ['store', 'auth', 'csrf']);
+
+$router->post('/commerce/ca-admin/media/{id}/meta',
+    [MediaLibraryController::class, 'updateMeta'],
     ['store', 'auth', 'csrf']);
 
 // =====================================================================
