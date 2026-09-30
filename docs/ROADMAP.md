@@ -51,6 +51,7 @@ Adding a stage or reordering requires updating this document first.
 | 008G.2| Recently Viewed                        | 2026-09-30 |
 | 008G.3| Message Center                         | 2026-10-01 |
 | 008G.4a| Upload Core + Store Branding          | 2026-09-30 |
+| 008G.4a.1| Media Library Page                   | 2026-09-30 |
 
 Also completed outside the staged sequence:
 
@@ -68,10 +69,31 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G.4a.1 - Media Library Page
+### Stage 008G.4a.2 - Product Media
 
-**Goal:** An admin page at /commerce/ca-admin/media for
-browsing, filtering, and managing uploaded files.
+**Goal:** Wire real product images and category banners
+through the upload pipeline. Replace every picsum.photos
+placeholder on the storefront with a real uploaded file.
+
+**Scope:**
+
+  - Product editor: image upload section. Multiple images
+    per product. Primary image selection. Gallery order.
+  - Product detail page: real gallery.
+  - Product cards across the storefront (catalog, home,
+    search, related, wishlist, recent): real images from
+    the product_images table.
+  - Category editor: banner upload.
+  - Category detail page: banner rendering.
+  - Home page category grid: real images.
+  - CMS pages and blog: hero image (if applicable).
+  - Backfill: none. Existing products have no images;
+    they fall back to a placeholder until a real image
+    is uploaded.
+
+**Depends on:** 008G.4a (upload pipeline) and 008G.4a.1
+(media library page - for the picker interface when
+selecting an existing file).
 
 **Scope:**
 

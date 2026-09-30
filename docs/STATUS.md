@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-09-28
-**Version:** 0.13.0-alpha
-**Stage:** 008G.4a complete. Next: 008G.4a.1 (media library page)
+**Version:** 0.13.1-alpha
+**Stage:** 008G.4a.1 complete. Next: 008G.4a.2 (product media)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
