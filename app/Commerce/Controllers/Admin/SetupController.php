@@ -179,13 +179,16 @@ final class SetupController extends AdminController
 
     private function saveBranding(Request $request): Response
     {
+        // The PWA fields (pwa_name, pwa_short_name,
+        // pwa_theme_color, pwa_background_color) were removed
+        // from this wizard in 008G.4a. They are managed from
+        // Store Settings -> Branding, which also handles logo
+        // and favicon upload. Keeping them here would create
+        // two entry points for the same columns with no
+        // benefit.
         return $this->saveStoreFields($request, [
-            'primary_color'        => ['required' => false, 'validator' => 'hexColor'],
-            'secondary_color'      => ['required' => false, 'validator' => 'hexColor'],
-            'pwa_name'             => ['required' => false, 'max_length' => 100],
-            'pwa_short_name'       => ['required' => false, 'max_length' => 50],
-            'pwa_theme_color'      => ['required' => false, 'validator' => 'hexColor'],
-            'pwa_background_color' => ['required' => false, 'validator' => 'hexColor'],
+            'primary_color'   => ['required' => false, 'validator' => 'hexColor'],
+            'secondary_color' => ['required' => false, 'validator' => 'hexColor'],
         ], 'branding');
     }
 

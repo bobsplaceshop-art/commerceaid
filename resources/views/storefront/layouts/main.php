@@ -61,6 +61,22 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
     <title><?= e($pageTitle) ?></title>
 
+    <?php
+    // Favicon and theme color from the store's branding.
+    // Falls back gracefully when the store has not uploaded
+    // a favicon (no tag rendered) or set a theme color
+    // (uses the design default).
+    $__faviconUrl   = store_favicon_url($store ?? null, 'lg', 'png');
+    $__themeColor   = ($store !== null && !empty($store->pwaThemeColor))
+        ? (string) $store->pwaThemeColor
+        : '#1a1a1a';
+    ?>
+    <?php if ($__faviconUrl !== null): ?>
+        <link rel="icon" type="image/png" href="<?= e($__faviconUrl) ?>">
+        <link rel="apple-touch-icon" href="<?= e($__faviconUrl) ?>">
+    <?php endif; ?>
+    <meta name="theme-color" content="<?= e($__themeColor) ?>">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@400;600&display=swap">

@@ -2,9 +2,10 @@
 /**
  * Setup tab: Branding.
  *
- * Colours and PWA fields are real (write to commerce_stores).
- * Logo and favicon uploads are stubbed until the FileService
- * integration lands.
+ * Only colours are managed here. Logo, favicon, and the PWA
+ * fields (app name, short name, theme colour, background
+ * colour) moved to Store Settings -> Branding in 008G.4a.
+ * This tab links there rather than duplicating the form.
  *
  * @var array  $store
  * @var array  $errors
@@ -66,65 +67,19 @@ $err = fn(string $k) => isset($errors[$k])
 
     <div class="ra-card mb-4">
         <div class="ra-card-header">
-            <h2 class="h6 mb-0">PWA <span class="muted fw-normal">(installable app)</span></h2>
+            <h2 class="h6 mb-0">Logo, favicon, and PWA</h2>
         </div>
         <div class="ra-card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label for="pwa_name" class="form-label">App name</label>
-                    <input type="text" id="pwa_name" name="pwa_name" class="form-control"
-                           value="<?= $val('pwa_name') ?>"
-                           placeholder="Anaya Global">
-                    <div class="form-text">Full name shown when installing the app.</div>
-                </div>
-
-                <div class="col-md-6">
-                    <label for="pwa_short_name" class="form-label">Short name</label>
-                    <input type="text" id="pwa_short_name" name="pwa_short_name" class="form-control"
-                           maxlength="12"
-                           value="<?= $val('pwa_short_name') ?>"
-                           placeholder="Anaya">
-                    <div class="form-text">Shown under the app icon. 12 characters max.</div>
-                </div>
-
-                <div class="col-md-6">
-                    <label for="pwa_theme_color" class="form-label">Theme colour</label>
-                    <div class="d-flex gap-2">
-                        <input type="color" id="pwa_theme_color_picker" value="<?= $val('pwa_theme_color', '#0f172a') ?>"
-                               style="width:44px;height:38px;padding:2px;border-radius:8px;border:1px solid var(--ra-border, #334155);cursor:pointer;background:transparent;"
-                               oninput="document.getElementById('pwa_theme_color').value = this.value">
-                        <input type="text" id="pwa_theme_color" name="pwa_theme_color" class="form-control"
-                               pattern="#[0-9A-Fa-f]{6}"
-                               value="<?= $val('pwa_theme_color', '#0f172a') ?>">
-                    </div>
-                    <div class="form-text">Colour of the browser bar when the app is open.</div>
-                </div>
-
-                <div class="col-md-6">
-                    <label for="pwa_background_color" class="form-label">Background colour</label>
-                    <div class="d-flex gap-2">
-                        <input type="color" id="pwa_background_color_picker" value="<?= $val('pwa_background_color', '#ffffff') ?>"
-                               style="width:44px;height:38px;padding:2px;border-radius:8px;border:1px solid var(--ra-border, #334155);cursor:pointer;background:transparent;"
-                               oninput="document.getElementById('pwa_background_color').value = this.value">
-                        <input type="text" id="pwa_background_color" name="pwa_background_color" class="form-control"
-                               pattern="#[0-9A-Fa-f]{6}"
-                               value="<?= $val('pwa_background_color', '#ffffff') ?>">
-                    </div>
-                    <div class="form-text">Shown while the app is loading.</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="ra-card mb-4">
-        <div class="ra-card-header">
-            <h2 class="h6 mb-0">Assets <span class="muted fw-normal">(coming soon)</span></h2>
-        </div>
-        <div class="ra-card-body">
-            <p class="muted small mb-0">
-                Logo and favicon upload will be enabled once the media library is wired.
-                For now, the platform uses the defaults from <code>config/branding.php</code>.
+            <p class="muted small mb-3">
+                The store logo, favicon, and PWA fields (app name, short name,
+                theme colour, background colour) are managed from Store Settings.
+                That page also handles the file uploads and previews.
             </p>
+            <a href="/commerce/ca-admin/settings?tab=branding"
+               class="ra-btn ra-btn-outline">
+                <i class="bi bi-palette me-1"></i>
+                Open Store Settings &rarr; Branding
+            </a>
         </div>
     </div>
 

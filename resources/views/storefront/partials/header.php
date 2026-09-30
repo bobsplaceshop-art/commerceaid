@@ -85,23 +85,42 @@ $isNavActive = function (string $href) use ($currentPath): bool {
 <header class="sf-header" role="banner">
     <div class="sf-container sf-header-inner">
 
-        <a href="/" class="sf-logo" aria-label="<?= e($brandName) ?> - Home">
-            <span class="sf-logo-emblem" aria-hidden="true">
-                <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" focusable="false">
-                    <!-- Stylized A + globe: a monogram-like mark with a
-                         circular outline and two cross strokes. Pure
-                         SVG so it scales cleanly and can be replaced
-                         via the store builder later. -->
-                    <circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M10 36 L24 10 L38 36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-                    <path d="M10 36 Q24 28 38 36" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"/>
-                    <ellipse cx="24" cy="24" rx="22" ry="8" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"/>
-                </svg>
-            </span>
-            <span class="sf-logo-text">
-                <span class="sf-logo-name"><?= e($brandName) ?></span>
-                <span class="sf-logo-sub">ONLINE SHOP</span>
-            </span>
+        <?php
+        // Uploaded logo takes precedence. When the merchant
+        // uploads a logo in Store Settings, the entire lockup
+        // (emblem + wordmark + subtitle) is replaced by the
+        // image. That matches how Shopify, WooCommerce, and
+        // BigCommerce handle merchant logos: the image is the
+        // mark. If a text wordmark is wanted, it is designed
+        // into the uploaded image.
+        //
+        // With no logo uploaded, the original inline SVG
+        // monogram and the brand wordmark render as before.
+        $__logoUrl = store_logo_url($store ?? null, 'lg', 'png');
+        ?>
+        <a href="/" class="sf-logo<?= $__logoUrl !== null ? ' sf-logo-custom' : '' ?>" aria-label="<?= e($brandName) ?> - Home">
+            <?php if ($__logoUrl !== null): ?>
+                <img src="<?= e($__logoUrl) ?>"
+                     alt="<?= e($brandName) ?>"
+                     class="sf-logo-image">
+            <?php else: ?>
+                <span class="sf-logo-emblem" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" focusable="false">
+                        <!-- Stylized A + globe: a monogram-like mark with a
+                             circular outline and two cross strokes. Pure
+                             SVG so it scales cleanly and can be replaced
+                             via the store builder later. -->
+                        <circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M10 36 L24 10 L38 36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                        <path d="M10 36 Q24 28 38 36" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+                        <ellipse cx="24" cy="24" rx="22" ry="8" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+                    </svg>
+                </span>
+                <span class="sf-logo-text">
+                    <span class="sf-logo-name"><?= e($brandName) ?></span>
+                    <span class="sf-logo-sub">ONLINE SHOP</span>
+                </span>
+            <?php endif; ?>
         </a>
 
         <button type="button"

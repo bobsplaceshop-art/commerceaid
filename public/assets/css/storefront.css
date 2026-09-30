@@ -1456,3 +1456,33 @@ h1, h2, h3, h4 {
         display: none;
     }
 }
+
+/* =====================================================================
+   Custom logo (008G.4a)
+   =====================================================================
+   When a store has uploaded a logo in Store Settings, the
+   entire header lockup (emblem + wordmark + subtitle)
+   is replaced by the uploaded image. The image renders at
+   the same vertical height as the inline SVG lockup so the
+   header stays balanced. Horizontal sizing is automatic.
+   ===================================================================== */
+
+.sf-logo-custom {
+    display: inline-flex;
+    align-items: center;
+}
+
+.sf-logo-image {
+    display: block;
+    height: 48px;
+    width: auto;
+    max-width: 220px;
+    object-fit: contain;
+}
+
+@media (max-width: 640px) {
+    .sf-logo-image {
+        height: 40px;
+        max-width: 160px;
+    }
+}

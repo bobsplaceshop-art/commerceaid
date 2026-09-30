@@ -233,6 +233,137 @@ if (!function_exists('customer_recent_messages')) {
     }
 }
 
+if (!function_exists('store_logo_url')) {
+    /**
+     * The public URL for the current store's uploaded logo, or
+     * null if the store has no logo set.
+     *
+     * Accepts an optional Store argument. When omitted, resolves
+     * the current store from the container. Useful from the
+     * storefront layout where $store is already in scope, and
+     * from anywhere else that needs the same value.
+     *
+     * Static-cached per (store id, variant) pair. The same store
+     * is typically asked for the same variant twice on a page
+     * (header and manifest), and the cache means we hit the DB
+     * once.
+     *
+     * Defensive: any failure returns null. A broken media read
+     * should never break a storefront page.
+     */
+    function store_logo_url(
+        ?\CorporateAid\Commerce\Models\Store $store = null,
+        string $variant = 'lg',
+        string $format = 'png'
+    ): ?string {
+        static $cache = [];
+
+        try {
+            if ($store === null) {
+                $container = \CorporateAid\Core\App::instance()->container();
+                $context = $container->get(
+                    \CorporateAid\Commerce\Context\StoreContext::class
+                );
+                if (!$context->has()) {
+                    return null;
+                }
+                $repo = $container->get(
+                    \CorporateAid\Commerce\Repositories\StoreRepository::class
+                );
+                $store = $repo->findById($context->id());
+                if ($store === null) {
+                    return null;
+                }
+            }
+
+            $fileId = (int) ($store->logoFileId ?? 0);
+            if ($fileId <= 0) {
+                return null;
+            }
+
+            $key = $fileId . ':' . $variant . ':' . $format;
+            if (array_key_exists($key, $cache)) {
+                return $cache[$key];
+            }
+
+            $container = $container ?? \CorporateAid\Core\App::instance()->container();
+            $media = $container->get(
+                \CorporateAid\Commerce\Repositories\MediaRepository::class
+            );
+            $item = $media->findById($fileId);
+            if ($item === null) {
+                $cache[$key] = null;
+                return null;
+            }
+
+            $url = $item->variantUrl($variant, $format);
+            $cache[$key] = $url;
+            return $url;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+}
+
+if (!function_exists('store_favicon_url')) {
+    /**
+     * The public URL for the current store's uploaded favicon,
+     * or null if not set. Same shape as store_logo_url().
+     */
+    function store_favicon_url(
+        ?\CorporateAid\Commerce\Models\Store $store = null,
+        string $variant = 'lg',
+        string $format = 'png'
+    ): ?string {
+        static $cache = [];
+
+        try {
+            if ($store === null) {
+                $container = \CorporateAid\Core\App::instance()->container();
+                $context = $container->get(
+                    \CorporateAid\Commerce\Context\StoreContext::class
+                );
+                if (!$context->has()) {
+                    return null;
+                }
+                $repo = $container->get(
+                    \CorporateAid\Commerce\Repositories\StoreRepository::class
+                );
+                $store = $repo->findById($context->id());
+                if ($store === null) {
+                    return null;
+                }
+            }
+
+            $fileId = (int) ($store->faviconFileId ?? 0);
+            if ($fileId <= 0) {
+                return null;
+            }
+
+            $key = $fileId . ':' . $variant . ':' . $format;
+            if (array_key_exists($key, $cache)) {
+                return $cache[$key];
+            }
+
+            $container = $container ?? \CorporateAid\Core\App::instance()->container();
+            $media = $container->get(
+                \CorporateAid\Commerce\Repositories\MediaRepository::class
+            );
+            $item = $media->findById($fileId);
+            if ($item === null) {
+                $cache[$key] = null;
+                return null;
+            }
+
+            $url = $item->variantUrl($variant, $format);
+            $cache[$key] = $url;
+            return $url;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+}
+
 if (!function_exists('customer_unread_message_count')) {
     /**
      * Unread message count for the currently logged-in customer.
