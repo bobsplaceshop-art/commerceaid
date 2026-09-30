@@ -180,6 +180,11 @@ $status = (string) $val('status', 'draft');
 }
 </style>
 
+<?php /* Product images admin behaviors. Upload zone, picker
+     modal, tile removal, drag reorder, primary radio. Loaded
+     only on this page. */ ?>
+<script src="<?= versioned_asset('js/product-images-admin.js') ?>"></script>
+
 <script>
 (function () {
     // Activate the tab matching the current URL hash (e.g. #tab-seo)
