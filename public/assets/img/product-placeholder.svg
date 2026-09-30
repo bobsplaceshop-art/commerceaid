@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 600 750"
+     preserveAspectRatio="xMidYMid slice"
+     role="img"
+     aria-label="Product image placeholder">
+    <rect width="600" height="750" fill="#f4f5f7"/>
+    <g transform="translate(300, 375)" fill="none"
+       stroke="#c9cfdb" stroke-width="6"
+       stroke-linecap="round" stroke-linejoin="round">
+        <rect x="-90" y="-110" width="180" height="180" rx="12"/>
+        <circle cx="-45" cy="-65" r="18" fill="#c9cfdb" stroke="none"/>
+        <path d="M -90 40 L -20 -30 L 30 20 L 60 -10 L 90 20"/>
+    </g>
+    <text x="300" y="510"
+          text-anchor="middle"
+          font-family="system-ui, -apple-system, sans-serif"
+          font-size="20"
+          fill="#9aa3b3">No image yet</text>
+</svg>

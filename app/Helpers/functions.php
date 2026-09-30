@@ -491,6 +491,75 @@ if (!function_exists('category_image_url')) {
     }
 }
 
+if (!function_exists('product_picture_url')) {
+    /**
+     * The public URL for a product's primary image variant, or
+     * a local placeholder SVG when the product has no image.
+     *
+     * Never returns null. This is the correct call for any
+     * storefront template that renders an image on a card or a
+     * thumbnail. It removes the need to branch at every call
+     * site.
+     *
+     * Uses product_image_url() under the hood. That helper
+     * returns null when the product has no image or when the
+     * media read fails. This wrapper substitutes the placeholder
+     * SVG in that case.
+     *
+     * The placeholder is a static asset served from the store's
+     * own domain. No external origin. picsum.photos was retired
+     * in 008G.4a.2 session 3.
+     */
+    function product_picture_url(
+        ?\CorporateAid\Commerce\Models\Product $product = null,
+        string $variant = 'card'
+    ): string {
+        static $cache = [];
+
+        if ($product === null || $product->id <= 0) {
+            return '/assets/img/product-placeholder.svg';
+        }
+
+        $key = $product->id . ':' . $variant;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        $url = product_image_url($product, $variant, 'webp');
+        $cache[$key] = $url ?? '/assets/img/product-placeholder.svg';
+        return $cache[$key];
+    }
+}
+
+if (!function_exists('category_picture_url')) {
+    /**
+     * The public URL for a category's image variant, or a local
+     * placeholder SVG when the category has no image.
+     *
+     * Same shape as product_picture_url. Never returns null.
+     * Uses category_image_url() under the hood.
+     */
+    function category_picture_url(
+        ?\CorporateAid\Commerce\Models\Category $category = null,
+        string $variant = 'md'
+    ): string {
+        static $cache = [];
+
+        if ($category === null || $category->id <= 0) {
+            return '/assets/img/category-placeholder.svg';
+        }
+
+        $key = $category->id . ':' . $variant;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        $url = category_image_url($category, $variant, 'webp');
+        $cache[$key] = $url ?? '/assets/img/category-placeholder.svg';
+        return $cache[$key];
+    }
+}
+
 if (!function_exists('customer_unread_message_count')) {
     /**
      * Unread message count for the currently logged-in customer.
