@@ -44,6 +44,7 @@ final class FileValidator
         'jpeg' => ['image/jpeg'],
         'png'  => ['image/png'],
         'gif'  => ['image/gif'],
+        'webp' => ['image/webp'],
         'xls'  => ['application/vnd.ms-excel'],
         'xlsx' => [
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

@@ -169,22 +169,6 @@
     // and reload. This is a deliberate trade for a simpler
     // server contract - no staging row, no orphan handling.
 
-    // Cached axis values, read from the uploader's data
-    // attribute. Populated once per page load.
-    var axisCache = null;
-    function getAxisValues() {
-        if (axisCache !== null) return axisCache;
-        var uploader = qs('[data-ra-image-uploader]');
-        if (!uploader) { axisCache = []; return axisCache; }
-        var raw = uploader.getAttribute('data-ra-axis-values') || '[]';
-        try {
-            axisCache = JSON.parse(raw);
-        } catch (e) {
-            axisCache = [];
-        }
-        return axisCache;
-    }
-
     /**
      * Append a new image to the pending set and render a
      * placeholder tile in the gallery grid.
@@ -273,25 +257,6 @@
             ? '<img src="' + thumbUrl + '" alt="" loading="lazy">'
             : '<div class="ra-image-tile-thumb-fallback"><i class="bi bi-image"></i></div>';
 
-        // Read the axes for the swatch select.
-        var axisValues = getAxisValues();
-        var selectOptions = '<option value="">- Not a swatch (gallery photo) -</option>';
-        axisValues.forEach(function (av) {
-            var label = ((av.axis || '') + ': ' + (av.value || '')).replace(/</g, '&lt;');
-            selectOptions += '<option value="' + String(av.id) + '">' + label + '</option>';
-        });
-
-        // Build the swatch field only if there are axes to show.
-        var swatchField = axisValues.length
-            ? '<div class="ra-image-tile-field">' +
-                  '<label class="ra-image-tile-label">Use as swatch image for</label>' +
-                  '<select name="new_images_meta[' + fileId + '][attribute_value_id]" ' +
-                          'class="form-select form-select-sm">' +
-                      selectOptions +
-                  '</select>' +
-              '</div>'
-            : '';
-
         // Note: name attributes here are dynamic strings built from
         // fileId (which is already an int). No user content is
         // interpolated. name and alt are placed via setAttribute /
@@ -319,7 +284,6 @@
                            'maxlength="255" ' +
                            'placeholder="Describe this image">' +
                 '</div>' +
-                swatchField +
                 '<div class="ra-image-tile-actions">' +
                     '<button type="button" ' +
                             'class="ra-btn ra-btn-outline ra-btn-sm" ' +

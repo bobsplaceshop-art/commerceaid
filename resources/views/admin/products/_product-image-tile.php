@@ -7,10 +7,6 @@
  *   $entry       array{image: ProductImage, media: MediaItem}
  *   $index       int   iteration index (unused now, kept for
  *                      future ordering hints)
- *   $axisValues  array<array{id:int, value:string, axis:string, hex:?string}>
- *                The product's variant axis values, flattened
- *                across axes. Used to populate the per-image
- *                swatch-preview assignment dropdown.
  *
  * Every input is scoped with images[<imageId>][...]. The
  * ProductController::syncImages() write path reads them via
@@ -23,19 +19,17 @@
  * primary radio handling) lives in product-images-admin.js.
  */
 
-$entry      = $entry      ?? null;
-$axisValues = $axisValues ?? [];
+$entry = $entry ?? null;
 
 if ($entry === null) {
     return;
 }
 
-$image      = $entry['image'];
-$media      = $entry['media'];
-$imageId    = (int) $image->id;
-$isPrimary  = (bool) $image->isPrimary;
-$altText    = (string) ($image->altText ?? '');
-$assignedAV = $image->attributeValueId;
+$image     = $entry['image'];
+$media     = $entry['media'];
+$imageId   = (int) $image->id;
+$isPrimary = (bool) $image->isPrimary;
+$altText   = (string) ($image->altText ?? '');
 
 // Thumbnail: the md variant in WebP. Matches the media
 // library grid's choice (admin/media/_grid-item.php). The
@@ -94,31 +88,6 @@ $mediaAlt  = $media->altText();
                    value="<?= e($altText) ?>"
                    placeholder="Describe this image">
         </div>
-
-        <?php if ($axisValues !== []): ?>
-        <div class="ra-image-tile-field">
-            <label for="ra-image-av-<?= $imageId ?>"
-                   class="ra-image-tile-label">
-                Use as swatch image for
-            </label>
-            <select id="ra-image-av-<?= $imageId ?>"
-                    name="images[<?= $imageId ?>][attribute_value_id]"
-                    class="form-select form-select-sm">
-                <option value="">- Not a swatch (gallery photo) -</option>
-                <?php foreach ($axisValues as $av): ?>
-                    <option value="<?= (int) $av['id'] ?>"
-                        <?= $assignedAV === (int) $av['id'] ? 'selected' : '' ?>>
-                        <?= e((string) ($av['axis'] ?? '')) ?>: <?= e((string) $av['value']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            <div class="form-text">
-                One image = one option. Upload separate images
-                for each color. Only the Color swatch swaps the
-                hero image on the storefront.
-            </div>
-        </div>
-        <?php endif; ?>
 
         <input type="hidden"
                name="images[<?= $imageId ?>][sort_order]"

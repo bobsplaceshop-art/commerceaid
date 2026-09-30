@@ -44,24 +44,6 @@
 
 $productImages = $productImages ?? [];
 $mediaLibrary  = $mediaLibrary  ?? [];
-$variantAxes   = $variantAxes   ?? [];
-
-// Flatten the axis values into a single list for the tile dropdown.
-// Each entry carries the axis name for grouping in the select.
-$allAxisValues = [];
-foreach ($variantAxes as $axis) {
-    if (empty($axis['values'])) {
-        continue;
-    }
-    foreach ($axis['values'] as $value) {
-        $allAxisValues[] = [
-            'id'    => (int) ($value['id'] ?? 0),
-            'value' => (string) ($value['value'] ?? ''),
-            'hex'   => $value['hex'] ?? null,
-            'axis'  => (string) ($axis['name'] ?? ''),
-        ];
-    }
-}
 
 $isEmpty = count($productImages) === 0;
 ?>
@@ -96,24 +78,11 @@ $isEmpty = count($productImages) === 0;
                ============================================================ */ ?>
         <div class="ra-card mb-3" data-ra-upload-zone>
             <div class="ra-card-body">
-                <?php
-                // Embed axis values as a data attribute so the
-                // JS can build swatch selects for placeholder
-                // tiles created after upload. JSON encoded
-                // through ENT_QUOTES to survive an HTML
-                // attribute context (Pattern 13).
-                $axisJson = htmlspecialchars(
-                    json_encode($allAxisValues, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-                    ENT_QUOTES,
-                    'UTF-8'
-                );
-                ?>
                 <div class="ra-image-uploader"
                      data-ra-image-uploader
                      data-upload-url="/commerce/ca-admin/media/upload"
                      data-context="product-image"
-                     data-product-id="<?= (int) ($product->id ?? 0) ?>"
-                     data-ra-axis-values="<?= $axisJson ?>">
+                     data-product-id="<?= (int) ($product->id ?? 0) ?>">
 
                     <div class="ra-image-uploader-drop"
                          data-ra-uploader-drop>
@@ -173,9 +142,8 @@ $isEmpty = count($productImages) === 0;
 
                     <?php foreach ($productImages as $idx => $entry): ?>
                         <?= view_partial('admin.products._product-image-tile', [
-                            'entry'         => $entry,
-                            'index'         => $idx,
-                            'axisValues'    => $allAxisValues,
+                            'entry' => $entry,
+                            'index' => $idx,
                         ]) ?>
                     <?php endforeach; ?>
 

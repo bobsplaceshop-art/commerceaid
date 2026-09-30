@@ -18,25 +18,8 @@ $inventory   = $inventory   ?? null;
 $attributes  = $attributes  ?? [];
 $activeTab   = $activeTab   ?? 'basic';
 
-$val = function (string $key, $default = '') use ($old, $product) {
-    if (array_key_exists($key, $old)) {
-        return $old[$key];
-    }
-    if ($product === null) {
-        return $default;
-    }
-    return $product->$key ?? $default;
-};
-
-$valBool = function (string $key, bool $default = false) use ($old, $product) {
-    if (array_key_exists($key, $old)) {
-        return !empty($old[$key]);
-    }
-    if ($product === null) {
-        return $default;
-    }
-    return (bool) ($product->$key ?? $default);
-};
+$val     = \CorporateAid\Commerce\Support\EditView::valClosure($old ?? [], $product ?? null);
+$valBool = \CorporateAid\Commerce\Support\EditView::valBoolClosure($old ?? [], $product ?? null);
 
 $err = function (string $key) use ($errors): string {
     return isset($errors[$key])
