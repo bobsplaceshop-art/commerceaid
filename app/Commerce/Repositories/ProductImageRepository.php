@@ -36,10 +36,14 @@ final class ProductImageRepository extends CommerceRepository
     // =================================================================
 
     /**
-     * Every image for a product, ordered by sort_order, id.
-     * Includes gallery images, swatch previews, and variant
-     * overrides. Callers filter by shape via the model's
-     * helpers.
+     * Gallery images for a product, ordered by sort_order, id.
+     * Gallery rows are those with attribute_value_id IS NULL -
+     * product photos that show in the storefront gallery and
+     * the admin gallery grid.
+     *
+     * Swatch previews (attribute_value_id set) are read
+     * separately by swatchPreviewsFor(). Variant overrides
+     * (variant_id set) are not in use yet.
      *
      * @return array<int, ProductImage>
      */
@@ -52,6 +56,7 @@ final class ProductImageRepository extends CommerceRepository
         $rows = $this->db->select(
             "SELECT * FROM `commerce_product_images`
               WHERE `store_id` = ? AND `product_id` = ?
+                AND `attribute_value_id` IS NULL
               ORDER BY `sort_order` ASC, `id` ASC",
             [$this->storeId(), $productId]
         );
