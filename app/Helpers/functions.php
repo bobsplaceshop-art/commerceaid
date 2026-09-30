@@ -364,6 +364,133 @@ if (!function_exists('store_favicon_url')) {
     }
 }
 
+if (!function_exists('product_image_url')) {
+    /**
+     * The public URL for a product's primary image, or null
+     * when the product has no images.
+     *
+     * Accepts an optional Product argument. When omitted,
+     * resolves nothing (returns null) - the caller must pass
+     * a Product in scope. Every storefront view that renders
+     * a product has it.
+     *
+     * Variant and format default to the product card shape:
+     * 400x500 WebP. Callers that render a different size
+     * (product detail, cart line, thumbnail) pass their own.
+     *
+     * Static-cached per (product id, variant, format). The
+     * same product appears multiple times on a page and the
+     * cache means we hit the DB once.
+     *
+     * Defensive: any failure returns null. A broken media read
+     * should never break a storefront page. Callers fall back
+     * to a picsum placeholder when this returns null.
+     */
+    function product_image_url(
+        ?\CorporateAid\Commerce\Models\Product $product = null,
+        string $variant = 'card',
+        string $format = 'webp'
+    ): ?string {
+        static $cache = [];
+
+        if ($product === null || $product->id <= 0) {
+            return null;
+        }
+
+        $key = $product->id . ':' . $variant . ':' . $format;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        try {
+            $container = \CorporateAid\Core\App::instance()->container();
+
+            $imageRepo = $container->get(
+                \CorporateAid\Commerce\Repositories\ProductImageRepository::class
+            );
+            $primary = $imageRepo->primaryFor((int) $product->id);
+            if ($primary === null) {
+                $cache[$key] = null;
+                return null;
+            }
+
+            $media = $container->get(
+                \CorporateAid\Commerce\Repositories\MediaRepository::class
+            );
+            $item = $media->findById($primary->fileId);
+            if ($item === null) {
+                $cache[$key] = null;
+                return null;
+            }
+
+            $url = $item->variantUrl($variant, $format);
+            $cache[$key] = $url;
+            return $url;
+        } catch (\Throwable) {
+            $cache[$key] = null;
+            return null;
+        }
+    }
+}
+
+if (!function_exists('category_image_url')) {
+    /**
+     * The public URL for a category's image, or null when the
+     * category has no image.
+     *
+     * Accepts an optional Category argument. Same shape as
+     * product_image_url.
+     *
+     * Variant and format default to the category card shape:
+     * 800x800 WebP. Category heroes and cards render at
+     * different sizes; callers pass their own variant when
+     * needed.
+     *
+     * Static-cached per (category id, variant, format).
+     * Defensive: any failure returns null.
+     */
+    function category_image_url(
+        ?\CorporateAid\Commerce\Models\Category $category = null,
+        string $variant = 'md',
+        string $format = 'webp'
+    ): ?string {
+        static $cache = [];
+
+        if ($category === null || $category->id <= 0) {
+            return null;
+        }
+
+        $fileId = (int) ($category->imageFileId ?? 0);
+        if ($fileId <= 0) {
+            return null;
+        }
+
+        $key = $fileId . ':' . $variant . ':' . $format;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        try {
+            $container = \CorporateAid\Core\App::instance()->container();
+            $media = $container->get(
+                \CorporateAid\Commerce\Repositories\MediaRepository::class
+            );
+            $item = $media->findById($fileId);
+            if ($item === null) {
+                $cache[$key] = null;
+                return null;
+            }
+
+            $url = $item->variantUrl($variant, $format);
+            $cache[$key] = $url;
+            return $url;
+        } catch (\Throwable) {
+            $cache[$key] = null;
+            return null;
+        }
+    }
+}
+
 if (!function_exists('customer_unread_message_count')) {
     /**
      * Unread message count for the currently logged-in customer.
