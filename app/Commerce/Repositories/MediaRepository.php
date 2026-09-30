@@ -5,7 +5,9 @@ namespace CorporateAid\Commerce\Repositories;
 
 use CorporateAid\Commerce\Models\MediaItem;
 use CorporateAid\Commerce\Models\MediaMeta;
+use CorporateAid\Commerce\Support\GeneratedVariant;
 use CorporateAid\Commerce\Support\MediaProcessor;
+use CorporateAid\Commerce\Support\MediaVariantSet;
 use CorporateAid\Core\Database;
 use CorporateAid\Platform\Models\File;
 use CorporateAid\Platform\Repositories\FileRepository;
@@ -129,7 +131,116 @@ final class MediaRepository
             $meta = $this->findMetaByFileId($stored->id);
         }
 
+        // ---- 4. Generate size variants ----
+        // Only for raster images. Non-image uploads skip this
+        // step entirely.
+        if ($meta !== null && $this->isRaster($stored->mimeType)) {
+            $this->registerVariants(
+                $stored,
+                $absolutePath,
+                $stored->mimeType,
+                $context,
+                $category
+            );
+        }
+
         return new MediaItem($stored, $meta);
+    }
+
+    /**
+     * Generate and register the size variants declared by the
+     * context. Writes each variant to disk, inserts a
+     * core_files row, and links it to the source via
+     * core_media_variants.
+     *
+     * Failures on individual variants are logged and skipped.
+     * A partial variant set is better than a failed upload.
+     */
+    private function registerVariants(
+        File $source,
+        string $sourceAbsolutePath,
+        string $sourceMime,
+        string $context,
+        string $category
+    ): void {
+        $spec = MediaVariantSet::for($context);
+
+        $relativeVariantDir = 'storage/uploads/'
+            . trim($category, '/')
+            . '/variants';
+        $absoluteVariantDir = rtrim($this->files->basePath(), '/')
+            . '/'
+            . $relativeVariantDir;
+
+        // A fresh prefix for this upload's variant set. Every
+        // variant file gets prefix-name.ext. The prefix is a
+        // UUID so it never collides with another upload's
+        // variants.
+        $filenamePrefix = generate_uuid();
+
+        $generated = $this->processor->generateVariants(
+            $sourceAbsolutePath,
+            $sourceMime,
+            $spec,
+            $absoluteVariantDir,
+            $filenamePrefix
+        );
+
+        if ($generated === []) {
+            return;
+        }
+
+        $relativeVariantDir = rtrim($relativeVariantDir, '/');
+
+        foreach ($generated as $variant) {
+            $relativePath = $relativeVariantDir . '/' . $variant->storedName;
+
+            // Register the variant file in core_files.
+            try {
+                $variantFileId = $this->fileRepo->create(
+                    uuid:         $variant->uuid,
+                    originalName: $source->originalName . ' (' . $variant->name . ')',
+                    storedName:   $variant->storedName,
+                    storagePath:  $relativePath,
+                    mimeType:     $variant->mimeType,
+                    extension:    $variant->extension,
+                    sizeBytes:    $variant->sizeBytes,
+                    sha256:       $variant->sha256,
+                    uploadedBy:   $source->uploadedBy,
+                );
+            } catch (\Throwable $e) {
+                // If registering the file fails, remove the
+                // disk artifact so it does not linger.
+                @unlink($variant->absolutePath);
+                continue;
+            }
+
+            // Link the variant to the source.
+            try {
+                $this->db->execute(
+                    "INSERT INTO `core_media_variants`
+                        (`source_file_id`, `variant_file_id`,
+                         `variant_name`, `width`, `height`, `format`)
+                     VALUES (?, ?, ?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE
+                        `variant_file_id` = VALUES(`variant_file_id`),
+                        `width`           = VALUES(`width`),
+                        `height`          = VALUES(`height`)",
+                    [
+                        $source->id,
+                        $variantFileId,
+                        $variant->name,
+                        $variant->width,
+                        $variant->height,
+                        $variant->format,
+                    ]
+                );
+            } catch (\Throwable $e) {
+                // If linking fails, soft-delete the orphan
+                // variant file so it does not accumulate.
+                $this->fileRepo->softDelete($variantFileId);
+            }
+        }
     }
 
     // =================================================================

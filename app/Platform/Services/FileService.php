@@ -177,6 +177,17 @@ final class FileService
     }
 
     /**
+     * The base path this service was constructed with. The
+     * project root, resolved once during bootstrap. Exposed
+     * so other services (e.g. MediaRepository) can compute
+     * absolute paths without duplicating config.
+     */
+    public function basePath(): string
+    {
+        return $this->basePath;
+    }
+
+    /**
      * Map a file category to its subdirectory under storage/uploads/.
      * Categories we don't know about fall back to a generic bucket.
      */

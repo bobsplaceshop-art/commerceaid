@@ -41,6 +41,32 @@ final class MediaItem
     }
 
     /**
+     * Public URL for a generated variant of this file.
+     *
+     * Variants are requested through their source UUID plus
+     * the variant name and format. The variant's own UUID is
+     * never exposed in URLs.
+     *
+     * Example: /media/abc-123/card.webp
+     *
+     * Returns the source URL if $name is empty, so a caller
+     * that has not yet been wired to variants still gets a
+     * working image path.
+     */
+    public function variantUrl(string $name, string $format = 'webp'): string
+    {
+        if ($name === '') {
+            return $this->url();
+        }
+        return '/media/'
+            . rawurlencode($this->file->uuid)
+            . '/'
+            . rawurlencode($name)
+            . '.'
+            . rawurlencode($format);
+    }
+
+    /**
      * Whether this item has image dimensions. True when the
      * meta row exists and both width and height are set.
      */
