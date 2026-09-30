@@ -955,3 +955,144 @@
         height: 120px;
     }
 }
+
+/* =====================================================================
+   Media library page (008G.4a.1)
+   =====================================================================
+   Grid of tiles. Each tile shows a thumbnail, filename,
+   size, dimensions, and category. Actions overflow to the
+   top-right corner on hover. Responsive: 4 columns wide,
+   2 at tablet, 1 at phone.
+   ===================================================================== */
+
+.ra-media-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+@media (max-width: 1100px) {
+    .ra-media-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+@media (max-width: 800px) {
+    .ra-media-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 480px) {
+    .ra-media-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ra-media-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--ra-card-bg, #111c33);
+    border: 1px solid var(--ra-border, #1f2a44);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color .15s ease, transform .15s ease;
+}
+
+.ra-media-tile:hover {
+    border-color: var(--ra-accent, #2563eb);
+}
+
+.ra-media-tile-thumb {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: var(--ra-hover, rgba(148, 163, 184, 0.08));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.ra-media-tile-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.ra-media-tile-thumb-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 2rem;
+    color: var(--ra-muted, #94a3b8);
+}
+
+.ra-media-tile-body {
+    padding: .6rem .75rem .7rem;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+    min-width: 0;
+}
+
+.ra-media-tile-name {
+    font-size: .84rem;
+    font-weight: 500;
+    color: var(--ra-fg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ra-media-tile-meta {
+    font-size: .74rem;
+    color: var(--ra-muted, #94a3b8);
+}
+
+.ra-media-tile-category {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--ra-accent, #2563eb);
+    margin-top: .15rem;
+}
+
+.ra-media-tile-actions {
+    position: absolute;
+    top: .4rem;
+    right: .4rem;
+    display: flex;
+    gap: .25rem;
+    opacity: 0;
+    transition: opacity .15s ease;
+    background: rgba(15, 23, 42, 0.65);
+    border-radius: 6px;
+    padding: .15rem;
+}
+
+[data-theme="light"] .ra-media-tile-actions {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.ra-media-tile:hover .ra-media-tile-actions,
+.ra-media-tile:focus-within .ra-media-tile-actions {
+    opacity: 1;
+}
+
+.ra-media-tile-actions .ra-icon-btn {
+    width: 28px;
+    height: 28px;
+    font-size: .9rem;
+}
+
+/* Touch devices: always show actions since hover is unavailable */
+@media (hover: none) {
+    .ra-media-tile-actions {
+        opacity: 1;
+    }
+}
