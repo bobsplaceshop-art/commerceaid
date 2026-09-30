@@ -144,7 +144,10 @@ $tabs['advanced'] = 'Advanced';
 
         <?php else: ?>
             <!-- ============================== NORMAL TAB ============================== -->
-            <form method="POST" action="/commerce/ca-admin/settings" class="ra-settings-form">
+            <form method="POST"
+                  action="/commerce/ca-admin/settings"
+                  class="ra-settings-form"
+                  enctype="multipart/form-data">
                 <?= csrf_field() ?>
                 <input type="hidden" name="_tab" value="<?= e($activeTab) ?>">
 

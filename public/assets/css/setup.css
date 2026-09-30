@@ -835,3 +835,123 @@
 }
 .ra-editor-surface strong { font-weight: 600; }
 .ra-editor-surface em { font-style: italic; }
+
+/* =====================================================================
+   Settings file upload widget (008G.4a)
+   =====================================================================
+   Renders inside the settings form for any field with
+   type = file. Preview thumbnail on the left, upload
+   controls on the right. Stacks vertically below 640px.
+   ===================================================================== */
+
+.ra-settings-field-file {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.ra-file-field {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: .85rem;
+    background: var(--ra-hover, rgba(148, 163, 184, 0.08));
+    border: 1px solid var(--ra-border, #1f2a44);
+    border-radius: 8px;
+}
+
+.ra-file-preview {
+    flex: 0 0 auto;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ra-card-bg, #111c33);
+    border: 1px solid var(--ra-border, #1f2a44);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.ra-file-preview-img {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.ra-file-preview-empty {
+    color: var(--ra-muted, #94a3b8);
+    font-size: 1.5rem;
+}
+
+.ra-file-controls {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.ra-file-input {
+    display: block;
+    width: 100%;
+    font-size: .88rem;
+    color: var(--ra-fg);
+    padding: .4rem 0;
+}
+
+.ra-file-input::file-selector-button {
+    padding: .35rem .75rem;
+    margin-right: .65rem;
+    border: 1px solid var(--ra-border, #1f2a44);
+    background: var(--ra-card-bg, #111c33);
+    color: var(--ra-fg);
+    border-radius: 6px;
+    font-size: .85rem;
+    cursor: pointer;
+    transition: background-color .12s ease, border-color .12s ease;
+}
+
+.ra-file-input::file-selector-button:hover {
+    background: var(--ra-hover, rgba(148, 163, 184, 0.12));
+    border-color: var(--ra-accent, #2563eb);
+}
+
+.ra-file-meta {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    font-size: .78rem;
+    color: var(--ra-muted, #94a3b8);
+}
+
+.ra-file-current strong {
+    color: var(--ra-fg);
+    font-weight: 600;
+}
+
+.ra-file-remove {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .82rem;
+    color: #f87171;
+    cursor: pointer;
+}
+
+.ra-file-remove input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+@media (max-width: 640px) {
+    .ra-file-field {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .ra-file-preview {
+        width: 100%;
+        height: 120px;
+    }
+}

@@ -56,6 +56,14 @@ final class SettingsController extends AdminController
             ? []
             : StoreSettingDefinitions::forGroup($activeTab);
 
+        // Column-target fields read their current value from
+        // commerce_stores, not from the key-value table.
+        // Merge those into $values so the view sees them under
+        // the same key the definition uses.
+        if ($activeTab !== 'advanced') {
+            $values = $this->mergeColumnValues($activeTab, $values, $definitions);
+        }
+
         // Advanced tab: custom settings only.
         $custom = $activeTab === 'advanced'
             ? $settings->customSettings()
@@ -88,11 +96,20 @@ final class SettingsController extends AdminController
             return Response::redirect('/commerce/ca-admin/settings?tab=' . urlencode($activeTab));
         }
 
+        $savedCount = 0;
+        $fileErrors = [];
+
         foreach ($definitions as $key => $def) {
             $target = (string) ($def['target'] ?? 'key_value');
 
             if ($target === 'column') {
-                $this->saveColumnSetting($key, $def, $request);
+                $outcome = $this->saveColumnSetting($key, $def, $request);
+                if ($outcome === 'saved') {
+                    $savedCount++;
+                } elseif (is_string($outcome)) {
+                    // The outcome is an error message.
+                    $fileErrors[] = $outcome;
+                }
                 continue;
             }
 
@@ -103,6 +120,7 @@ final class SettingsController extends AdminController
                 // Unchecked checkbox sends nothing. Absence means
                 // false. Presence (any value) means true.
                 $settings->set($key, $posted === null ? '0' : '1', $userId);
+                $savedCount++;
                 continue;
             }
 
@@ -112,9 +130,18 @@ final class SettingsController extends AdminController
             }
 
             $settings->set($key, (string) $posted, $userId);
+            $savedCount++;
         }
 
-        $session->flash('success', 'Settings saved.');
+        // Flash a message that reflects what actually happened.
+        if ($fileErrors !== []) {
+            $session->flash('error', implode(' ', $fileErrors));
+        } elseif ($savedCount > 0) {
+            $session->flash('success', 'Settings saved.');
+        } else {
+            $session->flash('info', 'No changes to save.');
+        }
+
         return Response::redirect('/commerce/ca-admin/settings?tab=' . urlencode($activeTab));
     }
 
@@ -191,19 +218,24 @@ final class SettingsController extends AdminController
      *
      * @param array<string,mixed> $def
      */
+    /**
+     * @param array<string,mixed> $def
+     * @return string 'saved' on success, 'skipped' if nothing
+     *                was posted, or an error message string
+     */
     private function saveColumnSetting(
         string $key,
         array $def,
         Request $request
-    ): void {
+    ): string {
         $column = (string) ($def['column'] ?? '');
         if ($column === '') {
-            return;
+            return 'skipped';
         }
 
         $storeContext = $this->container->get(StoreContext::class);
         if (!$storeContext->has()) {
-            return;
+            return 'skipped';
         }
         $storeId = $storeContext->id();
 
@@ -211,20 +243,20 @@ final class SettingsController extends AdminController
 
         // ---- File field ----
         if ($type === 'file') {
-            $this->saveFileColumn($storeId, $column, $def, $key, $request);
-            return;
+            return $this->saveFileColumn($storeId, $column, $def, $key, $request);
         }
 
         // ---- Scalar (string, boolean) ----
         $field = $this->fieldName($key);
         $posted = $request->input($field, null);
         if ($posted === null) {
-            return;
+            return 'skipped';
         }
 
         $value = trim((string) $posted);
         $this->container->get(StoreRepository::class)
             ->updateColumn($storeId, $column, $value === '' ? null : $value);
+        return 'saved';
     }
 
     /**
@@ -238,13 +270,18 @@ final class SettingsController extends AdminController
      *
      * @param array<string,mixed> $def
      */
+    /**
+     * @param array<string,mixed> $def
+     * @return string 'saved' on success, 'skipped' if nothing
+     *                was posted, or an error message string
+     */
     private function saveFileColumn(
         int $storeId,
         string $column,
         array $def,
         string $key,
         Request $request
-    ): void {
+    ): string {
         $field     = $this->fieldName($key);
         $removeKey = $field . '__remove';
         $uploadKey = $field . '__upload';
@@ -255,13 +292,15 @@ final class SettingsController extends AdminController
         if ($request->input($removeKey, null) !== null) {
             $this->container->get(StoreRepository::class)
                 ->updateColumn($storeId, $column, null);
-            return;
+            return 'saved';
         }
 
         $file = $request->file($uploadKey);
         if ($file === null) {
-            // Nothing to do.
-            return;
+            // Nothing was uploaded and nothing was removed.
+            // This is the common case for a save that only
+            // touched text fields on the same tab.
+            return 'skipped';
         }
 
         $context = (string) ($def['media_context'] ?? MediaVariantSet::CONTEXT_GENERAL);
@@ -290,14 +329,73 @@ final class SettingsController extends AdminController
         );
 
         if (is_array($result)) {
-            // Validation or processing failed. Flash the errors
-            // and leave the column unchanged.
-            $session = $this->container->get(\CorporateAid\Core\Session::class);
-            $session->flash('error', implode(' ', $result));
-            return;
+            // Validation or processing failed. Return the
+            // first error as the status. The caller flashes it.
+            return (string) ($result[0] ?? 'The file could not be processed.');
         }
 
         $this->container->get(StoreRepository::class)
             ->updateColumn($storeId, $column, $result->file->id);
+        return 'saved';
+    }
+
+    /**
+     * Merge commerce_stores column values into the $values map
+     * so the settings view sees them under the definition key.
+     *
+     * Only runs when the active tab contains at least one
+     * column-target field. Reads the current store row once.
+     *
+     * @param array<string,string> $values
+     * @param array<string,array<string,mixed>> $definitions
+     * @return array<string,string>
+     */
+    private function mergeColumnValues(
+        string $activeTab,
+        array $values,
+        array $definitions
+    ): array {
+        $hasColumnField = false;
+        foreach ($definitions as $def) {
+            if (($def['target'] ?? 'key_value') === 'column') {
+                $hasColumnField = true;
+                break;
+            }
+        }
+        if (!$hasColumnField) {
+            return $values;
+        }
+
+        $storeContext = $this->container->get(StoreContext::class);
+        if (!$storeContext->has()) {
+            return $values;
+        }
+
+        $store = $this->container->get(StoreRepository::class)
+            ->findById($storeContext->id());
+        if ($store === null) {
+            return $values;
+        }
+
+        foreach ($definitions as $key => $def) {
+            if (($def['target'] ?? 'key_value') !== 'column') {
+                continue;
+            }
+            $column = (string) ($def['column'] ?? '');
+            if ($column === '') {
+                continue;
+            }
+
+            // Map the column name to the Store model property.
+            // $column is snake_case; the model is camelCase.
+            $property = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $column))));
+            if (!property_exists($store, $property)) {
+                continue;
+            }
+            $value = $store->{$property};
+            $values[$key] = $value === null ? '' : (string) $value;
+        }
+
+        return $values;
     }
 }

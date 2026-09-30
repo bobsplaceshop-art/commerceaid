@@ -40,6 +40,8 @@ use CorporateAid\Commerce\Repositories\WishlistRepository;
 use CorporateAid\Commerce\Services\WishlistService;
 use CorporateAid\Commerce\Repositories\RecentViewRepository;
 use CorporateAid\Commerce\Repositories\CustomerNotificationRepository;
+use CorporateAid\Commerce\Repositories\MediaRepository;
+use CorporateAid\Commerce\Support\MediaProcessor;
 use CorporateAid\Commerce\Services\RecentViewService;
 use CorporateAid\Commerce\Services\CustomerNotificationService;
 use CorporateAid\Commerce\Services\CustomerAuthService;
@@ -291,6 +293,28 @@ final class CommerceServiceProvider
             fn() => new CustomerNotificationRepository(
                 $c->get(Database::class),
                 $c->get(StoreContext::class)
+            ));
+
+        // ---------- Media library ----------
+        //
+        // MediaRepository composes the Platform FileService
+        // (for uploads), FileRepository (for core_files
+        // inserts), and MediaProcessor (for EXIF stripping
+        // and variant generation).
+        //
+        // Neither MediaRepository nor MediaProcessor is bound
+        // anywhere else. The container does not auto-construct
+        // classes without explicit bindings, so both must be
+        // registered here.
+        $c->singleton(MediaProcessor::class,
+            fn() => new MediaProcessor());
+
+        $c->singleton(MediaRepository::class,
+            fn() => new MediaRepository(
+                $c->get(Database::class),
+                $c->get(\CorporateAid\Platform\Services\FileService::class),
+                $c->get(\CorporateAid\Platform\Repositories\FileRepository::class),
+                $c->get(MediaProcessor::class)
             ));
 
         // ---------- Middleware ----------

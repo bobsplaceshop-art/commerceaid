@@ -75,6 +75,16 @@ final class MediaRepository
         int $maxMb = FileService::DEFAULT_MAX_MB,
         ?int $userId = null
     ): MediaItem|array {
+        // ---- 0. Cap the caller's size by the context spec ----
+        // The context is authoritative. A caller may pass a
+        // smaller cap, but never a larger one than the context
+        // declares. Without this, a bug in the caller could
+        // let a 5 MB file through a 1 MB field.
+        $spec = MediaVariantSet::for($context);
+        if ($spec->sourceMaxMb < $maxMb) {
+            $maxMb = $spec->sourceMaxMb;
+        }
+
         // ---- 1. Store via Platform's validated pipeline ----
         $stored = $this->files->store($file, $userId, $category, $maxMb);
 

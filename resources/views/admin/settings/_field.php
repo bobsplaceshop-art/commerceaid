@@ -48,6 +48,14 @@ $boolOn = in_array(strtolower(trim($value)), ['1','true','on','yes'], true);
                value="<?= e($value) ?>"
                class="ra-settings-input">
 
+    <?php elseif ($type === 'file'): ?>
+        <?php
+        // File fields use their own partial. The partial
+        // resolves the current file ID to a preview URL and
+        // renders the upload + remove controls.
+        require __DIR__ . '/_field-file.php';
+        ?>
+
     <?php elseif ($type === 'select'): ?>
         <?php $options = is_array($def['options'] ?? null) ? $def['options'] : []; ?>
         <select id="set-<?= e($fieldName) ?>"

@@ -343,6 +343,137 @@ order lifecycle; returns are not.
 These are captured as Open Questions, to be resolved in
 the 008I plan document before code is written.
 
+### Stage 008J - Container Auto-Construction
+
+**Goal:** Eliminate the "forgot to bind" class of bug by
+teaching the container to construct concrete classes on
+demand when they are not explicitly bound.
+
+**Problem:**
+
+The container has no auto-construction. Every class that
+gets resolved via `$container->get(ClassName::class)` needs
+an explicit singleton binding in one of the three service
+providers (Core\App, CommerceServiceProvider, or a
+future product provider).
+
+In a codebase with ~190 classes, this is a silent failure
+mode. A missing binding is not caught by:
+
+  - php -l          (syntax is valid)
+  - PHPStan level 8 (the container resolves by string,
+                     reflection is not followed)
+  - The pre-commit hook (which runs the linter)
+
+The only things that catch it are a browser test or a real
+request. That is expensive.
+
+We hit this bug four times in a single session:
+
+  WishlistRepository             (008G.1 wiring)
+  RecentViewRepository           (008G.2 wiring)
+  CustomerNotificationRepository (008G.3 wiring)
+  MediaRepository                (008G.4a file 10 -> this
+                                  fix)
+
+Each time the symptom was a runtime 500 with a clear but
+late error:
+  "Container: nothing bound for 'Foo\Bar'."
+
+**Solution:**
+
+Add a `build()` method to `Container` that reflects on the
+target class, resolves its constructor parameters
+recursively through the same `get()` method, and caches
+the constructed instance as a singleton.
+
+Resolution order in `get()`:
+
+  1. If the instance is already cached, return it.
+  2. If the class has an explicit binding, use it.
+  3. If the class is a concrete class that exists,
+     auto-construct it.
+  4. Otherwise, throw a clear error.
+
+Explicit bindings always win. The auto-construction path
+is a fallback for the common case where a class has a
+constructor with type-hinted dependencies and no custom
+configuration. Config-dependent bindings (session name
+overrides, base paths, closures with captured state) still
+declare themselves explicitly.
+
+**Guards:**
+
+  - Only instantiate classes that pass `isInstantiable()`.
+    Interfaces, abstract classes, and traits throw.
+  - Type-hinted parameters are resolved recursively.
+    Untyped scalar parameters must have a default value,
+    or the container throws with a clear message.
+  - The construction recipe is cached per class so
+    reflection runs once per class, not once per resolve.
+
+**Deliverables:**
+
+  app/Core/Container.php
+    - New private build(string $class): object
+    - get() gains the fall-through branch
+    - A cached recipe map (class -> ReflectionClass,
+      ReflectionParameter[]) so reflection is cheap
+
+  docs/SPECIFICATION.md
+    - New ADR (ADR-018) documenting the decision and
+      its trade-offs versus explicit-binding-only
+
+  docs/REMEMBER.md
+    - New pattern entry: "Container auto-construction
+      fallback" describing when the fallback fires and
+      when explicit bindings should still be preferred
+
+  Cleanup pass:
+    - Audit every existing binding in App.php and
+      CommerceServiceProvider.php. Some are now redundant
+      (MediaProcessor for example). Decide per binding:
+      keep if the binding does something a constructor
+      cannot (a specific session name, a config value,
+      a captured closure). Remove if the binding is
+      purely `new Foo(...)` with no customization.
+      Removing reduces surface area; keeping is safe.
+
+**Cascade risk:**
+
+The container is Core. Every layer depends on it. Before
+merging:
+
+  1. Test every stage that shipped since the container
+     was last touched: 008D (cart), 008E (checkout),
+     008F (order lifecycle), 008G.1 (wishlist), 008G.2
+     (recently viewed), 008G.3 (message center), 008G.4a
+     (media pipeline).
+  2. Admin dashboard, admin product editor, admin
+     settings — the four most complex admin pages.
+  3. Storefront home, product detail, cart, checkout,
+     account pages.
+  4. Every middleware resolves through the container.
+     Verify none of them break.
+
+**Depends on:** Nothing. Can run as soon as a clean tree
+is available.
+
+**Sequenced:** After 008G.4a closes. Before 008G.4a.1
+(media library page), because the media page will add
+more repository bindings and we want auto-construction
+in place first.
+
+**Why not now, mid-008G.4a:** the media pipeline is
+half-done. Testing 008J requires a clean tree and a
+deliberate end-to-end pass. Bundling the container change
+into a bug fix is how subtle regressions slip in.
+
+**See also:**
+
+  - docs/SPECIFICATION.md ADR-001 (custom MVC framework)
+  - docs/ARCHITECTURE.md section 8 (container conventions)
+
 ### Stage 008H - Returns & Refunds
 
 **Goal:** Customer-initiated return requests. Integrates the
