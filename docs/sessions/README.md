@@ -76,6 +76,7 @@ Short. 30-80 lines. Five sections, in order:
 | 2026-09-30 | 005 | 008G.4a Upload Core - media pipeline, compliance tracker, 008I + 008J logged |
 | 2026-09-30-2 | 006 | 008G.4a.1 Media Library - store scoping via entity_files |
 | 2026-09-30-3 | 007 | 008G.4a.2 session 1/3 - product media backend (schema, model, repo, category image) |
+| 2026-09-30-4 | 008 | 008G.4a.2 session 3/3 - storefront consumption (real images on every surface) |
 
 **Naming:** the `Date` column matches the file name
 (without extension). If two sessions happened on the same
