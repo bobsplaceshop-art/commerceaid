@@ -1227,3 +1227,32 @@ html[data-theme="light"] .ra-table-wrap {
     max-width: 720px;
     width: 90vw;
 }
+
+/* ---- Pending tile state ---- */
+
+.ra-image-tile.is-pending {
+    border-style: dashed;
+    border-color: var(--ra-primary, #7c3aed);
+}
+
+.ra-image-tile.is-pending .ra-image-tile-handle {
+    /* Pending tiles cannot be reordered until they persist -
+       their position is controlled by new_images_order[]. */
+    cursor: not-allowed;
+    opacity: .4;
+}
+
+.ra-image-tile-badge-pending {
+    background: #f59e0b;
+}
+
+.ra-image-tile-thumb-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: #9aa3b3;
+    font-size: 2rem;
+    background: #f4f5f7;
+}

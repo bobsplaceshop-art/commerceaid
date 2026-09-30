@@ -1242,16 +1242,49 @@ final class ProductController extends AdminController
                 }
             }
 
-            // 3. Insertions. The uploader appends file ids to
-            // new_images_order[] in display order. If the order
-            // array is absent, iterate nothing - the tab always
-            // writes the order array when it writes new_images.
+            // 3. Insertions. The uploader and the picker both
+            // append file ids to new_images_order[] in display
+            // order. Optional alt_text and attribute_value_id
+            // for each new row come from new_images_meta[<fileId>]
+            // - set by the JS placeholder tiles that render
+            // immediately after upload, before save.
             $newOrder = $_POST['new_images_order'] ?? [];
+            $newMeta  = $_POST['new_images_meta'] ?? [];
             if (is_array($newOrder)) {
                 foreach ($newOrder as $fileId) {
                     $fileId = (int) $fileId;
-                    if ($fileId > 0) {
-                        $repo->add($productId, $fileId);
+                    if ($fileId <= 0) {
+                        continue;
+                    }
+
+                    $imageId = $repo->add($productId, $fileId);
+                    if ($imageId <= 0) {
+                        continue;
+                    }
+
+                    // Apply per-image metadata if the placeholder
+                    // tile collected any. Missing keys = leave the
+                    // row's defaults in place.
+                    if (is_array($newMeta)
+                        && isset($newMeta[$fileId])
+                        && is_array($newMeta[$fileId])
+                    ) {
+                        $meta = $newMeta[$fileId];
+                        $patch = [];
+
+                        if (array_key_exists('alt_text', $meta)) {
+                            $patch['alt_text'] = trim((string) $meta['alt_text']);
+                        }
+                        if (array_key_exists('attribute_value_id', $meta)) {
+                            $av = $meta['attribute_value_id'];
+                            $patch['attribute_value_id'] = ($av === '' || $av === null || $av === '0')
+                                ? null
+                                : (int) $av;
+                        }
+
+                        if ($patch !== []) {
+                            $repo->update($imageId, $patch);
+                        }
                     }
                 }
             }

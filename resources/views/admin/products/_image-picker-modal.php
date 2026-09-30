@@ -81,7 +81,9 @@ $mediaLibrary = $mediaLibrary ?? [];
                         <li class="ra-media-tile ra-picker-tile"
                             data-ra-picker-tile
                             data-file-id="<?= (int) $file->id ?>"
-                            data-file-name="<?= e($file->originalName) ?>">
+                            data-file-uuid="<?= e($file->uuid) ?>"
+                            data-file-name="<?= e($file->originalName) ?>"
+                            data-file-alt="<?= e($alt) ?>">
 
                             <label class="ra-picker-tile-label">
                                 <input type="checkbox"

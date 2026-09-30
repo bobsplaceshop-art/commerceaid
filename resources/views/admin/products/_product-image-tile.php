@@ -99,38 +99,23 @@ $mediaAlt  = $media->altText();
         <div class="ra-image-tile-field">
             <label for="ra-image-av-<?= $imageId ?>"
                    class="ra-image-tile-label">
-                Show for
+                Use as swatch image for
             </label>
             <select id="ra-image-av-<?= $imageId ?>"
                     name="images[<?= $imageId ?>][attribute_value_id]"
                     class="form-select form-select-sm">
-                <option value="">- Always visible -</option>
-                <?php
-                $lastAxis = null;
-                foreach ($axisValues as $av):
-                    $axisName = (string) ($av['axis'] ?? '');
-                    if ($axisName !== $lastAxis):
-                        if ($lastAxis !== null):
-                            echo '</optgroup>';
-                        endif;
-                        if ($axisName !== ''):
-                            echo '<optgroup label="' . e($axisName) . '">';
-                        endif;
-                        $lastAxis = $axisName;
-                    endif;
-                ?>
+                <option value="">- Not a swatch (gallery photo) -</option>
+                <?php foreach ($axisValues as $av): ?>
                     <option value="<?= (int) $av['id'] ?>"
                         <?= $assignedAV === (int) $av['id'] ? 'selected' : '' ?>>
-                        <?= e((string) $av['value']) ?>
+                        <?= e((string) ($av['axis'] ?? '')) ?>: <?= e((string) $av['value']) ?>
                     </option>
                 <?php endforeach; ?>
-                <?php if ($lastAxis !== null && $lastAxis !== ''): ?>
-                    </optgroup>
-                <?php endif; ?>
             </select>
             <div class="form-text">
-                Swaps the main image when the customer picks
-                this option on the product page.
+                One image = one option. Upload separate images
+                for each color. Only the Color swatch swaps the
+                hero image on the storefront.
             </div>
         </div>
         <?php endif; ?>

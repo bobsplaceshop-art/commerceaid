@@ -120,8 +120,19 @@
                     if (bar) {
                         bar.style.width = Math.round((done / total) * 100) + '%';
                     }
-                    if (data && data.status === 'ok' && data.file_id) {
-                        appendNewImage(data.file_id);
+                    // Server response shape (MediaController::upload):
+                    //   { ok: true, id, uuid, url, name, mime, size,
+                    //     dimensions, variants: [...] }
+                    // The previous version read data.status and
+                    // data.file_id, which do not exist. Every
+                    // upload silently failed.
+                    if (data && data.ok === true && data.id) {
+                        appendNewImage({
+                            fileId: data.id,
+                            uuid:   data.uuid || '',
+                            name:   data.name || '',
+                            alt:    ''
+                        });
                     } else {
                         console.warn('Upload failed', data);
                     }
@@ -158,26 +169,176 @@
     // and reload. This is a deliberate trade for a simpler
     // server contract - no staging row, no orphan handling.
 
-    function appendNewImage(fileId) {
+    // Cached axis values, read from the uploader's data
+    // attribute. Populated once per page load.
+    var axisCache = null;
+    function getAxisValues() {
+        if (axisCache !== null) return axisCache;
+        var uploader = qs('[data-ra-image-uploader]');
+        if (!uploader) { axisCache = []; return axisCache; }
+        var raw = uploader.getAttribute('data-ra-axis-values') || '[]';
+        try {
+            axisCache = JSON.parse(raw);
+        } catch (e) {
+            axisCache = [];
+        }
+        return axisCache;
+    }
+
+    /**
+     * Append a new image to the pending set and render a
+     * placeholder tile in the gallery grid.
+     *
+     * payload: {
+     *   fileId: int,
+     *   uuid:   string,
+     *   name:   string,
+     *   alt:    string
+     * }
+     *
+     * The placeholder tile carries:
+     *   - a thumbnail from /media/{uuid}/card.webp
+     *   - a "Pending - save to keep" badge
+     *   - alt text input named new_images_meta[<fileId>][alt_text]
+     *   - swatch select named new_images_meta[<fileId>][attribute_value_id]
+     *   - a hidden new_images_order[] input carrying the fileId
+     *   - a Remove button that removes the tile and its inputs
+     *
+     * On save, ProductController::syncImages() inserts a
+     * product_images row for the fileId, applies the alt/swatch
+     * from new_images_meta[<fileId>][...], and the next page
+     * load renders the persisted tile.
+     */
+    function appendNewImage(payload) {
+        var fileId = parseInt(payload && payload.fileId, 10);
+        if (!fileId || fileId <= 0) return;
+
+        var uuid = (payload && payload.uuid) || '';
+        var name = (payload && payload.name) || '';
+        var alt  = (payload && payload.alt)  || '';
+
         var container = qs('[data-ra-new-images-container]');
         if (!container) return;
 
         // Dedup - the picker might be reopened and the same file
-        // selected twice.
+        // selected twice, or the uploader might process the same
+        // file twice (retry, double-click).
         var existing = container.querySelector('input[value="' + fileId + '"]');
         if (existing) return;
 
-        var input = document.createElement('input');
-        input.type  = 'hidden';
-        input.name  = 'new_images_order[]';
-        input.value = fileId;
-        container.appendChild(input);
+        // 1. Register the file in the pending container.
+        var hidden = document.createElement('input');
+        hidden.type  = 'hidden';
+        hidden.name  = 'new_images_order[]';
+        hidden.value = String(fileId);
+        container.appendChild(hidden);
 
-        // Show a pending indicator on the uploader so the operator
-        // knows the image is queued. The real tile appears after
-        // the next save.
+        // 2. Ensure the gallery grid exists.
+        var grid = qs('[data-ra-image-grid]');
+        if (!grid) {
+            // Create the grid inside the gallery card if the
+            // product had no images yet (the initial page
+            // load rendered the empty state).
+            var galleryCard = qs('[data-ra-gallery-card]');
+            if (!galleryCard) return;
+
+            var cardBody = galleryCard.querySelector('.ra-card-body');
+            if (!cardBody) return;
+
+            grid = document.createElement('div');
+            grid.className = 'ra-image-grid';
+            grid.setAttribute('data-ra-image-grid', '');
+            grid.setAttribute('data-next-sort', '0');
+            cardBody.appendChild(grid);
+
+            // Reveal the gallery card.
+            galleryCard.hidden = false;
+            var emptyState = qs('[data-ra-empty-state]');
+            if (emptyState) emptyState.hidden = true;
+        }
+
+        // 3. Build the placeholder tile.
+        var tile = document.createElement('div');
+        tile.className = 'ra-image-tile is-pending';
+        tile.setAttribute('data-ra-image-tile', '');
+        tile.setAttribute('data-image-id', '');
+        tile.setAttribute('data-ra-pending-file-id', String(fileId));
+        tile.setAttribute('draggable', 'true');
+
+        var thumbUrl = uuid
+            ? '/media/' + encodeURIComponent(uuid) + '/card.webp'
+            : '';
+
+        var thumbHtml = thumbUrl
+            ? '<img src="' + thumbUrl + '" alt="" loading="lazy">'
+            : '<div class="ra-image-tile-thumb-fallback"><i class="bi bi-image"></i></div>';
+
+        // Read the axes for the swatch select.
+        var axisValues = getAxisValues();
+        var selectOptions = '<option value="">- Not a swatch (gallery photo) -</option>';
+        axisValues.forEach(function (av) {
+            var label = ((av.axis || '') + ': ' + (av.value || '')).replace(/</g, '&lt;');
+            selectOptions += '<option value="' + String(av.id) + '">' + label + '</option>';
+        });
+
+        // Build the swatch field only if there are axes to show.
+        var swatchField = axisValues.length
+            ? '<div class="ra-image-tile-field">' +
+                  '<label class="ra-image-tile-label">Use as swatch image for</label>' +
+                  '<select name="new_images_meta[' + fileId + '][attribute_value_id]" ' +
+                          'class="form-select form-select-sm">' +
+                      selectOptions +
+                  '</select>' +
+              '</div>'
+            : '';
+
+        // Note: name attributes here are dynamic strings built from
+        // fileId (which is already an int). No user content is
+        // interpolated. name and alt are placed via setAttribute /
+        // textContent below, not via string concatenation.
+        tile.innerHTML =
+            '<div class="ra-image-tile-handle" title="Drag to reorder">' +
+                '<i class="bi bi-grip-vertical" aria-hidden="true"></i>' +
+            '</div>' +
+            '<div class="ra-image-tile-thumb">' +
+                '<picture>' + thumbHtml + '</picture>' +
+                '<span class="ra-image-tile-badge ra-image-tile-badge-pending">' +
+                    '<i class="bi bi-hourglass-split" aria-hidden="true"></i> Pending' +
+                '</span>' +
+            '</div>' +
+            '<div class="ra-image-tile-body">' +
+                /* No primary radio on a pending tile - the
+                   image cannot be primary until it is saved.
+                   On the next page load the persisted tile
+                   carries the working radio. */
+                '<div class="ra-image-tile-field">' +
+                    '<label class="ra-image-tile-label">Alt text</label>' +
+                    '<input type="text" ' +
+                           'name="new_images_meta[' + fileId + '][alt_text]" ' +
+                           'class="form-control form-control-sm" ' +
+                           'maxlength="255" ' +
+                           'placeholder="Describe this image">' +
+                '</div>' +
+                swatchField +
+                '<div class="ra-image-tile-actions">' +
+                    '<button type="button" ' +
+                            'class="ra-btn ra-btn-outline ra-btn-sm" ' +
+                            'data-ra-remove-pending>' +
+                        '<i class="bi bi-trash me-1" aria-hidden="true"></i> Remove' +
+                    '</button>' +
+                '</div>' +
+            '</div>';
+
+        // Set the alt input value via DOM (avoids any quoting issue).
+        var altInput = tile.querySelector('input[name^="new_images_meta["]');
+        if (altInput && alt) altInput.value = alt;
+
+        grid.appendChild(tile);
+
+        // 4. Update the pending count on the uploader.
         var uploader = qs('[data-ra-image-uploader]');
         if (uploader) {
+            var count = qsa('input[name="new_images_order[]"]', container).length;
             var pending = uploader.querySelector('[data-ra-uploader-pending]');
             if (!pending) {
                 pending = document.createElement('div');
@@ -185,11 +346,57 @@
                 pending.className = 'ra-image-uploader-pending';
                 uploader.appendChild(pending);
             }
-            pending.textContent = container.children.length +
-                ' image' + (container.children.length === 1 ? '' : 's') +
+            pending.textContent = count +
+                ' new image' + (count === 1 ? '' : 's') +
                 ' queued. Save to add them to the gallery.';
         }
     }
+
+    // Delegated handler for the pending tile's Remove button.
+    // Removes the tile, its meta inputs, and the file id from
+    // new_images_order[]. Nothing to add to delete_images[]
+    // because the row has not been saved yet.
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-ra-remove-pending]');
+        if (!btn) return;
+        e.preventDefault();
+
+        var tile = btn.closest('[data-ra-image-tile]');
+        if (!tile) return;
+
+        var fileId = tile.getAttribute('data-ra-pending-file-id');
+        if (!fileId) return;
+
+        // Remove the tile's meta inputs (alt, swatch) - they are
+        // inside the tile, so removing the tile handles them.
+        // Remove the hidden new_images_order[] entry from the
+        // container.
+        var container = qs('[data-ra-new-images-container]');
+        if (container) {
+            var orderInput = container.querySelector('input[value="' + fileId + '"]');
+            if (orderInput) orderInput.parentNode.removeChild(orderInput);
+        }
+
+        tile.parentNode.removeChild(tile);
+
+        // Update the count.
+        if (container) {
+            var uploader = qs('[data-ra-image-uploader]');
+            var count = qsa('input[name="new_images_order[]"]', container).length;
+            var pending = uploader ? uploader.querySelector('[data-ra-uploader-pending]') : null;
+            if (pending) {
+                if (count === 0) {
+                    pending.textContent = '';
+                } else {
+                    pending.textContent = count +
+                        ' new image' + (count === 1 ? '' : 's') +
+                        ' queued. Save to add them to the gallery.';
+                }
+            }
+        }
+
+        updateEmptyState();
+    });
 
     // ---------- Picker modal ----------
 
@@ -280,7 +487,21 @@
 
         selected.forEach(function (cb) {
             var id = parseInt(cb.value, 10);
-            if (id > 0) appendNewImage(id);
+            if (!id || id <= 0) return;
+
+            // Read the tile's data attributes for uuid / name /
+            // alt. These are set by _image-picker-modal.php.
+            var tile = cb.closest('[data-ra-picker-tile]');
+            var uuid = tile ? (tile.getAttribute('data-file-uuid') || '') : '';
+            var name = tile ? (tile.getAttribute('data-file-name') || '') : '';
+            var alt  = tile ? (tile.getAttribute('data-file-alt')  || '') : '';
+
+            appendNewImage({
+                fileId: id,
+                uuid:   uuid,
+                name:   name,
+                alt:    alt
+            });
         });
 
         closePicker();

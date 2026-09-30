@@ -96,11 +96,24 @@ $isEmpty = count($productImages) === 0;
                ============================================================ */ ?>
         <div class="ra-card mb-3" data-ra-upload-zone>
             <div class="ra-card-body">
+                <?php
+                // Embed axis values as a data attribute so the
+                // JS can build swatch selects for placeholder
+                // tiles created after upload. JSON encoded
+                // through ENT_QUOTES to survive an HTML
+                // attribute context (Pattern 13).
+                $axisJson = htmlspecialchars(
+                    json_encode($allAxisValues, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                    ENT_QUOTES,
+                    'UTF-8'
+                );
+                ?>
                 <div class="ra-image-uploader"
                      data-ra-image-uploader
                      data-upload-url="/commerce/ca-admin/media/upload"
                      data-context="product-image"
-                     data-product-id="<?= (int) ($product->id ?? 0) ?>">
+                     data-product-id="<?= (int) ($product->id ?? 0) ?>"
+                     data-ra-axis-values="<?= $axisJson ?>">
 
                     <div class="ra-image-uploader-drop"
                          data-ra-uploader-drop>
