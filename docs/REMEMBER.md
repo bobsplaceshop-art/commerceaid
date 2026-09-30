@@ -1611,6 +1611,172 @@ partial.
 
 ---
 
+### Pattern 31 - require'd view files share scope; do not shadow caller variables
+
+**Problem:** A view file that is `require`d - not
+`view_partial`'d - runs in the same PHP variable scope as
+its caller and every sibling `require`d before and after
+it. Anything the file assigns leaks forward. A loop
+variable named `$val` in one tab becomes an array in the
+next tab's scope. If the next tab expected `$val` to be
+a closure, the call fails with a confusing error at a
+location that has nothing to do with the actual bug.
+
+**The tell:** a fatal error whose reported file is not
+the file you changed. The error reports the call site;
+the call site is a victim, not the cause. The last
+`require` in the chain that ran before the crash is the
+suspect.
+
+In this codebase specifically: an error that says
+"Array callback must have exactly two elements" or
+"Call to undefined method" or "Call to a member
+function on array" in a tab file, when the tab file
+itself has not been touched.
+
+**The rule:**
+
+1. A `require`-ed view shares scope. A `view_partial()`
+   call does not. Know which one you are writing.
+2. Before adding a variable to a `require`-ed view,
+   list the variables the caller has already defined.
+   In this codebase that list includes at minimum:
+   `$val`, `$valBool`, `$err`, `$product`, `$activeTab`,
+   `$mode`, `$old`, `$errors`, `$categories`, `$brands`,
+   `$categoryIds`, `$tagIds`, `$inventory`, `$attributes`.
+   Any new local variable whose name collides with this
+   list is a latent bug.
+3. Prefer loop variables that are explicitly not in
+   that list. `$axisValue`, `$tileIndex`, `$slotEntry` -
+   names that describe the iteration, not the value.
+4. If a `require`-ed view needs to compute a temporary
+   variable, wrap the computation in an IIFE or a
+   function. `(function () { ... })()` runs in its own
+   scope. No leakage.
+
+**Where we hit it:** Stage 008G.4a.2, File 24, session
+2026-09-30. The variant-images card in `_tab_images.php`
+iterated axis values with `foreach (... as $val)`.
+`$val` is a closure defined at the top of `edit.php`
+(line 21) and read by every other tab. The moment the
+loop ran, `$val` became an array. The next required file
+`_tab_pricing.php` called `$val('taxStatus', 'taxable')`
+on the array and died. The stack trace pointed at
+`_tab_pricing.php:5` - a file nobody had touched. The
+debug cycle took two hours because the reported location
+was correct but not the cause.
+
+**Related:**
+
+  - Pattern 28 (`view_partial` does not inherit outer
+    scope). Pattern 31 is the reverse: a `require`-ed
+    view does inherit outer scope, and it can pollute
+    that scope.
+  - Pattern 26 (shared partial guards reflect the
+    partial's own requirement). Pattern 26 is about a
+    partial failing to fire; Pattern 31 is about a
+    require'd file firing and doing damage.
+
+**Prevention checklist for adding a `require`-ed view
+file:**
+
+  1. Read the caller. List every variable it defines
+     before the require line.
+  2. In your new file, do not assign to any of those
+     names.
+  3. Do not use loop variables that look like shortcuts
+     (`$val`, `$item`, `$v`). Those names collide with
+     the codebase's conventions.
+  4. After writing the file, view the rendered page. A
+     sibling tab suddenly failing is the symptom.
+
+---
+
+### Pattern 32 - contract drift between producer and consumer shapes
+
+**Problem:** Two producers return data representing the
+same concept but with different key names. The consumer
+was written against one shape and later repointed at
+the other. Every read of a nonexistent key is guarded
+by `?? default`, so the read silently returns the
+default. No error. No exception. No log entry. The
+consumer produces empty output and the operator sees
+a feature that "does not work" with no failure signal.
+
+**The tell:** a conditional that should be true is
+false. A loop that should iterate is empty. A card
+that should render does not. A form field that should
+show a value is blank. All with no error in the log
+and no exception in the browser console.
+
+The specific tell for this codebase: a `?? 0`,
+`?? ''`, or `?? null` in a view or controller that
+guards a read of an array key which may or may not
+exist in the shape being iterated. Grep for `?? ` in
+the consumer. Every match is a candidate.
+
+**The rule:**
+
+1. When repointing a consumer at a different producer,
+   read the producer's exact return shape. Print it
+   from a CLI script (`print_r`, `var_export`, or
+   `json_encode` with `JSON_PRETTY_PRINT`). Read the
+   keys with your eyes.
+2. Grep the consumer for reads of every key. A read
+   guarded by `?? default` is not safe - it is
+   silently ambiguous. A missing key produces the
+   default and no diagnostics.
+3. Prefer explicit `array_key_exists` checks when the
+   value matters. `$row['x'] ?? 0` hides a mistake;
+   `array_key_exists('x', $row) ? (int) $row['x'] : 0`
+   is longer but honest, and PHPStan can flag a
+   missing key at analysis time if the shape is
+   annotated.
+4. When two producers exist for the same concept,
+   document the shape of each at the top of the method
+   that produces it. `swatchAxesFor()` returns
+   `attribute_value_id`; `categoryVariantAxes()`
+   returns `id`. Both are "the value's id". Naming
+   them consistently across the codebase would be
+   ideal, but where the two already exist, the docblock
+   is the second-best defense.
+
+**Where we hit it:** Stage 008G.4a.2, File 24, session
+2026-09-30. The variant-images card in `_tab_images.php`
+read `$axisValue['id']`. But `showEdit()` had been
+repointed (File 24a) at `swatchAxesFor()`, which
+returns `attribute_value_id` on each value. The `?? 0`
+guard turned the miss into a zero, the
+`if ($valueId <= 0) continue;` skipped every iteration,
+and `$colorValues` stayed empty. The card did not
+render. No error, no log line, no console warning.
+
+**Related:**
+
+  - Pattern 15 (snake_case vs camelCase in views). Same
+    family: same concept, different key. Pattern 15 was
+    fixed by a shared closure that translates between
+    the two names. Pattern 32 is the shape-drift
+    analogue: two producer methods, two key sets.
+  - Pattern 26 (guards that fire on the wrong caller).
+    Pattern 26 is about a guard that silently skips a
+    whole partial. Pattern 32 is about individual reads
+    that silently fall back on defaults.
+
+**Prevention checklist when repointing a consumer:**
+
+  1. Print the new producer's exact output shape.
+  2. Diff the keys against every read in the consumer.
+  3. Any read guarded by `?? default` is a candidate
+     for silent failure. Verify each by hand.
+  4. After the change, log the shape at runtime (a
+     temporary `error_log` with the count of the built
+     structure). If the count is 0 where it should be
+     N, the drift is active.
+  5. Remove the temporary log once the shape is stable.
+
+---
+
 ## 19. Documents to Read First When Joining
 
 If you are new to this project and need to get up to speed
