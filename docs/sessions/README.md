@@ -71,10 +71,16 @@ Short. 30-80 lines. Five sections, in order:
 |------|---------|-------|
 | 2026-09-28 | 001 | 008G close - search, gallery, responsive audit, four admin button bugs |
 | 2026-09-29 | 002 | 008G.1 Wishlist - full stack, Patterns 28 & 29 added |
-| 2026-09-30 | 003 | 008G.2 Recently Viewed - full stack, no new patterns |
-| 2026-10-01 | 004 | 008G.3 Message Center - self-contained, Pattern 30 added |
-| 2026-10-02 | 005 | 008G.4a Upload Core - media pipeline, compliance tracker, 008I + 008J logged |
-| 2026-09-30 | 006 | 008G.4a.1 Media Library (second session of the day) |
+| 2026-09-29-2 | 003 | 008G.2 Recently Viewed - full stack, no new patterns |
+| 2026-09-29-3 | 004 | 008G.3 Message Center - self-contained, Pattern 30 added |
+| 2026-09-30 | 005 | 008G.4a Upload Core - media pipeline, compliance tracker, 008I + 008J logged |
+| 2026-09-30-2 | 006 | 008G.4a.1 Media Library - store scoping via entity_files |
+
+**Naming:** the `Date` column matches the file name
+(without extension). If two sessions happened on the same
+calendar day, the second is `YYYY-MM-DD-2.md` and the third
+is `YYYY-MM-DD-3.md`. The session number is a monotonic
+counter across all sessions, unrelated to the date.
 
 ## Why Not Just git log
 
