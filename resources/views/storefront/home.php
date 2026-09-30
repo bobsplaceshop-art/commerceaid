@@ -208,7 +208,7 @@ $trustRow = [
                 <?php foreach ($topCategories as $c): ?>
                     <a href="/categories/<?= e(rawurlencode($c->slug)) ?>" class="sf-home-category-card">
                         <div class="sf-home-category-image">
-                            <img src="<?= e($seedImage($c->slug, 'cat')) ?>"
+                            <img src="<?= e(category_picture_url($c, 'md')) ?>"
                                  alt=""
                                  loading="lazy"
                                  width="600"

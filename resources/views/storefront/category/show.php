@@ -14,9 +14,14 @@
  *   Category data-sf-category-id="{id}"
  *
  * Images:
- *   Hero banner uses picsum.photos seeded by "category-{slug}" so
- *   it is deterministic per category. Replaced by real banner
- *   media when uploads land.
+ *   Hero banner uses category_picture_url() at the lg variant
+ *   (1600x1600). The image is CSS-cropped into the 3:1 hero
+ *   container. Falls back to a local placeholder SVG when the
+ *   category has no uploaded image.
+
+ *   Follow-up: a wide (1600x600) variant on the category-image
+ *   context would preserve more composition than a square
+ *   cropped to 3:1. Logged for a future small stage.
  */
 
 $category = $category ?? null;
@@ -33,7 +38,7 @@ $total = (int) $result['total'];
 $page  = (int) $result['page'];
 $pages = (int) $result['pages'];
 
-$heroImage = 'https://picsum.photos/seed/' . rawurlencode('category-' . $category->slug) . '/1200/400';
+$heroImage = category_picture_url($category, 'lg');
 
 /**
  * Page URL preserving only the page param.

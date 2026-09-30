@@ -12,16 +12,14 @@
  *   Each card carries data-sf-category-id="{id}".
  *
  * Images:
- *   Uses picsum.photos seeded by category slug. Deterministic per
- *   category. Replaced by real category images when uploads land.
+ *   The category's uploaded image, via category_picture_url().
+ *   Falls back to a local placeholder SVG when the category has
+ *   no uploaded image. Never null.
  */
 
 $categories = $categories ?? [];
 $totalCount = $totalCount ?? count($categories);
 
-$placeholderImage = function (string $seed, int $w = 500, int $h = 650): string {
-    return 'https://picsum.photos/seed/' . rawurlencode($seed) . '/' . $w . '/' . $h;
-};
 ?>
 
 <div class="sf-container sf-categories-index" data-sf-page="categories">
@@ -61,7 +59,7 @@ $placeholderImage = function (string $seed, int $w = 500, int $h = 650): string 
                    data-sf-category-id="<?= (int) $c->id ?>">
 
                     <div class="sf-category-card-image">
-                        <img src="<?= e($placeholderImage($c->slug, 500, 650)) ?>"
+                        <img src="<?= e(category_picture_url($c, 'md')) ?>"
                              alt=""
                              loading="lazy"
                              width="500"
