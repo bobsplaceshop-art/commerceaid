@@ -100,7 +100,7 @@ $flashOk = $flashOk ?? null;
 
                     <?php
                     $detailUrl = '/products/' . rawurlencode($product->slug);
-                    $imageUrl  = 'https://picsum.photos/seed/' . rawurlencode($product->slug) . '/600/750';
+                    $imageUrl  = product_picture_url($product, 'card');
                     $onSale    = $product->isOnSale();
                     $stockClass = 'sf-stock-in';
                     $stockLabel = 'In stock';
