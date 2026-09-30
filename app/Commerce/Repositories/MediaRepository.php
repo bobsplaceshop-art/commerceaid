@@ -325,6 +325,46 @@ final class MediaRepository
     // =================================================================
 
     /**
+     * Resolve a specific size variant for a source file,
+     * addressed by the source's UUID plus the variant name
+     * and format.
+     *
+     * Returns the variant file wrapped as a MediaItem, or
+     * null if the source does not exist, the variant does
+     * not exist, or either file is soft-deleted.
+     */
+    public function findVariantBySourceUuid(
+        string $sourceUuid,
+        string $variantName,
+        string $format
+    ): ?MediaItem {
+        if ($sourceUuid === '' || $variantName === '' || $format === '') {
+            return null;
+        }
+
+        $row = $this->db->selectOne(
+            "SELECT vf.*
+               FROM `core_media_variants` cv
+               JOIN `core_files` sf ON sf.`id` = cv.`source_file_id`
+               JOIN `core_files` vf ON vf.`id` = cv.`variant_file_id`
+              WHERE sf.`uuid` = ?
+                AND sf.`deleted_at` IS NULL
+                AND cv.`variant_name` = ?
+                AND cv.`format` = ?
+                AND vf.`deleted_at` IS NULL
+              LIMIT 1",
+            [$sourceUuid, $variantName, $format]
+        );
+
+        if ($row === null) {
+            return null;
+        }
+
+        $file = File::fromRow($row);
+        return new MediaItem($file, $this->findMetaByFileId($file->id));
+    }
+
+    /**
      * Soft-delete a file. Delegates to FileService, which
      * unlinks every entity reference and soft-deletes the
      * file row.

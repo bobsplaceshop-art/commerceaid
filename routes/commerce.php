@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 use CorporateAid\Core\Router;
 use CorporateAid\Commerce\Controllers\Pwa\ManifestController;
+use CorporateAid\Commerce\Controllers\Admin\MediaController;
+use CorporateAid\Commerce\Controllers\MediaServeController;
 use CorporateAid\Commerce\Controllers\Admin\DashboardController;
 use CorporateAid\Commerce\Controllers\Admin\SettingsController;
 use CorporateAid\Commerce\Controllers\Admin\LegalPageController;
@@ -20,11 +22,50 @@ use CorporateAid\Commerce\Controllers\Admin\CustomerApprovalController;
 $router->get('/manifest.json', [ManifestController::class, '__invoke']);
 
 // =====================================================================
+// Public - media serving
+// =====================================================================
+//
+// The UUID is the public reference. Numeric file IDs are
+// never exposed in URLs. No authentication - uploaded media
+// (store logos, product images) is publicly visible by
+// design. The UUID scheme prevents enumeration, not access.
+//
+//   GET /media/{uuid}                      source file
+//   GET /media/{uuid}/{variant}.{format}   size variant
+//
+// The route for the variant uses a dot in {variant} so
+// /media/{uuid}/card.webp parses as variant="card" and
+// format="webp". The pattern below matches both forms.
+$router->get('/media/{uuid}',
+    [MediaServeController::class, 'serve'],
+    ['store']);
+
+$router->get('/media/{uuid}/{variant}.{format}',
+    [MediaServeController::class, 'serve'],
+    ['store']);
+
+// =====================================================================
 // Admin - dashboard
 // =====================================================================
 $router->get('/commerce/ca-admin',
     [DashboardController::class, 'index'],
     ['store', 'auth']);
+
+// =====================================================================
+// Admin - media library
+// =====================================================================
+//
+// AJAX endpoints. Both return JSON, not HTML.
+//
+//   POST /commerce/ca-admin/media/upload   multipart
+//   POST /commerce/ca-admin/media/delete   form data
+$router->post('/commerce/ca-admin/media/upload',
+    [MediaController::class, 'upload'],
+    ['store', 'auth', 'csrf']);
+
+$router->post('/commerce/ca-admin/media/delete',
+    [MediaController::class, 'delete'],
+    ['store', 'auth', 'csrf']);
 
 // =====================================================================
 // Admin - setup / settings hub
