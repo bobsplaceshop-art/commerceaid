@@ -61,7 +61,12 @@ final class MediaRepository
     /**
      * Process an uploaded file into the media library.
      *
+     * $storeId is required. Every upload is linked to a
+     * store via core_entity_files so the media library page
+     * can scope its listing.
+     *
      * @param array{name:string,type:string,tmp_name:string,error:int,size:int} $file
+     * @param int    $storeId   the store that owns this file
      * @param string $category  routing category for storage subdirectory
      * @param string $context   media meta context ('store-logo', etc.)
      * @param int    $maxMb     size cap in MB
@@ -70,6 +75,7 @@ final class MediaRepository
      */
     public function storeFromUpload(
         array $file,
+        int $storeId,
         string $category,
         string $context,
         int $maxMb = FileService::DEFAULT_MAX_MB,
@@ -154,7 +160,43 @@ final class MediaRepository
             );
         }
 
+        // ---- 5. Link to the store ----
+        // Every upload writes a core_entity_files row so the
+        // media library page can scope its listing. Idempotent
+        // via the UNIQUE key.
+        if ($storeId > 0) {
+            $this->linkToStore($stored->id, $storeId, $context, $userId);
+        }
+
         return new MediaItem($stored, $meta);
+    }
+
+    /**
+     * Write a core_entity_files link from a file to a store.
+     *
+     * Idempotent via the UNIQUE key on
+     * (file_id, entity_type, entity_id, file_category).
+     * INSERT IGNORE turns a duplicate into a silent skip, so
+     * re-uploading the same file for the same store and
+     * context is a no-op.
+     */
+    public function linkToStore(
+        int $fileId,
+        int $storeId,
+        string $category,
+        ?int $userId = null
+    ): void {
+        if ($fileId <= 0 || $storeId <= 0) {
+            return;
+        }
+
+        $this->db->execute(
+            "INSERT IGNORE INTO `core_entity_files`
+                (`file_id`, `entity_type`, `entity_id`,
+                 `file_category`, `linked_by`)
+             VALUES (?, 'store', ?, ?, ?)",
+            [$fileId, $storeId, $category, $userId]
+        );
     }
 
     /**
@@ -254,6 +296,58 @@ final class MediaRepository
     }
 
     // =================================================================
+    // Usage queries
+    // =================================================================
+
+    /**
+     * How many entities reference this file. Used by the
+     * media page to decide whether a file can be deleted
+     * without leaving a dangling reference.
+     */
+    public function usageCountForFile(int $fileId): int
+    {
+        if ($fileId <= 0) {
+            return 0;
+        }
+
+        return (int) $this->db->scalar(
+            "SELECT COUNT(*) FROM `core_entity_files`
+              WHERE `file_id` = ?",
+            [$fileId]
+        );
+    }
+
+    /**
+     * Every entity reference for a file. Used by the delete
+     * modal to show "used by: store logo, product #42".
+     *
+     * @return array<int, array{entity_type:string, entity_id:int, file_category:string}>
+     */
+    public function findUsageForFile(int $fileId): array
+    {
+        if ($fileId <= 0) {
+            return [];
+        }
+
+        $rows = $this->db->select(
+            "SELECT `entity_type`, `entity_id`, `file_category`
+               FROM `core_entity_files`
+              WHERE `file_id` = ?
+              ORDER BY `entity_type` ASC, `entity_id` ASC",
+            [$fileId]
+        );
+
+        return array_map(
+            fn ($r) => [
+                'entity_type'   => (string) $r['entity_type'],
+                'entity_id'     => (int)    $r['entity_id'],
+                'file_category' => (string) $r['file_category'],
+            ],
+            $rows
+        );
+    }
+
+    // =================================================================
     // Reads
     // =================================================================
 
@@ -328,6 +422,142 @@ final class MediaRepository
             $out[] = new MediaItem($f, $metasByFileId[$f->id] ?? null);
         }
         return $out;
+    }
+
+    // =================================================================
+    // Paginated listing for the media library page
+    // =================================================================
+
+    /**
+     * List files scoped to a store, with optional filters and
+     * pagination.
+     *
+     * Files are scoped by joining core_entity_files on
+     * entity_type='store' and entity_id=$storeId. A file
+     * uploaded by another store does not appear.
+     *
+     * @param array{q?:string, mime?:string, category?:string, sort?:string} $filters
+     * @return array{items:array<int,MediaItem>, total:int, page:int, per_page:int, pages:int}
+     */
+    public function paginateForStore(
+        int $storeId,
+        array $filters = [],
+        int $page = 1,
+        int $perPage = 24
+    ): array {
+        if ($storeId <= 0) {
+            return [
+                'items'    => [],
+                'total'    => 0,
+                'page'     => 1,
+                'per_page' => $perPage,
+                'pages'    => 1,
+            ];
+        }
+
+        $perPage = max(1, min($perPage, 100));
+        $page    = max(1, $page);
+
+        $where  = [
+            "ef.`entity_type` = 'store'",
+            "ef.`entity_id` = ?",
+            "f.`deleted_at` IS NULL",
+        ];
+        $params = [$storeId];
+
+        $q = trim((string) ($filters['q'] ?? ''));
+        if ($q !== '') {
+            $where[]  = "f.`original_name` LIKE ?";
+            $params[] = '%' . $q . '%';
+        }
+
+        $mime = trim((string) ($filters['mime'] ?? ''));
+        if ($mime !== '') {
+            $where[]  = "f.`mime_type` LIKE ?";
+            $params[] = $mime . '%';
+        }
+
+        $category = trim((string) ($filters['category'] ?? ''));
+        if ($category !== '') {
+            $where[]  = "ef.`file_category` = ?";
+            $params[] = $category;
+        }
+
+        $whereSql = implode(' AND ', $where);
+
+        $sort = (string) ($filters['sort'] ?? 'newest');
+        $orderBy = match ($sort) {
+            'oldest' => "f.`created_at` ASC, f.`id` ASC",
+            'name'   => "f.`original_name` ASC",
+            'size'   => "f.`size_bytes` DESC",
+            default  => "f.`created_at` DESC, f.`id` DESC",
+        };
+
+        $total = (int) $this->db->scalar(
+            "SELECT COUNT(*)
+               FROM `core_files` f
+               INNER JOIN `core_entity_files` ef ON ef.`file_id` = f.`id`
+              WHERE {$whereSql}",
+            $params
+        );
+
+        $pages  = max(1, (int) ceil($total / $perPage));
+        $page   = min($page, $pages);
+        $offset = ($page - 1) * $perPage;
+
+        $rows = $this->db->select(
+            "SELECT f.*
+               FROM `core_files` f
+               INNER JOIN `core_entity_files` ef ON ef.`file_id` = f.`id`
+              WHERE {$whereSql}
+              ORDER BY {$orderBy}
+              LIMIT {$perPage} OFFSET {$offset}",
+            $params
+        );
+
+        $fileIds = [];
+        $files   = [];
+        foreach ($rows as $row) {
+            $files[]   = File::fromRow($row);
+            $fileIds[] = (int) $row['id'];
+        }
+        $metasByFileId = $this->findMetasByFileIds($fileIds);
+
+        $items = [];
+        foreach ($files as $f) {
+            $items[] = new MediaItem($f, $metasByFileId[$f->id] ?? null);
+        }
+
+        return [
+            'items'    => $items,
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'pages'    => $pages,
+        ];
+    }
+
+    /**
+     * Distinct file categories that exist for a store. Used
+     * by the media page's category filter dropdown.
+     *
+     * @return array<int, string>
+     */
+    public function categoriesForStore(int $storeId): array
+    {
+        if ($storeId <= 0) {
+            return [];
+        }
+
+        $rows = $this->db->select(
+            "SELECT DISTINCT `file_category`
+               FROM `core_entity_files`
+              WHERE `entity_type` = 'store' AND `entity_id` = ?
+              ORDER BY `file_category` ASC",
+            [$storeId]
+        );
+
+        return array_map(fn ($r) => (string) $r['file_category'], $rows);
     }
 
     // =================================================================

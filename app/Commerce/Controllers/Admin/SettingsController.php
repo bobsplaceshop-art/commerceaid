@@ -106,8 +106,11 @@ final class SettingsController extends AdminController
                 $outcome = $this->saveColumnSetting($key, $def, $request);
                 if ($outcome === 'saved') {
                     $savedCount++;
-                } elseif (is_string($outcome)) {
-                    // The outcome is an error message.
+                } elseif ($outcome === 'skipped') {
+                    // Nothing to do for this field. Not an
+                    // error. Do not flash.
+                } else {
+                    // Any other string is an error message.
                     $fileErrors[] = $outcome;
                 }
                 continue;
@@ -322,6 +325,7 @@ final class SettingsController extends AdminController
 
         $result = $media->storeFromUpload(
             $file,
+            $storeId,
             $category,
             $context,
             $maxMb,

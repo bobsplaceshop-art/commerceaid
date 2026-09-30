@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace CorporateAid\Commerce\Controllers\Admin;
 
+use CorporateAid\Commerce\Context\StoreContext;
 use CorporateAid\Commerce\Repositories\MediaRepository;
 use CorporateAid\Commerce\Support\MediaVariantSet;
 use CorporateAid\Core\Auth;
@@ -65,10 +66,20 @@ final class MediaController extends AdminController
         $auth   = $this->container->get(Auth::class);
         $userId = $auth->user()?->id;
 
+        $storeContext = $this->container->get(StoreContext::class);
+        $storeId = $storeContext->has() ? $storeContext->id() : 0;
+        if ($storeId <= 0) {
+            return Response::json([
+                'ok'     => false,
+                'errors' => ['No store context. Cannot store a media file.'],
+            ], 400);
+        }
+
         $media = $this->container->get(MediaRepository::class);
 
         $result = $media->storeFromUpload(
             $file,
+            $storeId,
             $category,
             $context,
             $maxMb,
