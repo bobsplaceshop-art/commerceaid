@@ -98,6 +98,7 @@ final class ProductController extends AdminController
             'attributes'    => [],
             'productImages' => [],
             'mediaLibrary'  => $this->resolveMediaLibrary(),
+            'variantAxes'   => [],
             'activeTab'     => (string) $request->query('tab', 'basic'),
         ]);
     }
@@ -141,6 +142,7 @@ final class ProductController extends AdminController
             'inventory'     => $productInventory,
             'productImages' => $productImages,
             'mediaLibrary'  => $mediaItems,
+            'variantAxes'   => $this->categoryVariantAxes($product->id),
             'activeTab'     => (string) $request->query('tab', 'basic'),
         ]);
     }
