@@ -219,6 +219,122 @@ System messages, order updates, promotions. Reads from
 **Depends on:** Stage 008F (order status events feed the
 Order Updates tab), Stage 008F.1 (shell).
 
+### Stage 008I - Newsletter & Email Campaigns
+
+**Goal:** An inbuilt newsletter and campaign system. No
+Mailchimp, no Klaviyo, no third-party marketing processor.
+The subscriber list, the campaigns, and the sending
+infrastructure all live inside the store's own deployment.
+
+**Why inbuilt:**
+
+  1. DSGVO data transfer. Sending email addresses to a
+     US-owned marketing service makes that service a
+     processor and requires Standard Contractual Clauses,
+     a Transfer Impact Assessment, and specific
+     disclosures under Schrems II. Every customer who
+     used the platform would have to do that work
+     themselves if the platform relied on an external
+     service.
+
+  2. Cost. Mailchimp's free tier caps at 500 contacts and
+     1,000 sends/month. Beyond that it is $20-100+/month
+     depending on list size. The store's own SMTP provider
+     is the only ongoing cost.
+
+  3. Vendor lock-in. Every integration with an external
+     marketing service is a maintenance burden the
+     platform's customers inherit. No API changes, no
+     deprecations, no billing surprises.
+
+  4. Consent records. German law requires provable
+     double opt-in: consent timestamp, source, subscriber
+     IP. Mailchimp provides this. So can the platform,
+     and the customer owns the record.
+
+**Deliverables:**
+
+  Schema:
+    commerce_subscribers                 email, status,
+                                         consent timestamp,
+                                         consent IP, source,
+                                         confirmation token,
+                                         confirmed_at,
+                                         unsubscribed_at,
+                                         unsubscribe_reason
+    commerce_subscriber_lists            named lists
+                                         (newsletter, product
+                                         updates, promotions)
+    commerce_subscriber_list_members     subscriber <-> list
+    commerce_email_campaigns             subject, body,
+                                         list, status,
+                                         sent_at, stats
+    commerce_email_queue                 pending sends
+    commerce_email_events                opens, clicks,
+                                         bounces, unsubscribes
+
+  Admin:
+    /commerce/ca-admin/subscribers       list + filter + export
+    /commerce/ca-admin/subscribers/lists named lists
+    /commerce/ca-admin/campaigns         compose + send
+    /commerce/ca-admin/campaigns/{id}    stats
+
+  Storefront:
+    - The existing newsletter subscribe form (footer) writes
+      to commerce_subscribers.
+    - Double opt-in confirmation email with a signed link.
+    - Unsubscribe link in every campaign email:
+      /newsletter/unsubscribe/{token}
+    - The account preferences page
+      (/account/messages/preferences, from 008G.3) gains a
+      "Newsletter and promotions" toggle that opts back in.
+
+  Sending:
+    - Uses the existing EmailService (Platform).
+    - Queue-based: campaigns enqueue N rows in
+      commerce_email_queue. A cron or CLI worker drains
+      them.
+    - Rate-limited to avoid blacklisting.
+    - No third-party dependency.
+
+**Compliance:**
+
+  - Double opt-in by default for German deployments.
+    Single opt-in configurable for other countries.
+  - Consent timestamp, source, and IP recorded per
+    subscriber. Audit trail for DSGVO Art. 7(1).
+  - Unsubscribe link mandatory in every email. UWG § 7,
+    DSGVO Art. 21.
+  - No external processor. DSGVO Art. 28 does not apply
+    to a service the operator runs on their own hardware.
+
+**Depends on:** 008E.1 (German compliance), 008G.3 (account
+preferences page).
+
+**Sequenced:** After 008G.4c (self-hosted fonts) and
+before 008H (returns). Newsletter is independent of the
+order lifecycle; returns are not.
+
+**Open questions:**
+
+  - Should campaigns support A/B subject testing? Nice to
+    have, not essential.
+  - Should subscriber segments be rule-based (customers
+    who bought X) or only list-based? List-based is
+    simpler; segments are a Stage 011+ concern.
+  - Bounce handling: hard bounces auto-suppress the
+    subscriber. Soft bounces retry N times, then
+    suppress. Standard practice; low effort.
+  - Open and click tracking: both require a tracking
+    pixel and a redirect endpoint. Both have DSGVO
+    implications (the pixel is stored on the user's
+    device). Under TTDSG § 25 they need consent. This
+    likely means tracking is opt-in for the operator,
+    default off for German deployments.
+
+These are captured as Open Questions, to be resolved in
+the 008I plan document before code is written.
+
 ### Stage 008H - Returns & Refunds
 
 **Goal:** Customer-initiated return requests. Integrates the
