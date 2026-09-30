@@ -1256,3 +1256,86 @@ html[data-theme="light"] .ra-table-wrap {
     font-size: 2rem;
     background: #f4f5f7;
 }
+
+/* =====================================================================
+ * Variant images card (008G.4a.2 session 4)
+ * =====================================================================
+ * One slot per color value. A slot shows the assigned swatch
+ * image (or the value's hex fill, or an empty icon).
+ * ===================================================================== */
+
+.ra-variant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.ra-variant-slot {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding: .5rem;
+    border: 1px solid var(--ra-border, #e5e9f2);
+    border-radius: .5rem;
+    background: var(--ra-card-bg, #ffffff);
+    transition: border-color .15s;
+}
+
+.ra-variant-slot.has-image {
+    border-color: var(--ra-primary, #7c3aed);
+    box-shadow: 0 0 0 1px var(--ra-primary, #7c3aed);
+}
+
+.ra-variant-slot-thumb {
+    aspect-ratio: 1 / 1;
+    border-radius: .375rem;
+    background: var(--ra-cream, #f4f5f7);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ra-variant-slot-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ra-variant-slot-fill {
+    display: block;
+    width: 60%;
+    height: 60%;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .1);
+}
+
+.ra-variant-slot-empty {
+    color: #c9cfdb;
+    font-size: 2rem;
+}
+
+.ra-variant-slot-body {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+
+.ra-variant-slot-label {
+    font-size: .85rem;
+    color: var(--ra-fg, #0f172a);
+    text-align: center;
+}
+
+.ra-variant-slot-actions {
+    display: flex;
+    gap: .35rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.ra-variant-slot-actions .ra-btn {
+    font-size: .78rem;
+    padding: .25rem .55rem;
+}

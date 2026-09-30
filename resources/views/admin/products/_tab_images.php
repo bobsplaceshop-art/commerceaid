@@ -12,19 +12,32 @@
  *   $mediaLibrary   array<MediaItem>
  *                   The store's full media library, for the picker.
  *
- *   $variantAxes    array<array{id:int, name:string, slug:string,
- *                              values:array<array{id:int, value:string,
- *                                                hex:?string}>}>
- *                   The product's variant axes (Color, Size). Empty
- *                   for simple products or when no category maps a
- *                   variant-axis attribute.
+ *   $variantAxes    array<array{attribute_id:int, slug:string,
+ *                              name:string, is_color_axis:bool,
+ *                              values:array<array{
+ *                                attribute_value_id:int,
+ *                                value:string,
+ *                                color_hex:?string,
+ *                                sort_order:int,
+ *                                variant_ids:array<int,int>
+ *                              }>}>
+ *                   The shape returned by
+ *                   ProductVariantRepository::swatchAxesFor().
+ *                   Each value carries attribute_value_id (NOT id).
+ *                   Empty for simple products.
+ *
+ *   $variantImages  array<int, array{image: ProductImage, media: MediaItem}>
+ *                   Keyed by attribute_value_id. The currently
+ *                   assigned swatch image for each color value.
+ *                   Empty when no variant images are assigned.
  *
  * The tab is a container. It renders:
  *
  *   1. An upload zone (JS wired, no server-side form action).
  *   2. A reorderable gallery grid, one tile per image.
  *   3. A picker row that opens the media library modal.
- *   4. An empty state when there are no images.
+ *   4. A variant-images card (one slot per color value).
+ *   5. An empty state when there are no images.
  *
  * All behavior lives in public/assets/js/product-images-admin.js.
  *
@@ -36,16 +49,74 @@
  *   images[<imageId>][is_primary]
  *   images[<imageId>][attribute_value_id]
  *
- *   new_images_order[]    (file ids, appended by the uploader)
- *   delete_images[]       (image ids to remove, appended by JS)
+ *   new_images_order[]                (file ids, appended by JS)
+ *   new_images_meta[<fileId>][...]    (per-new-image metadata)
+ *   delete_images[]                   (image ids to remove)
+ *   variant_images[<attribute_value_id>]  (variant assignments)
  *
  * The write path is ProductController::syncImages().
+ *
+ * IMPORTANT - variable scope:
+ *
+ *   This file is require'd by edit.php in the same scope as
+ *   every other tab (_tab_basic, _tab_pricing, _tab_inventory,
+ *   _tab_shipping, _tab_seo). Any variable defined here shadows
+ *   the outer scope for the remaining requires.
+ *
+ *   edit.php defines $val (a closure) and $valBool (a closure)
+ *   at the top. Every tab reads them. Do NOT assign to $val or
+ *   $valBool in this file. The colorValues loop uses
+ *   $axisValue as its iterator for exactly this reason.
  */
 
 $productImages = $productImages ?? [];
 $mediaLibrary  = $mediaLibrary  ?? [];
+$variantAxes   = $variantAxes   ?? [];
+$variantImages = $variantImages ?? [];
 
 $isEmpty = count($productImages) === 0;
+
+// Build the list of color-axis values. Only axes whose
+// is_color_axis flag is true are considered (the server
+// computes this from input_type = 'color' with a slug/name
+// fallback). Size and other axes are ignored for swatch
+// assignment.
+//
+// $variantImages is a map keyed by attribute_value_id.
+//
+// The value shape from swatchAxesFor() uses the key
+// attribute_value_id, not id. The repository adds a
+// values entry as:
+//     ['attribute_value_id' => ..., 'value' => ...,
+//      'color_hex' => ..., 'sort_order' => ..., 'variant_ids' => []]
+//
+// NOTE: the loop variable is named $axisValue, not $val.
+// $val is the outer value-closure that edit.php defines and
+// that every other tab depends on. Renaming this iterator
+// prevents _tab_images.php from shadowing $val for the
+// siblings that require after it.
+$colorValues = [];
+foreach ($variantAxes as $axis) {
+    if (empty($axis['is_color_axis'])) {
+        continue;
+    }
+    foreach (($axis['values'] ?? []) as $axisValue) {
+        $valueId = (int) ($axisValue['attribute_value_id'] ?? 0);
+        if ($valueId <= 0) {
+            continue;
+        }
+        $assigned = $variantImages[$valueId] ?? null;
+        $colorValues[] = [
+            'axis_name'          => (string) ($axis['name'] ?? ''),
+            'attribute_value_id' => $valueId,
+            'value'              => (string) ($axisValue['value'] ?? ''),
+            'color_hex'          => $axisValue['color_hex'] ?? null,
+            'assigned_image'     => $assigned,
+        ];
+    }
+}
+
+$hasColorValues = count($colorValues) > 0;
 ?>
 <div class="tab-pane fade<?= ($activeTab ?? 'basic') === 'images' ? ' show active' : '' ?>"
      id="tab-images"
@@ -193,6 +264,43 @@ $isEmpty = count($productImages) === 0;
                modal renders at the document level, never inside a
                form. See edit.php's tail.
                ============================================================ */ ?>
+
+        <?php /* ============================================================
+               Variant images.
+               Only rendered when the product has at least one
+               color axis (axis.is_color_axis = true). Renders
+               one slot per color value. Each slot shows the
+               currently assigned image or an empty state, plus
+               an "Assign" trigger that opens the picker with
+               that attribute value as the target.
+
+               The assignment POST array is:
+                 variant_images[<attribute_value_id>] = <file_id>
+
+               syncImages() reads it after the gallery blocks.
+               ============================================================ */ ?>
+        <?php if ($hasColorValues): ?>
+            <div class="ra-card mb-3" data-ra-variant-images-card>
+                <div class="ra-card-header">
+                    <h3 class="h6 mb-0">Variant images</h3>
+                </div>
+                <div class="ra-card-body">
+                    <p class="muted small mb-3">
+                        Assign a swatch image per color value. The
+                        customer sees the image next to the color
+                        swatch and on the product page when they
+                        pick the color.
+                    </p>
+                    <div class="ra-variant-grid">
+                        <?php foreach ($colorValues as $slot): ?>
+                            <?= view_partial('admin.products._variant-image-slot', [
+                                'slot' => $slot,
+                            ]) ?>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <?php /* ============================================================
                Hidden inputs appended by JS.
