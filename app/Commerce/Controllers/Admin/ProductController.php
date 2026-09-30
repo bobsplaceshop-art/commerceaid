@@ -13,6 +13,8 @@ use CorporateAid\Commerce\Repositories\BrandRepository;
 use CorporateAid\Commerce\Repositories\CategoryRepository;
 use CorporateAid\Commerce\Repositories\InventoryRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
+use CorporateAid\Commerce\Repositories\ProductImageRepository;
+use CorporateAid\Commerce\Repositories\MediaRepository;
 use CorporateAid\Commerce\Repositories\ProductVariantRepository;
 use CorporateAid\Commerce\Repositories\AttributeRepository;
 use CorporateAid\Commerce\Services\CatalogService;
@@ -82,18 +84,21 @@ final class ProductController extends AdminController
         $catalog = $this->container->get(CatalogService::class);
 
         return $this->render('admin.products.edit', [
-            'title'      => 'New product',
-            'product'    => null,
-            'errors'     => $session->getFlash('product_errors', []),
-            'old'        => $_SESSION['_old'] ?? [],
-            'mode'       => 'create',
-            'categories' => $catalog->categoriesForSelect(),
-            'brands'     => $catalog->brandsForSelect(),
-            'categoryIds'=> [],
-            'tagIds'     => [],
-            'inventory'  => null,
-            'variants'   => [],
-            'attributes' => [],
+            'title'         => 'New product',
+            'product'       => null,
+            'errors'        => $session->getFlash('product_errors', []),
+            'old'           => $_SESSION['_old'] ?? [],
+            'mode'          => 'create',
+            'categories'    => $catalog->categoriesForSelect(),
+            'brands'        => $catalog->brandsForSelect(),
+            'categoryIds'   => [],
+            'tagIds'        => [],
+            'inventory'     => null,
+            'variants'      => [],
+            'attributes'    => [],
+            'productImages' => [],
+            'mediaLibrary'  => $this->resolveMediaLibrary(),
+            'activeTab'     => (string) $request->query('tab', 'basic'),
         ]);
     }
 
@@ -113,6 +118,16 @@ final class ProductController extends AdminController
 
         $productInventory = $inventory->forUnit($product->id, 0);
 
+        // Resolve the product's images to MediaItem instances
+        // for the Images tab and for the picker preview.
+        $productImages = $this->resolveProductImages($product->id);
+
+        // The store's media library, for the picker modal.
+        // Capped at 200 items - the picker paginates if it
+        // ever needs more, but 200 covers every realistic
+        // merchant's library on day one.
+        $mediaItems = $this->resolveMediaLibrary();
+
         return $this->render('admin.products.edit', [
             'title'         => 'Edit: ' . $product->name,
             'product'       => $product,
@@ -124,6 +139,8 @@ final class ProductController extends AdminController
             'categoryIds'   => $repo->categoryIdsFor($product->id),
             'tagIds'        => $repo->tagIdsFor($product->id),
             'inventory'     => $productInventory,
+            'productImages' => $productImages,
+            'mediaLibrary'  => $mediaItems,
             'activeTab'     => (string) $request->query('tab', 'basic'),
         ]);
     }
@@ -1036,5 +1053,86 @@ final class ProductController extends AdminController
         $text = strtolower(trim($text));
         $text = preg_replace('/[^a-z0-9]+/', '-', $text) ?? '';
         return trim($text, '-');
+    }
+
+    // =================================================================
+    // Image helpers
+    // =================================================================
+
+    /**
+     * Resolve a product's images to a list of MediaItem
+     * instances, ordered by sort_order. Each item is paired
+     * with its ProductImage row so the view can render
+     * primary state, alt text, and variant assignment.
+     *
+     * @return array<int, array{image: \CorporateAid\Commerce\Models\ProductImage, media: \CorporateAid\Commerce\Models\MediaItem}>
+     */
+    private function resolveProductImages(int $productId): array
+    {
+        if ($productId <= 0) {
+            return [];
+        }
+
+        $imageRepo = $this->container->get(ProductImageRepository::class);
+        $mediaRepo = $this->container->get(MediaRepository::class);
+
+        $rows = $imageRepo->listForProduct($productId);
+        if ($rows === []) {
+            return [];
+        }
+
+        // Bulk-load the underlying MediaItem for each image
+        // in one query. No N+1.
+        $fileIds = [];
+        foreach ($rows as $row) {
+            $fileIds[] = $row->fileId;
+        }
+        $mediaById = [];
+        foreach ($mediaRepo->findByIds($fileIds) as $item) {
+            $mediaById[$item->file->id] = $item;
+        }
+
+        $out = [];
+        foreach ($rows as $row) {
+            $media = $mediaById[$row->fileId] ?? null;
+            if ($media === null) {
+                // The underlying file is missing or soft-
+                // deleted. Skip the row - a broken image
+                // reference in the admin gallery is not
+                // useful.
+                continue;
+            }
+            $out[] = [
+                'image' => $row,
+                'media' => $media,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * The current store's media library as a flat list of
+     * MediaItem, for the picker modal. Capped at 200 items.
+     *
+     * @return array<int, \CorporateAid\Commerce\Models\MediaItem>
+     */
+    private function resolveMediaLibrary(): array
+    {
+        try {
+            $storeContext = $this->container->get(\CorporateAid\Commerce\Context\StoreContext::class);
+            if (!$storeContext->has()) {
+                return [];
+            }
+            $mediaRepo = $this->container->get(MediaRepository::class);
+            $result = $mediaRepo->paginateForStore(
+                $storeContext->id(),
+                [],
+                1,
+                200
+            );
+            return $result['items'] ?? [];
+        } catch (\Throwable) {
+            return [];
+        }
     }
 }
