@@ -72,7 +72,7 @@ $status = (string) $val('status', 'draft');
     </a>
 </div>
 
-<form method="POST" action="<?= e($actionUrl) ?>" novalidate id="ra-product-form">
+<form method="POST" action="<?= e($actionUrl) ?>" novalidate id="ra-product-form" enctype="multipart/form-data">
     <?= csrf_field() ?>
     <input type="hidden" name="current_tab" id="ra-current-tab" value="<?= e($activeTab ?? 'basic') ?>">
 

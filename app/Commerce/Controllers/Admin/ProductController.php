@@ -198,6 +198,15 @@ final class ProductController extends AdminController
             );
         }
 
+        // Product images. Reads the images[] / new_images[] /
+        // delete_images[] POST payload written by the Images tab.
+        // On create there are no existing rows to update, so the
+        // images[] array is expected to be empty; new_images[]
+        // carries the file IDs. Failures are swallowed inside the
+        // method so a broken image save never rolls back the
+        // product row, categories, tags, or inventory.
+        $this->syncImages($productId);
+
         $session->flash('success', 'Product created.');
         $session->clearOldInput();
         return Response::redirect('/commerce/ca-admin/products');
@@ -223,7 +232,7 @@ final class ProductController extends AdminController
             $session->flashOldInput($data);
 
             $tab = (string) $request->input('current_tab', 'basic');
-            $allowedTabs = ['basic','pricing','inventory','shipping','variants','seo'];
+            $allowedTabs = ['basic','pricing','inventory','shipping','variants','seo','images'];
             if (!in_array($tab, $allowedTabs, true)) {
                 $tab = 'basic';
             }
@@ -264,12 +273,16 @@ final class ProductController extends AdminController
             }
         }
 
+        // Product images. Reads the images[] / new_images[] /
+        // delete_images[] POST payload written by the Images tab.
+        $this->syncImages($id);
+
         $session->flash('success', 'Product updated.');
         $session->clearOldInput();
 
         // Preserve the current tab across save
         $tab = (string) $request->input('current_tab', 'basic');
-        $allowedTabs = ['basic','pricing','inventory','shipping','variants','seo'];
+        $allowedTabs = ['basic','pricing','inventory','shipping','variants','seo','images'];
         if (!in_array($tab, $allowedTabs, true)) {
             $tab = 'basic';
         }
@@ -1133,6 +1146,141 @@ final class ProductController extends AdminController
             return $result['items'] ?? [];
         } catch (\Throwable) {
             return [];
+        }
+    }
+
+    // =================================================================
+    // Image sync
+    // =================================================================
+
+    /**
+     * Read the image POST payload and apply it to the product.
+     *
+     * Payload shape written by _tab_images.php:
+     *
+     *   images[<imageId>][sort_order]          int
+     *   images[<imageId>][alt_text]            string (may be empty)
+     *   images[<imageId>][is_primary]          0|1
+     *   images[<imageId>][attribute_value_id]  int|string ("0" or "" = null)
+     *
+     *   new_images_order[]                     int  (file ids, in
+     *                                          display order)
+     *   delete_images[]                        int  (image ids to remove)
+     *
+     * Order of operations:
+     *
+     *   1. Deletions first, so a delete + re-add of the same
+     *      file does not collide on the primary flag.
+     *   2. Updates to existing rows.
+     *   3. Insertions of new rows, in the declared order.
+     *   4. Primary fallback: if the product has images but none
+     *      is flagged primary, promote the lowest-sort_order row.
+     *      Guarantees a stable card image across saves where the
+     *      operator removed the previous primary.
+     *
+     * Failure handling: the entire body is wrapped in a
+     * try/catch. A broken image save must not roll back the
+     * product row, categories, tags, or inventory. The exception
+     * is logged via Logger::error() (a static class) and the
+     * method returns normally. The merchant sees "Product
+     * saved" and their image changes are silently dropped.
+     * That is the correct trade: text and category changes are
+     * more important than image ordering.
+     */
+    private function syncImages(int $productId): void
+    {
+        if ($productId <= 0) {
+            return;
+        }
+
+        try {
+            $repo = $this->container->get(ProductImageRepository::class);
+
+            // 1. Deletions.
+            $delete = $_POST['delete_images'] ?? [];
+            if (is_array($delete)) {
+                foreach ($delete as $imageId) {
+                    $imageId = (int) $imageId;
+                    if ($imageId > 0) {
+                        $repo->remove($imageId);
+                    }
+                }
+            }
+
+            // 2. Updates to existing rows.
+            $updates = $_POST['images'] ?? [];
+            if (is_array($updates)) {
+                foreach ($updates as $imageId => $fields) {
+                    $imageId = (int) $imageId;
+                    if ($imageId <= 0 || !is_array($fields)) {
+                        continue;
+                    }
+
+                    $patch = [];
+
+                    if (array_key_exists('alt_text', $fields)) {
+                        $patch['alt_text'] = trim((string) $fields['alt_text']);
+                    }
+                    if (array_key_exists('sort_order', $fields)) {
+                        $patch['sort_order'] = (int) $fields['sort_order'];
+                    }
+                    if (array_key_exists('is_primary', $fields)) {
+                        $patch['is_primary'] = (bool) $fields['is_primary'];
+                    }
+                    if (array_key_exists('attribute_value_id', $fields)) {
+                        $av = $fields['attribute_value_id'];
+                        $patch['attribute_value_id'] = ($av === '' || $av === null || $av === '0' || $av === 0)
+                            ? null
+                            : (int) $av;
+                    }
+
+                    if ($patch !== []) {
+                        $repo->update($imageId, $patch);
+                    }
+                }
+            }
+
+            // 3. Insertions. The uploader appends file ids to
+            // new_images_order[] in display order. If the order
+            // array is absent, iterate nothing - the tab always
+            // writes the order array when it writes new_images.
+            $newOrder = $_POST['new_images_order'] ?? [];
+            if (is_array($newOrder)) {
+                foreach ($newOrder as $fileId) {
+                    $fileId = (int) $fileId;
+                    if ($fileId > 0) {
+                        $repo->add($productId, $fileId);
+                    }
+                }
+            }
+
+            // 4. Primary fallback. The repository also enforces
+            // this on add() for the first image, but a save where
+            // the operator deleted the previous primary leaves no
+            // flagged row. Promote the first.
+            $all = $repo->listForProduct($productId);
+            if ($all !== []) {
+                $hasPrimary = false;
+                foreach ($all as $img) {
+                    if ($img->isPrimary) {
+                        $hasPrimary = true;
+                        break;
+                    }
+                }
+                if (!$hasPrimary) {
+                    $repo->setPrimary($productId, $all[0]->id);
+                }
+            }
+        } catch (\Throwable $e) {
+            \CorporateAid\Platform\Support\Logger::error(
+                'Product image sync failed',
+                [
+                    'product_id' => $productId,
+                    'error'      => $e->getMessage(),
+                    'file'       => $e->getFile(),
+                    'line'       => $e->getLine(),
+                ]
+            );
         }
     }
 }
