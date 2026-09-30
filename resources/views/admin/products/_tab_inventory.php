@@ -39,7 +39,7 @@ $isVariable   = ($product ?? null) !== null && $product->isVariable();
     </div>
 
     <div style="margin-top:1.25rem; display:flex; gap:.75rem; flex-wrap:wrap;">
-        <a href="/commerce/ca-admin/products/<?= (int) $product->id ?>/edit?tab=variants"
+        <a href="/commerce/ca-admin/products/<?= (int) $product->id ?>/variants"
            class="ra-btn ra-btn-primary">
             <i class="bi bi-diagram-3 me-1"></i> Manage variations
         </a>

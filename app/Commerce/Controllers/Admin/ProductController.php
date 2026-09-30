@@ -143,7 +143,14 @@ final class ProductController extends AdminController
             'inventory'     => $productInventory,
             'productImages'  => $productImages,
             'mediaLibrary'   => $mediaItems,
-            'variantAxes'    => $this->categoryVariantAxes($product->id),
+            // swatchAxesFor() produces the shape the Images
+            // tab's variant-images card needs (each axis carries
+            // is_color_axis). categoryVariantAxes() produces a
+            // different shape for the variations page and the
+            // regeneration flow — those are unaffected.
+            'variantAxes'    => $this->container
+                ->get(ProductVariantRepository::class)
+                ->swatchAxesFor($product->id),
             'variantImages'  => $this->resolveVariantImages($product->id),
             'activeTab'      => (string) $request->query('tab', 'basic'),
         ]);
@@ -527,7 +534,7 @@ final class ProductController extends AdminController
 
         if (empty($valueIds)) {
             $session->flash('error', 'Select at least one attribute value to generate variants.');
-            return Response::redirect('/commerce/ca-admin/products/' . $productId . '/edit?tab=variants');
+            return Response::redirect('/commerce/ca-admin/products/' . $productId . '/variants');
         }
 
         // Fetch the attribute for each value so we can group by attribute
@@ -553,7 +560,7 @@ final class ProductController extends AdminController
 
         if (empty($byAttr)) {
             $session->flash('error', 'None of the selected values are valid.');
-            return Response::redirect('/commerce/ca-admin/products/' . $productId . '/edit?tab=variants');
+            return Response::redirect('/commerce/ca-admin/products/' . $productId . '/variants');
         }
 
         // Cartesian product
@@ -591,7 +598,7 @@ final class ProductController extends AdminController
             ? $created . ' variant' . ($created === 1 ? '' : 's') . ' generated.'
             : 'All selected combinations already exist.');
 
-        return Response::redirect('/commerce/ca-admin/products/' . $productId . '/edit?tab=variants');
+        return Response::redirect('/commerce/ca-admin/products/' . $productId . '/variants');
     }
 
     /**
@@ -660,7 +667,7 @@ final class ProductController extends AdminController
         }
 
         $session->flash('success', $saved . ' variant' . ($saved === 1 ? '' : 's') . ' saved.');
-        return Response::redirect('/commerce/ca-admin/products/' . $productId . '/edit?tab=variants');
+        return Response::redirect('/commerce/ca-admin/products/' . $productId . '/variants');
     }
 
     /**
@@ -677,7 +684,7 @@ final class ProductController extends AdminController
         $this->container->get(ProductVariantRepository::class)->delete($variantId);
         $session->flash('success', 'Variant removed.');
 
-        return Response::redirect('/commerce/ca-admin/products/' . $productId . '/edit?tab=variants');
+        return Response::redirect('/commerce/ca-admin/products/' . $productId . '/variants');
     }
 
 
