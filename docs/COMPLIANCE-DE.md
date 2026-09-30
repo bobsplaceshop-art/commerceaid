@@ -776,6 +776,13 @@ responsibility is:
 
 **Checklist for the operator:**
 
+  [ ] Confirm the specific hosting plan provisions the
+      requested data center before ordering. Marketing
+      may claim the host operates in Germany; only the
+      plan-level confirmation is binding. Some providers
+      (including Truehost for VPS plans) allocate the
+      data center at provisioning time and treat a
+      location change as a paid migration.
   [ ] Ask the hosting provider for a signed DPA under
       Article 28 DSGVO.
   [ ] Confirm the DPA lists all sub-processors.
