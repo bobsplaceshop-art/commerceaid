@@ -608,7 +608,12 @@ select.sf-filter-input {
  * ===================================================================== */
 
 .sf-categories-index {
-    padding: 0 0 3rem;
+    /* Padding fix: this rule previously set `padding: 0 0 3rem`
+       which zeroed the horizontal padding from .sf-container.
+       The category index rendered flush against the viewport
+       edges. Horizontal comes from .sf-container now; only the
+       vertical is added here. */
+    padding-bottom: 3rem;
 }
 
 .sf-categories-count {
@@ -707,7 +712,10 @@ select.sf-filter-input {
  * ===================================================================== */
 
 .sf-category-show {
-    padding: 0 0 3rem;
+    /* Padding fix: same pattern as .sf-categories-index above.
+       Horizontal comes from .sf-container; vertical is added
+       here. */
+    padding-bottom: 3rem;
 }
 
 .sf-category-hero {

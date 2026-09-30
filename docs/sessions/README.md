@@ -13,8 +13,24 @@ short session gets an entry.
 
 Five steps:
 
-1. Write the session file. `YYYY-MM-DD.md`. If two sessions
-   happen on the same day, append `-2`.
+1. Write the session file. `YYYY-MM-DD.md`.
+
+   **Same-day sessions:** if a second session happens on
+   the same calendar day, the second file is named
+   `YYYY-MM-DD-2.md`. A third is `YYYY-MM-DD-3.md`.
+
+   **Before writing, check whether the target file
+   already exists.** A previous session on the same day
+   may have already used the bare `YYYY-MM-DD.md` name.
+   Overwriting would lose the earlier session's record.
+
+   Detect:
+
+       ls docs/sessions/ | grep "$(date +%Y-%m-%d)"
+
+   If the bare name is taken, use the -2 suffix. The
+   index table at the bottom of this file is the
+   canonical list of what exists.
 
 2. Update the distilled docs. Patterns in `docs/REMEMBER.md`.
    Current stage in `docs/STATUS.md`. Sequence in
@@ -58,6 +74,7 @@ Short. 30-80 lines. Five sections, in order:
 | 2026-09-30 | 003 | 008G.2 Recently Viewed - full stack, no new patterns |
 | 2026-10-01 | 004 | 008G.3 Message Center - self-contained, Pattern 30 added |
 | 2026-10-02 | 005 | 008G.4a Upload Core - media pipeline, compliance tracker, 008I + 008J logged |
+| 2026-09-30 | 006 | 008G.4a.1 Media Library (second session of the day) |
 
 ## Why Not Just git log
 

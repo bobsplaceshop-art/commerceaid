@@ -523,6 +523,63 @@ into a bug fix is how subtle regressions slip in.
   - docs/SPECIFICATION.md ADR-001 (custom MVC framework)
   - docs/ARCHITECTURE.md section 8 (container conventions)
 
+### Stage 008G.4d - Category Filters
+
+**Goal:** Add product filtering on the category detail page
+(`/categories/{slug}`). The category detail currently shows
+a bare product grid. Add the same filter surface the
+`/products` catalog page has: search, brand, price range,
+attribute facets.
+
+**Why:** the `/products` page already has filters. The
+category detail page has none. A merchant's customers
+browsing by category have no way to narrow the results.
+For a category with 200 products, that is unusable.
+
+**Scope:**
+
+  - Reuse the filter component from `/products`. The
+    CatalogFilterBar partial (`_filters.php` or similar)
+    becomes shared between the catalog index and the
+    category detail.
+  - Search box: filters products by name or SKU within
+    the category.
+  - Brand filter: dropdown of brands that have products
+    in this category.
+  - Price range: min/max numeric inputs.
+  - Attribute facets: variant-axis and informational
+    attributes mapped to the category. Each renders as
+    checkboxes for its values.
+  - Sort dropdown: newest, price ascending, price
+    descending, name.
+  - URL state: filters live in query parameters so
+    bookmarked URLs work.
+  - Active filter chips: a row above the grid showing
+    which filters are applied, each with an X to remove.
+  - Pagination preserves the filter set.
+
+**Depends on:** 008G (storefront polish). No dependency on
+the media library stage; runs in parallel with 008G.4a.2.
+
+**Sequenced:** after 008G.4a.2 (product media), before
+008G.4b (PWA). Filters on a page full of placeholder images
+is less useful than filters on a page full of real product
+photos.
+
+**Open questions:**
+
+  - Should the filter component be a shared partial or a
+    view model passed by both controllers?
+  - Should attribute facets come from the product's
+    informational attributes only, or also from variant
+    axes (Color / Size, which are already variant
+    attributes)?
+  - Should the filters be AJAX-driven (partial page
+    update) or full page reload?
+
+These are captured as Open Questions, to be resolved in
+the 008G.4d plan document before code is written.
+
 ### Stage 008H - Returns & Refunds
 
 **Goal:** Customer-initiated return requests. Integrates the
