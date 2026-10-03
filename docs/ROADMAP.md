@@ -53,6 +53,7 @@ Adding a stage or reordering requires updating this document first.
 | 008G.4a| Upload Core + Store Branding          | 2026-09-30 |
 | 008G.4a.1| Media Library Page                   | 2026-09-30 |
 | 008G.4a.2| Product Media                        | 2026-10-03 |
+| 008G.4a.3| Responsive Image Templates           | 2026-10-04 |
 
 Also completed outside the staged sequence:
 
@@ -70,57 +71,53 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G.4a.3 - Responsive Image Templates
+### Stage 008G.4c - Self-Hosted Font Manager
 
-**Goal:** Request the right image size per viewport
-across the storefront.
+**Goal:** Eliminate the Google Fonts DSGVO exposure.
+Serve fonts from the store's own domain.
 
-**Why this stage exists:** the media pipeline
-(008G.4a) generates WebP and JPEG variants at
-multiple sizes per context. The storefront still
-requests a single size per image. On a phone, a
-1200px-wide hero variant is fetched for a 400px-wide
-slot. On desktop, a 400px card variant is upscaled
-to fill a 600px card. Neither is correct.
+**Why this stage exists:** the current storefront loads
+Google Fonts from fonts.googleapis.com and
+fonts.gstatic.com. Every page load transmits the
+visitor's IP address to Google. The Bavarian DPA has
+confirmed that this is a personal data transfer
+requiring consent. LG Munchen I (2022) ordered damages
+for exactly this. Abmahnung risk is real.
+
+Self-hosting the fonts removes the third-party
+request entirely. Zero IP transfer to Google. Zero
+consent requirement under TTDSG § 25.
 
 **Scope:**
 
-  - Product cards: `<picture>` with `md` (800x1000) as
-    the default and `card` (400x500) for the smallest
-    viewports. Serve WebP with JPEG fallback.
-  - Product detail hero: srcset with `lg`
-    (1200x1500), `md`, and `card` variants. The
-    browser picks based on viewport width and DPR.
-  - Product detail thumbnails: `card` only. Already
-    the right size.
-  - Category grid cards: `md` (800x800) with a `thumb`
-    (400x400) fallback for narrow viewports.
-  - Category hero: `lg` (1600x1600), CSS-cropped.
-    Follow-up: add a wide `1600x600` variant to the
-    category-image context for a proper 3:1 hero.
-  - Home top-category grid: `md`.
-  - All images: `loading="lazy"` except the product
-    detail hero (which loads eagerly to avoid a
-    visible pop-in).
-  - All `<picture>` blocks: WebP source, JPEG
-    fallback for maximum compatibility.
+  - A Font Manager admin page under Settings.
+  - A curated catalog of open-source fonts, all OFL
+    or Apache 2.0 licensed. Full Google Fonts catalog
+    or a subset.
+  - The merchant picks a display font and a body font
+    (already exists as :root CSS variables).
+  - On save, the platform downloads the WOFF2 files
+    locally to storage/uploads/fonts/.
+  - The storefront serves them from /assets/fonts/
+    with font-display: swap.
+  - No external font requests in the rendered page.
+    CSP style-src and font-src drop the Google origins.
+  - A font stack fallback in case the WOFF2 fails to
+    load.
 
-**Depends on:** 008G.4a.2 (product media) - complete.
-The variant pipeline already generates every size this
-stage needs.
+**Depends on:** 008G.4a.2 (media pipeline for
+downloading files). The download uses the same
+storage path as other uploaded assets.
 
-**Sequenced:** before 008G.4b (PWA). The PWA's offline
-cache will reference the image variant URLs, so the
-variants must be live first.
+**Sequenced:** before 008G.4b (PWA) and 008G.4a.4
+(AVIF). Both are polish. This is compliance.
 
 **Not in scope:**
 
-  - Real image editing (crop, background removal).
-  - Responsive video templates.
-  - CDN delivery for images.
-  - A srcset-configurable admin UI per product. The
-    sizes are fixed per context for now; a future
-    stage can make them store-configurable.
+  - Font subsetting (Latin-only, etc). Downloads
+    every glyph.
+  - Variable fonts. Static weights only.
+  - A full font editor or a per-store font CDN.
 
 ## Planned Stages
 
@@ -1169,6 +1166,30 @@ further polish, not a fix.
 Likely stage: not yet scheduled. Evaluate after
 008G.4a.3 ships and a Lighthouse run gives a
 baseline.
+
+### Category Hero Toggle
+
+A per-category setting to hide the hero banner.
+Useful for categories where the merchant does not
+have a 3:1 image and prefers to show only the title
+and description.
+
+Two complementary features:
+
+  - A "Show hero image" checkbox on the category
+    editor (default on).
+  - When off, `category/show.php` renders the hero
+    section without the image div, falling back to a
+    plain text header.
+
+The current default (always show, crop to fill) is
+the industry standard. The toggle is a merchant
+preference, not a bug fix.
+
+Likely stage: 008G.4c or a future storefront polish
+pass.
+
+---
 
 ## Feature Toggle System
 

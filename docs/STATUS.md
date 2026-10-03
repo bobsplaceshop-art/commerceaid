@@ -1,8 +1,8 @@
 # Project Status
 
-**As of:** 2026-10-03
-**Version:** 0.14.0-alpha
-**Stage:** 008G.4a.2 complete. Next: 008G.4a.3 (responsive image templates)
+**As of:** 2026-10-04
+**Version:** 0.15.0-alpha
+**Stage:** 008G.4a.3 complete. Next: 008G.4c (self-hosted font manager)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -125,20 +125,24 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008G.4a.3
+## Current Focus — Stage 008G.4c
 
-**Deliverable:** Responsive Image Templates.
+**Deliverable:** Self-Hosted Font Manager.
 
-The media pipeline already generates WebP and JPEG
-variants at multiple sizes per context. The storefront
-currently requests one size per image. This stage wires
-the templates to request the right variant per viewport
-with srcset, sizes, and native lazy loading.
+The storefront currently loads Google Fonts from
+fonts.googleapis.com and fonts.gstatic.com. Every
+page load transmits the visitor's IP address to
+Google. Under DSGVO, that is a personal data
+transfer requiring consent. The Bavarian DPA has
+confirmed this position; German courts have issued
+damages rulings.
 
-Surfaces: product cards, product detail gallery,
-category grid, category hero, home category grid.
+The fix is self-hosting: download the font files,
+serve them from the store's own domain, drop the
+Google origins from the CSP.
 
-Scope in docs/ROADMAP.md under Planned Stages -> 008G.4a.3.
+Scope in docs/ROADMAP.md under Planned Stages ->
+008G.4c.
 
 ---
 
