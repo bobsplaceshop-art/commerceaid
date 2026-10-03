@@ -691,6 +691,61 @@ if (!function_exists('category_picture_tag')) {
     }
 }
 
+if (!function_exists('media_picture_tag')) {
+    /**
+     * Render a complete <picture> block for an already-
+     * resolved MediaItem.
+     *
+     * Same shape as product_picture_tag() and
+     * category_picture_tag(), but takes the MediaItem
+     * directly. Use this when the caller already has the
+     * media item in hand:
+     *
+     *   - Product detail thumbnails (built from $gallery).
+     *   - Swatch preview images (built from $swatchImages).
+     *   - Any other view that resolves MediaItems itself.
+     *
+     * When $media is null, emits the fallback <img> with the
+     * provided placeholder.
+     *
+     * @param array<string,mixed> $options
+     */
+    function media_picture_tag(
+        ?\CorporateAid\Commerce\Models\MediaItem $media,
+        string $context,
+        array $options = []
+    ): string {
+        $variant       = (string) ($options['variant'] ?? 'card');
+        $alt           = (string) ($options['alt'] ?? '');
+        $class         = $options['class'] ?? null;
+        $sizes         = (string) ($options['sizes'] ?? '(max-width: 640px) 50vw, 320px');
+        $loading       = (string) ($options['loading'] ?? 'lazy');
+        $fetchpriority = $options['fetchpriority'] ?? null;
+        $width         = (int) ($options['width'] ?? 400);
+        $height        = (int) ($options['height'] ?? 500);
+        $decoding      = (string) ($options['decoding'] ?? 'async');
+        $extraAttrs    = $options['attrs'] ?? [];
+        $placeholder   = (string) ($options['placeholder'] ?? '/assets/img/product-placeholder.svg');
+
+        $imgAttrs = _picture_tag_img_attrs(
+            $alt, $class, $loading, $fetchpriority, $width, $height, $decoding, $extraAttrs
+        );
+
+        if ($media === null) {
+            return '<img src="' . e($placeholder) . '"' . $imgAttrs . '>';
+        }
+
+        $spec        = \CorporateAid\Commerce\Support\MediaVariantSet::for($context);
+        $sourcesHtml = _picture_tag_sources($media, $spec, $sizes);
+        $primarySrc  = $media->variantUrl($variant, _picture_tag_primary_format($spec));
+
+        return '<picture>'
+            . $sourcesHtml
+            . '<img src="' . e($primarySrc) . '"' . $imgAttrs . '>'
+            . '</picture>';
+    }
+}
+
 if (!function_exists('product_primary_media_item')) {
     /**
      * Resolve the MediaItem for a product's primary image.
