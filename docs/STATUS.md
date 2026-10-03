@@ -1,8 +1,8 @@
 # Project Status
 
-**As of:** 2026-09-28
-**Version:** 0.13.1-alpha
-**Stage:** 008G.4a.1 complete. Next: 008G.4a.2 (product media)
+**As of:** 2026-10-03
+**Version:** 0.14.0-alpha
+**Stage:** 008G.4a.2 complete. Next: 008G.4a.3 (responsive image templates)
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -125,15 +125,20 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008G.1
+## Current Focus — Stage 008G.4a.3
 
-**Deliverable:** Wishlist.
+**Deliverable:** Responsive Image Templates.
 
-Customers can save products for later. Per-customer for
-logged-in customers, per-session for guests. Merge on login,
-same pattern as the cart.
+The media pipeline already generates WebP and JPEG
+variants at multiple sizes per context. The storefront
+currently requests one size per image. This stage wires
+the templates to request the right variant per viewport
+with srcset, sizes, and native lazy loading.
 
-Scope in docs/ROADMAP.md under Planned Stages -> 008G.1.
+Surfaces: product cards, product detail gallery,
+category grid, category hero, home category grid.
+
+Scope in docs/ROADMAP.md under Planned Stages -> 008G.4a.3.
 
 ---
 

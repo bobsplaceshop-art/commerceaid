@@ -52,6 +52,7 @@ Adding a stage or reordering requires updating this document first.
 | 008G.3| Message Center                         | 2026-10-01 |
 | 008G.4a| Upload Core + Store Branding          | 2026-09-30 |
 | 008G.4a.1| Media Library Page                   | 2026-09-30 |
+| 008G.4a.2| Product Media                        | 2026-10-03 |
 
 Also completed outside the staged sequence:
 
@@ -69,59 +70,57 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G.4a.2 - Product Media
+### Stage 008G.4a.3 - Responsive Image Templates
 
-**Goal:** Wire real product images and category banners
-through the upload pipeline. Replace every picsum.photos
-placeholder on the storefront with a real uploaded file.
+**Goal:** Request the right image size per viewport
+across the storefront.
 
-**Scope:**
-
-  - Product editor: image upload section. Multiple images
-    per product. Primary image selection. Gallery order.
-  - Product detail page: real gallery.
-  - Product cards across the storefront (catalog, home,
-    search, related, wishlist, recent): real images from
-    the product_images table.
-  - Category editor: banner upload.
-  - Category detail page: banner rendering.
-  - Home page category grid: real images.
-  - CMS pages and blog: hero image (if applicable).
-  - Backfill: none. Existing products have no images;
-    they fall back to a placeholder until a real image
-    is uploaded.
-
-**Depends on:** 008G.4a (upload pipeline) and 008G.4a.1
-(media library page - for the picker interface when
-selecting an existing file).
+**Why this stage exists:** the media pipeline
+(008G.4a) generates WebP and JPEG variants at
+multiple sizes per context. The storefront still
+requests a single size per image. On a phone, a
+1200px-wide hero variant is fetched for a 400px-wide
+slot. On desktop, a 400px card variant is upscaled
+to fill a 600px card. Neither is correct.
 
 **Scope:**
 
-- Grid view with thumbnails.
-- File size, dimensions, upload date, usage count.
-- Search by filename, filter by mime type, sort by
-  date/size/name.
-- Delete (blocked if in use, or warned with a link to
-  the referencing entity).
-- Replace in place (new upload swaps the file behind an
-  existing media ID, no re-linking).
-- Pagination.
+  - Product cards: `<picture>` with `md` (800x1000) as
+    the default and `card` (400x500) for the smallest
+    viewports. Serve WebP with JPEG fallback.
+  - Product detail hero: srcset with `lg`
+    (1200x1500), `md`, and `card` variants. The
+    browser picks based on viewport width and DPR.
+  - Product detail thumbnails: `card` only. Already
+    the right size.
+  - Category grid cards: `md` (800x800) with a `thumb`
+    (400x400) fallback for narrow viewports.
+  - Category hero: `lg` (1600x1600), CSS-cropped.
+    Follow-up: add a wide `1600x600` variant to the
+    category-image context for a proper 3:1 hero.
+  - Home top-category grid: `md`.
+  - All images: `loading="lazy"` except the product
+    detail hero (which loads eagerly to avoid a
+    visible pop-in).
+  - All `<picture>` blocks: WebP source, JPEG
+    fallback for maximum compatibility.
 
-**Store scoping:**
+**Depends on:** 008G.4a.2 (product media) - complete.
+The variant pipeline already generates every size this
+stage needs.
 
-Each upload will write a core_entity_files link with
-entity_type='store', entity_id=<current store>,
-file_category=<context>. That link is how the media page
-scopes its listing to the current store without a schema
-change. Uses the existing polymorphic link table from
-Platform.
+**Sequenced:** before 008G.4b (PWA). The PWA's offline
+cache will reference the image variant URLs, so the
+variants must be live first.
 
-A cleanup routine (later) handles the case where a store
-is deleted: remove the entity_files links for that store,
-and soft-delete any file that is no longer referenced by
-any entity.
+**Not in scope:**
 
-**Depends on:** 008G.4a (upload pipeline).
+  - Real image editing (crop, background removal).
+  - Responsive video templates.
+  - CDN delivery for images.
+  - A srcset-configurable admin UI per product. The
+    sizes are fixed per context for now; a future
+    stage can make them store-configurable.
 
 ## Planned Stages
 
