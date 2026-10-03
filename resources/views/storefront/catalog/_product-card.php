@@ -57,7 +57,6 @@ if ($product->isOutOfStock()) {
     $stockLabel = 'On backorder';
 }
 
-$imageUrl  = product_picture_url($product, 'card');
 $detailUrl = '/products/' . rawurlencode($product->slug);
 
 // Rating stub. Replace with real data when reviews ship. When
@@ -71,12 +70,13 @@ $ratingCount = 0;
     <div class="sf-product-card-media">
 
         <a href="<?= e($detailUrl) ?>" class="sf-product-card-image-link" tabindex="-1" aria-hidden="true">
-            <img src="<?= e($imageUrl) ?>"
-                 alt=""
-                 loading="lazy"
-                 width="600"
-                 height="750"
-                 class="sf-product-card-image">
+            <?= product_picture_tag($product, [
+                'variant' => 'card',
+                'class'   => 'sf-product-card-image',
+                'sizes'   => '(max-width: 640px) 50vw, (max-width: 900px) 33vw, 320px',
+                'width'   => 400,
+                'height'  => 500,
+            ]) ?>
         </a>
 
         <?php if ($onSale): ?>

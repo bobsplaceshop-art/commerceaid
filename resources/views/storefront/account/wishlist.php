@@ -74,7 +74,6 @@ $count = (int) ($count ?? 0);
 
                     <?php
                     $detailUrl = '/products/' . rawurlencode($product->slug);
-                    $imageUrl  = product_picture_url($product, 'card');
                     $onSale    = $product->isOnSale();
                     $stockClass = 'sf-stock-in';
                     $stockLabel = 'In stock';
@@ -88,12 +87,13 @@ $count = (int) ($count ?? 0);
                     ?>
 
                     <a href="<?= e($detailUrl) ?>" class="sf-wishlist-card-media">
-                        <img src="<?= e($imageUrl) ?>"
-                             alt=""
-                             loading="lazy"
-                             width="600"
-                             height="750"
-                             class="sf-wishlist-card-image">
+                        <?= product_picture_tag($product, [
+                            'variant' => 'card',
+                            'class'   => 'sf-wishlist-card-image',
+                            'sizes'   => '(max-width: 640px) 50vw, (max-width: 900px) 33vw, 320px',
+                            'width'   => 400,
+                            'height'  => 500,
+                        ]) ?>
                         <?php if ($onSale): ?>
                             <span class="sf-wishlist-card-badge sf-badge-sale">
                                 Sale

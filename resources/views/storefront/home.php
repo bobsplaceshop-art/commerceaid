@@ -208,11 +208,12 @@ $trustRow = [
                 <?php foreach ($topCategories as $c): ?>
                     <a href="/categories/<?= e(rawurlencode($c->slug)) ?>" class="sf-home-category-card">
                         <div class="sf-home-category-image">
-                            <img src="<?= e(category_picture_url($c, 'md')) ?>"
-                                 alt=""
-                                 loading="lazy"
-                                 width="600"
-                                 height="750">
+                            <?= category_picture_tag($c, [
+                                'variant' => 'md',
+                                'sizes'   => '(max-width: 640px) 50vw, (max-width: 900px) 33vw, 400px',
+                                'width'   => 500,
+                                'height'  => 500,
+                            ]) ?>
                         </div>
                         <div class="sf-home-category-footer">
                             <span class="sf-home-category-name"><?= e($c->name) ?></span>

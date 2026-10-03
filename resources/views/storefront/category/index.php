@@ -59,11 +59,12 @@ $totalCount = $totalCount ?? count($categories);
                    data-sf-category-id="<?= (int) $c->id ?>">
 
                     <div class="sf-category-card-image">
-                        <img src="<?= e(category_picture_url($c, 'md')) ?>"
-                             alt=""
-                             loading="lazy"
-                             width="500"
-                             height="650">
+                        <?= category_picture_tag($c, [
+                            'variant' => 'md',
+                            'sizes'   => '(max-width: 640px) 50vw, (max-width: 900px) 33vw, 400px',
+                            'width'   => 500,
+                            'height'  => 500,
+                        ]) ?>
                     </div>
 
                     <div class="sf-category-card-footer">

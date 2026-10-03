@@ -38,8 +38,6 @@ $total = (int) $result['total'];
 $page  = (int) $result['page'];
 $pages = (int) $result['pages'];
 
-$heroImage = category_picture_url($category, 'lg');
-
 /**
  * Page URL preserving only the page param.
  */
@@ -66,7 +64,14 @@ $pageUrl = function (int $p): string {
 
     <section class="sf-category-hero" data-sf-section="category-detail">
         <div class="sf-category-hero-image">
-            <img src="<?= e($heroImage) ?>" alt="" loading="lazy" width="1200" height="400">
+            <?= category_picture_tag($category, [
+                'variant'       => 'lg',
+                'sizes'         => '(max-width: 900px) 100vw, 1400px',
+                'loading'       => 'eager',
+                'fetchpriority' => 'high',
+                'width'         => 1400,
+                'height'        => 400,
+            ]) ?>
         </div>
         <div class="sf-category-hero-body">
             <h1 class="sf-category-hero-title"><?= e($category->name) ?></h1>
