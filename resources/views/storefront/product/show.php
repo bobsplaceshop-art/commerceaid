@@ -219,29 +219,118 @@ if ($gallery !== []) {
                         <input type="hidden" name="product_id" value="<?= (int) $product->id ?>">
 
                         <?php if ($isVariableWithVariants): ?>
-                            <div class="sf-product-variants">
-                                <label for="sf-variant-select" class="sf-field-label">
-                                    Choose an option <span class="req">*</span>
-                                </label>
-                                <select name="variant_id"
-                                        id="sf-variant-select"
-                                        class="sf-select"
-                                        required>
-                                    <option value="">Select&hellip;</option>
-                                    <?php foreach ($variants as $v): ?>
-                                        <option value="<?= (int) $v->id ?>"
-                                                data-price="<?= e(number_format($v->price, 2, '.', '')) ?>">
-                                            <?php
-                                            $label = trim((string) $v->attributeSummary);
-                                            if ($label === '') {
-                                                $label = $v->sku ?: 'Variant #' . (int) $v->id;
-                                            }
-                                            echo e($label . ' — ' . number_format($v->price, 2));
-                                            ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
+                            <?php
+                            // The swatch selector. One row per
+                            // variant axis. The first axis renders
+                            // as image swatches when is_color_axis
+                            // is true, otherwise as text chips.
+                            //
+                            // The hidden variant_id input carries the
+                            // resolved variant id. product-swatches.js
+                            // sets it on click.
+                            //
+                            // The combinations map lets the JS
+                            // resolve a selected (value_id, value_id)
+                            // pair to a variant id without a
+                            // network round-trip.
+                            $swatchAxes         = $swatchAxes         ?? [];
+                            $combinations       = $combinations       ?? [];
+                            $swatchImages       = $swatchImages       ?? [];
+                            $sellableVariantIds = $sellableVariantIds ?? [];
+
+                            $combinationsJson = json_encode(
+                                $combinations,
+                                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+                            );
+                            ?>
+                            <div class="sf-product-variants"
+                                 data-sf-swatches
+                                 data-sf-combinations="<?= e($combinationsJson) ?>"
+                                 data-sf-sellable="<?= e(implode(',', $sellableVariantIds)) ?>">
+
+                                <input type="hidden"
+                                       name="variant_id"
+                                       value=""
+                                       data-sf-variant-input>
+
+                                <?php foreach ($swatchAxes as $axis): ?>
+                                    <?php
+                                    $axisSlug = (string) ($axis['slug'] ?? '');
+                                    $axisName = (string) ($axis['name'] ?? '');
+                                    $isColor  = !empty($axis['is_color_axis']);
+                                    ?>
+                                    <div class="sf-swatch-axis"
+                                         data-sf-axis="<?= e($axisSlug) ?>">
+                                        <div class="sf-swatch-axis-label">
+                                            <?= e($axisName) ?>:
+                                            <span class="sf-swatch-axis-value"
+                                                  data-sf-axis-value></span>
+                                        </div>
+
+                                        <div class="sf-swatch-row">
+                                            <?php foreach (($axis['values'] ?? []) as $val): ?>
+                                                <?php
+                                                $valId      = (int) ($val['attribute_value_id'] ?? 0);
+                                                $variantIds = $val['variant_ids'] ?? [];
+                                                $hex        = $val['color_hex'] ?? '';
+                                                $label      = (string) ($val['value'] ?? '');
+
+                                                $imageUrl = null;
+                                                if (isset($swatchImages[$valId])) {
+                                                    $imageUrl = $swatchImages[$valId]['media']
+                                                        ->variantUrl('card', 'webp');
+                                                }
+                                                ?>
+                                                <button type="button"
+                                                        class="sf-swatch<?= $isColor ? ' sf-swatch-color' : ' sf-swatch-chip' ?>"
+                                                        data-sf-swatch
+                                                        data-axis="<?= e($axisSlug) ?>"
+                                                        data-value-id="<?= $valId ?>"
+                                                        data-variant-ids="<?= e(implode(',', $variantIds)) ?>"
+                                                        <?php if ($imageUrl !== null): ?>
+                                                            data-swap-image="<?= e($imageUrl) ?>"
+                                                        <?php endif; ?>>
+                                                    <?php if ($imageUrl !== null): ?>
+                                                        <img src="<?= e($imageUrl) ?>"
+                                                             alt=""
+                                                             loading="lazy">
+                                                    <?php elseif ($isColor && $hex !== ''): ?>
+                                                        <span class="sf-swatch-fill"
+                                                              style="background-color: <?= e($hex) ?>"></span>
+                                                    <?php else: ?>
+                                                        <span class="sf-swatch-label"><?= e($label) ?></span>
+                                                    <?php endif; ?>
+                                                </button>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
                             </div>
+
+                            <noscript>
+                                <div class="sf-product-variants">
+                                    <label for="sf-variant-select" class="sf-field-label">
+                                        Choose an option <span class="req">*</span>
+                                    </label>
+                                    <select name="variant_id"
+                                            id="sf-variant-select"
+                                            class="sf-select"
+                                            required>
+                                        <option value="">Select&hellip;</option>
+                                        <?php foreach ($variants as $v): ?>
+                                            <option value="<?= (int) $v->id ?>">
+                                                <?php
+                                                $label = trim((string) $v->attributeSummary);
+                                                if ($label === '') {
+                                                    $label = $v->sku ?: 'Variant #' . (int) $v->id;
+                                                }
+                                                echo e($label . ' — ' . number_format($v->price, 2));
+                                                ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </noscript>
                         <?php else: ?>
                             <input type="hidden" name="variant_id" value="0">
                         <?php endif; ?>
@@ -324,3 +413,4 @@ if ($gallery !== []) {
 </div>
 
 <script src="/assets/js/storefront-gallery.js" defer></script>
+<script src="<?= versioned_asset('js/product-swatches.js') ?>" defer></script>

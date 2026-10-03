@@ -179,6 +179,40 @@ final class ProductController extends StorefrontController
             }
         }
 
+        // ----- Swatch selector data (variable products) -----
+        // The storefront swatch row reads:
+        //   - swatchAxes:         variant axes with values + is_color_axis
+        //   - combinations:       "value_id:value_id" -> variant_id
+        //   - swatchImages:       attribute_value_id -> assigned image
+        //   - sellableVariantIds: variants with available > 0
+        $swatchAxes         = [];
+        $combinations       = [];
+        $swatchImages       = [];
+        $sellableVariantIds = [];
+
+        if ($product->isVariable()) {
+            $swatchAxes   = $variants->swatchAxesFor($product->id);
+            $combinations = $variants->combinationsFor($product->id);
+            $swatchImages = $this->resolveSwatchImages($product->id);
+
+            // A variant is sellable when its inventory row has
+            // available > 0. Products that do not manage stock
+            // return every active variant id as sellable.
+            if ($product->manageStock) {
+                foreach ($inventory->stockForProduct($product->id) as $row) {
+                    $vid = (int) ($row['variant_id'] ?? 0);
+                    $available = (int) ($row['available'] ?? 0);
+                    if ($vid > 0 && $available > 0) {
+                        $sellableVariantIds[] = $vid;
+                    }
+                }
+            } else {
+                foreach ($variantList as $v) {
+                    $sellableVariantIds[] = (int) $v->id;
+                }
+            }
+        }
+
         // ----- Record the view (best-effort, never throws) -----
         // Side effect of viewing. The service swallows all
         // failures so a broken recorder cannot break the page.
@@ -196,9 +230,63 @@ final class ProductController extends StorefrontController
             'parentCategory'  => $parentCategory,
             'stockQty'        => $stockQty,
             'isLiveSoldOut'   => $isLiveSoldOut,
-            'variants'        => $variantList,
-            'related'         => $related,
-            'gallery'         => $gallery,
+            'variants'          => $variantList,
+            'related'           => $related,
+            'gallery'           => $gallery,
+            'swatchAxes'        => $swatchAxes,
+            'combinations'      => $combinations,
+            'swatchImages'      => $swatchImages,
+            'sellableVariantIds'=> $sellableVariantIds,
         ]);
+    }
+
+    /**
+     * Resolve the product's variant swatch images to
+     * MediaItem pairs, keyed by attribute_value_id.
+     *
+     * Reads ProductImageRepository::swatchPreviewsFor()
+     * (returns attribute_value_id => ProductImage), bulk
+     * loads the underlying MediaItem for each, and pairs
+     * them.
+     *
+     * @return array<int, array{image: \CorporateAid\Commerce\Models\ProductImage,
+     *                          media: \CorporateAid\Commerce\Models\MediaItem}>
+     */
+    private function resolveSwatchImages(int $productId): array
+    {
+        if ($productId <= 0) {
+            return [];
+        }
+
+        $imageRepo = $this->container->get(ProductImageRepository::class);
+        $mediaRepo = $this->container->get(MediaRepository::class);
+
+        $rows = $imageRepo->swatchPreviewsFor($productId);
+        if ($rows === []) {
+            return [];
+        }
+
+        $fileIds = [];
+        foreach ($rows as $row) {
+            $fileIds[] = $row->fileId;
+        }
+
+        $mediaById = [];
+        foreach ($mediaRepo->findByIds($fileIds) as $item) {
+            $mediaById[$item->file->id] = $item;
+        }
+
+        $out = [];
+        foreach ($rows as $attributeValueId => $row) {
+            $media = $mediaById[$row->fileId] ?? null;
+            if ($media === null) {
+                continue;
+            }
+            $out[(int) $attributeValueId] = [
+                'image' => $row,
+                'media' => $media,
+            ];
+        }
+        return $out;
     }
 }
