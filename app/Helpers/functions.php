@@ -560,6 +560,364 @@ if (!function_exists('category_picture_url')) {
     }
 }
 
+if (!function_exists('product_picture_tag')) {
+    /**
+     * Render a complete <picture> block for a product's
+     * primary image.
+     *
+     * Emits the srcset for every format the context declares
+     * (webp, jpeg, avif when it ships). Emits a plain <img>
+     * with the local placeholder SVG when the product has no
+     * image.
+     *
+     * Options:
+     *   variant       string  Base variant for the <img>
+     *                         src fallback. Default: 'card'.
+     *   alt           ?string Alt text. Default: product name.
+     *   class         ?string CSS class on the <img>.
+     *   sizes         string  The sizes attribute.
+     *                         Default: '(max-width: 640px) 50vw, 320px'.
+     *   loading       string  'lazy' or 'eager'. Default: 'lazy'.
+     *   fetchpriority ?string 'high', 'low', or null.
+     *   width         int     Rendered width for CLS. Default: 400.
+     *   height        int     Rendered height for CLS. Default: 500.
+     *   decoding      string  'async' or 'sync'. Default: 'async'.
+     *   attrs         array<string,mixed>  Extra attributes
+     *                 for the <img>. A key whose value is
+     *                 true renders as a boolean attribute
+     *                 (e.g. 'data-sf-gallery-main' => true).
+     *
+     * @param array<string,mixed> $options
+     */
+    function product_picture_tag(
+        ?\CorporateAid\Commerce\Models\Product $product = null,
+        array $options = []
+    ): string {
+        $variant       = (string) ($options['variant'] ?? 'card');
+        $alt           = $options['alt'] ?? null;
+        $class         = $options['class'] ?? null;
+        $sizes         = (string) ($options['sizes'] ?? '(max-width: 640px) 50vw, 320px');
+        $loading       = (string) ($options['loading'] ?? 'lazy');
+        $fetchpriority = $options['fetchpriority'] ?? null;
+        $width         = (int) ($options['width'] ?? 400);
+        $height        = (int) ($options['height'] ?? 500);
+        $decoding      = (string) ($options['decoding'] ?? 'async');
+        $extraAttrs    = $options['attrs'] ?? [];
+
+        // Resolve the MediaItem for this product's primary image.
+        $media = product_primary_media_item($product);
+
+        // Alt text resolution.
+        if ($alt === null) {
+            $alt = ($product !== null && $product->name !== '') ? $product->name : '';
+        }
+
+        // Common <img> attribute string used in both paths.
+        $imgAttrs = _picture_tag_img_attrs(
+            $alt, $class, $loading, $fetchpriority, $width, $height, $decoding, $extraAttrs
+        );
+
+        // No image: emit the placeholder <img> only.
+        if ($media === null) {
+            $placeholder = '/assets/img/product-placeholder.svg';
+            return '<img src="' . e($placeholder) . '"' . $imgAttrs . '>';
+        }
+
+        // With image: build the <picture> block.
+        $spec       = \CorporateAid\Commerce\Support\MediaVariantSet::for(
+            \CorporateAid\Commerce\Support\MediaVariantSet::CONTEXT_PRODUCT_IMAGE
+        );
+        $sourcesHtml = _picture_tag_sources($media, $spec, $sizes);
+        $primarySrc  = $media->variantUrl($variant, _picture_tag_primary_format($spec));
+
+        return '<picture>'
+            . $sourcesHtml
+            . '<img src="' . e($primarySrc) . '"' . $imgAttrs . '>'
+            . '</picture>';
+    }
+}
+
+if (!function_exists('category_picture_tag')) {
+    /**
+     * Render a complete <picture> block for a category's
+     * image. Same shape and options as product_picture_tag().
+     *
+     * Options default to the category card shape:
+     *   variant 'md', sizes '(max-width: 640px) 50vw, 400px',
+     *   width 500, height 500.
+     *
+     * @param array<string,mixed> $options
+     */
+    function category_picture_tag(
+        ?\CorporateAid\Commerce\Models\Category $category = null,
+        array $options = []
+    ): string {
+        $variant       = (string) ($options['variant'] ?? 'md');
+        $alt           = $options['alt'] ?? null;
+        $class         = $options['class'] ?? null;
+        $sizes         = (string) ($options['sizes'] ?? '(max-width: 640px) 50vw, 400px');
+        $loading       = (string) ($options['loading'] ?? 'lazy');
+        $fetchpriority = $options['fetchpriority'] ?? null;
+        $width         = (int) ($options['width'] ?? 500);
+        $height        = (int) ($options['height'] ?? 500);
+        $decoding      = (string) ($options['decoding'] ?? 'async');
+        $extraAttrs    = $options['attrs'] ?? [];
+
+        $media = category_primary_media_item($category);
+
+        if ($alt === null) {
+            $alt = ($category !== null && $category->name !== '') ? $category->name : '';
+        }
+
+        $imgAttrs = _picture_tag_img_attrs(
+            $alt, $class, $loading, $fetchpriority, $width, $height, $decoding, $extraAttrs
+        );
+
+        if ($media === null) {
+            $placeholder = '/assets/img/category-placeholder.svg';
+            return '<img src="' . e($placeholder) . '"' . $imgAttrs . '>';
+        }
+
+        $spec        = \CorporateAid\Commerce\Support\MediaVariantSet::for(
+            \CorporateAid\Commerce\Support\MediaVariantSet::CONTEXT_CATEGORY_IMAGE
+        );
+        $sourcesHtml = _picture_tag_sources($media, $spec, $sizes);
+        $primarySrc  = $media->variantUrl($variant, _picture_tag_primary_format($spec));
+
+        return '<picture>'
+            . $sourcesHtml
+            . '<img src="' . e($primarySrc) . '"' . $imgAttrs . '>'
+            . '</picture>';
+    }
+}
+
+if (!function_exists('product_primary_media_item')) {
+    /**
+     * Resolve the MediaItem for a product's primary image.
+     * Returns null when the product has no image or the media
+     * read fails. Static-cached per product id.
+     */
+    function product_primary_media_item(
+        ?\CorporateAid\Commerce\Models\Product $product = null
+    ): ?\CorporateAid\Commerce\Models\MediaItem {
+        static $cache = [];
+
+        if ($product === null || $product->id <= 0) {
+            return null;
+        }
+
+        $key = $product->id;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        try {
+            $container = \CorporateAid\Core\App::instance()->container();
+            $imageRepo = $container->get(
+                \CorporateAid\Commerce\Repositories\ProductImageRepository::class
+            );
+            $primary = $imageRepo->primaryFor((int) $product->id);
+            if ($primary === null) {
+                return $cache[$key] = null;
+            }
+            $mediaRepo = $container->get(
+                \CorporateAid\Commerce\Repositories\MediaRepository::class
+            );
+            return $cache[$key] = $mediaRepo->findById($primary->fileId);
+        } catch (\Throwable) {
+            return $cache[$key] = null;
+        }
+    }
+}
+
+if (!function_exists('category_primary_media_item')) {
+    /**
+     * Resolve the MediaItem for a category's image. Returns
+     * null when the category has no image or the media read
+     * fails. Static-cached per category id.
+     */
+    function category_primary_media_item(
+        ?\CorporateAid\Commerce\Models\Category $category = null
+    ): ?\CorporateAid\Commerce\Models\MediaItem {
+        static $cache = [];
+
+        if ($category === null || $category->id <= 0) {
+            return null;
+        }
+
+        $fileId = (int) ($category->imageFileId ?? 0);
+        if ($fileId <= 0) {
+            return null;
+        }
+
+        $key = $fileId;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        try {
+            $container = \CorporateAid\Core\App::instance()->container();
+            $mediaRepo = $container->get(
+                \CorporateAid\Commerce\Repositories\MediaRepository::class
+            );
+            return $cache[$key] = $mediaRepo->findById($fileId);
+        } catch (\Throwable) {
+            return $cache[$key] = null;
+        }
+    }
+}
+
+if (!function_exists('_picture_tag_sources')) {
+    /**
+     * Build the <source> blocks for a <picture>. One source
+     * per format that the context declares AND that the
+     * MediaItem actually has a variant for.
+     *
+     * The order matches the industry-standard preference:
+     * avif first, then webp, then jpeg. Browsers try sources
+     * in declaration order and pick the first supported
+     * format.
+     *
+     * Cached per (uuid, format, context-variant-set). The
+     * expensive part is variantUrl() calls and possible DB
+     * reads; the string assembly is cheap.
+     */
+    function _picture_tag_sources(
+        \CorporateAid\Commerce\Models\MediaItem $media,
+        \CorporateAid\Commerce\Support\MediaContextSpec $spec,
+        string $sizes
+    ): string {
+        static $cache = [];
+
+        $uuid = (string) $media->file->uuid;
+        $key  = $uuid . ':' . $sizes;
+
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        // Collect every format the context declares.
+        $declaredFormats = [];
+        foreach ($spec->variants as $vSpec) {
+            foreach ($vSpec->formats as $format) {
+                $declaredFormats[$format] = true;
+            }
+        }
+
+        // Preference order: avif, webp, jpeg. Anything else
+        // (png, gif) is appended after.
+        $ordered = [];
+        foreach (['avif', 'webp', 'jpeg'] as $fmt) {
+            if (isset($declaredFormats[$fmt])) {
+                $ordered[] = $fmt;
+                unset($declaredFormats[$fmt]);
+            }
+        }
+        foreach (array_keys($declaredFormats) as $fmt) {
+            $ordered[] = $fmt;
+        }
+
+        $mimeTypes = [
+            'avif' => 'image/avif',
+            'webp' => 'image/webp',
+            'jpeg' => 'image/jpeg',
+            'png'  => 'image/png',
+            'gif'  => 'image/gif',
+        ];
+
+        $html = '';
+        foreach ($ordered as $format) {
+            $srcsetEntries = [];
+            foreach ($spec->variants as $vSpec) {
+                if (!in_array($format, $vSpec->formats, true)) {
+                    continue;
+                }
+                $url = $media->variantUrl($vSpec->name, $format);
+                $srcsetEntries[] = e($url) . ' ' . $vSpec->width . 'w';
+            }
+            if ($srcsetEntries === []) {
+                continue;
+            }
+
+            $type = $mimeTypes[$format] ?? 'application/octet-stream';
+            $html .= '<source type="' . e($type) . '"'
+                   . ' srcset="' . implode(', ', $srcsetEntries) . '"'
+                   . ' sizes="' . e($sizes) . '">';
+        }
+
+        return $cache[$key] = $html;
+    }
+}
+
+if (!function_exists('_picture_tag_primary_format')) {
+    /**
+     * The format used for the <img src> fallback. Prefer webp
+     * (universal support today), fall back to jpeg, then to
+     * whatever the spec declares first.
+     */
+    function _picture_tag_primary_format(
+        \CorporateAid\Commerce\Support\MediaContextSpec $spec
+    ): string {
+        $all = [];
+        foreach ($spec->variants as $vSpec) {
+            foreach ($vSpec->formats as $format) {
+                $all[$format] = true;
+            }
+        }
+        if (isset($all['webp'])) return 'webp';
+        if (isset($all['jpeg'])) return 'jpeg';
+        if (isset($all['avif'])) return 'avif';
+        return (string) array_key_first($all);
+    }
+}
+
+if (!function_exists('_picture_tag_img_attrs')) {
+    /**
+     * Build the attribute string for the <img> element.
+     *
+     * @param array<string,mixed> $extra
+     *              Extra attributes. A value of true renders
+     *              as a boolean attribute name only.
+     */
+    function _picture_tag_img_attrs(
+        string $alt,
+        ?string $class,
+        string $loading,
+        ?string $fetchpriority,
+        int $width,
+        int $height,
+        string $decoding,
+        array $extra
+    ): string {
+        $parts = [];
+        $parts[] = ' alt="' . e($alt) . '"';
+        if ($class !== null && $class !== '') {
+            $parts[] = ' class="' . e($class) . '"';
+        }
+        $parts[] = ' loading="' . e($loading) . '"';
+        if ($fetchpriority !== null && $fetchpriority !== '') {
+            $parts[] = ' fetchpriority="' . e($fetchpriority) . '"';
+        }
+        $parts[] = ' decoding="' . e($decoding) . '"';
+        $parts[] = ' width="' . $width . '"';
+        $parts[] = ' height="' . $height . '"';
+
+        foreach ($extra as $name => $value) {
+            $name = (string) $name;
+            if ($name === '' || !preg_match('/^[a-zA-Z_][a-zA-Z0-9_:-]*$/', $name)) {
+                continue;
+            }
+            if ($value === true) {
+                $parts[] = ' ' . $name;
+            } elseif ($value !== false && $value !== null) {
+                $parts[] = ' ' . $name . '="' . e((string) $value) . '"';
+            }
+        }
+
+        return implode('', $parts);
+    }
+}
+
 if (!function_exists('customer_unread_message_count')) {
     /**
      * Unread message count for the currently logged-in customer.
