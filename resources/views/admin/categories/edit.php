@@ -112,8 +112,11 @@ $categoryId = $category !== null ? (int) $category->id : 0;
 
                     <div class="ra-file-meta">
                         <span class="ra-file-hint">
-                            PNG, JPEG, WebP, or GIF. Max 5 MB.
-                            Landscape or square recommended.
+                            <strong>Recommended: 1600 &times; 533 pixels (3:1 aspect).</strong>
+                            PNG, JPEG, or WebP. Max 5 MB.
+                            Images with a different aspect ratio are
+                            cropped to fill the banner &mdash; keep
+                            important content centered.
                         </span>
                     </div>
                 </div>
