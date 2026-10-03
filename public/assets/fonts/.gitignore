@@ -1,0 +1,15 @@
+# Writing fonts are downloaded on demand via FontDownloader.
+# Only the ones a merchant selects land here. Keeping them
+# out of the repo keeps clones small and forces a fresh
+# download per environment, which is the correct model for
+# merchant-configurable assets.
+
+*
+
+# But keep this directory and its .gitkeep.
+!.gitkeep
+!.gitignore
+
+# Font Awesome is bundled and versioned. Uncomment the
+# exception below when Session 5 commits the four FA
+# binaries under public/assets/fontawesome/.

@@ -18,6 +18,7 @@ use CorporateAid\Commerce\Repositories\CategoryRepository;
 use CorporateAid\Commerce\Repositories\InventoryRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
 use CorporateAid\Commerce\Repositories\ProductImageRepository;
+use CorporateAid\Commerce\Services\Fonts\FontDownloader;
 use CorporateAid\Commerce\Repositories\StoreRepository;
 use CorporateAid\Commerce\Repositories\CustomerAddressRepository;
 use CorporateAid\Commerce\Repositories\CustomerRepository;
@@ -93,6 +94,18 @@ final class CommerceServiceProvider
             fn() => new ProductImageRepository(
                 $c->get(Database::class),
                 $c->get(StoreContext::class)
+            ));
+
+        // The App is not bound in the container (by design,
+        // it IS the container owner). Capture the base path
+        // once at registration time so the binding closure
+        // does not need to resolve the App at request time.
+        $appBasePath = \CorporateAid\Core\App::instance()->basePath();
+
+        $c->singleton(FontDownloader::class,
+            fn() => new FontDownloader(
+                $c->get(\CorporateAid\Platform\Repositories\FileRepository::class),
+                $appBasePath
             ));
 
         $c->singleton(InventoryRepository::class,
