@@ -81,15 +81,17 @@ if ($isLiveSoldOut) {
 // product with no images.
 $gallery = $gallery ?? [];
 
-$mainImage  = '/assets/img/product-placeholder.svg';
+// Each thumbnail entry carries the MediaItem plus the
+// large URL for the gallery swap JS. The <picture>
+// markup is built by media_picture_tag() at render
+// time; the 'large' URL is what the JS reads on
+// thumbnail click.
 $thumbnails = [];
 
 if ($gallery !== []) {
-    $mainImage = $gallery[0]['media']->variantUrl('lg', 'webp');
-
     foreach ($gallery as $entry) {
         $thumbnails[] = [
-            'thumb' => $entry['media']->variantUrl('card', 'webp'),
+            'media' => $entry['media'],
             'large' => $entry['media']->variantUrl('lg', 'webp'),
         ];
     }
@@ -123,12 +125,16 @@ if ($gallery !== []) {
         <!-- ========================================================= -->
         <div class="sf-product-media" data-sf-gallery>
             <div class="sf-product-image-large">
-                <img src="<?= e($mainImage) ?>"
-                     alt=""
-                     width="900"
-                     height="1125"
-                     class="sf-product-main-img"
-                     data-sf-gallery-main>
+                <?= product_picture_tag($product, [
+                    'variant'       => 'lg',
+                    'class'         => 'sf-product-main-img',
+                    'sizes'         => '(max-width: 900px) 100vw, 500px',
+                    'loading'       => 'eager',
+                    'fetchpriority' => 'high',
+                    'width'         => 500,
+                    'height'        => 500,
+                    'attrs'         => ['data-sf-gallery-main' => true],
+                ]) ?>
 
                 <?php if ($onSale): ?>
                     <span class="sf-product-badge sf-badge-sale">
@@ -146,7 +152,12 @@ if ($gallery !== []) {
                             data-sf-gallery-thumb
                             data-large="<?= e($thumb['large']) ?>"
                             aria-label="Show image <?= $i + 1 ?>">
-                        <img src="<?= e($thumb['thumb']) ?>" alt="" width="300" height="375" loading="lazy">
+                        <?= media_picture_tag($thumb['media'], 'product-image', [
+                            'variant' => 'card',
+                            'sizes'   => '72px',
+                            'width'   => 300,
+                            'height'  => 375,
+                        ]) ?>
                     </button>
                 <?php endforeach; ?>
             </div>
@@ -275,11 +286,10 @@ if ($gallery !== []) {
                                                 $hex        = $val['color_hex'] ?? '';
                                                 $label      = (string) ($val['value'] ?? '');
 
-                                                $imageUrl = null;
-                                                if (isset($swatchImages[$valId])) {
-                                                    $imageUrl = $swatchImages[$valId]['media']
-                                                        ->variantUrl('card', 'webp');
-                                                }
+                                                $swapMedia = $swatchImages[$valId]['media'] ?? null;
+                                                $imageUrl  = $swapMedia !== null
+                                                    ? $swapMedia->variantUrl('card', 'webp')
+                                                    : null;
                                                 ?>
                                                 <button type="button"
                                                         class="sf-swatch<?= $isColor ? ' sf-swatch-color' : ' sf-swatch-chip' ?>"
@@ -290,10 +300,13 @@ if ($gallery !== []) {
                                                         <?php if ($imageUrl !== null): ?>
                                                             data-swap-image="<?= e($imageUrl) ?>"
                                                         <?php endif; ?>>
-                                                    <?php if ($imageUrl !== null): ?>
-                                                        <img src="<?= e($imageUrl) ?>"
-                                                             alt=""
-                                                             loading="lazy">
+                                                    <?php if ($swapMedia !== null): ?>
+                                                        <?= media_picture_tag($swapMedia, 'product-image', [
+                                                            'variant' => 'card',
+                                                            'sizes'   => '56px',
+                                                            'width'   => 400,
+                                                            'height'  => 500,
+                                                        ]) ?>
                                                     <?php elseif ($isColor && $hex !== ''): ?>
                                                         <span class="sf-swatch-fill"
                                                               style="background-color: <?= e($hex) ?>"></span>

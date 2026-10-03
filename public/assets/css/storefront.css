@@ -91,6 +91,32 @@ img {
     display: block;
 }
 
+/* =====================================================================
+ * Picture elements are layout-transparent.
+ * =====================================================================
+ * A <picture> element exists only to hold <source> children.
+ * It has no visual role. Removing it from the layout tree
+ * with display: contents lets its <img> child participate
+ * directly in the parent's layout — the same as before the
+ * picture wrapper was introduced in 008G.4a.3.
+ *
+ * Without this rule, every CSS selector that targets
+ * "wrapper img" (like .sf-category-hero-image img) sees the
+ * <img> as an inline child of an inline <picture>, not as a
+ * block filling its container. The result is a clipped image
+ * because the container has overflow: hidden.
+ *
+ * This is the standard fix used by every major CSS reset.
+ * Safari 16+ and every Chrome, Firefox, and Edge version
+ * since 2019 supports it correctly. Older Safari had
+ * accessibility bugs, but those versions are outside the
+ * storefront's browser support target.
+ * ===================================================================== */
+
+picture {
+    display: contents;
+}
+
 a {
     color: inherit;
     text-decoration: none;
