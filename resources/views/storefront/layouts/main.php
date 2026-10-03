@@ -357,6 +357,7 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     })();
     </script>
     <?php endif; ?>
+<script src="<?= versioned_asset('js/storefront-hero.js') ?>" defer></script>
 <script src="<?= versioned_asset('js/wishlist.js') ?>" defer></script>
 
 <?php if (!empty($cookieBannerEnabled)): ?>

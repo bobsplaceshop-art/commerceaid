@@ -118,10 +118,20 @@
             // combination may be incomplete (Color selected, no
             // Size yet) and the swap is independent of the
             // combination.
+            //
+            // The hero is a <picture> block. Use the shared
+            // swapHeroImage() helper which removes the
+            // <source> elements and sets the img src. Setting
+            // img.src alone has no visible effect.
             var swapUrl = btn.getAttribute('data-swap-image');
             if (swapUrl) {
-                var main = document.querySelector('[data-sf-gallery-main]');
-                if (main) main.src = swapUrl;
+                if (window.SF && window.SF.swapHeroImage) {
+                    window.SF.swapHeroImage(swapUrl);
+                } else {
+                    // Fallback: no helper loaded.
+                    var main = document.querySelector('[data-sf-gallery-main]');
+                    if (main) main.src = swapUrl;
+                }
             }
 
             // Update the axis label.

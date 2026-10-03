@@ -34,7 +34,17 @@
                     var large = thumb.getAttribute('data-large');
                     if (!large) return;
 
-                    main.src = large;
+                    // Swap the hero. The helper removes the
+                    // <source> elements and sets the img src,
+                    // because the hero is a <picture> block
+                    // and setting img.src alone has no effect.
+                    if (window.SF && window.SF.swapHeroImage) {
+                        window.SF.swapHeroImage(large);
+                    } else {
+                        // Fallback: no helper loaded. Set src
+                        // directly (works only on plain <img>).
+                        main.src = large;
+                    }
 
                     thumbs.forEach(function (t) {
                         t.classList.remove('is-active');
