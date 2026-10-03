@@ -1105,6 +1105,71 @@ session storage could move to a table. Not a priority.
 
 ---
 
+### AVIF Image Variants (008G.4a.4)
+
+Add AVIF encoding to the media pipeline as a third
+format alongside WebP and JPEG. AVIF produces 30-50%
+smaller files than WebP at the same visual quality.
+
+The `<picture>` markup shipped in 008G.4a.3 is already
+forward-compatible: the helpers emit a
+`<source type="image/avif">` only if an AVIF variant
+exists for the file. When this sub-stage lands, every
+call site automatically starts including AVIF — no
+markup change needed.
+
+Scope:
+
+  - Extend MediaProcessor::generateVariants() to
+    produce `.avif` alongside `.webp` and `.jpeg`.
+  - Extend each MediaVariantSet context's format
+    list with 'avif'.
+  - Backfill existing variants: re-run the pipeline
+    on demand for files with no AVIF variant, or
+    schedule a batch job.
+
+Prerequisite check: whether the installed GD build
+has AVIF encoding enabled. PHP 8.1+ supports it, but
+GD builds vary. Test with:
+
+    php -r 'var_dump(function_exists("imageavif"));'
+
+If false, either rebuild GD or add an Imagick
+fallback path.
+
+Sequenced: after 008G.4a.3. Before 008G.4b (PWA),
+so the service worker caches every format from day
+one.
+
+### Blur-Up Image Placeholders
+
+Render a tiny inline base64 placeholder as the `<img>`
+src, then swap to the real image once it loads. No
+visible pop-in, no layout shift after first paint.
+
+Scope:
+
+  - Generate a very small variant (32x40 or similar)
+    per image.
+  - Encode it inline as base64 in the `<img src>`.
+  - A small JS handler swaps the src once the real
+    image has loaded.
+  - Decide which images get blur-up: product cards
+    only, or hero too.
+
+Trade-off: adds ~200-400 bytes per image to the HTML
+for a store with many product cards. Worth doing only
+if a performance audit shows the LCP or CLS metric
+needs it.
+
+The `width` and `height` attributes shipped in
+008G.4a.3 already prevent layout shift. Blur-up is a
+further polish, not a fix.
+
+Likely stage: not yet scheduled. Evaluate after
+008G.4a.3 ships and a Lighthouse run gives a
+baseline.
+
 ## Feature Toggle System
 
 All new features ship behind a toggle in `core_feature_flags`.
