@@ -47,7 +47,7 @@
            Before: 5fr / 7fr, which at a 1360px container
            gave media ~543px and pushed info below the fold
            on mid-range desktops. */
-        grid-template-columns: minmax(360px, 420px) 1fr;
+        grid-template-columns: minmax(440px, 500px) 1fr;
         gap: 3.5rem;
         align-items: start;
     }
@@ -68,12 +68,12 @@
        than top-aligned with empty space below. */
     margin: 0 auto;
     width: 100%;
-    max-width: 420px;
+    max-width: 500px;
 }
 
 .sf-product-image-large {
     position: relative;
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 1 / 1;
     overflow: hidden;
     border-radius: var(--sf-radius);
     background: var(--sf-cream);
