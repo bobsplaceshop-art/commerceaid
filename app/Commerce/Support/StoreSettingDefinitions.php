@@ -37,6 +37,7 @@ final class StoreSettingDefinitions
 {
     public const GROUP_GENERAL    = 'general';
     public const GROUP_BRANDING   = 'branding';
+    public const GROUP_FONTS      = 'fonts';
     public const GROUP_COMPLIANCE = 'compliance';
 
     /**
@@ -152,6 +153,40 @@ final class StoreSettingDefinitions
         ],
 
         // -------------------------------------------------------------
+        // Fonts
+        // -------------------------------------------------------------
+        'store.font_body_slug' => [
+            'label'   => 'Body font',
+            'type'    => 'select',
+            'default' => '',
+            'group'   => self::GROUP_FONTS,
+            'hint'    => 'Used for body text across the storefront. Select a font to download it. Leave empty for the platform default.',
+            'options' => [],
+            'target'  => 'column',
+            'column'  => 'font_body_slug',
+        ],
+        'store.font_display_slug' => [
+            'label'   => 'Display font',
+            'type'    => 'select',
+            'default' => '',
+            'group'   => self::GROUP_FONTS,
+            'hint'    => 'Used for headings and titles. Serif fonts work well for a premium feel; bold sans-serifs for a modern one.',
+            'options' => [],
+            'target'  => 'column',
+            'column'  => 'font_display_slug',
+        ],
+        'store.font_script_slug' => [
+            'label'   => 'Script font',
+            'type'    => 'select',
+            'default' => '',
+            'group'   => self::GROUP_FONTS,
+            'hint'    => 'Used for decorative accents. Applied sparingly - for example on the storefront headline.',
+            'options' => [],
+            'target'  => 'column',
+            'column'  => 'font_script_slug',
+        ],
+
+        // -------------------------------------------------------------
         // Compliance
         // -------------------------------------------------------------
         'catalog.hide_out_of_stock' => [
@@ -238,7 +273,52 @@ final class StoreSettingDefinitions
                 $out[$key] = $def;
             }
         }
+
+        // The Fonts group has three selects whose option
+        // lists come from FontCatalog at runtime. Constant
+        // arrays cannot call functions, so populate them
+        // here.
+        if ($group === self::GROUP_FONTS) {
+            $out = self::populateFontOptions($out);
+        }
+
         return $out;
+    }
+
+    /**
+     * Attach option lists to the three font select
+     * definitions. Options come from
+     * FontCatalog::forSlot(): 'body', 'display', 'script'.
+     *
+     * Each list is prepended with an empty option so the
+     * merchant can clear the selection and fall back to
+     * the platform default stack.
+     *
+     * @param array<string,array<string,mixed>> $defs
+     * @return array<string,array<string,mixed>>
+     */
+    private static function populateFontOptions(array $defs): array
+    {
+        $slotMap = [
+            'store.font_body_slug'    => 'body',
+            'store.font_display_slug' => 'display',
+            'store.font_script_slug'  => 'script',
+        ];
+
+        foreach ($slotMap as $key => $slot) {
+            if (!isset($defs[$key])) {
+                continue;
+            }
+
+            $options = ['' => '\u{2014} Use platform default \u{2014}'];
+            foreach (\CorporateAid\Commerce\Support\Fonts\FontCatalog::forSlot($slot) as $font) {
+                $options[$font['slug']] = $font['family'];
+            }
+
+            $defs[$key]['options'] = $options;
+        }
+
+        return $defs;
     }
 
     /**
@@ -267,6 +347,7 @@ final class StoreSettingDefinitions
         return match ($group) {
             self::GROUP_GENERAL    => 'General',
             self::GROUP_BRANDING   => 'Branding',
+            self::GROUP_FONTS      => 'Fonts',
             self::GROUP_COMPLIANCE => 'Compliance',
             default                => ucfirst($group),
         };

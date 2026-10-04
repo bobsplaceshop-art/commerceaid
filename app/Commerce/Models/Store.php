@@ -56,6 +56,14 @@ final class Store
     public ?string $pwaShortName = null;
     public ?string $pwaThemeColor = null;
     public ?string $pwaBackgroundColor = null;
+
+    // Font selections. Null = use the platform default.
+    // Non-null = a slug from FontCatalog. The downloader
+    // fetches the WOFF2 files the first time a slug is
+    // selected.
+    public ?string $fontBodySlug    = null;
+    public ?string $fontDisplaySlug = null;
+    public ?string $fontScriptSlug  = null;
     public ?string $seoDefaultTitle = null;
     public ?string $seoDefaultDescription = null;
     public ?int $seoDefaultOgFileId = null;
@@ -108,6 +116,10 @@ final class Store
         $s->updatedAt                    = $row['updated_at'] ?? null;
         $s->createdBy                    = isset($row['created_by']) ? (int) $row['created_by'] : null;
         $s->updatedBy                    = isset($row['updated_by']) ? (int) $row['updated_by'] : null;
+        
+        $s->fontBodySlug                 = $row['font_body_slug']    ?? null;
+        $s->fontDisplaySlug              = $row['font_display_slug'] ?? null;
+        $s->fontScriptSlug               = $row['font_script_slug']  ?? null;
         return $s;
     }
 

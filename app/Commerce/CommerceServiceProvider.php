@@ -18,6 +18,7 @@ use CorporateAid\Commerce\Repositories\CategoryRepository;
 use CorporateAid\Commerce\Repositories\InventoryRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
 use CorporateAid\Commerce\Repositories\ProductImageRepository;
+use CorporateAid\Commerce\Repositories\FontRepository;
 use CorporateAid\Commerce\Services\Fonts\FontDownloader;
 use CorporateAid\Commerce\Repositories\StoreRepository;
 use CorporateAid\Commerce\Repositories\CustomerAddressRepository;
@@ -106,6 +107,12 @@ final class CommerceServiceProvider
             fn() => new FontDownloader(
                 $c->get(\CorporateAid\Platform\Repositories\FileRepository::class),
                 $appBasePath
+            ));
+
+        $c->singleton(FontRepository::class,
+            fn() => new FontRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
             ));
 
         $c->singleton(InventoryRepository::class,

@@ -9,6 +9,8 @@ use CorporateAid\Core\Response;
 use CorporateAid\Core\Session;
 use CorporateAid\Commerce\Repositories\StoreRepository;
 use CorporateAid\Commerce\Repositories\StoreSettingsRepository;
+use CorporateAid\Commerce\Repositories\FontRepository;
+use CorporateAid\Commerce\Services\Fonts\FontDownloader;
 use CorporateAid\Commerce\Context\StoreContext;
 use CorporateAid\Commerce\Repositories\MediaRepository;
 use CorporateAid\Commerce\Support\MediaVariantSet;
@@ -136,6 +138,20 @@ final class SettingsController extends AdminController
             $savedCount++;
         }
 
+        // Fonts tab has a side effect: after the slug
+        // selections are written, fetch any missing WOFF2
+        // files. Downloads happen once per slug per store
+        // install. A failure here does NOT roll back the
+        // selection - the merchant keeps their choice and
+        // sees a warning. The storefront falls back to the
+        // platform font stack for any slot that did not
+        // download.
+        if ($activeTab === StoreSettingDefinitions::GROUP_FONTS) {
+            foreach ($this->downloadSelectedFonts() as $fontError) {
+                $fileErrors[] = $fontError;
+            }
+        }
+
         // Flash a message that reflects what actually happened.
         if ($fileErrors !== []) {
             $session->flash('error', implode(' ', $fileErrors));
@@ -220,9 +236,6 @@ final class SettingsController extends AdminController
      *   string    - plain text or hex color
      *
      * @param array<string,mixed> $def
-     */
-    /**
-     * @param array<string,mixed> $def
      * @return string 'saved' on success, 'skipped' if nothing
      *                was posted, or an error message string
      */
@@ -263,6 +276,59 @@ final class SettingsController extends AdminController
     }
 
     /**
+     * Download every WOFF2 weight for the store's currently
+     * selected fonts. Called after the Fonts tab save has
+     * written the slug columns.
+     *
+     * Idempotent: files already on disk are skipped inside
+     * FontDownloader::download(). A second save of the same
+     * slug is free.
+     *
+     * The return value is a list of human-readable error
+     * strings, empty on success. The caller adds them to
+     * the save flash. Failures do not roll back the slug
+     * selection.
+     *
+     * @return array<int,string>
+     */
+    private function downloadSelectedFonts(): array
+    {
+        $storeContext = $this->container->get(StoreContext::class);
+        if (!$storeContext->has()) {
+            return ['Font downloads skipped: no store context.'];
+        }
+
+        try {
+            $fontRepo = $this->container->get(FontRepository::class);
+            $downloader = $this->container->get(FontDownloader::class);
+        } catch (\Throwable $e) {
+            return ['Font downloader unavailable: ' . $e->getMessage()];
+        }
+
+        $selections = $fontRepo->getSelections($storeContext->id());
+        $errors = [];
+
+        foreach ($selections as $slot => $slug) {
+            if ($slug === null || $slug === '') {
+                continue;
+            }
+
+            try {
+                $result = $downloader->download($slug);
+            } catch (\Throwable $e) {
+                $errors[] = "Font '{$slug}' ({$slot}): " . $e->getMessage();
+                continue;
+            }
+
+            foreach ($result['errors'] as $err) {
+                $errors[] = "Font '{$slug}' ({$slot}): {$err}";
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
      * Handle the upload flow for a file-typed column setting.
      *
      * Three possible actions based on the POST:
@@ -271,9 +337,6 @@ final class SettingsController extends AdminController
      *   - The remove flag was set: clear the column.
      *   - Neither: leave the column unchanged.
      *
-     * @param array<string,mixed> $def
-     */
-    /**
      * @param array<string,mixed> $def
      * @return string 'saved' on success, 'skipped' if nothing
      *                was posted, or an error message string
