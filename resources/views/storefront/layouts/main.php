@@ -116,6 +116,7 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?= versioned_asset('bootstrap-icons/bootstrap-icons.min.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('fontawesome/css/all.min.css') ?>" rel="stylesheet">
 
     <link href="<?= versioned_asset('css/storefront.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-home.css') ?>" rel="stylesheet">
