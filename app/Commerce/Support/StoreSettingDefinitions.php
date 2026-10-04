@@ -310,7 +310,7 @@ final class StoreSettingDefinitions
                 continue;
             }
 
-            $options = ['' => '\u{2014} Use platform default \u{2014}'];
+            $options = ['' => '- Use platform default -'];
             foreach (\CorporateAid\Commerce\Support\Fonts\FontCatalog::forSlot($slot) as $font) {
                 $options[$font['slug']] = $font['family'];
             }
