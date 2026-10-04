@@ -1,8 +1,8 @@
 # Project Status
 
-**As of:** 2026-10-04
-**Version:** 0.16.0-alpha
-**Stage:** 008G.4c complete. Next: 008G.4b (PWA).
+**As of:** 2026-10-05
+**Version:** 0.17.0-alpha
+**Stage:** 008G.4b complete. Next: 008G.5 (product reviews).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -125,27 +125,37 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008G.4b
+## Current Focus — Stage 008G.5
 
-**Deliverable:** Progressive Web App.
+**Deliverable:** Product Reviews.
 
-The storefront ships as a PWA: installable on mobile
-home screens, functional offline for the shell, with a
-web app manifest driven by the store's branding. The
-manifest controller already exists
-(app/Commerce/Controllers/Pwa/ManifestController.php)
-from an earlier stage but does not yet render a full
-manifest or register a service worker.
+The product detail page's Reviews tab currently renders
+a placeholder. Customer ratings and written reviews are
+the highest-impact feature missing from the storefront
+for conversion. The feature has been logged as
+deferred in four prior stage documents:
 
-Fonts and icons are now self-hosted (008G.4c). The
-service worker caches a self-contained asset set, no
-cross-origin fetch. This is the clean base for the
-caching layer.
+  - docs/stages/008b_extended-visual-plan.md
+  - docs/stages/008b_storefront-visual-identity.md
+  - docs/stages/008c_customer-auth-plan.md
+  - docs/STATUS.md "What Doesn't Work Yet"
 
-Scope in docs/ROADMAP.md under In Progress -> 008G.4b.
+Scope in docs/ROADMAP.md under In Progress -> 008G.5
+(when the stage open commit is written).
 
-Google Fonts DSGVO exposure (COMPLIANCE-DE.md entry 9)
-is closed as of stage 008G.4c.
+Reviews ship with:
+
+  - New schema (commerce_product_reviews).
+  - Repository, service, and controller.
+  - A customer-facing submission form on the PDP.
+  - An admin moderation queue.
+  - Star rating + count rendered in the buy box
+    under the product title.
+  - Verified-purchase badge based on order history.
+
+The 008G.4b stage closed on 2026-10-05. The PWA is
+installable, offline-functional for the shell, and the
+manifest is driven by store branding.
 ---
 
 ## Database State

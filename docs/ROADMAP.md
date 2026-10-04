@@ -55,6 +55,7 @@ Adding a stage or reordering requires updating this document first.
 | 008G.4a.2| Product Media                        | 2026-10-03 |
 | 008G.4a.3| Responsive Image Templates           | 2026-10-04 |
 | 008G.4c  | Self-Hosted Font Manager             | 2026-10-04 |
+| 008G.4b  | PWA                                  | 2026-10-05 |
 
 Also completed outside the staged sequence:
 
@@ -72,69 +73,70 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G.4b - PWA
+### Stage 008G.5 - Product Reviews
 
-**Goal:** Ship the storefront as a Progressive Web App.
-Installable on mobile home screens. Functional offline
-for the shell. Manifest driven by the store's branding.
+**Goal:** Customer ratings and written reviews on the
+product detail page. Fill the Reviews tab that the PDP
+now renders as a placeholder.
 
-**Why this stage exists:** the storefront already loads
-fast. What is missing is the native-app affordance: the
-install prompt, the offline shell, the app icon on the
-home screen, the ability to open without a network
-round-trip on repeat visits.
-
-The 008G.4 group originally bundled PWA with the upload
-core and the responsive image work. Those shipped in
-008G.4a and 008G.4a.3. PWA was deferred. It opens now
-because fonts and icons are self-hosted (008G.4c), so a
-service worker has a clean, same-origin asset base to
-cache.
+**Why this stage exists:** the tabs on the PDP have a
+Reviews slot that reads "coming soon". Reviews are the
+highest-impact missing storefront feature for
+conversion. The feature has been logged as deferred in
+four prior stage documents.
 
 **Scope:**
 
-  - A web app manifest, served per store at a stable
-    URL. Reads name, short_name, description, theme
-    color, background color, icons, and start_url from
-    the store's branding settings.
-  - A service worker registered on the storefront
-    shell. Caches: the shell HTML, the CSS, the JS,
-    the self-hosted fonts, Bootstrap Icons, Font
-    Awesome, and a 404/offline fallback page.
-  - A per-store icon set. The store has uploaded
-    logo and favicon. The manifest references the
-    favicon variants and (if the merchant has
-    uploaded them) PWA-specific icon sizes 192x192
-    and 512x512.
-  - An install prompt handler (beforeinstallprompt)
-    that surfaces an "Install" affordance in the
-    storefront header or footer.
-  - An offline fallback page at /offline.
-  - A cache-versioning strategy: bump the version
-    string when any asset changes. The build has no
-    tooling step, so the version is derived from a
-    manual constant or a file mtime sum.
+  - Schema: commerce_product_reviews (id, store_id,
+    product_id, customer_id, order_id nullable,
+    rating 1-5, title, body, verified_purchase,
+    status ('pending' | 'approved' | 'rejected'),
+    created_at, updated_at).
+  - Repository: ProductReviewRepository. Methods:
+    listForProduct() (approved only, paginated),
+    listPending() (moderation), create(), approve(),
+    reject(), averageForProduct(),
+    countForProduct().
+  - Service: ProductReviewService. Verifies purchase
+    against commerce_orders (order status
+    'completed' or 'delivered'), enforces one review
+    per customer per product, rate-limits submissions.
+  - Customer-facing: a submission form on the PDP
+    Reviews tab. Logged-in customers only. Star picker
+    plus title plus body. "Verified purchase" badge
+    renders automatically when the customer has a
+    completed order containing this product.
+  - Admin moderation queue at
+    /commerce/ca-admin/reviews. Approve / reject /
+    delete. Permission slug review.moderate.
+  - Storefront rendering: star rating + count under
+    the product title in the buy box. Full review
+    list inside the Reviews tab with pagination.
+  - Ratings filter tab (5, 4, 3, 2, 1 star) once a
+    product has enough reviews.
 
-**Depends on:** 008G.4c (self-hosted fonts and icons -
-the service worker caches a same-origin asset set).
+**Depends on:** 008C (customer accounts), 008F (order
+lifecycle). Both shipped.
+
+**DSGVO:** reviews are customer-authored content
+containing personal data (name, occasionally
+location). The plan doc documents retention and the
+moderation workflow. Reviews are deleted or
+anonymized on customer account deletion (DSGVO Art.
+17).
 
 **Not in scope:**
 
-  - Background sync.
-  - Push notifications.
-  - Web Share Target.
-  - Payment Request API.
+  - Review photos / videos.
+  - Helpful/unhelpful voting.
+  - Merchant replies.
+  - Star distribution charts.
+  - Review incentives or email reminders.
 
-  These are separate small stages if needed.
-
-**DSGVO note (TTDSG § 25):** the service worker caches
-assets in the browser. The German regulatory reading is
-that functional caching for a user-initiated feature (the
-customer visits a site that registers a service worker,
-or installs the PWA) is exempt under § 25(2)(2). The
-service worker is treated as an operational feature, not
-a tracking mechanism. Documented in COMPLIANCE-DE.md
-entry 11.
+**Sequenced:** after 008G.4b. Before 008G.4d
+(Category Filters) because the rating aggregate feeds
+the filter and sort features - filter by rating
+requires reviews to exist first.
 
 ## Planned Stages
 

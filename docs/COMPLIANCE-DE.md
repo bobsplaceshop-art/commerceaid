@@ -429,8 +429,27 @@ workers. No consent banner change is needed.
 
 **Stage:** 008G.4b (planned)
 
-**Status:** Done (documented). The service worker ships in
-008G.4b with this exemption applied.
+**Status:** Done. Stage 008G.4b.
+
+The service worker ships in public/sw.js. It caches only
+same-origin assets and is registered on the storefront.
+The TTDSG § 25 exemption applies because the caching is
+functional - it serves a user-initiated PWA experience,
+not a tracking purpose. No consent banner change was
+required.
+
+The cookie consent banner continues to gate analytics,
+marketing, and other non-essential storage separately.
+The service worker is on a different legal footing and
+is not subject to that gate.
+
+Verified in browser:
+  - sw.js registers and activates on the storefront.
+  - Cache Storage holds a same-origin asset set.
+  - Offline navigation renders the branded offline
+    page.
+  - No service worker in /commerce/, /account/, or
+    /api/.
 
 ---
 
