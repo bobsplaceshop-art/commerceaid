@@ -398,14 +398,127 @@ if ($gallery !== []) {
         </div>
     </section>
 
-    <?php if (!empty($product->description)): ?>
-        <section class="sf-product-description">
-            <h2 class="sf-section-title">Description</h2>
-            <div class="sf-product-description-body">
-                <?= nl2br(e($product->description)) ?>
+    <?php
+    // Specifications data. Renders only when at least one
+    // field is populated. Values come from data the controller
+    // already passes to this view. Attribute values (Color,
+    // Size, Care Instructions) are added in a follow-up
+    // commit — they need a controller change to load.
+    $specs = [];
+    if ($brand !== null && !empty($brand->name)) {
+        $specs['Brand'] = $brand->name;
+    }
+    if (!empty($product->sku)) {
+        $specs['SKU'] = $product->sku;
+    }
+    if (!empty($product->barcode)) {
+        $specs['Barcode'] = $product->barcode;
+    }
+    if (!empty($product->weight)) {
+        $specs['Weight'] = $product->weight;
+    }
+    if (!empty($product->dimensions)) {
+        $specs['Dimensions'] = $product->dimensions;
+    }
+    if ($primaryCategory !== null && !empty($primaryCategory->name)) {
+        $specs['Category'] = $primaryCategory->name;
+    }
+
+    $hasDescription = !empty($product->description);
+    $hasSpecs       = $specs !== [];
+
+    // Determine which tab opens by default. Description first,
+    // then Specifications, then Reviews as fallbacks.
+    $defaultTab = $hasDescription ? 'description'
+                : ($hasSpecs    ? 'specs'
+                                : 'reviews');
+    ?>
+
+    <section class="sf-product-tabs" data-sf-tabs>
+
+        <div class="sf-product-tabs-strip" role="tablist" aria-label="Product details">
+            <?php if ($hasDescription): ?>
+                <button type="button"
+                        class="sf-product-tab<?= $defaultTab === 'description' ? ' is-active' : '' ?>"
+                        role="tab"
+                        id="sf-tab-description-btn"
+                        aria-controls="sf-tab-description"
+                        aria-selected="<?= $defaultTab === 'description' ? 'true' : 'false' ?>"
+                        data-sf-tab="description">
+                    Description
+                </button>
+            <?php endif; ?>
+
+            <?php if ($hasSpecs): ?>
+                <button type="button"
+                        class="sf-product-tab<?= $defaultTab === 'specs' ? ' is-active' : '' ?>"
+                        role="tab"
+                        id="sf-tab-specs-btn"
+                        aria-controls="sf-tab-specs"
+                        aria-selected="<?= $defaultTab === 'specs' ? 'true' : 'false' ?>"
+                        data-sf-tab="specs">
+                    Specifications
+                </button>
+            <?php endif; ?>
+
+            <button type="button"
+                    class="sf-product-tab<?= $defaultTab === 'reviews' ? ' is-active' : '' ?>"
+                    role="tab"
+                    id="sf-tab-reviews-btn"
+                    aria-controls="sf-tab-reviews"
+                    aria-selected="<?= $defaultTab === 'reviews' ? 'true' : 'false' ?>"
+                    data-sf-tab="reviews">
+                Reviews <span class="sf-product-tab-count">(0)</span>
+            </button>
+        </div>
+
+        <?php if ($hasDescription): ?>
+            <div class="sf-product-tab-panel<?= $defaultTab === 'description' ? ' is-active' : '' ?>"
+                 role="tabpanel"
+                 id="sf-tab-description"
+                 aria-labelledby="sf-tab-description-btn"
+                 data-sf-tab-panel="description">
+                <div class="sf-product-description-body">
+                    <?= nl2br(e($product->description)) ?>
+                </div>
             </div>
-        </section>
-    <?php endif; ?>
+        <?php endif; ?>
+
+        <?php if ($hasSpecs): ?>
+            <div class="sf-product-tab-panel<?= $defaultTab === 'specs' ? ' is-active' : '' ?>"
+                 role="tabpanel"
+                 id="sf-tab-specs"
+                 aria-labelledby="sf-tab-specs-btn"
+                 data-sf-tab-panel="specs">
+                <table class="sf-product-specs">
+                    <tbody>
+                        <?php foreach ($specs as $label => $value): ?>
+                            <tr>
+                                <th scope="row"><?= e($label) ?></th>
+                                <td><?= e((string) $value) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+
+        <div class="sf-product-tab-panel<?= $defaultTab === 'reviews' ? ' is-active' : '' ?>"
+             role="tabpanel"
+             id="sf-tab-reviews"
+             aria-labelledby="sf-tab-reviews-btn"
+             data-sf-tab-panel="reviews">
+            <div class="sf-product-reviews-empty">
+                <i class="bi bi-chat-square-text" aria-hidden="true"></i>
+                <p class="sf-product-reviews-empty-title">No reviews yet</p>
+                <p class="sf-product-reviews-empty-body">
+                    Reviews are coming soon. Verified customers will be able
+                    to share their experience here.
+                </p>
+            </div>
+        </div>
+
+    </section>
 
     <?php if (!empty($related)): ?>
         <section class="sf-product-related">
@@ -427,3 +540,4 @@ if ($gallery !== []) {
 
 <script src="/assets/js/storefront-gallery.js" defer></script>
 <script src="<?= versioned_asset('js/product-swatches.js') ?>" defer></script>
+<script src="<?= versioned_asset('js/product-tabs.js') ?>" defer></script>
