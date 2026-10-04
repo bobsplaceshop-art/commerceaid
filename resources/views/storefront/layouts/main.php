@@ -66,7 +66,7 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     // Falls back gracefully when the store has not uploaded
     // a favicon (no tag rendered) or set a theme color
     // (uses the design default).
-    $__faviconUrl   = store_favicon_url($store ?? null, 'lg', 'png');
+    $__faviconUrl   = store_favicon_url($store ?? null, 'sm', 'png');
     $__themeColor   = ($store !== null && !empty($store->pwaThemeColor))
         ? (string) $store->pwaThemeColor
         : '#1a1a1a';
@@ -76,6 +76,7 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
         <link rel="apple-touch-icon" href="<?= e($__faviconUrl) ?>">
     <?php endif; ?>
     <meta name="theme-color" content="<?= e($__themeColor) ?>">
+    <link rel="manifest" href="/manifest.json">
 
     <?php
     // Self-hosted fonts. The three @font-face rules below are

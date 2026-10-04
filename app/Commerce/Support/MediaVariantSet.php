@@ -115,8 +115,17 @@ final class MediaVariantSet
             sourceMaxMb: 1,
             sharpen:     false,
             variants: [
-                new MediaVariantSpec('lg', 64, 64, ['png'], self::FIT_INSIDE),
-                new MediaVariantSpec('sm', 32, 32, ['png'], self::FIT_INSIDE),
+                // PWA manifest icons. 512 and 192 are the two
+                // sizes the W3C web app manifest requires for
+                // installability. Both PNG, no WebP - the
+                // manifest spec requires one of PNG, SVG,
+                // JPEG, or WebP but PNG is the universal
+                // default that every browser accepts.
+                new MediaVariantSpec('lg',     512, 512, ['png'], self::FIT_INSIDE),
+                new MediaVariantSpec('md',     192, 192, ['png'], self::FIT_INSIDE),
+                // Classic favicon sizes for the browser tab.
+                new MediaVariantSpec('sm',      64,  64, ['png'], self::FIT_INSIDE),
+                new MediaVariantSpec('thumb',   32,  32, ['png'], self::FIT_INSIDE),
             ],
         );
     }
