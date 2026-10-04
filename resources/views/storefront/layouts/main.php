@@ -400,6 +400,7 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <?php endif; ?>
 <script src="<?= versioned_asset('js/storefront-hero.js') ?>" defer></script>
 <script src="<?= versioned_asset('js/wishlist.js') ?>" defer></script>
+<script src="<?= versioned_asset('js/pwa-install.js') ?>" defer></script>
 
 <?php if (!empty($cookieBannerEnabled)): ?>
     <?= view_partial('storefront.partials._cookie-banner', ['store' => $store]) ?>

@@ -166,6 +166,15 @@ $isNavActive = function (string $href) use ($currentPath): bool {
                 <?php endif; ?>
             </a>
 
+            <button type="button"
+                    class="sf-icon-btn"
+                    data-sf-pwa-install
+                    aria-label="Install Anaya Global as an app"
+                    hidden
+                    aria-hidden="true">
+                <i class="bi bi-download" aria-hidden="true"></i>
+            </button>
+
             <?php if ($__unread !== null && $__unread > 0): ?>
                 <?php
                 // Bell dropdown. Shows the most recent unread
