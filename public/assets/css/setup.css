@@ -318,6 +318,19 @@
     opacity: 1;
 }
 
+/* Native dropdown options. Chrome, Edge, and Firefox
+   render the option panel using OS chrome, but honor
+   explicit background and color on <option> when set.
+   Without this rule the option inherits the select's
+   text color but has no background, leaving dark-theme
+   text on the OS default light panel. */
+
+.ra-content select option,
+.ra-content .form-select option {
+    background: var(--ra-input-bg, #ffffff);
+    color: var(--ra-text, #0f172a);
+}
+
 .ra-content .form-control[type="number"] {
     -moz-appearance: textfield;
 }
