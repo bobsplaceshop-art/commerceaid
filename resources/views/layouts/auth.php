@@ -55,7 +55,7 @@ $formError = is_array($errors) ? ($errors['_form'] ?? null) : null;
                 radial-gradient(1200px 600px at 80% -10%, rgba(96,165,250,.15), transparent 60%),
                 radial-gradient(1000px 500px at 0% 110%,  rgba(37,99,235,.12),  transparent 60%);
             background-color: var(--ra-bg, #f4f6fb);
-            color: var(--ra-fg, #0f172a);
+            color: var(--ra-text, #0f172a);
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
             min-height: 100vh;
             display: flex;
@@ -67,7 +67,7 @@ $formError = is_array($errors) ? ($errors['_form'] ?? null) : null;
         .auth-card {
             width: 100%;
             max-width: 440px;
-            background: var(--ra-card-bg, #ffffff);
+            background: var(--ra-surface, #ffffff);
             border: 1px solid var(--ra-border, #e5e9f2);
             border-radius: 18px;
             padding: 2.5rem 2.25rem 2.25rem;
@@ -82,7 +82,7 @@ $formError = is_array($errors) ? ($errors['_form'] ?? null) : null;
             gap: .65rem;
             font-weight: 700;
             font-size: 1.3rem;
-            color: var(--ra-fg, #0f172a);
+            color: var(--ra-text, #0f172a);
             letter-spacing: -.01em;
         }
 
@@ -100,7 +100,7 @@ $formError = is_array($errors) ? ($errors['_form'] ?? null) : null;
 
         .form-label {
             font-weight: 500;
-            color: var(--ra-fg, #334155);
+            color: var(--ra-text, #334155);
             font-size: .92rem;
             margin-bottom: .4rem;
         }
@@ -108,7 +108,7 @@ $formError = is_array($errors) ? ($errors['_form'] ?? null) : null;
         .form-control {
             background: var(--ra-input-bg, #ffffff);
             border: 1px solid var(--ra-border, #d1d9e6);
-            color: var(--ra-fg, #0f172a);
+            color: var(--ra-text, #0f172a);
             border-radius: 10px;
             padding: .65rem .85rem;
             font-size: .95rem;
@@ -118,7 +118,7 @@ $formError = is_array($errors) ? ($errors['_form'] ?? null) : null;
         .form-control:focus {
             background: var(--ra-input-bg, #ffffff);
             border-color: var(--brand-primary);
-            color: var(--ra-fg, #0f172a);
+            color: var(--ra-text, #0f172a);
             box-shadow: 0 0 0 4px rgba(37,99,235,.12);
         }
 
@@ -154,7 +154,7 @@ $formError = is_array($errors) ? ($errors['_form'] ?? null) : null;
         }
 
         .pw-toggle:hover {
-            color: var(--ra-fg, #475569);
+            color: var(--ra-text, #475569);
         }
 
         .alert-error {
