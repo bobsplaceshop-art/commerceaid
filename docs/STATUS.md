@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-10-04
-**Version:** 0.15.0-alpha
-**Stage:** 008G.4c in progress (sessions 3, 4a, 4b shipped). Next: Session 5 (icon libraries).
+**Version:** 0.16.0-alpha
+**Stage:** 008G.4c complete. Next: 008G.4b (PWA).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -125,37 +125,27 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008G.4c
+## Current Focus — Stage 008G.4b
 
-**Deliverable:** Self-Hosted Font Manager.
+**Deliverable:** Progressive Web App.
 
-**Status: the Google Fonts exposure is closed.**
-The storefront no longer loads from
-fonts.googleapis.com or fonts.gstatic.com. Fonts are
-self-hosted under /assets/fonts/ and served from the
-store's own domain. The CSP no longer allows the
-Google origins.
+The storefront ships as a PWA: installable on mobile
+home screens, functional offline for the shell, with a
+web app manifest driven by the store's branding. The
+manifest controller already exists
+(app/Commerce/Controllers/Pwa/ManifestController.php)
+from an earlier stage but does not yet render a full
+manifest or register a service worker.
 
-Sessions 3, 4a, and 4b are committed. Session 5
-(icon libraries: Bootstrap Icons + Font Awesome Free)
-remains. Session 6 closes the stage.
+Fonts and icons are now self-hosted (008G.4c). The
+service worker caches a self-contained asset set, no
+cross-origin fetch. This is the clean base for the
+caching layer.
 
-The original problem: the storefront loaded Google
-Fonts from fonts.googleapis.com and fonts.gstatic.com.
-Every page load transmitted the visitor's IP address
-to Google. Under DSGVO, that is a personal data
-transfer requiring consent. The Bavarian DPA has
-confirmed this position; German courts have issued
-damages rulings.
+Scope in docs/ROADMAP.md under In Progress -> 008G.4b.
 
-The fix, in two parts: self-host the fonts, then drop
-the Google origins from the CSP. Both are done.
-serve them from the store's own domain, drop the
-Google origins from the CSP.
-
-Scope in docs/ROADMAP.md under Planned Stages ->
-008G.4c.
-
+Google Fonts DSGVO exposure (COMPLIANCE-DE.md entry 9)
+is closed as of stage 008G.4c.
 ---
 
 ## Database State

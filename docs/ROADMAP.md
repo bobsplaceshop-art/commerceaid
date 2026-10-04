@@ -54,6 +54,7 @@ Adding a stage or reordering requires updating this document first.
 | 008G.4a.1| Media Library Page                   | 2026-09-30 |
 | 008G.4a.2| Product Media                        | 2026-10-03 |
 | 008G.4a.3| Responsive Image Templates           | 2026-10-04 |
+| 008G.4c  | Self-Hosted Font Manager             | 2026-10-04 |
 
 Also completed outside the staged sequence:
 
@@ -71,53 +72,69 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G.4c - Self-Hosted Font Manager
+### Stage 008G.4b - PWA
 
-**Goal:** Eliminate the Google Fonts DSGVO exposure.
-Serve fonts from the store's own domain.
+**Goal:** Ship the storefront as a Progressive Web App.
+Installable on mobile home screens. Functional offline
+for the shell. Manifest driven by the store's branding.
 
-**Why this stage exists:** the current storefront loads
-Google Fonts from fonts.googleapis.com and
-fonts.gstatic.com. Every page load transmits the
-visitor's IP address to Google. The Bavarian DPA has
-confirmed that this is a personal data transfer
-requiring consent. LG Munchen I (2022) ordered damages
-for exactly this. Abmahnung risk is real.
+**Why this stage exists:** the storefront already loads
+fast. What is missing is the native-app affordance: the
+install prompt, the offline shell, the app icon on the
+home screen, the ability to open without a network
+round-trip on repeat visits.
 
-Self-hosting the fonts removes the third-party
-request entirely. Zero IP transfer to Google. Zero
-consent requirement under TTDSG § 25.
+The 008G.4 group originally bundled PWA with the upload
+core and the responsive image work. Those shipped in
+008G.4a and 008G.4a.3. PWA was deferred. It opens now
+because fonts and icons are self-hosted (008G.4c), so a
+service worker has a clean, same-origin asset base to
+cache.
 
 **Scope:**
 
-  - A Font Manager admin page under Settings.
-  - A curated catalog of open-source fonts, all OFL
-    or Apache 2.0 licensed. Full Google Fonts catalog
-    or a subset.
-  - The merchant picks a display font and a body font
-    (already exists as :root CSS variables).
-  - On save, the platform downloads the WOFF2 files
-    locally to storage/uploads/fonts/.
-  - The storefront serves them from /assets/fonts/
-    with font-display: swap.
-  - No external font requests in the rendered page.
-    CSP style-src and font-src drop the Google origins.
-  - A font stack fallback in case the WOFF2 fails to
-    load.
+  - A web app manifest, served per store at a stable
+    URL. Reads name, short_name, description, theme
+    color, background color, icons, and start_url from
+    the store's branding settings.
+  - A service worker registered on the storefront
+    shell. Caches: the shell HTML, the CSS, the JS,
+    the self-hosted fonts, Bootstrap Icons, Font
+    Awesome, and a 404/offline fallback page.
+  - A per-store icon set. The store has uploaded
+    logo and favicon. The manifest references the
+    favicon variants and (if the merchant has
+    uploaded them) PWA-specific icon sizes 192x192
+    and 512x512.
+  - An install prompt handler (beforeinstallprompt)
+    that surfaces an "Install" affordance in the
+    storefront header or footer.
+  - An offline fallback page at /offline.
+  - A cache-versioning strategy: bump the version
+    string when any asset changes. The build has no
+    tooling step, so the version is derived from a
+    manual constant or a file mtime sum.
 
-**Depends on:** 008G.4a.2 (media pipeline for
-downloading files). The download uses the same
-storage path as other uploaded assets.
-
-**Sequenced:** before 008G.4b (PWA) and 008G.4a.4
-(AVIF). Both are polish. This is compliance.
+**Depends on:** 008G.4c (self-hosted fonts and icons -
+the service worker caches a same-origin asset set).
 
 **Not in scope:**
 
-  - Font subsetting (Latin-only, etc). Downloads
-    every glyph.
-  - Variable fonts. Static weights only.
-  - A full font editor or a per-store font CDN.
+  - Background sync.
+  - Push notifications.
+  - Web Share Target.
+  - Payment Request API.
+
+  These are separate small stages if needed.
+
+**DSGVO note (TTDSG § 25):** the service worker caches
+assets in the browser. The German regulatory reading is
+that functional caching for a user-initiated feature (the
+customer visits a site that registers a service worker,
+or installs the PWA) is exempt under § 25(2)(2). The
+service worker is treated as an operational feature, not
+a tracking mechanism. Documented in COMPLIANCE-DE.md
+entry 11.
 
 ## Planned Stages
 
@@ -1188,6 +1205,37 @@ preference, not a bug fix.
 
 Likely stage: 008G.4c or a future storefront polish
 pass.
+
+### Self-Host Bootstrap CSS + JS
+
+Bootstrap 5.3.3 ships from cdn.jsdelivr.net in both the
+admin layout and the storefront layout. The CSP allows
+that origin for script-src and style-src because of it.
+Self-hosting Bootstrap is a separate concern from the
+self-hosted fonts and icons (008G.4c).
+
+Scope:
+
+  - Download bootstrap.min.css and
+    bootstrap.bundle.min.js into public/assets/bootstrap/.
+  - Replace the two CDN references in the admin and
+    storefront layouts.
+  - Drop cdn.jsdelivr.net from the CSP entirely.
+  - Add a version-pinning note: the local copy is
+    upgraded manually when a new Bootstrap release is
+    adopted.
+
+Why deferred: Bootstrap is a versioned dependency, not a
+brand asset. Bumping it means downloading a new file and
+verifying no breakage. That is a mechanical but
+deliberate step, not a one-time self-host like the fonts
+and icons were. Best done as its own small sub-stage when
+the CSP tightening is actually needed.
+
+**Likely stage:** 008G.4c.2 or a future storefront polish
+pass.
+
+---
 
 ### Font Preview Panel (008G.4c.1)
 

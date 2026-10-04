@@ -50,7 +50,7 @@ Status values:
 | 6 | Cookie consent API for third-party scripts | Done | 008E.1 |
 | 7 | Country-driven compliance gate | Done | 008E.1 |
 | 8 | Widerrufsrecht 14-day window enforcement | Deferred | 008H |
-| 9 | Google Fonts self-hosting (DSGVO) | Not started | 008G.4c |
+| 9 | Google Fonts self-hosting (DSGVO) | Done | 008G.4c |
 | 10 | EXIF stripping on image upload (DSGVO) | Partial | 008G.4a |
 | 11 | Service worker consent exemption (TTDSG § 25) | Done | 008G.4b plan |
 | 12 | Newsletter double opt-in | Not started | 008I |
@@ -59,7 +59,7 @@ Status values:
 | 15 | Media deletion rules (DSGVO Art. 17) | Done | 008G.4a plan |
 | 16 | Data minimisation (DSGVO Art. 5) | Done | 008G.4a plan |
 | 17 | Copyright attribution (UrhG § 13) | Partial | 008G.4a |
-| 18 | Font Awesome attribution (OFL, MIT, CC BY) | Deferred | 008G.4c |
+| 18 | Font Awesome attribution (OFL, MIT, CC BY) | Done | 008G.4c |
 | 19 | Sub-processor disclosure for external services | Ongoing | - |
 | 20 | Hosting provider processor agreement (Art. 28) | Not started | - |
 
@@ -345,9 +345,15 @@ priority for German deployments.
   - Planned fix: ROADMAP backlog entry "Self-Hosted Font
     Manager (008G.4c)".
 
-**Stage:** 008G.4c (planned)
+**Stage:** 008G.4c (complete)
 
-**Status:** Not started. **HIGH PRIORITY.**
+**Status:** Done. Stage 008G.4c.
+
+The storefront no longer loads from fonts.googleapis.com
+or fonts.gstatic.com. Writing fonts are self-hosted under
+public/assets/fonts/. The three platform defaults are
+committed. Merchant-selected fonts are downloaded on
+save. The CSP font-src has no external origins.
 
 ---
 
@@ -654,9 +660,16 @@ assets. Self-hosted. No external CDN.
 
 **Where the code lives:** Not yet bundled.
 
-**Stage:** 008G.4c (planned)
+**Stage:** 008G.4c (complete)
 
-**Status:** Deferred.
+**Status:** Done. Stage 008G.4c.
+
+Font Awesome Free is bundled at
+public/assets/fontawesome/. The license file is
+committed at
+public/assets/fontawesome/LICENSE.txt. The CSS is
+loaded from the admin and storefront layouts. No
+external request.
 
 ---
 
