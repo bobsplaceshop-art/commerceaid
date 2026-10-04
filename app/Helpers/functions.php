@@ -1138,3 +1138,129 @@ if (!function_exists('view_partial')) {
         }
     }
 }
+
+if (!function_exists('store_font_selections')) {
+    /**
+     * Read the store's font selections and return the resolved
+     * FontCatalog entries.
+     *
+     * @param ?\CorporateAid\Commerce\Models\Store $store
+     * @return array{body:?array<string,mixed>,display:?array<string,mixed>,script:?array<string,mixed>}
+     */
+    function store_font_selections(
+        ?\CorporateAid\Commerce\Models\Store $store = null
+    ): array {
+        static $cache = [];
+
+        $default = ['body' => null, 'display' => null, 'script' => null];
+
+        try {
+            if ($store === null) {
+                $container = \CorporateAid\Core\App::instance()->container();
+                $context = $container->get(
+                    \CorporateAid\Commerce\Context\StoreContext::class
+                );
+                if (!$context->has()) {
+                    return $default;
+                }
+                $repo = $container->get(
+                    \CorporateAid\Commerce\Repositories\StoreRepository::class
+                );
+                $store = $repo->findById($context->id());
+                if ($store === null) {
+                    return $default;
+                }
+            }
+
+            $storeId = (int) ($store->id ?? 0);
+            if ($storeId <= 0) {
+                return $default;
+            }
+
+            if (isset($cache[$storeId])) {
+                return $cache[$storeId];
+            }
+
+            $container = \CorporateAid\Core\App::instance()->container();
+            $fontRepo = $container->get(
+                \CorporateAid\Commerce\Repositories\FontRepository::class
+            );
+            $slugs = $fontRepo->getSelections($storeId);
+
+            $out = ['body' => null, 'display' => null, 'script' => null];
+            foreach ($slugs as $slot => $slug) {
+                if ($slug === null || $slug === '') {
+                    continue;
+                }
+                $font = \CorporateAid\Commerce\Support\Fonts\FontCatalog::find($slug);
+                if ($font === null) {
+                    continue;
+                }
+                if ($slot === 'body') {
+                    $out['body'] = $font;
+                } elseif ($slot === 'display') {
+                    $out['display'] = $font;
+                } elseif ($slot === 'script') {
+                    $out['script'] = $font;
+                }
+            }
+
+            $cache[$storeId] = $out;
+            return $out;
+        } catch (\Throwable $e) {
+            return $default;
+        }
+    }
+}
+
+if (!function_exists('store_font_face_css')) {
+    /**
+     * Build the @font-face CSS for the store's selected fonts.
+     *
+     * Returns an empty string when the store uses platform
+     * defaults. Otherwise emits one @font-face rule per
+     * (font, weight) pair. Only weights declared by the
+     * FontCatalog are emitted - the downloader wrote exactly
+     * those files at save time.
+     */
+    function store_font_face_css(
+        ?\CorporateAid\Commerce\Models\Store $store = null
+    ): string {
+        $selections = store_font_selections($store);
+        $blocks = [];
+
+        foreach ($selections as $slot => $font) {
+            if ($font === null) {
+                continue;
+            }
+
+            $slug    = (string) ($font['slug']   ?? '');
+            $family  = (string) ($font['family'] ?? '');
+            $weights = (array)  ($font['weights'] ?? []);
+
+            if ($slug === '' || $family === '') {
+                continue;
+            }
+
+            $safeFamily = addcslashes($family, "'\\");
+
+            foreach ($weights as $weight) {
+                $weightStr = (string) $weight;
+                $url = '/assets/fonts/'
+                    . rawurlencode($slug) . '/'
+                    . rawurlencode($slug . '-' . $weightStr . '.woff2');
+
+                $blocks[] = "@font-face {"
+                    . "font-family: '{$safeFamily}';"
+                    . "font-style: normal;"
+                    . "font-weight: {$weightStr};"
+                    . "font-display: swap;"
+                    . "src: url('{$url}') format('woff2');"
+                    . "}";
+            }
+        }
+
+        return implode("\n", $blocks);
+    }
+}
+

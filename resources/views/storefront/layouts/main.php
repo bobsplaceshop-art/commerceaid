@@ -77,9 +77,42 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <?php endif; ?>
     <meta name="theme-color" content="<?= e($__themeColor) ?>">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@400;600&display=swap">
+    <?php
+    // Self-hosted fonts. The three @font-face rules below are
+    // generated from the store's font selections. If the store
+    // has not overridden the defaults, the block is empty and
+    // the platform default stack (defined in storefront.css)
+    // is used as-is. No external request to Google Fonts, ever.
+    $__fontSelections = store_font_selections($store ?? null);
+    $__fontFaceCss    = store_font_face_css($store ?? null);
+
+    $__fontFallback = [
+        'body'    => "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+        'display' => "'Playfair Display', Georgia, serif",
+        'script'  => "'Dancing Script', 'Brush Script MT', cursive",
+    ];
+
+    $__fontStack = function (string $slot) use ($__fontSelections, $__fontFallback): string {
+        $font = $__fontSelections[$slot] ?? null;
+        if ($font === null) {
+            return $__fontFallback[$slot];
+        }
+        $family  = (string) ($font['family'] ?? '');
+        $generic = $slot === 'body' ? 'sans-serif'
+                 : ($slot === 'display' ? 'serif' : 'cursive');
+        return "'" . addcslashes($family, "'\\") . "', {$generic}";
+    };
+    ?>
+    <?php if ($__fontFaceCss !== ''): ?>
+        <style><?= $__fontFaceCss ?></style>
+    <?php endif; ?>
+    <style>
+        :root {
+            --sf-font-body:    <?= $__fontStack('body') ?>;
+            --sf-font-display: <?= $__fontStack('display') ?>;
+            --sf-font-script:  <?= $__fontStack('script') ?>;
+        }
+    </style>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
