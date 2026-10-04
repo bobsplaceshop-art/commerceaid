@@ -18,6 +18,7 @@ use CorporateAid\Commerce\Repositories\CategoryRepository;
 use CorporateAid\Commerce\Repositories\InventoryRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
 use CorporateAid\Commerce\Repositories\ProductImageRepository;
+use CorporateAid\Commerce\Repositories\ProductReviewRepository;
 use CorporateAid\Commerce\Repositories\FontRepository;
 use CorporateAid\Commerce\Services\Fonts\FontDownloader;
 use CorporateAid\Commerce\Repositories\StoreRepository;
@@ -93,6 +94,12 @@ final class CommerceServiceProvider
 
         $c->singleton(ProductImageRepository::class,
             fn() => new ProductImageRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(ProductReviewRepository::class,
+            fn() => new ProductReviewRepository(
                 $c->get(Database::class),
                 $c->get(StoreContext::class)
             ));
