@@ -2,7 +2,7 @@
 
 **As of:** 2026-10-04
 **Version:** 0.15.0-alpha
-**Stage:** 008G.4a.3 complete. Next: 008G.4c (self-hosted font manager)
+**Stage:** 008G.4c in progress (sessions 3, 4a, 4b shipped). Next: Session 5 (icon libraries).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -129,15 +129,27 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 **Deliverable:** Self-Hosted Font Manager.
 
-The storefront currently loads Google Fonts from
-fonts.googleapis.com and fonts.gstatic.com. Every
-page load transmits the visitor's IP address to
-Google. Under DSGVO, that is a personal data
+**Status: the Google Fonts exposure is closed.**
+The storefront no longer loads from
+fonts.googleapis.com or fonts.gstatic.com. Fonts are
+self-hosted under /assets/fonts/ and served from the
+store's own domain. The CSP no longer allows the
+Google origins.
+
+Sessions 3, 4a, and 4b are committed. Session 5
+(icon libraries: Bootstrap Icons + Font Awesome Free)
+remains. Session 6 closes the stage.
+
+The original problem: the storefront loaded Google
+Fonts from fonts.googleapis.com and fonts.gstatic.com.
+Every page load transmitted the visitor's IP address
+to Google. Under DSGVO, that is a personal data
 transfer requiring consent. The Bavarian DPA has
 confirmed this position; German courts have issued
 damages rulings.
 
-The fix is self-hosting: download the font files,
+The fix, in two parts: self-host the fonts, then drop
+the Google origins from the CSP. Both are done.
 serve them from the store's own domain, drop the
 Google origins from the CSP.
 

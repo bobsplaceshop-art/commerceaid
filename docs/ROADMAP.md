@@ -1189,6 +1189,45 @@ preference, not a bug fix.
 Likely stage: 008G.4c or a future storefront polish
 pass.
 
+### Font Preview Panel (008G.4c.1)
+
+The Fonts tab on the Store Settings page offers three
+dropdowns (body, display, script), each populated from
+the FontCatalog's 50 curated fonts. The merchant picks
+a font and saves, but there is no way to see what the
+font actually looks like until they reload the
+storefront.
+
+Scope:
+
+  - A live preview line under each select showing
+    sample text rendered in the currently selected font.
+  - A grid preview of the whole catalog filtered by
+    slot, with each font's name and a sample line
+    rendered in that font.
+
+Mechanism (recommended):
+
+  - On selection, a small AJAX call triggers
+    FontDownloader::download() for the chosen slug.
+    Once the WOFF2 is on disk, the browser re-renders
+    the preview using the now-available @font-face.
+  - One-time download per font per store install.
+    Files land in public/assets/fonts/{slug}/ and are
+    served by Apache directly.
+
+Deliberately not included in the 008G.4c stage:
+
+  - The stage had a specific compliance goal (drop
+    Google Fonts from the CSP). Preview is merchant UX,
+    not compliance.
+  - Preview needs a new route, a new JS module, and a
+    per-selection download trigger. Real scope of its
+    own.
+
+**Likely stage:** 008G.4c.1 or a later storefront
+polish pass.
+
 ---
 
 ## Feature Toggle System
