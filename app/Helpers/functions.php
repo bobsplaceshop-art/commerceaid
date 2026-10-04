@@ -1187,9 +1187,23 @@ if (!function_exists('store_font_selections')) {
             );
             $slugs = $fontRepo->getSelections($storeId);
 
+            // Platform defaults. When a slot is empty (the merchant
+            // has not chosen a font, or cleared it), fall back to
+            // the catalog entry for the platform default. This
+            // guarantees the storefront always has a self-hosted
+            // font for every slot, never a silent system fallback.
+            $defaults = [
+                'body'    => 'inter',
+                'display' => 'playfair-display',
+                'script'  => 'dancing-script',
+            ];
+
             $out = ['body' => null, 'display' => null, 'script' => null];
             foreach ($slugs as $slot => $slug) {
                 if ($slug === null || $slug === '') {
+                    $slug = $defaults[$slot] ?? null;
+                }
+                if ($slug === null) {
                     continue;
                 }
                 $font = \CorporateAid\Commerce\Support\Fonts\FontCatalog::find($slug);

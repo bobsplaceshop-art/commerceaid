@@ -1,15 +1,18 @@
-# Writing fonts are downloaded on demand via FontDownloader.
-# Only the ones a merchant selects land here. Keeping them
-# out of the repo keeps clones small and forces a fresh
-# download per environment, which is the correct model for
-# merchant-configurable assets.
+# Writing fonts are downloaded on demand via FontDownloader for
+# merchant-selected fonts. The three platform defaults are
+# committed because the storefront must render correctly on the
+# very first page load, before any admin save has run.
 
 *
 
-# But keep this directory and its .gitkeep.
+# Directory markers
 !.gitkeep
 !.gitignore
 
-# Font Awesome is bundled and versioned. Uncomment the
-# exception below when Session 5 commits the four FA
-# binaries under public/assets/fontawesome/.
+# Platform default fonts (committed)
+!inter/
+!inter/*.woff2
+!playfair-display/
+!playfair-display/*.woff2
+!dancing-script/
+!dancing-script/*.woff2
