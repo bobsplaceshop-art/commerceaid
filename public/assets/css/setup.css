@@ -453,40 +453,6 @@
 [data-theme="dark"] .ra-badge-muted   { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
 [data-theme="dark"] .ra-badge-warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
 
-/* ================================================================
-   Theme tokens - authoritative for admin pages
-   Loaded after app.css, so overrides any gaps.
-   ================================================================ */
-
-:root,
-[data-theme="light"] {
-    --ra-bg:           #f4f6fb;
-    --ra-fg:           #0f172a;
-    --ra-muted:        #64748b;
-    --ra-card-bg:      #ffffff;
-    --ra-border:       #e5e9f2;
-    --ra-hover:        rgba(148, 163, 184, 0.08);
-    --ra-input-bg:     #ffffff;
-    --ra-active:       rgba(37, 99, 235, 0.10);
-    --ra-accent:       #2563eb;
-    --ra-sidebar-bg:   #ffffff;
-    --ra-topbar-bg:    #ffffff;
-}
-
-[data-theme="dark"] {
-    --ra-bg:           #0b1220;
-    --ra-fg:           #e2e8f0;
-    --ra-muted:        #94a3b8;
-    --ra-card-bg:      #111c33;
-    --ra-border:       #1f2a44;
-    --ra-hover:        rgba(148, 163, 184, 0.10);
-    --ra-input-bg:     #0b1424;
-    --ra-active:       rgba(96, 165, 250, 0.15);
-    --ra-accent:       #60a5fa;
-    --ra-sidebar-bg:   #0b1220;
-    --ra-topbar-bg:    #111c33;
-}
-
 /* Force text colors on admin pages so nothing inherits browser default */
 
 .ra-content,
