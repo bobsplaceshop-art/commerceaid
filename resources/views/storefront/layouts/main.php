@@ -71,10 +71,16 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
         ? (string) $store->pwaThemeColor
         : '#1a1a1a';
     ?>
-    <?php if ($__faviconUrl !== null): ?>
-        <link rel="icon" type="image/png" href="<?= e($__faviconUrl) ?>">
-        <link rel="apple-touch-icon" href="<?= e($__faviconUrl) ?>">
-    <?php endif; ?>
+    <?php
+    // Always emit a favicon link. When the store has not
+    // uploaded one, fall back to the 192x192 PWA placeholder
+    // so the browser does not request /favicon.ico at the
+    // domain root (which would 404 and pollute the console
+    // in offline mode).
+    $__faviconHref = $__faviconUrl ?? '/assets/img/pwa/icon-192.png';
+    ?>
+    <link rel="icon" type="image/png" href="<?= e($__faviconHref) ?>">
+    <link rel="apple-touch-icon" href="<?= e($__faviconHref) ?>">
     <meta name="theme-color" content="<?= e($__themeColor) ?>">
     <link rel="manifest" href="/manifest.json">
 
@@ -400,6 +406,16 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <link href="<?= versioned_asset('css/storefront-cookie-banner.css') ?>" rel="stylesheet">
     <script src="<?= versioned_asset('js/cookie-consent.js') ?>" defer></script>
 <?php endif; ?>
+
+<script>
+// Service worker registration. Silent on failure - the
+// page works fine without a service worker.
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function () {});
+    });
+}
+</script>
 
 </body>
 </html>

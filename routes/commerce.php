@@ -18,7 +18,7 @@ use CorporateAid\Commerce\Controllers\Admin\CustomerApprovalController;
 /** @var Router $router */
 
 // =====================================================================
-// PWA - manifest
+// PWA - manifest + offline fallback
 // =====================================================================
 $router->get('/manifest.json', [ManifestController::class, '__invoke']);
 

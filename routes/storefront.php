@@ -58,18 +58,21 @@ $router->get('/', [HomeController::class, 'index'], ['store']);
 //
 // Rendered by the service worker when the network is unavailable.
 // Served from the storefront because that's where the PWA lives.
+//
+// The view at resources/views/errors/offline.php is a
+// self-contained branded page (navy/gold palette, truck icon,
+// Try Again button). It does not use the storefront layout
+// because it has to render during a failed navigation, when
+// the request cycle is unreliable.
 $router->get('/offline', function (Request $req, array $params): Response {
-    return Response::html(
-        '<!doctype html><html><head><meta charset="utf-8">'
-        . '<title>Offline</title>'
-        . '<meta name="viewport" content="width=device-width,initial-scale=1">'
-        . '<style>body{font-family:system-ui;padding:4rem;max-width:520px;'
-        . 'margin:0 auto;color:#1c1a16;text-align:center}h1{margin:0 0 .5rem}'
-        . 'p{color:#57534e;line-height:1.6}</style></head><body>'
-        . '<h1>You are offline</h1>'
-        . '<p>Reconnect to continue shopping.</p>'
-        . '</body></html>'
-    );
+    ob_start();
+    require __DIR__ . '/../resources/views/errors/offline.php';
+    $html = ob_get_clean();
+    // ob_get_clean() returns string|false. The buffer is
+    // always started in this closure, so false is not
+    // reachable in practice - but PHPStan is right to
+    // require the guard.
+    return Response::html(is_string($html) ? $html : '');
 });
 
 // ---------------------------------------------------------------------
