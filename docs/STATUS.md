@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-10-05
-**Version:** 0.17.0-alpha
-**Stage:** 008G.4b complete. Next: 008G.5 (product reviews).
+**Version:** 0.18.0-alpha
+**Stage:** 008G.5 complete. Next: 008G.4d (category filters).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -125,37 +125,27 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008G.5
+## Current Focus — Stage 008G.4d
 
-**Deliverable:** Product Reviews.
+**Deliverable:** Category Filters.
 
-The product detail page's Reviews tab currently renders
-a placeholder. Customer ratings and written reviews are
-the highest-impact feature missing from the storefront
-for conversion. The feature has been logged as
-deferred in four prior stage documents:
+The category detail page (`/categories/{slug}`) renders
+a bare product grid. The `/products` catalog page has a
+full filter surface: search, brand, price range,
+attribute facets, sort. This stage brings the same
+surface to the category detail.
 
-  - docs/stages/008b_extended-visual-plan.md
-  - docs/stages/008b_storefront-visual-identity.md
-  - docs/stages/008c_customer-auth-plan.md
-  - docs/STATUS.md "What Doesn't Work Yet"
+Scope in docs/ROADMAP.md under In Progress -> 008G.4d.
 
-Scope in docs/ROADMAP.md under In Progress -> 008G.5
-(when the stage open commit is written).
+**Rating facet:** because reviews now exist (008G.5),
+the filter surface can include a rating facet — five
+checkboxes for 1-star through 5-star. This is the
+first feature that consumes the rating aggregate.
 
-Reviews ship with:
-
-  - New schema (commerce_product_reviews).
-  - Repository, service, and controller.
-  - A customer-facing submission form on the PDP.
-  - An admin moderation queue.
-  - Star rating + count rendered in the buy box
-    under the product title.
-  - Verified-purchase badge based on order history.
-
-The 008G.4b stage closed on 2026-10-05. The PWA is
-installable, offline-functional for the shell, and the
-manifest is driven by store branding.
+Closes the 008G.4 group. After this stage, the entire
+008G.4 series (upload core, media library, product
+media, responsive images, PWA, self-hosted fonts,
+category filters) is complete.
 ---
 
 ## Database State

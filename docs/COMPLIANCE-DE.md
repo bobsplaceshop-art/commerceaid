@@ -62,6 +62,16 @@ Status values:
 | 18 | Font Awesome attribution (OFL, MIT, CC BY) | Done | 008G.4c |
 | 19 | Sub-processor disclosure for external services | Ongoing | - |
 | 20 | Hosting provider processor agreement (Art. 28) | Not started | - |
+| 21 | Review data handling (DSGVO Art. 17) | Done | 008G.5 |
+| 12 | Newsletter double opt-in | Not started | 008I |
+| 13 | Newsletter unsubscribe link | Not started | 008I |
+| 14 | Newsletter: no third-party transfer (DSGVO) | Not started | 008I |
+| 15 | Media deletion rules (DSGVO Art. 17) | Done | 008G.4a plan |
+| 16 | Data minimisation (DSGVO Art. 5) | Done | 008G.4a plan |
+| 17 | Copyright attribution (UrhG § 13) | Partial | 008G.4a |
+| 18 | Font Awesome attribution (OFL, MIT, CC BY) | Done | 008G.4c |
+| 19 | Sub-processor disclosure for external services | Ongoing | - |
+| 20 | Hosting provider processor agreement (Art. 28) | Not started | - |
 
 ---
 
@@ -905,3 +915,57 @@ Done / Partial:
   - `docs/stages/008g.4a_upload-core-plan.md` - media
     pipeline compliance notes
   - `docs/ARCHITECTURE.md` - layer contract
+
+---
+
+## 21. Review Data Handling (DSGVO Art. 17)
+
+**Requirement:** DSGVO Art. 17 gives a data subject
+the right to erasure. A customer who writes a product
+review and later deletes their account must have their
+identifying data removed from the review system.
+
+**Exposure:** Fines for failing to honour a valid
+erasure request. Reputational harm.
+
+**How we address it:** Reviews are stored with a
+nullable `customer_id`. When a customer account is
+deleted:
+
+  - `customer_id` is set to NULL.
+  - `title` is set to NULL.
+  - `body` is replaced with "[This review was removed
+    at the author's request]".
+  - `rating` is preserved — it remains valid data for
+    the product's aggregate score.
+
+The rendering layer shows "Anonymous" as the author
+when `customer_id` is NULL.
+
+The `ProductReviewRepository::anonymizeForCustomer()`
+method runs this transformation. It is called from
+the customer account deletion flow.
+
+No IP addresses, no user agents, no email addresses
+are ever stored on a review. The display name is
+resolved at render time from `commerce_customers` via
+the FK. When the FK is nulled, the name is gone.
+
+**Where the code lives:**
+  - `app/Commerce/Repositories/ProductReviewRepository.php`
+    (method `anonymizeForCustomer`)
+  - `app/Commerce/Models/ProductReview.php`
+    (nullable `$customerId`)
+  - `database/migrations/0319_create_product_reviews.sql`
+    (nullable FK to `commerce_customers`)
+
+**Stage:** 008G.5
+
+**Status:** Done. The anonymization path exists. The
+customer-account-deletion hook will call it when the
+deletion flow is built (Stage 008G.6 or 008H).
+
+**Note:** the anonymization method is present and
+tested at the repository layer. The account-deletion
+flow that invokes it is deferred. In the meantime, a
+manual SQL call can anonymize a customer's reviews.

@@ -56,6 +56,7 @@ Adding a stage or reordering requires updating this document first.
 | 008G.4a.3| Responsive Image Templates           | 2026-10-04 |
 | 008G.4c  | Self-Hosted Font Manager             | 2026-10-04 |
 | 008G.4b  | PWA                                  | 2026-10-05 |
+| 008G.5   | Product Reviews                      | 2026-10-05 |
 
 Also completed outside the staged sequence:
 
@@ -73,70 +74,63 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G.5 - Product Reviews
+### Stage 008G.4d - Category Filters
 
-**Goal:** Customer ratings and written reviews on the
-product detail page. Fill the Reviews tab that the PDP
-now renders as a placeholder.
+**Goal:** Add product filtering on the category detail
+page (`/categories/{slug}`). The category detail
+currently shows a bare product grid. Add the same
+filter surface the `/products` catalog page has:
+search, brand, price range, attribute facets, sort.
 
-**Why this stage exists:** the tabs on the PDP have a
-Reviews slot that reads "coming soon". Reviews are the
-highest-impact missing storefront feature for
-conversion. The feature has been logged as deferred in
-four prior stage documents.
+**Why:** the `/products` page already has filters. The
+category detail page has none. A merchant's customers
+browsing by category have no way to narrow the
+results. For a category with 200 products, that is
+unusable.
 
 **Scope:**
 
-  - Schema: commerce_product_reviews (id, store_id,
-    product_id, customer_id, order_id nullable,
-    rating 1-5, title, body, verified_purchase,
-    status ('pending' | 'approved' | 'rejected'),
-    created_at, updated_at).
-  - Repository: ProductReviewRepository. Methods:
-    listForProduct() (approved only, paginated),
-    listPending() (moderation), create(), approve(),
-    reject(), averageForProduct(),
-    countForProduct().
-  - Service: ProductReviewService. Verifies purchase
-    against commerce_orders (order status
-    'completed' or 'delivered'), enforces one review
-    per customer per product, rate-limits submissions.
-  - Customer-facing: a submission form on the PDP
-    Reviews tab. Logged-in customers only. Star picker
-    plus title plus body. "Verified purchase" badge
-    renders automatically when the customer has a
-    completed order containing this product.
-  - Admin moderation queue at
-    /commerce/ca-admin/reviews. Approve / reject /
-    delete. Permission slug review.moderate.
-  - Storefront rendering: star rating + count under
-    the product title in the buy box. Full review
-    list inside the Reviews tab with pagination.
-  - Ratings filter tab (5, 4, 3, 2, 1 star) once a
-    product has enough reviews.
+  - Reuse the filter component from `/products`. The
+    filter bar partial becomes shared between the
+    catalog index and the category detail.
+  - Search box: filters products by name or SKU
+    within the category.
+  - Brand filter: dropdown of brands that have
+    products in this category.
+  - Price range: min/max numeric inputs.
+  - Attribute facets: variant-axis and informational
+    attributes mapped to the category. Each renders
+    as checkboxes for its values.
+  - **Rating facet:** five checkboxes for 1-star
+    through 5-star. Only shows products whose average
+    rating meets the filter. This is the first feature
+    that consumes the rating aggregate from 008G.5.
+  - Sort dropdown: newest, price ascending, price
+    descending, name.
+  - URL state: filters live in query parameters so
+    bookmarked URLs work.
+  - Active filter chips: a row above the grid showing
+    which filters are applied, each with an X to
+    remove.
+  - Pagination preserves the filter set.
 
-**Depends on:** 008C (customer accounts), 008F (order
-lifecycle). Both shipped.
+**Depends on:** 008G (storefront polish), 008G.5
+(ratings exist for the rating facet). Both shipped.
 
-**DSGVO:** reviews are customer-authored content
-containing personal data (name, occasionally
-location). The plan doc documents retention and the
-moderation workflow. Reviews are deleted or
-anonymized on customer account deletion (DSGVO Art.
-17).
+**Sequenced:** opens now. Closes the 008G.4 group.
 
-**Not in scope:**
+**Open questions:**
 
-  - Review photos / videos.
-  - Helpful/unhelpful voting.
-  - Merchant replies.
-  - Star distribution charts.
-  - Review incentives or email reminders.
+  - Should the filter component be a shared partial
+    or a view model passed by both controllers?
+  - Should attribute facets come from the product's
+    informational attributes only, or also from
+    variant axes (Color / Size)?
+  - Should the filters be AJAX-driven (partial page
+    update) or full page reload?
 
-**Sequenced:** after 008G.4b. Before 008G.4d
-(Category Filters) because the rating aggregate feeds
-the filter and sort features - filter by rating
-requires reviews to exist first.
+These are captured as Open Questions, to be resolved
+in the stage plan before code is written.
 
 ## Planned Stages
 
