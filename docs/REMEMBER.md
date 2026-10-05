@@ -1807,3 +1807,135 @@ Login with admin@anayaglobal.test / ChangeMe!2026.
 ---
 
 End of REMEMBER.md patterns section.
+
+---
+
+### Pattern 33 - Forgot to bind a class into the container
+
+**Problem:** The container requires an explicit binding for every
+class resolved through `$container->get(ClassName::class)`. When
+the binding is missing, the first request that touches the class
+throws:
+
+    Container: nothing bound for 'Foo\Bar'.
+
+That is the only symptom. There is no earlier warning. The
+syntax is valid (`php -l` passes). The class exists on disk
+(PHPStan resolves it). The call site references `Foo\Bar::class`,
+which is a valid constant. Nothing in the build chain sees the
+string `'Foo\Bar'` and asks whether the container can resolve it.
+
+The class of bug hit the project four times in two months:
+
+    MediaRepository             (008G.4a)
+    ProductReviewRepository     (008G.5)
+    ProductReviewService        (008G.5)
+    ProductImageRepository      (008G.4a.2)
+
+Each one threw at runtime. Each was diagnosed from a browser
+test. Each cost 20-60 minutes.
+
+**The tell:** a 500 with the exact message above, on a request
+that reaches a class which was recently added or recently first
+called. The class's file is correct. The route that reaches it is
+correct. The problem is that no provider's `register()` method
+declares the binding.
+
+In practice the symptom shows up as soon as the new class is
+first resolved. A new repository that is only referenced from a
+controller will fail on the first HTTP request to that
+controller. A new service that is called from inside another
+service will fail on the first request that reaches the outer
+service.
+
+**The rule (as of 008J, commit f1fbd72):**
+
+The container auto-constructs classes with no binding. When a
+class has a constructor whose parameters are all class-typed (and
+resolvable through `get()`) or have defaults, the container
+builds it on first request. No binding needed.
+
+This means:
+
+1. A repository with constructor `(Database $db, StoreContext
+   $ctx)` no longer needs an explicit binding. It resolves on
+   `get(FooRepository::class)` without further setup.
+2. A repository with a captured primitive still needs an
+   explicit binding. Example: `FileService` takes `$basePath`
+   as a string argument. The container cannot invent that
+   value, so `FileService::class` is still bound explicitly.
+3. A service that needs a method called after construction
+   still needs an explicit binding. Example:
+   `SystemSettingService` binds through a closure that calls
+   `setNotificationService()` after `new`. Auto-construction
+   would produce an instance missing that wire-up.
+4. A class that depends on an interface still needs the
+   interface bound. The container can auto-construct a
+   concrete class, but if a constructor takes an interface
+   parameter, `get()` on the interface reaches the throw
+   branch unless a binding provides the concrete
+   implementation.
+
+**When adding a new repository or service:**
+
+  - If the constructor takes only class-typed dependencies and
+    no post-construction setup, no binding is required as of
+    008J.
+  - If the constructor takes a primitive (string, int, array)
+    without a default, add an explicit binding in the owning
+    provider.
+  - If the class needs a method called after `new`, add an
+    explicit binding.
+  - If you are unsure, the fastest check is a CLI smoke test:
+    boot the app, `get(Foo::class)`, print the class name. If
+    it resolves, no binding is needed. If it throws, the
+    message names the missing parameter.
+
+**Where we hit it, in order:**
+
+  1. `MediaRepository` (008G.4a file 10). The repository and
+     `MediaProcessor` were written and referenced from
+     `MediaController::upload()`. Neither was registered.
+     First upload attempt threw.
+  2. `ProductReviewRepository` and `ProductReviewService`
+     (008G.5). Both were referenced from `ProductController::show()`
+     and `ProductReviewController`. Neither was registered.
+  3. `ProductImageRepository` (008G.4a.2 file 21). Referenced
+     from `ProductController::showEdit()`. Not registered.
+  4. `App::class` inside a binding closure (008G.4c). A
+     closure tried to resolve `App::class` through the
+     container, but `App` is not bound (it owns the
+     container). Fixed by capturing the base path at
+     registration time.
+
+The fourth is a variant: the class exists but the container
+has no way to reach it. Same error message, different cause.
+
+**Related:**
+
+  - `docs/SPECIFICATION.md` ADR-018 documents the decision
+    that produced the auto-construction fallback.
+  - `docs/baseline/14-provider.md` describes the three service
+    providers and their binding patterns.
+  - Pattern 34 (whitelisted-update models need the same
+    discipline for new columns) is the sibling pattern: both
+    are silent failures that only surface on the first request
+    that touches the new piece.
+
+**Prevention checklist for adding a new class:**
+
+  1. Write the class.
+  2. If the constructor has a primitive parameter without a
+     default, or a method call after `new`, add an explicit
+     binding.
+  3. Otherwise, do nothing. As of 008J, the container builds
+     it on demand.
+  4. After the first browser test that reaches the class,
+     check the app log for `Container:` errors. If one
+     appears, the constructor has a shape the container
+     cannot auto-resolve. Read the error message; it names
+     the parameter and the fix.
+  5. Before committing any new class, run a CLI smoke test
+     for any route that reaches it. The CLI test boots
+     faster than a browser and gives the same failure mode
+     for container errors.

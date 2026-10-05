@@ -780,6 +780,105 @@ sit empty until the features are built.
 
 ---
 
+### ADR-018 - Container Auto-Construction
+
+**Context (2026-10-05):** The container requires an explicit binding
+for every class resolved through `$container->get(ClassName::class)`.
+A missing binding is not caught by `php -l` (the syntax is valid), not
+by PHPStan level 8 (the container resolves by string, so reflection is
+not followed), and not by the pre-commit hook. It surfaces only at
+runtime, as a 500 with "Container: nothing bound for 'Foo\Bar'."
+
+That failure mode hit the project four times across two months:
+
+  - `MediaRepository`              (008G.4a, media pipeline)
+  - `ProductReviewRepository`      (008G.5, reviews)
+  - `ProductReviewService`         (008G.5, reviews)
+  - `ProductImageRepository`       (008G.4a.2, product media)
+
+Each one was diagnosed from a browser test. Each cost twenty to sixty
+minutes. The class of bug is silent by construction: nothing in the
+build chain sees the string `'Foo\Bar'` and asks whether that class
+can be instantiated.
+
+**Decision:** Add auto-construction to the container. A new
+`build(string $class): object` method reflects on the constructor and
+resolves each class-typed parameter recursively through `get()`.
+`get()` gains a fall-through: when an id is not bound and not cached,
+and names a concrete class, it calls `build()` and caches the result
+as a singleton.
+
+Resolution order in `get()`:
+
+  1. If the id is a cached instance, return it.
+  2. If the id has an explicit binding, run the factory.
+  3. If the id names an instantiable class, auto-construct it.
+  4. Otherwise, throw.
+
+Explicit bindings always win. Auto-construction is a fallback for the
+common case where a class has a typed constructor and no custom
+configuration. Classes that need a captured primitive, a
+post-construction wire-up, or a non-default session still declare an
+explicit binding.
+
+**Guards:**
+
+  - `isInstantiable()`. Abstract classes, interfaces, and traits
+    throw.
+  - Class-typed parameters resolve recursively. Interfaces and
+    abstract classes reach `get()`, which will throw if they are
+    not bound.
+  - Untyped parameters must have a default. Otherwise `build()`
+    throws, naming the class and the offending parameter.
+  - The reflection recipe (`ReflectionClass` plus a normalized
+    parameter list) is cached per class. Reflection runs once per
+    class per request, not once per resolve.
+
+**`has()` stays strict.** It reports whether an id has been
+registered or has already been resolved. It does not report whether
+`get()` could auto-construct the id. The Kernel's middleware
+resolver depends on the strict-before-get reading: it calls `has()`
+to confirm a middleware class was registered by its owning provider,
+and its error message tells the developer to add the binding.
+Auto-construction does not mask that check.
+
+**Reasoning:**
+
+  - **Eliminates a silent failure class.** A class with a typed
+    constructor and no custom configuration no longer needs a
+    binding. It resolves on first use.
+  - **Explicit bindings stay authoritative.** Every binding that
+    exists today is unchanged. The fall-through only fires for
+    classes that currently throw on `get()`.
+  - **Reflection cost is paid once.** The recipe is cached per
+    class, so the second resolve is a map lookup.
+  - **`has()` semantics do not change.** The one caller that
+    depends on strictness — the Kernel's middleware resolver —
+    keeps working with the same guarantees.
+
+**Consequences:**
+
+  - Repository and service constructors gain a contract: any
+    class-typed dependency must be resolvable through `get()`.
+    The container builds on demand. A cycle between two
+    constructors (A needs B, B needs A) is not detected; PHP
+    will throw a stack-depth error. Nothing in the current
+    codebase has this shape.
+  - The set of removable bindings grows over time. Bindings that
+    are purely `fn() => new Foo($c->get(Database::class), $c->get(StoreContext::class))`
+    are now redundant. Removing them is a separate cleanup pass,
+    done one class at a time with a re-verification after each
+    removal.
+  - A class with a captured primitive is still required to bind
+    explicitly. The container cannot invent a base path, a
+    session name, or a config value.
+
+**Status:** `Container::build()` and the `get()` fall-through ship
+in commit f1fbd72 (2026-10-05, Session 1 of Stage 008J). The
+binding cleanup pass is Session 2.
+
+---
+
 ## 3. Doctrine Rules (Cross-Document)
 
 The following rules were learned through specific failures during this
