@@ -670,6 +670,27 @@ final class ProductRepository extends CommerceRepository
             $where[] = "p.`is_featured` = 1";
         }
 
+        // Rating filter. "N stars & up" semantics. The value
+        // is a minimum average rating (1-5). Products with no
+        // approved reviews are excluded when this filter is
+        // active — the customer asked for products rated at
+        // least N, and an unrated product cannot satisfy that.
+        if (!empty($filters['rating_min']) && is_numeric($filters['rating_min'])) {
+            $ratingMin = (float) $filters['rating_min'];
+            if ($ratingMin >= 1.0 && $ratingMin <= 5.0) {
+                $where[] = "EXISTS (
+                    SELECT 1
+                      FROM `commerce_product_reviews` r
+                     WHERE r.`store_id` = p.`store_id`
+                       AND r.`product_id` = p.`id`
+                       AND r.`status` = 'approved'
+                     GROUP BY r.`product_id`
+                    HAVING AVG(r.`rating`) >= ?
+                )";
+                $params[] = $ratingMin;
+            }
+        }
+
         return [implode(' AND ', $where), $params];
     }
 

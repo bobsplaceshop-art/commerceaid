@@ -97,6 +97,27 @@ $showSearch      = $showSearch      ?? true;
         </div>
 
         <div class="sf-filter-block">
+            <label class="sf-filter-label">Rating</label>
+            <?php
+            // "& up" semantics. A single radio value selects
+            // the minimum average rating. Amazon-style.
+            $selectedRating = (string) ($currentFilters['rating'] ?? '');
+            ?>
+            <label class="sf-filter-check">
+                <input type="radio" name="rating" value=""
+                       <?= $selectedRating === '' ? 'checked' : '' ?>>
+                <span>Any rating</span>
+            </label>
+            <?php for ($r = 4; $r >= 1; $r--): ?>
+                <label class="sf-filter-check">
+                    <input type="radio" name="rating" value="<?= $r ?>"
+                           <?= $selectedRating === (string) $r ? 'checked' : '' ?>>
+                    <span><?= $r ?> star<?= $r === 1 ? '' : 's' ?> &amp; up</span>
+                </label>
+            <?php endfor; ?>
+        </div>
+
+        <div class="sf-filter-block">
             <label class="sf-filter-check">
                 <input type="checkbox"
                        name="in_stock"

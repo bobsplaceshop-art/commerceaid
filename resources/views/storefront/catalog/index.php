@@ -81,6 +81,9 @@ if (!empty($currentFilters['price_min']) || !empty($currentFilters['price_max'])
     $max = $currentFilters['price_max'] ?: '∞';
     $activeChips[] = ['key' => 'price_min', 'label' => 'Price: ' . $min . ' - ' . $max];
 }
+if (!empty($currentFilters['rating'])) {
+    $activeChips[] = ['key' => 'rating', 'label' => (int) $currentFilters['rating'] . '★ & up'];
+}
 ?>
 
 <div class="sf-container sf-catalog" data-sf-page="catalog">
@@ -107,19 +110,11 @@ if (!empty($currentFilters['price_min']) || !empty($currentFilters['price_max'])
         </p>
     </header>
 
-    <?php if (!empty($activeChips)): ?>
-        <div class="sf-catalog-active-filters" data-sf-catalog-block="active-filters">
-            <?php foreach ($activeChips as $chip): ?>
-                <a href="<?= e($clearFilterUrl($chip['key'])) ?>" class="sf-chip">
-                    <span><?= e($chip['label']) ?></span>
-                    <i class="bi bi-x-lg" aria-hidden="true"></i>
-                </a>
-            <?php endforeach; ?>
-            <a href="/products" class="sf-chip sf-chip-clear-all">
-                Clear all
-            </a>
-        </div>
-    <?php endif; ?>
+    <?= view_partial('storefront/catalog/_active-chips', [
+        'activeChips'    => $activeChips,
+        'clearFilterUrl' => $clearFilterUrl,
+        'clearAllUrl'    => '/products',
+    ]) ?>
 
     <div class="sf-catalog-layout">
 

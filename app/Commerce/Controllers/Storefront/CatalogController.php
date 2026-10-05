@@ -55,8 +55,18 @@ final class CatalogController extends StorefrontController
         $inStockOnly = (bool) $request->query('in_stock', false);
         $priceMinRaw = (string) $request->query('price_min', '');
         $priceMaxRaw = (string) $request->query('price_max', '');
+        $ratingRaw   = (string) $request->query('rating', '');
         $sortKey     = (string) $request->query('sort', 'newest');
         $page        = max(1, (int) $request->query('page', 1));
+
+        // Validate rating: 1-5 or empty.
+        $rating = '';
+        if ($ratingRaw !== '' && is_numeric($ratingRaw)) {
+            $r = (int) $ratingRaw;
+            if ($r >= 1 && $r <= 5) {
+                $rating = (string) $r;
+            }
+        }
 
         // ----- Validate sort against whitelist -----
         if (!isset(self::VALID_SORTS[$sortKey])) {
@@ -97,6 +107,9 @@ final class CatalogController extends StorefrontController
         if ($priceMaxRaw !== '' && is_numeric($priceMaxRaw)) {
             $filters['price_max'] = (float) $priceMaxRaw;
         }
+        if ($rating !== '') {
+            $filters['rating_min'] = (int) $rating;
+        }
         $filters['sort'] = $sortKey;
 
         // ----- Query -----
@@ -122,6 +135,7 @@ final class CatalogController extends StorefrontController
             'in_stock'  => $inStockOnly ? '1' : '',
             'price_min' => $priceMinRaw,
             'price_max' => $priceMaxRaw,
+            'rating'    => $rating,
             'sort'      => $sortKey,
         ];
 

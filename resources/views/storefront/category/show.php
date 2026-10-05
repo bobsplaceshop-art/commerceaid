@@ -94,6 +94,12 @@ $pageUrl = function (int $p): string {
         </nav>
     <?php endif; ?>
 
+    <?= view_partial('storefront/catalog/_active-chips', [
+        'activeChips'    => $activeChips,
+        'clearFilterUrl' => $clearFilterUrl,
+        'clearAllUrl'    => '/categories/' . rawurlencode($category->slug),
+    ]) ?>
+
     <div class="sf-catalog-layout">
 
         <?= view_partial('storefront/catalog/_filters', [

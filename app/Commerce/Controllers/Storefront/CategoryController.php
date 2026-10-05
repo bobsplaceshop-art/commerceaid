@@ -96,7 +96,17 @@ final class CategoryController extends StorefrontController
         $inStockOnly = (bool) $request->query('in_stock', false);
         $priceMinRaw = (string) $request->query('price_min', '');
         $priceMaxRaw = (string) $request->query('price_max', '');
+        $ratingRaw   = (string) $request->query('rating', '');
         $sortKey     = (string) $request->query('sort', 'newest');
+
+        // Validate rating: 1-5 or empty.
+        $rating = '';
+        if ($ratingRaw !== '' && is_numeric($ratingRaw)) {
+            $r = (int) $ratingRaw;
+            if ($r >= 1 && $r <= 5) {
+                $rating = (string) $r;
+            }
+        }
 
         // Validate sort against the same whitelist.
         if (!isset(self::VALID_SORTS[$sortKey])) {
@@ -122,6 +132,9 @@ final class CategoryController extends StorefrontController
         if ($priceMaxRaw !== '' && is_numeric($priceMaxRaw)) {
             $filters['price_max'] = (float) $priceMaxRaw;
         }
+        if ($rating !== '') {
+            $filters['rating_min'] = (int) $rating;
+        }
 
         $filters = array_merge($filters, $this->hideOutOfStockFilter());
         $result = $productRepo->paginatePublished(
@@ -143,6 +156,7 @@ final class CategoryController extends StorefrontController
             'in_stock'  => $inStockOnly ? '1' : '',
             'price_min' => $priceMinRaw,
             'price_max' => $priceMaxRaw,
+            'rating'    => $rating,
             'sort'      => $sortKey,
         ];
 
@@ -154,6 +168,40 @@ final class CategoryController extends StorefrontController
             || $sortKey !== 'newest';
 
         $sortOptions = self::VALID_SORTS;
+
+        // ----- Active filter chips -----
+        // Same shape as CatalogController. The URL base is
+        // the current category page.
+        $categoryBase = '/categories/' . rawurlencode($category->slug);
+
+        // $currentFilters is array<string,string> here. Only
+        // the empty-string check is meaningful — a non-empty
+        // string is never null or 0.
+        $clearFilterUrl = function (string $key) use ($currentFilters, $categoryBase): string {
+            $q = array_filter($currentFilters, fn ($v) => $v !== '');
+            unset($q[$key]);
+            $qs = http_build_query($q);
+            return $qs === '' ? $categoryBase : $categoryBase . '?' . $qs;
+        };
+
+        $activeChips = [];
+        if ($q !== '') {
+            $activeChips[] = ['key' => 'q', 'label' => 'Search: ' . $q];
+        }
+        if ($brandSlug !== '') {
+            $activeChips[] = ['key' => 'brand', 'label' => 'Brand: ' . $brandSlug];
+        }
+        if ($inStockOnly) {
+            $activeChips[] = ['key' => 'in_stock', 'label' => 'In stock only'];
+        }
+        if ($priceMinRaw !== '' || $priceMaxRaw !== '') {
+            $min = $priceMinRaw !== '' ? $priceMinRaw : '0';
+            $max = $priceMaxRaw !== '' ? $priceMaxRaw : 'max';
+            $activeChips[] = ['key' => 'price_min', 'label' => 'Price: ' . $min . ' - ' . $max];
+        }
+        if ($rating !== '') {
+            $activeChips[] = ['key' => 'rating', 'label' => (int) $rating . '★ & up'];
+        }
 
         // Child categories for the subcategory chip strip.
         $children = [];
@@ -180,6 +228,8 @@ final class CategoryController extends StorefrontController
             'brandOptions'   => $brandOptions,
             'sortOptions'    => $sortOptions,
             'hasFilters'     => $hasFilters,
+            'activeChips'    => $activeChips,
+            'clearFilterUrl' => $clearFilterUrl,
         ]);
     }
 }

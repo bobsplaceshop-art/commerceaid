@@ -1406,3 +1406,29 @@ select.sf-filter-input {
     white-space: nowrap;
     border: 0;
 }
+
+/* =====================================================================
+   Filter block checkbox/radio layout (008G.4d session 3)
+   The base .sf-filter-check is inline-flex, which works for a
+   single checkbox. The rating filter has five radios and
+   needs a stacked layout. One per row, clean left edge.
+   ===================================================================== */
+
+.sf-filter-block .sf-filter-check {
+    display: flex;
+    margin-bottom: .35rem;
+}
+
+.sf-filter-block .sf-filter-check:last-child {
+    margin-bottom: 0;
+}
+
+/* Radios match the checkbox styling. Only the checkbox
+   selector was defined in the base rules. */
+.sf-filter-block .sf-filter-check input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--sf-gold-dark);
+    flex-shrink: 0;
+    margin: 0;
+}
