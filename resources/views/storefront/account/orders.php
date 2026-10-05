@@ -8,10 +8,11 @@
  *   $tab       string  active tab (unpaid|to_ship|shipped|completed|cancelled|all)
  *   $counts    array<string,int>
  */
-$customer = $customer ?? null;
-$result   = $result   ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 20, 'pages' => 1];
-$tab      = $tab      ?? 'all';
-$counts   = $counts   ?? [];
+$customer      = $customer      ?? null;
+$result        = $result        ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 20, 'pages' => 1];
+$tab           = $tab           ?? 'all';
+$counts        = $counts        ?? [];
+$openReturnMap = $openReturnMap ?? [];
 
 if ($customer === null) {
     return;
@@ -70,7 +71,10 @@ $pageUrl = function (int $p) use ($tab): string {
     <?php else: ?>
         <div class="sf-orders-list">
             <?php foreach ($orders as $o): ?>
-                <?= view_partial('storefront.account._order-row', ['o' => $o]) ?>
+                <?= view_partial('storefront.account._order-row', [
+                    'o'             => $o,
+                    'openReturnMap' => $openReturnMap,
+                ]) ?>
             <?php endforeach; ?>
         </div>
 

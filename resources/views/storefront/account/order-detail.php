@@ -60,6 +60,32 @@ $carrierLabel = $order->carrierLabel();
 
 $withdrawalEligible = $order->isWithdrawalEligible();
 $withdrawalDeadline = $order->withdrawalDeadline();
+
+// Return eligibility. Passed by AccountController::orderDetail().
+// Default-guarded here so the view renders correctly even if the
+// controller stops sending it (a defensive default that matches
+// the pattern every other view uses).
+//   canReturn    bool         true when the customer may start a
+//                             new return for this order
+//   windowCloses ?string      ISO timestamp the window closes, or
+//                             null when no delivery date is set
+//   openRequest  ?ReturnRequest  an open request if one exists
+$returnEligibility = $returnEligibility ?? [
+    'canReturn'    => false,
+    'windowCloses' => null,
+    'openRequest'  => null,
+];
+
+// Derived once and used in two places: the header badge (Return
+// in progress) and the withdrawal section link. Null when no
+// request is open.
+$openRequest = $returnEligibility['openRequest'] ?? null;
+
+// In-flight return quantity per order line. Passed by
+// AccountController::orderDetail(). Default-guarded here so the
+// view renders correctly even if the controller stops sending it.
+//   order_item_id => quantity
+$inFlightMap = $inFlightMap ?? [];
 ?>
 <div class="sf-account-panel" data-sf-page="account-order-detail">
 
@@ -81,9 +107,17 @@ $withdrawalDeadline = $order->withdrawalDeadline();
                     : '—' ?>
             </p>
         </div>
-        <span class="sf-order-badge <?= e($statusClass) ?> sf-order-badge-lg">
-            <?= e($statusLabel) ?>
-        </span>
+        <div class="sf-order-detail-badges">
+            <span class="sf-order-badge <?= e($statusClass) ?> sf-order-badge-lg">
+                <?= e($statusLabel) ?>
+            </span>
+            <?php if ($openRequest !== null): ?>
+                <a href="/account/returns/<?= e($openRequest->requestNumber) ?>"
+                   class="sf-order-badge sf-order-badge-lg sf-order-badge-muted">
+                    Return in progress
+                </a>
+            <?php endif; ?>
+        </div>
     </header>
 
     <!-- ============================ STATUS CARDS ============================ -->
@@ -160,6 +194,15 @@ $withdrawalDeadline = $order->withdrawalDeadline();
                     </div>
                     <div class="sf-order-item-qty">
                         Qty <?= (int) $item->quantity ?>
+                        <?php if ($item->returnedQuantity > 0): ?>
+                            <span class="sf-order-item-returned">
+                                (<?= (int) $item->returnedQuantity ?> of <?= (int) $item->quantity ?> returned)
+                            </span>
+                        <?php elseif (($inFlightMap[$item->id] ?? 0) > 0): ?>
+                            <span class="sf-order-item-returned">
+                                (<?= (int) $inFlightMap[$item->id] ?> being returned)
+                            </span>
+                        <?php endif; ?>
                     </div>
                     <div class="sf-order-item-total">
                         <?= e(number_format($item->lineTotal, 2)) ?> <?= e($order->currencyCode) ?>
@@ -203,6 +246,17 @@ $withdrawalDeadline = $order->withdrawalDeadline();
             <dd class="sf-order-totals-grand">
                 <?= e(number_format($order->grandTotal, 2)) ?> <?= e($order->currencyCode) ?>
             </dd>
+
+            <?php if ($order->refundedTotal > 0): ?>
+                <dt>Refunded</dt>
+                <dd class="sf-order-totals-refund">
+                    &minus;<?= e(number_format($order->refundedTotal, 2)) ?> <?= e($order->currencyCode) ?>
+                </dd>
+                <dt class="sf-order-totals-net">Net paid</dt>
+                <dd class="sf-order-totals-net">
+                    <?= e(number_format($order->grandTotal - $order->refundedTotal, 2)) ?> <?= e($order->currencyCode) ?>
+                </dd>
+            <?php endif; ?>
         </dl>
     </section>
 
@@ -275,6 +329,21 @@ $withdrawalDeadline = $order->withdrawalDeadline();
                     Read the full withdrawal policy
                 </a>
             </p>
+
+            <?php if ($openRequest !== null): ?>
+                <p class="mt-3 mb-0">
+                    <a href="/account/returns/<?= e($openRequest->requestNumber) ?>" class="sf-link">
+                        View your open return request
+                    </a>
+                </p>
+            <?php elseif (!empty($returnEligibility['canReturn'])): ?>
+                <p class="mt-3 mb-0">
+                    <a href="/account/returns/new/<?= e($order->orderNumber) ?>"
+                       class="sf-btn sf-btn-primary sf-btn-sm">
+                        Start a return
+                    </a>
+                </p>
+            <?php endif; ?>
         </section>
     <?php endif; ?>
 

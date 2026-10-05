@@ -155,12 +155,24 @@ final class AccountController extends StorefrontController
         $result = $orders->paginateForCustomerTab($customer->id, $tab, $page, 20);
         $counts = $orders->countForCustomerTabs($customer->id);
 
+        // For each order on this page, look up whether an open
+        // return request exists. One query for the page, not N.
+        // The view renders a "Return in progress" badge per row.
+        $orderIds = [];
+        foreach ($result['items'] as $o) {
+            $orderIds[] = $o->id;
+        }
+        $openReturnMap = $this->container
+            ->get(\CorporateAid\Commerce\Repositories\ReturnRequestRepository::class)
+            ->openRequestMapForOrders($orderIds);
+
         return $this->render('storefront.account.orders', [
-            'title'    => 'My Orders',
-            'customer' => $customer,
-            'result'   => $result,
-            'tab'      => $tab,
-            'counts'   => $counts,
+            'title'         => 'My Orders',
+            'customer'      => $customer,
+            'result'        => $result,
+            'tab'           => $tab,
+            'counts'        => $counts,
+            'openReturnMap' => $openReturnMap,
         ]);
     }
 
@@ -199,11 +211,57 @@ final class AccountController extends StorefrontController
         $itemRepo = $this->container->get(\CorporateAid\Commerce\Repositories\OrderItemRepository::class);
         $items = $itemRepo->forOrder($order->id);
 
+        // In-flight return quantities per order line. One query
+        // for the whole order, not one per line. Used by the view
+        // to annotate each line with "N being returned" when the
+        // customer has an active return in progress on that line.
+        $itemIds = [];
+        foreach ($items as $item) {
+            $itemIds[] = $item->id;
+        }
+        $inFlightMap = $this->container
+            ->get(\CorporateAid\Commerce\Repositories\ReturnRequestItemRepository::class)
+            ->inFlightMapForOrderItems($itemIds);
+
+        // Return eligibility for the view. The view renders a
+        // "Start a return" button inside the withdrawal block
+        // when this is true, and a link to the open request
+        // otherwise. Composed from two conditions so the button
+        // and the withdrawal block stay consistent:
+        //   - Order::isWithdrawalEligible()  (14 days from placed_at)
+        //   - ReturnRequestService::isWithinWindow()  (store's
+        //     windowDays from delivery, or pre-delivery allowed)
+        // The same gate is applied in ReturnController::canReturnFor().
+        $returnRepo = $this->container->get(
+            \CorporateAid\Commerce\Repositories\ReturnRequestRepository::class
+        );
+        $returnSvc = $this->container->get(
+            \CorporateAid\Commerce\Services\ReturnRequestService::class
+        );
+
+        $openRequest = null;
+        foreach ($returnRepo->listForOrder($order->id) as $rr) {
+            if ($rr->isOpen()) {
+                $openRequest = $rr;
+                break;
+            }
+        }
+
+        $returnEligibility = [
+            'canReturn'    => $openRequest === null
+                              && $order->isWithdrawalEligible()
+                              && $returnSvc->isWithinWindow($order),
+            'windowCloses' => $returnSvc->windowClosesAt($order),
+            'openRequest'  => $openRequest,
+        ];
+
         return $this->render('storefront.account.order-detail', [
-            'title'    => 'Order ' . $order->orderNumber,
-            'customer' => $customer,
-            'order'    => $order,
-            'items'    => $items,
+            'title'             => 'Order ' . $order->orderNumber,
+            'customer'          => $customer,
+            'order'             => $order,
+            'items'             => $items,
+            'returnEligibility' => $returnEligibility,
+            'inFlightMap'       => $inFlightMap,
         ]);
     }
 

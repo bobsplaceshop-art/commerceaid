@@ -17,6 +17,7 @@ use CorporateAid\Commerce\Controllers\Storefront\CartController;
 use CorporateAid\Commerce\Controllers\Storefront\WishlistController;
 use CorporateAid\Commerce\Controllers\Storefront\RecentViewController;
 use CorporateAid\Commerce\Controllers\Storefront\MessageController;
+use CorporateAid\Commerce\Controllers\Storefront\ReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
 
 /** @var Router $router */
@@ -205,6 +206,22 @@ $router->post('/account/messages/mark-read',     [MessageController::class, 'mar
 $router->post('/account/messages/mark-all-read', [MessageController::class, 'markAllRead'],     ['store', 'csrf']);
 $router->get('/account/messages/preferences',    [MessageController::class, 'preferences'],     ['store']);
 $router->post('/account/messages/preferences',   [MessageController::class, 'savePreferences'], ['store', 'csrf']);
+
+// Returns (Stage 008H)
+//
+// Every route requires login. The controller gates on
+// CustomerAuthService::user() and redirects to /account/login
+// when the customer is not logged in. Same shape as the
+// message-center, wishlist, and recent-view routes.
+//
+// Route order matters: /new/{orderNumber} must precede
+// /{requestNumber} so the literal "new" is not captured as a
+// request number.
+$router->get('/account/returns',                    [ReturnController::class, 'index'],  ['store']);
+$router->get('/account/returns/new/{orderNumber}',  [ReturnController::class, 'create'], ['store']);
+$router->post('/account/returns',                   [ReturnController::class, 'store'],  ['store', 'csrf']);
+$router->get('/account/returns/{requestNumber}',    [ReturnController::class, 'show'],   ['store']);
+$router->post('/account/returns/{id}/cancel',       [ReturnController::class, 'cancel'], ['store', 'csrf']);
 
 // Search (Stage 008G)
 $router->get('/search', [SearchController::class, 'index'], ['store']);

@@ -292,6 +292,45 @@ final class OrderRepository extends CommerceRepository
         return array_map(fn ($r) => Order::fromRow($r), $rows);
     }
 
+    // =================================================================
+    // Returns eligibility (Stage 008H)
+    // =================================================================
+
+    /**
+     * Orders belonging to the customer that have at least one order
+     * line with outstanding returnable quantity.
+     *
+     * "Outstanding" means quantity > returned_quantity on the order
+     * item row. In-flight return requests are not considered here -
+     * ReturnRequestService enforces the per-line cap when a request
+     * is opened. This method is a coarse eligibility filter.
+     *
+     * Ordered newest first. Capped at 50 to keep the Apply tab
+     * readable and the query bounded; a customer with more than 50
+     * eligible orders is an edge case.
+     *
+     * @return array<int, Order>
+     */
+    public function listEligibleForReturn(int $customerId): array
+    {
+        $rows = $this->db->select(
+            "SELECT o.* FROM `commerce_orders` o
+              WHERE o.`store_id` = ?
+                AND o.`customer_id` = ?
+                AND o.`status` NOT IN ('cancelled', 'failed', 'refunded')
+                AND EXISTS (
+                    SELECT 1 FROM `commerce_order_items` i
+                     WHERE i.`order_id` = o.`id`
+                       AND i.`store_id` = o.`store_id`
+                       AND i.`quantity` > i.`returned_quantity`
+                )
+              ORDER BY o.`id` DESC
+              LIMIT 50",
+            [$this->storeId(), $customerId]
+        );
+        return array_map(fn ($r) => Order::fromRow($r), $rows);
+    }
+
     /**
      * Fast check: does this customer have any unclaimed orders?
      * Cheaper than listClaimableForCustomer when we only need a

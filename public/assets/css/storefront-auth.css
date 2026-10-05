@@ -462,6 +462,21 @@
    Order detail page
    ===================================================================== */
 
+/* The header row contains the title block on the left and one or
+   more status badges on the right. Used by order-detail.php. The
+   wrapper keeps the order status badge and any side-process badge
+   (e.g. "Return in progress") side by side, right-aligned, and
+   wraps on narrow viewports. return-detail.php uses the same
+   .sf-order-detail-header container without this wrapper because
+   it only has one badge. */
+.sf-order-detail-badges {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .sf-order-detail {
     max-width: 960px;
     margin: 0 auto;
@@ -633,6 +648,12 @@
     color: var(--sf-muted, #777);
     white-space: nowrap;
 }
+.sf-order-item-returned {
+    display: block;
+    font-size: .78rem;
+    color: var(--sf-muted, #777);
+    margin-top: .15rem;
+}
 .sf-order-item-total {
     font-weight: 500;
     color: var(--sf-charcoal, #111);
@@ -665,6 +686,15 @@
     border-top: 2px solid var(--sf-charcoal, #111);
     font-weight: 600;
     font-size: 1.1rem;
+}
+.sf-order-totals-refund {
+    color: #991b1b;
+    font-weight: 500;
+}
+.sf-order-totals-net {
+    padding-top: .5rem;
+    border-top: 1px solid var(--sf-border, #e5e1d8);
+    font-weight: 600;
 }
 
 /* ---- Addresses ---- */

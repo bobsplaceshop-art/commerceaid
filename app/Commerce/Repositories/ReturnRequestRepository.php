@@ -66,6 +66,55 @@ final class ReturnRequestRepository extends CommerceRepository
         return $count > 0;
     }
 
+
+    /**
+     * Map of order_id => request_number for any order in the
+     * given list that has an open return request.
+     *
+     * Open means status IN (requested, approved, received).
+     * Used by the order list to badge orders that have a
+     * return in flight without issuing one query per row.
+     *
+     * When an order has more than one open request (which the
+     * service prevents, but a manual DB edit could produce),
+     * the most recent one wins.
+     *
+     * @param array<int, int> $orderIds
+     * @return array<int, string> order_id => request_number
+     */
+    public function openRequestMapForOrders(array $orderIds): array
+    {
+        if ($orderIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($orderIds), '?'));
+        $params       = [$this->storeId()];
+        foreach ($orderIds as $id) {
+            $params[] = (int) $id;
+        }
+
+        $rows = $this->db->select(
+            "SELECT `order_id`, `request_number`
+               FROM `commerce_return_requests`
+              WHERE `store_id` = ?
+                AND `order_id` IN ({$placeholders})
+                AND `status` IN ('requested','approved','received')
+              ORDER BY `requested_at` DESC, `id` DESC",
+            $params
+        );
+
+        $map = [];
+        foreach ($rows as $r) {
+            $orderId = (int) $r['order_id'];
+            // First row wins because the query is DESC-ordered.
+            if (!isset($map[$orderId])) {
+                $map[$orderId] = (string) $r['request_number'];
+            }
+        }
+        return $map;
+    }
+
     /**
      * @param array<string,mixed> $filters
      * @return array{items: array<int, ReturnRequest>, total: int, page: int, per_page: int, pages: int}
@@ -110,14 +159,26 @@ final class ReturnRequestRepository extends CommerceRepository
     }
 
     /**
-     * @param array<string,mixed> $data
+     * Insert a new return request. Returns the inserted id.
+     *
+     * The caller (ReturnRequestService::open()) has already
+     * computed every value and is inside a transaction. This
+     * method does not begin or commit anything.
+     *
+     * @param array<string,mixed> $data Column => value map.
      */
     public function create(array $data): int
     {
-        return $this->db->insert('commerce_return_requests', array_merge(
-            ['store_id' => $this->storeId()],
-            $data
-        ));
+        $data = array_merge(['store_id' => $this->storeId()], $data);
+
+        $columns      = array_keys($data);
+        $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+        $columnList   = '`' . implode('`, `', $columns) . '`';
+
+        return $this->db->insert(
+            "INSERT INTO `commerce_return_requests` ({$columnList}) VALUES ({$placeholders})",
+            array_values($data)
+        );
     }
 
     /**

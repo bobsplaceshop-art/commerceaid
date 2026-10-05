@@ -3,11 +3,22 @@
  * One row in the customer's order list.
  *
  * @var \CorporateAid\Commerce\Models\Order $o
+ * @var array<int,string> $openReturnMap  order_id => request_number
+ *                                        for orders with an open
+ *                                        return request. Optional;
+ *                                        defaults to empty.
  */
-$o = $o ?? null;
+$o             = $o             ?? null;
+$openReturnMap = $openReturnMap ?? [];
+
 if ($o === null) {
     return;
 }
+
+// If this order has an open return request, show a badge in the
+// header. The map is built once per page load by
+// AccountController::orders().
+$returnRequestNo = $openReturnMap[$o->id] ?? null;
 
 $statusLabels = [
     'pending_payment'    => 'Pending payment',
@@ -42,6 +53,12 @@ $statusClass = match ($o->status) {
             <span class="sf-order-badge <?= e($statusClass) ?>">
                 <?= e($statusLabel) ?>
             </span>
+            <?php if ($returnRequestNo !== null): ?>
+                <a href="/account/returns/<?= e($returnRequestNo) ?>"
+                   class="sf-order-badge sf-order-badge-muted">
+                    Return in progress
+                </a>
+            <?php endif; ?>
         </div>
         <div class="sf-order-row-meta">
             <span>

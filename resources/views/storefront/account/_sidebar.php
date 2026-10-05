@@ -73,7 +73,7 @@ $groups = [
         'id'    => 'returns',
         'label' => 'Returns',
         'items' => [
-            ['label' => 'Returns', 'href' => '#', 'icon' => 'bi-arrow-return-left', 'soon' => true],
+            ['label' => 'Returns', 'href' => '/account/returns', 'icon' => 'bi-arrow-return-left'],
         ],
     ],
     [

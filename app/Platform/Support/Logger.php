@@ -42,7 +42,24 @@ final class Logger
 
         $line .= PHP_EOL;
 
-        @file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
+        // Primary target: the log file. When the write fails, fall
+        // back to error_log() so the entry is not lost. The @ on
+        // file_put_contents is intentional - PHP's warning is not
+        // useful on its own - but the return value is checked so a
+        // failure is not silent.
+        $written = @file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
+
+        if ($written === false) {
+            // Fallback. error_log() writes to the SAPI's configured
+            // error log. For mod_php under Apache this is Apache's
+            // error.log. For CLI it is stderr. Either is better than
+            // silence.
+            //
+            // The prefix marks entries that reached the fallback so
+            // they are greppable in whichever log actually received
+            // them.
+            error_log('[ca-fallback] ' . rtrim($line));
+        }
     }
 
     /** @param array<string,mixed> $context */

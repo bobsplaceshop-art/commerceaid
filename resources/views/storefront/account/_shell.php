@@ -56,6 +56,7 @@ $crumbLabels = [
     'account'          => 'Account',
     'orders'           => 'My Orders',
     'claims'           => 'Claims',
+    'returns'          => 'Returns',
     'addresses'        => 'Addresses',
     'create'           => 'New address',
     'edit'             => 'Edit',

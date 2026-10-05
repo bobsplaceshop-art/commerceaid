@@ -22,15 +22,31 @@ final class ReturnRequestItemRepository extends CommerceRepository
     }
 
     /**
+     * Insert one row per return line. Called from
+     * ReturnRequestService::open() inside the create transaction.
+     *
+     * Each $item is a column => value map. The store_id is
+     * stamped here; the caller does not pass it.
+     *
      * @param array<int, array<string,mixed>> $items
      */
     public function createMany(array $items): void
     {
+        if ($items === []) {
+            return;
+        }
+
         foreach ($items as $item) {
-            $this->db->insert('commerce_return_request_items', array_merge(
-                ['store_id' => $this->storeId()],
-                $item
-            ));
+            $data = array_merge(['store_id' => $this->storeId()], $item);
+
+            $columns      = array_keys($data);
+            $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+            $columnList   = '`' . implode('`, `', $columns) . '`';
+
+            $this->db->insert(
+                "INSERT INTO `commerce_return_request_items` ({$columnList}) VALUES ({$placeholders})",
+                array_values($data)
+            );
         }
     }
 
@@ -70,5 +86,54 @@ final class ReturnRequestItemRepository extends CommerceRepository
             [$this->storeId(), $orderItemId]
         );
         return $sum;
+    }
+
+    /**
+     * Map of order_item_id => in-flight return quantity across
+     * all open or processing return requests for the given lines.
+     *
+     * "In flight" means the request is in status requested,
+     * approved, or received. Rejected and cancelled requests are
+     * excluded. Refunded requests are excluded - those units
+     * have already been counted in returned_quantity on the
+     * order item and must not be double-counted by the customer
+     * view.
+     *
+     * Used by AccountController::orderDetail() to annotate each
+     * order line with "N being returned" when the customer has
+     * an active return in progress on that line.
+     *
+     * @param array<int, int> $orderItemIds
+     * @return array<int, int> order_item_id => quantity
+     */
+    public function inFlightMapForOrderItems(array $orderItemIds): array
+    {
+        if ($orderItemIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($orderItemIds), '?'));
+        $params       = [$this->storeId()];
+        foreach ($orderItemIds as $id) {
+            $params[] = (int) $id;
+        }
+
+        $rows = $this->db->select(
+            "SELECT i.`order_item_id`, SUM(i.`quantity`) AS qty
+               FROM `commerce_return_request_items` i
+               INNER JOIN `commerce_return_requests` r
+                 ON r.`id` = i.`request_id`
+              WHERE i.`store_id` = ?
+                AND i.`order_item_id` IN ({$placeholders})
+                AND r.`status` IN ('requested','approved','received')
+              GROUP BY i.`order_item_id`",
+            $params
+        );
+
+        $map = [];
+        foreach ($rows as $r) {
+            $map[(int) $r['order_item_id']] = (int) $r['qty'];
+        }
+        return $map;
     }
 }
