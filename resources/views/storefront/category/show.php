@@ -109,6 +109,13 @@ $pageUrl = function (int $p): string {
 
         <section class="sf-catalog-main">
 
+            <?= view_partial('storefront/catalog/_toolbar', [
+                'result'         => $result,
+                'currentFilters' => $currentFilters,
+                'sortOptions'    => $sortOptions,
+                'formId'         => 'sf-catalog-filter-form',
+            ]) ?>
+
     <?php if (empty($items)): ?>
         <div class="sf-empty">
             <i class="bi bi-box-seam"></i>

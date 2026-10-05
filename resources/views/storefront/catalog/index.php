@@ -142,27 +142,12 @@ if (!empty($currentFilters['price_min']) || !empty($currentFilters['price_max'])
         <!-- ========================================================= -->
         <section class="sf-catalog-main">
 
-            <?php if ($total > 0): ?>
-                <div class="sf-catalog-toolbar" data-sf-catalog-block="sort">
-                    <span class="sf-catalog-count-inline">
-                        Showing <?= count($items) ?> of <?= $total ?>
-                    </span>
-                    <div class="sf-catalog-sort">
-                        <label for="sf-sort" class="sf-filter-label">Sort by</label>
-                        <select id="sf-sort"
-                                name="sort"
-                                class="sf-filter-input"
-                                form="sf-catalog-filter-form"
-                                onchange="document.getElementById('sf-catalog-filter-form').submit()">
-                            <?php foreach ($sortOptions as $key => $label): ?>
-                                <option value="<?= e($key) ?>" <?= ($currentFilters['sort'] ?? 'newest') === $key ? 'selected' : '' ?>>
-                                    <?= e($label) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                </div>
-            <?php endif; ?>
+            <?= view_partial('storefront/catalog/_toolbar', [
+                'result'         => $result,
+                'currentFilters' => $currentFilters,
+                'sortOptions'    => $sortOptions,
+                'formId'         => 'sf-catalog-filter-form',
+            ]) ?>
 
             <?php if (empty($items)): ?>
                 <div class="sf-empty">
