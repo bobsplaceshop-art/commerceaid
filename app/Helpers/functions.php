@@ -1278,3 +1278,33 @@ if (!function_exists('store_font_face_css')) {
     }
 }
 
+
+if (!function_exists('admin_pending_review_count')) {
+    /**
+     * Number of product reviews currently awaiting moderation.
+     * Used by the admin sidebar badge. Static-cached per
+     * request. Returns 0 on any failure.
+     *
+     * Defensive: a broken repository cannot break the admin
+     * shell. A store with no reviews table (edge case) returns
+     * 0 and the badge stays hidden.
+     */
+    function admin_pending_review_count(): int
+    {
+        static $cached = null;
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        try {
+            $container = \CorporateAid\Core\App::instance()->container();
+            $repo = $container->get(
+                \CorporateAid\Commerce\Repositories\ProductReviewRepository::class
+            );
+            return $cached = $repo->countPending();
+        } catch (\Throwable) {
+            return $cached = 0;
+        }
+    }
+}

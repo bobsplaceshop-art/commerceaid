@@ -98,6 +98,7 @@ $groups = [
             ['label' => 'Inventory',  'href' => '/commerce/ca-admin/inventory',  'icon' => 'bi-boxes'],
             ['label' => 'Attributes', 'href' => '/commerce/ca-admin/attributes', 'icon' => 'bi-input-cursor-text'],
             ['label' => 'Media',      'href' => '/commerce/ca-admin/media',      'icon' => 'bi-images'],
+            ['label' => 'Reviews',    'href' => '/commerce/ca-admin/reviews',    'icon' => 'bi-chat-square-text', 'badge' => admin_pending_review_count()],
         ],
     ],
     [
@@ -161,16 +162,28 @@ $renderNavItem = function (array $item, callable $isActive, bool $setupComplete)
     }
 
     $ariaCurrent = ($active !== '') ? ' aria-current="page"' : '';
+
+    // Optional badge. A numeric count that renders as a
+    // pill on the right side of the nav item. Used by
+    // Reviews (pending moderation count). Any future nav
+    // item can set `'badge' => N` in the groups array.
+    $badge    = (int) ($item['badge'] ?? 0);
+    $badgeHtml = $badge > 0
+        ? '<span class="ra-nav-badge">' . $badge . '</span>'
+        : '';
+
     return sprintf(
         '<a href="%s" class="ra-nav-item %s"%s>'
         . '<i class="bi %s" aria-hidden="true"></i>'
         . '<span>%s</span>'
+        . '%s'
         . '</a>',
         e($href),
         $active,
         $ariaCurrent,
         e($icon),
-        e($label)
+        e($label),
+        $badgeHtml
     );
 };
 ?>

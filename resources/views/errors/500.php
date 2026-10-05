@@ -22,8 +22,8 @@ $displayRef = isset($errorRef) && is_string($errorRef) ? $errorRef : null;
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Something went wrong - Anaya Global</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="/assets/css/app.css" rel="stylesheet">
+    <link href="/assets/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/assets/css/main.css" rel="stylesheet">
     <script>
     (function () {
         try {

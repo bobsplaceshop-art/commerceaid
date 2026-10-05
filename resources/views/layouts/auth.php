@@ -43,7 +43,7 @@ $formError = is_array($errors) ? ($errors['_form'] ?? null) : null;
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?= asset('bootstrap-icons/bootstrap-icons.min.css') ?>" rel="stylesheet">
-    <link href="<?= asset('css/app.css') ?>" rel="stylesheet">
+    <link href="<?= asset('css/main.css') ?>" rel="stylesheet">
     <style>
         :root {
             --brand-primary: <?= e($primary) ?>;

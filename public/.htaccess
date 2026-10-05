@@ -41,15 +41,16 @@ DirectoryIndex index.php
     #
     # Directive-by-directive:
     #   default-src 'self'      - anything not listed below comes only from same origin
-    #   script-src  'self' 'unsafe-inline' cdn.jsdelivr.net
-    #                           - scripts: local + inline + Bootstrap CDN
-    #   style-src   'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com
-    #                           - styles: local + inline + Bootstrap CDN
-    #                             + Google Fonts CSS
-    #   font-src    'self' cdn.jsdelivr.net fonts.gstatic.com data:
-    #                           - fonts: local + Bootstrap Icons
-    #                             + Google Fonts (gstatic) + data URIs
-    #   img-src     'self' data: picsum.photos fastly.picsum.photos
+    #   script-src  'self' 'unsafe-inline' https://cdn.jsdelivr.net
+    #                           - scripts: local + inline + Bootstrap JS
+    #   style-src   'self' 'unsafe-inline' https://cdn.jsdelivr.net
+    #                           - styles: local + inline + Bootstrap CSS
+    #   font-src    'self' data:
+    #                           - fonts: local + data URIs. All fonts are
+    #                             self-hosted (008G.4c). Bootstrap Icons
+    #                             and Font Awesome both ship from
+    #                             /assets/. No external font origin.
+    #   img-src     'self' data: https://picsum.photos https://fastly.picsum.photos
     #                           - images: local + inline data URIs
     #                             + picsum.photos placeholder
     #                             NOTE - picsum.photos is a DEVELOPMENT
@@ -57,7 +58,7 @@ DirectoryIndex index.php
     #                             category media ships from the store's
     #                             own domain, remove both picsum.photos
     #                             and fastly.picsum.photos from img-src.
-    #   connect-src 'self' cdn.jsdelivr.net
+    #   connect-src 'self' https://cdn.jsdelivr.net
     #                           - fetch/XHR destinations (jsdelivr for source maps)
     #   frame-ancestors 'none'  - block framing (overlaps with X-Frame-Options)
     #   base-uri    'self'      - prevent <base href> hijacking

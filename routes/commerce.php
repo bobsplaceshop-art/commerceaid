@@ -12,6 +12,7 @@ use CorporateAid\Commerce\Controllers\Admin\LegalPageController;
 use CorporateAid\Commerce\Controllers\Admin\SetupController;
 use CorporateAid\Commerce\Controllers\Admin\CategoryController;
 use CorporateAid\Commerce\Controllers\Admin\BrandController;
+use CorporateAid\Commerce\Controllers\Admin\ReviewController;
 use CorporateAid\Commerce\Controllers\Admin\ProductController;
 use CorporateAid\Commerce\Controllers\Admin\CustomerApprovalController;
 
@@ -164,6 +165,30 @@ $router->post('/commerce/ca-admin/brands/{id}/restore',
 $router->post('/commerce/ca-admin/brands/{id}/delete',
     [BrandController::class, 'destroy'],
     ['store', 'auth', 'csrf']);
+
+
+// =====================================================================
+// Admin - Reviews
+// =====================================================================
+// All four routes gated by the review.moderate permission.
+// The moderator needs review.moderate (assigned to super-admin
+// by the seed). The GET shows a filtered list; the three POSTs
+// mutate one row and redirect back to the same filter.
+$router->get('/commerce/ca-admin/reviews',
+    [ReviewController::class, 'index'],
+    ['store', 'auth', 'permission:review.moderate']);
+
+$router->post('/commerce/ca-admin/reviews/{id}/approve',
+    [ReviewController::class, 'approve'],
+    ['store', 'auth', 'csrf', 'permission:review.moderate']);
+
+$router->post('/commerce/ca-admin/reviews/{id}/reject',
+    [ReviewController::class, 'reject'],
+    ['store', 'auth', 'csrf', 'permission:review.moderate']);
+
+$router->post('/commerce/ca-admin/reviews/{id}/delete',
+    [ReviewController::class, 'destroy'],
+    ['store', 'auth', 'csrf', 'permission:review.moderate']);
 
 $router->get('/commerce/ca-admin/brands/{id}/delete-info',
     [BrandController::class, 'deleteInfo'],
