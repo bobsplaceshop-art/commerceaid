@@ -17,7 +17,7 @@
  * whose name does not match the current version.
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME    = `anaya-${CACHE_VERSION}`;
 
 /*
@@ -74,6 +74,7 @@ const PRECACHE_URLS = [
   '/assets/js/storefront-hero.js',
   '/assets/js/wishlist.js',
   '/assets/js/product-tabs.js',
+  '/assets/js/product-reviews.js',
 ];
 
 /* ------------------------------------------------------------------

@@ -180,6 +180,36 @@ if ($gallery !== []) {
                 <p class="sf-product-short"><?= e($product->shortDescription) ?></p>
             <?php endif; ?>
 
+            <?php
+            // Aggregate rating block. Stars + score + count.
+            // The link carries data-sf-tab-link="reviews" so
+            // product-tabs.js can activate the Reviews tab and
+            // scroll to it on click.
+            $__revCount = (int) ($reviewAggregate['count'] ?? 0);
+            $__revAvg   = (float) ($reviewAggregate['average'] ?? 0);
+            $__revWhole = (int) round($__revAvg);
+            ?>
+            <a href="#reviews"
+               class="sf-product-rating-link<?= $__revCount === 0 ? ' is-empty' : '' ?>"
+               data-sf-tab-link="reviews">
+                <span class="sf-product-rating-stars" aria-hidden="true">
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <i class="bi <?= $i <= $__revWhole ? 'bi-star-fill' : 'bi-star' ?>"></i>
+                    <?php endfor; ?>
+                </span>
+                <?php if ($__revCount > 0): ?>
+                    <span class="sf-product-rating-text">
+                        <span class="sf-product-rating-score"><?= e(number_format($__revAvg, 1)) ?></span>
+                        <span class="sf-product-rating-sep">&middot;</span>
+                        <span class="sf-product-rating-count">
+                            <?= (int) $__revCount ?> review<?= $__revCount === 1 ? '' : 's' ?>
+                        </span>
+                    </span>
+                <?php else: ?>
+                    <span class="sf-product-rating-text">Be the first to review</span>
+                <?php endif; ?>
+            </a>
+
             <div class="sf-product-price-block">
                 <span class="sf-product-price"><?= e(number_format($price, 2)) ?></span>
                 <?php if ($onSale && $compareAt !== null): ?>
@@ -468,7 +498,7 @@ if ($gallery !== []) {
                     aria-controls="sf-tab-reviews"
                     aria-selected="<?= $defaultTab === 'reviews' ? 'true' : 'false' ?>"
                     data-sf-tab="reviews">
-                Reviews <span class="sf-product-tab-count">(0)</span>
+                Reviews <span class="sf-product-tab-count">(<?= (int) ($reviewAggregate['count'] ?? 0) ?>)</span>
             </button>
         </div>
 
@@ -549,3 +579,4 @@ if ($gallery !== []) {
 <script src="/assets/js/storefront-gallery.js" defer></script>
 <script src="<?= versioned_asset('js/product-swatches.js') ?>" defer></script>
 <script src="<?= versioned_asset('js/product-tabs.js') ?>" defer></script>
+<script src="<?= versioned_asset('js/product-reviews.js') ?>" defer></script>

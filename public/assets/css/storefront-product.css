@@ -1100,3 +1100,57 @@
     text-align: center;
     margin-top: 2rem;
 }
+
+/* =====================================================================
+   Buy-box aggregate rating (008G.5 session 3)
+   A link under the product title that shows the star
+   average and review count. Clicking activates the
+   Reviews tab and scrolls to it.
+   ===================================================================== */
+
+.sf-product-rating-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    text-decoration: none;
+    color: var(--sf-ink-soft);
+    font-size: .88rem;
+    line-height: 1;
+    margin: .35rem 0 .5rem;
+    transition: color var(--sf-t-base) var(--sf-ease);
+}
+
+.sf-product-rating-link:hover {
+    color: var(--sf-ink);
+}
+
+.sf-product-rating-stars {
+    color: var(--sf-gold, #c6a15b);
+    font-size: .85rem;
+    letter-spacing: .08em;
+    display: inline-flex;
+    gap: .05rem;
+}
+
+.sf-product-rating-link.is-empty .sf-product-rating-stars {
+    color: var(--sf-border);
+}
+
+.sf-product-rating-text {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .35rem;
+}
+
+.sf-product-rating-score {
+    font-weight: 600;
+    color: var(--sf-ink);
+}
+
+.sf-product-rating-sep {
+    color: var(--sf-ink-muted);
+}
+
+.sf-product-rating-count {
+    color: var(--sf-ink-soft);
+}

@@ -45,6 +45,24 @@
                 });
             });
         });
+
+        // Any element with data-sf-tab-link="{key}" activates
+        // the target tab and scrolls the tabs section into
+        // view. Used by the buy-box rating block.
+        var links = document.querySelectorAll('[data-sf-tab-link]');
+        Array.prototype.slice.call(links).forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var key = link.getAttribute('data-sf-tab-link');
+                var target = document.querySelector('[data-sf-tab="' + key + '"]');
+                if (!target) return;
+                target.click();
+                var tabsRoot = document.querySelector('[data-sf-tabs]');
+                if (tabsRoot && typeof tabsRoot.scrollIntoView === 'function') {
+                    tabsRoot.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
     }
 
     if (document.readyState === 'loading') {
