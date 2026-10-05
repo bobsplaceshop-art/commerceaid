@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-10-05
-**Version:** 0.19.0-alpha
-**Stage:** 008G.4d complete. Next: 008J (container auto-construction).
+**Version:** 0.19.1-alpha
+**Stage:** 008J complete. Next: 008H (returns & refunds).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -125,50 +125,52 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008J
+## Current Focus — Stage 008H
 
-**Deliverable:** Container Auto-Construction.
+**Deliverable:** Returns & Refunds.
 
-The container requires explicit bindings for every
-class resolved through `$container->get(Class::class)`.
-A missing binding surfaces as a runtime 500 with
-"Container: nothing bound for X" — but only when a
-code path hits that class. PHPStan, lint, and the
-pre-commit hook do not catch it.
+Customer-initiated return requests. Integrates the German
+Widerrufsrecht (14-day right of withdrawal) with a real
+workflow. This is compliance item 8 in `docs/COMPLIANCE-DE.md`,
+currently the only open German compliance item with a stage
+assigned.
 
-The bug class has hit this project four times:
+**Scope:**
 
-  - MediaRepository (008G.4a)
-  - ProductReviewService (008G.5)
-  - App::class inside a binding closure (008G.4c)
-  - One earlier occurrence
+  - `commerce_return_requests` and
+    `commerce_return_request_items` tables.
+  - Customer-facing return initiation from the order detail
+    page. The 14-day window is enforced from delivery.
+  - `/account/returns` with tabs: Apply, In Processing,
+    Closed.
+  - Admin approval queue. Approve, reject, mark received,
+    process refund.
+  - Refund tracking. `commerce_orders.refunded_total`
+    already exists; the stage updates it when a return
+    resolves.
+  - Integration with the Widerrufsrecht legal page already
+    shipped in 008E.1.
 
-Each time a developer had to trace the error from
-a runtime failure. Auto-construction eliminates the
-class.
+**Out of scope:**
 
-**Scope:** `Container::build(string $class): object`
-with reflection. `Container::get()` gains a
-fall-through. Explicit bindings always win; the
-auto-construct path handles the common case where
-a class has a typed constructor and no custom
-configuration.
+  - Actual payment provider refunds. Those land with the
+    providers in Stage 010.
+  - Return shipment labels.
+  - Multi-currency refunds.
 
-**Cascade:** the container is Core. Every layer
-depends on it. Before merge, test every stage
-that shipped since the container was last touched,
-plus every admin page and every storefront
-surface. Full scope in docs/ROADMAP.md under
-In Progress -> 008J.
+Full scope in `docs/ROADMAP.md` under In Progress -> 008H.
 
-**Why first:** the fix is small (one method, one
-fall-through branch). Every subsequent stage
-benefits. No other stage has this leverage.
+**Why next:** it closes the last open German compliance item
+with a stage assigned. The customer-facing order surface from
+008F is the natural home. The `commerce_order_*` schema already
+carries `refunded_total` and the `refunded` /
+`partial_refunded` status values from 007B, so the data model
+is ready.
 
-The 008G.4 series is complete. Every sub-stage
-shipped except AVIF variants (008G.4a.4), which
-remains in the backlog as a small additive
-optimization.
+The 008G.4 series closed 2026-10-05. Stage 008J (container
+auto-construction) closed the same day and eliminated the
+"forgot to bind" bug class that had hit the project four
+times.
 ---
 
 ## Database State
