@@ -27,6 +27,14 @@ final class CategoryController extends StorefrontController
 {
     private const PER_PAGE = 24;
 
+    private const VALID_SORTS = [
+        'newest'     => 'Newest',
+        'price_asc'  => 'Price: low to high',
+        'price_desc' => 'Price: high to low',
+        'name_asc'   => 'Name: A to Z',
+        'featured'   => 'Featured first',
+    ];
+
     // -----------------------------------------------------------------
     // GET /categories
     // -----------------------------------------------------------------
@@ -78,16 +86,74 @@ final class CategoryController extends StorefrontController
 
         $page = max(1, (int) $request->query('page', 1));
 
-        // Product listing scoped to this category.
-        $filters = array_merge(
-            ['category_id' => $category->id, 'sort' => 'newest'],
-            $this->hideOutOfStockFilter()
-        );
+        // ----- Read filter query params -----
+        // Same pipeline as CatalogController::index(), minus the
+        // category dropdown (the page IS the category).
+        $brandRepo = $this->container->get(\CorporateAid\Commerce\Repositories\BrandRepository::class);
+
+        $q           = trim((string) $request->query('q', ''));
+        $brandSlug   = trim((string) $request->query('brand', ''));
+        $inStockOnly = (bool) $request->query('in_stock', false);
+        $priceMinRaw = (string) $request->query('price_min', '');
+        $priceMaxRaw = (string) $request->query('price_max', '');
+        $sortKey     = (string) $request->query('sort', 'newest');
+
+        // Validate sort against the same whitelist.
+        if (!isset(self::VALID_SORTS[$sortKey])) {
+            $sortKey = 'newest';
+        }
+
+        $brandId = null;
+        if ($brandSlug !== '') {
+            $resolvedBrand = $brandRepo->findBySlug($brandSlug);
+            if ($resolvedBrand !== null) {
+                $brandId = $resolvedBrand->id;
+            }
+        }
+
+        // ----- Build the repository filters -----
+        $filters = ['category_id' => $category->id, 'sort' => $sortKey];
+        if ($q !== '')                          { $filters['q'] = $q; }
+        if ($brandId !== null)                  { $filters['brand_id'] = $brandId; }
+        if ($inStockOnly)                       { $filters['in_stock_only'] = true; }
+        if ($priceMinRaw !== '' && is_numeric($priceMinRaw)) {
+            $filters['price_min'] = (float) $priceMinRaw;
+        }
+        if ($priceMaxRaw !== '' && is_numeric($priceMaxRaw)) {
+            $filters['price_max'] = (float) $priceMaxRaw;
+        }
+
+        $filters = array_merge($filters, $this->hideOutOfStockFilter());
         $result = $productRepo->paginatePublished(
             $filters,
             $page,
             self::PER_PAGE
         );
+
+        // ----- Filter dropdown data -----
+        $brandOptions = [];
+        foreach ($brandRepo->listAll() as $b) {
+            $brandOptions[] = ['slug' => $b->slug, 'name' => $b->name];
+        }
+
+        // ----- Current query state for the view -----
+        $currentFilters = [
+            'q'         => $q,
+            'brand'     => $brandSlug,
+            'in_stock'  => $inStockOnly ? '1' : '',
+            'price_min' => $priceMinRaw,
+            'price_max' => $priceMaxRaw,
+            'sort'      => $sortKey,
+        ];
+
+        $hasFilters = $q !== ''
+            || $brandSlug !== ''
+            || $inStockOnly
+            || $priceMinRaw !== ''
+            || $priceMaxRaw !== ''
+            || $sortKey !== 'newest';
+
+        $sortOptions = self::VALID_SORTS;
 
         // Child categories for the subcategory chip strip.
         $children = [];
@@ -105,11 +171,15 @@ final class CategoryController extends StorefrontController
         }
 
         return $this->render('storefront.category.show', [
-            'title'    => $category->name,
-            'category' => $category,
-            'parent'   => $parent,
-            'children' => $children,
-            'result'   => $result,
+            'title'          => $category->name,
+            'category'       => $category,
+            'parent'         => $parent,
+            'children'       => $children,
+            'result'         => $result,
+            'currentFilters' => $currentFilters,
+            'brandOptions'   => $brandOptions,
+            'sortOptions'    => $sortOptions,
+            'hasFilters'     => $hasFilters,
         ]);
     }
 }

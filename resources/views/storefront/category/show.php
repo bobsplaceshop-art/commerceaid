@@ -94,6 +94,21 @@ $pageUrl = function (int $p): string {
         </nav>
     <?php endif; ?>
 
+    <div class="sf-catalog-layout">
+
+        <?= view_partial('storefront/catalog/_filters', [
+            'currentFilters'  => $currentFilters,
+            'sortOptions'     => $sortOptions,
+            'categoryOptions' => [],
+            'brandOptions'    => $brandOptions,
+            'formAction'      => '/categories/' . rawurlencode($category->slug),
+            'categoryLocked'  => true,
+            'hasFilters'      => $hasFilters,
+            'showSearch'      => true,
+        ]) ?>
+
+        <section class="sf-catalog-main">
+
     <?php if (empty($items)): ?>
         <div class="sf-empty">
             <i class="bi bi-box-seam"></i>
@@ -153,5 +168,9 @@ $pageUrl = function (int $p): string {
             </nav>
         <?php endif; ?>
     <?php endif; ?>
+
+
+        </section>
+    </div>
 
 </div>
