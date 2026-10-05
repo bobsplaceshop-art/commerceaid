@@ -297,6 +297,42 @@ final class OrderRepository extends CommerceRepository
      * Cheaper than listClaimableForCustomer when we only need a
      * boolean for the dashboard notification.
      */
+    /**
+     * The id of a qualifying order for the verified-purchase
+     * badge on a product review.
+     *
+     * A qualifying order:
+     *   - belongs to the customer
+     *   - has status 'delivered' or 'completed'
+     *   - contains an order item for the given product
+     *
+     * Returns the most recent qualifying order id, or null
+     * when none exists. Used by ProductReviewService at
+     * review submission time.
+     */
+    public function findVerifiedPurchaseOrderId(int $customerId, int $productId): ?int
+    {
+        if ($customerId <= 0 || $productId <= 0) {
+            return null;
+        }
+
+        $row = $this->db->selectOne(
+            "SELECT o.`id`
+               FROM `commerce_orders` o
+               INNER JOIN `commerce_order_items` oi
+                 ON oi.`order_id` = o.`id`
+              WHERE o.`store_id` = ?
+                AND o.`customer_id` = ?
+                AND oi.`product_id` = ?
+                AND o.`status` IN ('delivered', 'completed')
+              ORDER BY o.`id` DESC
+              LIMIT 1",
+            [$this->storeId(), $customerId, $productId]
+        );
+
+        return $row !== null ? (int) $row['id'] : null;
+    }
+
     public function hasClaimableOrders(int $customerId): bool
     {
         $count = (int) $this->db->scalar(

@@ -9,6 +9,8 @@ use CorporateAid\Commerce\Repositories\BrandRepository;
 use CorporateAid\Commerce\Repositories\CategoryRepository;
 use CorporateAid\Commerce\Repositories\InventoryRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
+use CorporateAid\Commerce\Services\CustomerAuthService;
+use CorporateAid\Commerce\Services\ProductReviewService;
 use CorporateAid\Commerce\Repositories\ProductImageRepository;
 use CorporateAid\Commerce\Repositories\MediaRepository;
 use CorporateAid\Commerce\Repositories\ProductVariantRepository;
@@ -219,6 +221,25 @@ final class ProductController extends StorefrontController
         // See docs/stages/008g.2_recently-viewed-plan.md.
         $this->container->get(RecentViewService::class)->record($product->id);
 
+        // ----- Product reviews -----
+        // The Reviews tab renders the aggregate (average,
+        // count, distribution), the submission form (or a
+        // sign-in CTA), and the list of approved reviews.
+        //
+        // Data comes from ProductReviewService. The customer's
+        // own review (any status) is resolved separately so
+        // the form loads in edit mode when one exists.
+        $reviewService = $this->container->get(ProductReviewService::class);
+        $reviewAggregate = $reviewService->forProduct($product->id, 10, 0);
+
+        $customerId = null;
+        try {
+            $customerId = $this->container->get(CustomerAuthService::class)->id();
+        } catch (\Throwable) {
+            $customerId = null;
+        }
+        $customerReview = $reviewService->customerReview($product->id, $customerId);
+
         // ----- SEO title fallback -----
         $title = $product->seoTitle ?: $product->name;
 
@@ -237,6 +258,9 @@ final class ProductController extends StorefrontController
             'combinations'      => $combinations,
             'swatchImages'      => $swatchImages,
             'sellableVariantIds'=> $sellableVariantIds,
+            'reviewAggregate'   => $reviewAggregate,
+            'customerReview'    => $customerReview,
+            'customerId'        => $customerId,
         ]);
     }
 

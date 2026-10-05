@@ -8,6 +8,7 @@ use CorporateAid\Commerce\Controllers\Storefront\HomeController;
 use CorporateAid\Commerce\Controllers\Storefront\CatalogController;
 use CorporateAid\Commerce\Controllers\Storefront\CategoryController;
 use CorporateAid\Commerce\Controllers\Storefront\ProductController;
+use CorporateAid\Commerce\Controllers\Storefront\ProductReviewController;
 use CorporateAid\Commerce\Controllers\Storefront\SearchController;
 use CorporateAid\Commerce\Controllers\Storefront\AuthController;
 use CorporateAid\Commerce\Controllers\Storefront\AccountController;
@@ -82,6 +83,18 @@ $router->get('/offline', function (Request $req, array $params): Response {
 // (/products/{slug}) so /products matches the listing and not
 // a product named "products".
 $router->get('/products',        [CatalogController::class,  'index'], ['store']);
+// ---------------------------------------------------------------------
+// Product reviews
+// ---------------------------------------------------------------------
+//
+// Submission requires login. The controller checks the
+// customer session and redirects to /account/login when
+// missing. CSRF is enforced.
+//
+// Pagination is public. Returns JSON.
+$router->post('/products/{slug}/review',  [ProductReviewController::class, 'submit'],   ['store', 'csrf']);
+$router->get('/products/{slug}/reviews',  [ProductReviewController::class, 'paginate'], ['store']);
+
 $router->get('/products/{slug}', [ProductController::class,  'show'],  ['store']);
 
 // ---------------------------------------------------------------------

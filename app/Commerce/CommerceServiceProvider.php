@@ -30,6 +30,7 @@ use CorporateAid\Commerce\Repositories\OrderItemRepository;
 use CorporateAid\Commerce\Repositories\OrderStatusHistoryRepository;
 use CorporateAid\Commerce\Repositories\LegalPageRepository;
 use CorporateAid\Commerce\Services\PricingService;
+use CorporateAid\Commerce\Services\ProductReviewService;
 use CorporateAid\Commerce\Repositories\CustomerGroupPriceRepository;
 use CorporateAid\Commerce\Repositories\CustomerGroupRepository;
 use CorporateAid\Commerce\Repositories\ProductVariantRepository;
@@ -102,6 +103,12 @@ final class CommerceServiceProvider
             fn() => new ProductReviewRepository(
                 $c->get(Database::class),
                 $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(ProductReviewService::class,
+            fn() => new ProductReviewService(
+                $c->get(ProductReviewRepository::class),
+                $c->get(OrderRepository::class)
             ));
 
         // The App is not bound in the container (by design,

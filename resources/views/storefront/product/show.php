@@ -508,14 +508,22 @@ if ($gallery !== []) {
              id="sf-tab-reviews"
              aria-labelledby="sf-tab-reviews-btn"
              data-sf-tab-panel="reviews">
-            <div class="sf-product-reviews-empty">
-                <i class="bi bi-chat-square-text" aria-hidden="true"></i>
-                <p class="sf-product-reviews-empty-title">No reviews yet</p>
-                <p class="sf-product-reviews-empty-body">
-                    Reviews are coming soon. Verified customers will be able
-                    to share their experience here.
-                </p>
-            </div>
+
+            <?= view_partial('storefront/product/_reviews-summary', [
+                'reviewAggregate' => $reviewAggregate,
+            ]) ?>
+
+            <?= view_partial('storefront/product/_reviews-form', [
+                'product'        => $product,
+                'customerReview' => $customerReview,
+                'customerId'     => $customerId ?? null,
+            ]) ?>
+
+            <?= view_partial('storefront/product/_reviews-list', [
+                'product'         => $product,
+                'reviewAggregate' => $reviewAggregate,
+            ]) ?>
+
         </div>
 
     </section>
