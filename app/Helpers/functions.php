@@ -1307,4 +1307,35 @@ if (!function_exists('admin_pending_review_count')) {
             return $cached = 0;
         }
     }
+
+    /**
+     * Orders awaiting merchant action. Counts orders in
+     * status pending_payment or paid - the "new" tab of the
+     * admin orders queue.
+     *
+     * Used by the admin sidebar badge and the dashboard tile.
+     * Static-cached per request. Returns 0 on any failure.
+     *
+     * Defensive: a broken repository cannot break the admin
+     * shell.
+     */
+    function admin_pending_order_count(): int
+    {
+        static $cached = null;
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        try {
+            $container = \CorporateAid\Core\App::instance()->container();
+            $repo = $container->get(
+                \CorporateAid\Commerce\Repositories\OrderRepository::class
+            );
+            return $cached = $repo->countByStatus('pending_payment')
+                           + $repo->countByStatus('paid');
+        } catch (\Throwable) {
+            return $cached = 0;
+        }
+    }
 }

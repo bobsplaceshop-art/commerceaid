@@ -15,6 +15,8 @@ use CorporateAid\Commerce\Controllers\Admin\BrandController;
 use CorporateAid\Commerce\Controllers\Admin\ReviewController;
 use CorporateAid\Commerce\Controllers\Admin\ProductController;
 use CorporateAid\Commerce\Controllers\Admin\CustomerApprovalController;
+use CorporateAid\Commerce\Controllers\Admin\AdminOrderController;
+use CorporateAid\Commerce\Controllers\Admin\AdminCustomerController;
 
 /** @var Router $router */
 
@@ -189,6 +191,38 @@ $router->post('/commerce/ca-admin/reviews/{id}/reject',
 $router->post('/commerce/ca-admin/reviews/{id}/delete',
     [ReviewController::class, 'destroy'],
     ['store', 'auth', 'csrf', 'permission:review.moderate']);
+
+// =====================================================================
+// Admin - Orders (Stage 008K.1)
+// =====================================================================
+// GETs gated by orders.view. POSTs gated by orders.manage.
+// The list shows status tabs; the detail shows line items,
+// status history, internal notes, and the transition bar.
+$router->get('/commerce/ca-admin/orders',
+    [AdminOrderController::class, 'index'],
+    ['store', 'auth', 'permission:orders.view']);
+
+$router->get('/commerce/ca-admin/orders/{id}',
+    [AdminOrderController::class, 'show'],
+    ['store', 'auth', 'permission:orders.view']);
+
+$router->post('/commerce/ca-admin/orders/{id}/status',
+    [AdminOrderController::class, 'updateStatus'],
+    ['store', 'auth', 'csrf', 'permission:orders.manage']);
+
+$router->post('/commerce/ca-admin/orders/{id}/note',
+    [AdminOrderController::class, 'addNote'],
+    ['store', 'auth', 'csrf', 'permission:orders.manage']);
+
+// =====================================================================
+// Admin - Customers (Stage 008K.1, read-only detail)
+// =====================================================================
+// The list page lands in 008K.2. This detail page is the
+// target of the "View customer profile" link on the order
+// detail page.
+$router->get('/commerce/ca-admin/customers/{id}',
+    [AdminCustomerController::class, 'show'],
+    ['store', 'auth', 'permission:customers.view']);
 
 $router->get('/commerce/ca-admin/brands/{id}/delete-info',
     [BrandController::class, 'deleteInfo'],

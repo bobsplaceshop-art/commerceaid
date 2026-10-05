@@ -284,4 +284,62 @@ final class Order
         $decoded = json_decode($json, true);
         return is_array($decoded) ? $decoded : null;
     }
+
+    // =================================================================
+    // Admin status transitions (Stage 008K.1)
+    // =================================================================
+
+    /**
+     * Allowed admin-side status transitions. Key = current
+     * status, value = the statuses it may transition to from
+     * the admin order page.
+     *
+     * Rules:
+     *   - One step forward. No skipping (paid -> shipped is
+     *     not allowed; paid -> processing -> packed ->
+     *     shipped is).
+     *   - Cancel is allowed from pending_payment, paid,
+     *     processing, packed, and on_hold. Once shipped, the
+     *     order cannot be cancelled by the merchant.
+     *   - on_hold can only be entered from processing and
+     *     only exits back to processing or cancelled.
+     *   - Terminal states (completed, cancelled, failed,
+     *     refunded, partially_refunded) have no outgoing
+     *     transitions.
+     *   - refunded and partially_refunded are NOT reachable
+     *     from the admin order page. They are set by the
+     *     returns flow (ReturnRequestService::processRefund).
+     *
+     * @var array<string, list<string>>
+     */
+    private const TRANSITIONS = [
+        'pending_payment' => ['paid', 'cancelled'],
+        'paid'            => ['processing', 'cancelled'],
+        'processing'      => ['packed', 'on_hold', 'cancelled'],
+        'packed'          => ['shipped', 'cancelled'],
+        'shipped'         => ['delivered'],
+        'delivered'       => ['completed'],
+        'on_hold'         => ['processing', 'cancelled'],
+    ];
+
+    /**
+     * The statuses this order may transition to from its
+     * current state. Empty array when the current status is
+     * terminal or unknown.
+     *
+     * @return list<string>
+     */
+    public function allowedTransitions(): array
+    {
+        return self::TRANSITIONS[$this->status] ?? [];
+    }
+
+    /**
+     * Whether a transition from this order's current status
+     * to $toStatus is allowed.
+     */
+    public function canTransitionTo(string $toStatus): bool
+    {
+        return in_array($toStatus, $this->allowedTransitions(), true);
+    }
 }

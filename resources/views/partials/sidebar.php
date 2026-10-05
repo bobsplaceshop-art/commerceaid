@@ -105,7 +105,7 @@ $groups = [
         'id'    => 'sales',
         'label' => 'Sales',
         'items' => [
-            ['label' => 'Orders',              'href' => '/commerce/ca-admin/orders',              'icon' => 'bi-receipt',           'locked' => true],
+            ['label' => 'Orders',              'href' => '/commerce/ca-admin/orders',              'icon' => 'bi-receipt',           'badge' => admin_pending_order_count()],
             ['label' => 'Customers',           'href' => '/commerce/ca-admin/customers',           'icon' => 'bi-people',            'locked' => true],
             ['label' => 'Customer Groups',     'href' => '/commerce/ca-admin/customer-groups',     'icon' => 'bi-people-fill'],
             ['label' => 'Customer Approvals',  'href' => '/commerce/ca-admin/customer-approvals',  'icon' => 'bi-check2-square'],

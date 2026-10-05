@@ -139,6 +139,122 @@ final class OrderRepository extends CommerceRepository
     }
 
     // =================================================================
+    // Admin order tabs (Stage 008K.1)
+    // =================================================================
+
+    /**
+     * Counts of orders in each admin-facing status group. One
+     * query, five conditional SUMs. Used by the admin orders
+     * list for the tab badges.
+     *
+     * The groups mirror the admin list tabs:
+     *   new        - pending_payment, paid
+     *   processing - processing, packed, on_hold
+     *   shipped    - shipped, delivered
+     *   done       - completed, cancelled, failed,
+     *                refunded, partially_refunded
+     *   all        - every order
+     *
+     * @return array<string, int>
+     */
+    public function countByStatusGroups(): array
+    {
+        $rows = $this->db->select(
+            "SELECT
+                SUM(CASE WHEN `status` IN ('pending_payment', 'paid')
+                     THEN 1 ELSE 0 END) AS new_count,
+                SUM(CASE WHEN `status` IN ('processing', 'packed', 'on_hold')
+                     THEN 1 ELSE 0 END) AS processing_count,
+                SUM(CASE WHEN `status` IN ('shipped', 'delivered')
+                     THEN 1 ELSE 0 END) AS shipped_count,
+                SUM(CASE WHEN `status` IN ('completed', 'cancelled', 'failed',
+                                           'refunded', 'partially_refunded')
+                     THEN 1 ELSE 0 END) AS done_count,
+                COUNT(*) AS all_count
+               FROM `commerce_orders`
+              WHERE `store_id` = ?",
+            [$this->storeId()]
+        );
+
+        $r = $rows[0] ?? [];
+        return [
+            'new'        => (int) ($r['new_count'] ?? 0),
+            'processing' => (int) ($r['processing_count'] ?? 0),
+            'shipped'    => (int) ($r['shipped_count'] ?? 0),
+            'done'       => (int) ($r['done_count'] ?? 0),
+            'all'        => (int) ($r['all_count'] ?? 0),
+        ];
+    }
+
+    // =================================================================
+    // Admin order status transitions (Stage 008K.1)
+    // =================================================================
+
+    /**
+     * Apply a status transition. Updates commerce_orders.status
+     * and appends a row to commerce_order_status_history inside
+     * one transaction.
+     *
+     * The caller is responsible for validating that the
+     * transition is allowed (via Order::canTransitionTo()).
+     * This method trusts its caller for the business rule and
+     * only guarantees the two writes succeed or fail together.
+     *
+     * Transaction shape mirrors InventoryRepository::adjust().
+     * The history row is written with a direct insert rather
+     * than through OrderStatusHistoryRepository because
+     * cross-repository calls inside a transaction are the
+     * anti-pattern the codebase avoids.
+     *
+     * @param int         $orderId
+     * @param string      $fromStatus   current status before update
+     * @param string      $toStatus     target status
+     * @param int|null    $changedBy    acting admin user id, or
+     *                                  null for system transitions
+     * @param string|null $note         optional note on the
+     *                                  transition
+     */
+    public function transitionStatus(
+        int $orderId,
+        string $fromStatus,
+        string $toStatus,
+        ?int $changedBy = null,
+        ?string $note = null
+    ): void {
+        $this->db->beginTransaction();
+        try {
+            // 1) Update the order's status column.
+            $this->db->execute(
+                "UPDATE `commerce_orders`
+                    SET `status` = ?
+                  WHERE `store_id` = ? AND `id` = ?",
+                [$toStatus, $this->storeId(), $orderId]
+            );
+
+            // 2) Append the history row.
+            $this->db->insert(
+                "INSERT INTO `commerce_order_status_history`
+                    (`store_id`, `order_id`, `from_status`, `to_status`,
+                     `changed_by`, `note`)
+                 VALUES (?, ?, ?, ?, ?, ?)",
+                [
+                    $this->storeId(),
+                    $orderId,
+                    $fromStatus,
+                    $toStatus,
+                    $changedBy,
+                    $note,
+                ]
+            );
+
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    // =================================================================
     // Customer order tabs (Stage 008F)
     // =================================================================
 
@@ -448,6 +564,24 @@ final class OrderRepository extends CommerceRepository
         if (!empty($filters['status'])) {
             $where[] = "`status` = ?";
             $params[] = (string) $filters['status'];
+        }
+
+        // List variant of the status filter. Used by the admin
+        // orders queue to filter by a group of statuses (e.g.
+        // the "New" tab groups pending_payment and paid).
+        // Non-string or empty entries are dropped.
+        if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
+            $statuses = array_values(array_filter(
+                $filters['statuses'],
+                fn ($s) => is_string($s) && $s !== ''
+            ));
+            if ($statuses !== []) {
+                $placeholders = implode(', ', array_fill(0, count($statuses), '?'));
+                $where[]  = "`status` IN ({$placeholders})";
+                foreach ($statuses as $s) {
+                    $params[] = $s;
+                }
+            }
         }
 
         if (!empty($filters['payment_status'])) {
