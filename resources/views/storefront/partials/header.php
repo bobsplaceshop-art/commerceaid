@@ -235,7 +235,9 @@ $isNavActive = function (string $href) use ($currentPath): bool {
             <?php endif; ?>
 
             <?php if ($__customer === null): ?>
-                <a href="/account/login" class="sf-icon-btn sf-icon-btn-labeled" aria-label="Sign in">
+                <a href="/account/login"
+                   class="sf-icon-btn sf-icon-btn-labeled is-signed-out"
+                   aria-label="Sign in (currently signed out)">
                     <i class="bi bi-person" aria-hidden="true"></i>
                     <span class="sf-icon-btn-label">Sign in</span>
                 </a>
@@ -257,8 +259,8 @@ $isNavActive = function (string $href) use ($currentPath): bool {
                 ?>
                 <div class="sf-account-menu" data-sf-account-menu>
                     <button type="button"
-                            class="sf-icon-btn sf-account-menu-toggle"
-                            aria-label="Account menu"
+                            class="sf-icon-btn sf-account-menu-toggle is-signed-in"
+                            aria-label="Account menu (signed in)"
                             aria-haspopup="true"
                             aria-expanded="false"
                             data-sf-account-toggle>

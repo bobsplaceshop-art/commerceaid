@@ -1512,3 +1512,52 @@ h1, h2, h3, h4 {
         max-width: 160px;
     }
 }
+
+/* =====================================================================
+   Signed-in / signed-out indicator on the account icon.
+   A small colored dot in the top-right corner of the icon.
+   Green when signed in, red when signed out.
+   ===================================================================== */
+
+.sf-icon-btn-labeled,
+.sf-account-menu-toggle {
+    position: relative;
+}
+
+.sf-icon-btn-labeled.is-signed-out::after,
+.sf-icon-btn-labeled.is-signed-in::after,
+.sf-account-menu-toggle.is-signed-out::after,
+.sf-account-menu-toggle.is-signed-in::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid #ffffff;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.sf-icon-btn-labeled.is-signed-out::after,
+.sf-account-menu-toggle.is-signed-out::after {
+    background: #ef4444;
+}
+
+.sf-icon-btn-labeled.is-signed-in::after,
+.sf-account-menu-toggle.is-signed-in::after {
+    background: #22c55e;
+}
+
+@media (max-width: 640px) {
+    .sf-icon-btn-labeled.is-signed-out::after,
+    .sf-icon-btn-labeled.is-signed-in::after,
+    .sf-account-menu-toggle.is-signed-out::after,
+    .sf-account-menu-toggle.is-signed-in::after {
+        top: 3px;
+        right: 3px;
+        width: 7px;
+        height: 7px;
+    }
+}
