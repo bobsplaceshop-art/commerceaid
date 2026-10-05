@@ -70,41 +70,7 @@ final class CommerceServiceProvider
         // ---------- Context ----------
         $c->singleton(StoreContext::class, fn() => new StoreContext());
 
-        // ---------- Repositories: store ----------
-        $c->singleton(StoreRepository::class,
-            fn() => new StoreRepository($c->get(Database::class)));
-
         // ---------- Repositories: catalog ----------
-        $c->singleton(CategoryRepository::class,
-            fn() => new CategoryRepository(
-                $c->get(Database::class),
-                $c->get(StoreContext::class)
-            ));
-
-        $c->singleton(BrandRepository::class,
-            fn() => new BrandRepository(
-                $c->get(Database::class),
-                $c->get(StoreContext::class)
-            ));
-
-        $c->singleton(ProductRepository::class,
-            fn() => new ProductRepository(
-                $c->get(Database::class),
-                $c->get(StoreContext::class)
-            ));
-
-        $c->singleton(ProductImageRepository::class,
-            fn() => new ProductImageRepository(
-                $c->get(Database::class),
-                $c->get(StoreContext::class)
-            ));
-
-        $c->singleton(ProductReviewRepository::class,
-            fn() => new ProductReviewRepository(
-                $c->get(Database::class),
-                $c->get(StoreContext::class)
-            ));
-
         $c->singleton(ProductReviewService::class,
             fn() => new ProductReviewService(
                 $c->get(ProductReviewRepository::class),
@@ -134,17 +100,6 @@ final class CommerceServiceProvider
                 $c->get(Database::class),
                 $c->get(StoreContext::class)
             ));
-
-        $c->singleton(ProductVariantRepository::class,
-            fn() => new ProductVariantRepository(
-                $c->get(Database::class),
-                $c->get(StoreContext::class),
-                $c->get(InventoryRepository::class)
-            ));
-
-        // Attribute definitions are store-independent, so no StoreContext
-        $c->singleton(AttributeRepository::class,
-            fn() => new AttributeRepository($c->get(Database::class)));
 
         $c->singleton(CategoryAttributeRepository::class,
             fn() => new CategoryAttributeRepository(
@@ -347,9 +302,6 @@ final class CommerceServiceProvider
         // anywhere else. The container does not auto-construct
         // classes without explicit bindings, so both must be
         // registered here.
-        $c->singleton(MediaProcessor::class,
-            fn() => new MediaProcessor());
-
         $c->singleton(MediaRepository::class,
             fn() => new MediaRepository(
                 $c->get(Database::class),
