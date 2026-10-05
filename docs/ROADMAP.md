@@ -57,6 +57,7 @@ Adding a stage or reordering requires updating this document first.
 | 008G.4c  | Self-Hosted Font Manager             | 2026-10-04 |
 | 008G.4b  | PWA                                  | 2026-10-05 |
 | 008G.5   | Product Reviews                      | 2026-10-05 |
+| 008G.4d  | Category Filters                     | 2026-10-05 |
 
 Also completed outside the staged sequence:
 
@@ -74,63 +75,121 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008G.4d - Category Filters
+### Stage 008J - Container Auto-Construction
 
-**Goal:** Add product filtering on the category detail
-page (`/categories/{slug}`). The category detail
-currently shows a bare product grid. Add the same
-filter surface the `/products` catalog page has:
-search, brand, price range, attribute facets, sort.
+**Goal:** Eliminate the "forgot to bind" bug class
+by teaching the container to construct concrete
+classes on demand when they are not explicitly
+bound.
 
-**Why:** the `/products` page already has filters. The
-category detail page has none. A merchant's customers
-browsing by category have no way to narrow the
-results. For a category with 200 products, that is
-unusable.
+**Problem:**
 
-**Scope:**
+The container has no auto-construction. Every class
+resolved through `$container->get(ClassName::class)`
+needs an explicit singleton binding in one of the
+three service providers. In a codebase with ~200
+classes, this is a silent failure mode. A missing
+binding is not caught by:
 
-  - Reuse the filter component from `/products`. The
-    filter bar partial becomes shared between the
-    catalog index and the category detail.
-  - Search box: filters products by name or SKU
-    within the category.
-  - Brand filter: dropdown of brands that have
-    products in this category.
-  - Price range: min/max numeric inputs.
-  - Attribute facets: variant-axis and informational
-    attributes mapped to the category. Each renders
-    as checkboxes for its values.
-  - **Rating facet:** five checkboxes for 1-star
-    through 5-star. Only shows products whose average
-    rating meets the filter. This is the first feature
-    that consumes the rating aggregate from 008G.5.
-  - Sort dropdown: newest, price ascending, price
-    descending, name.
-  - URL state: filters live in query parameters so
-    bookmarked URLs work.
-  - Active filter chips: a row above the grid showing
-    which filters are applied, each with an X to
-    remove.
-  - Pagination preserves the filter set.
+  - php -l             (syntax is valid)
+  - PHPStan level 8    (container resolves by string)
+  - The pre-commit hook
 
-**Depends on:** 008G (storefront polish), 008G.5
-(ratings exist for the rating facet). Both shipped.
+Only a browser test or real request catches it.
 
-**Sequenced:** opens now. Closes the 008G.4 group.
+The bug class has hit this project four times:
 
-**Open questions:**
+  WishlistRepository             (008G.1 wiring)
+  RecentViewRepository           (008G.2 wiring)
+  CustomerNotificationRepository (008G.3 wiring)
+  MediaRepository                (008G.4a file 10)
+  ProductReviewService           (008G.5)
+  App::class inside a closure    (008G.4c)
 
-  - Should the filter component be a shared partial
-    or a view model passed by both controllers?
-  - Should attribute facets come from the product's
-    informational attributes only, or also from
-    variant axes (Color / Size)?
-  - Should the filters be AJAX-driven (partial page
-    update) or full page reload?
+Each one cost 20-60 minutes of diagnosis.
 
-These are captured as Open Questions, to be resolved
-in the stage plan before code is written.
+**Solution:**
+
+Add a `build(string $class): object` method to
+`Container` that reflects on the target class,
+resolves its constructor parameters recursively
+through the same `get()` method, and caches the
+constructed instance as a singleton.
+
+`get()` resolution order:
+
+  1. If the instance is already cached, return it.
+  2. If the class has an explicit binding, use it.
+  3. If the class is concrete and exists, auto-
+     construct it via `build()`.
+  4. Otherwise, throw a clear error.
+
+Explicit bindings always win. Auto-construction is
+a fallback for the common case where a class has a
+typed constructor and no custom configuration.
+Config-dependent bindings (base paths, closures
+with captured state, session name overrides) still
+declare themselves explicitly.
+
+**Guards:**
+
+  - Only `isInstantiable()` classes. Interfaces,
+    abstract classes, and traits throw.
+  - Type-hinted parameters resolve recursively.
+  - Untyped scalar parameters must have a default,
+    or the container throws a clear error.
+  - The reflection recipe is cached per class.
+    Reflection runs once per class, not once per
+    resolve.
+
+**Deliverables:**
+
+  - `Container::build()` method.
+  - `get()` fall-through branch.
+  - A cached recipe map (class -> ReflectionClass,
+    ReflectionParameter[]).
+  - ADR-018 in docs/SPECIFICATION.md.
+  - A pattern entry in docs/REMEMBER.md.
+  - A cleanup pass on existing bindings. Remove
+    bindings that are purely `new Foo(...)` with
+    no customization. Keep bindings that capture
+    config, use a non-default session, or do
+    anything a constructor cannot.
+
+**Cascade risk:**
+
+  The container is Core. Every layer depends on it.
+  Before merging, test every stage that shipped
+  since the container was last touched:
+
+    - 008D (cart), 008E (checkout), 008F (order
+      lifecycle).
+    - 008G.1, 008G.2, 008G.3 (storefront customer
+      features).
+    - 008G.4a, 008G.4a.1, 008G.4a.2, 008G.4a.3
+      (media pipeline).
+    - 008G.4b (PWA), 008G.4c (fonts), 008G.4d
+      (filters), 008G.5 (reviews).
+
+  Plus the four most complex admin pages
+  (dashboard, product editor, settings, media
+  library), every storefront surface (home,
+  catalog, category, product, cart, checkout,
+  account), and every middleware.
+
+**Sequenced:** opens now. Before any future
+stage. Every subsequent stage benefits.
+
+**Why not now, mid-008G.4d:** the filter work
+was mid-flight. Auto-construction requires a
+clean tree and a deliberate end-to-end test
+pass. That is what this stage provides.
+
+**See also:**
+
+  - docs/SPECIFICATION.md ADR-001 (custom MVC)
+  - docs/ARCHITECTURE.md section 8 (container
+    conventions)
 
 ## Planned Stages
 

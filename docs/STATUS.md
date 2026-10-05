@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-10-05
-**Version:** 0.18.0-alpha
-**Stage:** 008G.5 complete. Next: 008G.4d (category filters).
+**Version:** 0.19.0-alpha
+**Stage:** 008G.4d complete. Next: 008J (container auto-construction).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -125,27 +125,50 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008G.4d
+## Current Focus — Stage 008J
 
-**Deliverable:** Category Filters.
+**Deliverable:** Container Auto-Construction.
 
-The category detail page (`/categories/{slug}`) renders
-a bare product grid. The `/products` catalog page has a
-full filter surface: search, brand, price range,
-attribute facets, sort. This stage brings the same
-surface to the category detail.
+The container requires explicit bindings for every
+class resolved through `$container->get(Class::class)`.
+A missing binding surfaces as a runtime 500 with
+"Container: nothing bound for X" — but only when a
+code path hits that class. PHPStan, lint, and the
+pre-commit hook do not catch it.
 
-Scope in docs/ROADMAP.md under In Progress -> 008G.4d.
+The bug class has hit this project four times:
 
-**Rating facet:** because reviews now exist (008G.5),
-the filter surface can include a rating facet — five
-checkboxes for 1-star through 5-star. This is the
-first feature that consumes the rating aggregate.
+  - MediaRepository (008G.4a)
+  - ProductReviewService (008G.5)
+  - App::class inside a binding closure (008G.4c)
+  - One earlier occurrence
 
-Closes the 008G.4 group. After this stage, the entire
-008G.4 series (upload core, media library, product
-media, responsive images, PWA, self-hosted fonts,
-category filters) is complete.
+Each time a developer had to trace the error from
+a runtime failure. Auto-construction eliminates the
+class.
+
+**Scope:** `Container::build(string $class): object`
+with reflection. `Container::get()` gains a
+fall-through. Explicit bindings always win; the
+auto-construct path handles the common case where
+a class has a typed constructor and no custom
+configuration.
+
+**Cascade:** the container is Core. Every layer
+depends on it. Before merge, test every stage
+that shipped since the container was last touched,
+plus every admin page and every storefront
+surface. Full scope in docs/ROADMAP.md under
+In Progress -> 008J.
+
+**Why first:** the fix is small (one method, one
+fall-through branch). Every subsequent stage
+benefits. No other stage has this leverage.
+
+The 008G.4 series is complete. Every sub-stage
+shipped except AVIF variants (008G.4a.4), which
+remains in the backlog as a small additive
+optimization.
 ---
 
 ## Database State
