@@ -76,53 +76,74 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-### Stage 008H - Returns & Refunds
-
-**Goal:** Customer-initiated return requests. Integrates the
-German Widerrufsrecht (14-day right of withdrawal) with a real
-workflow.
-
-**Deliverables:**
-
-- `commerce_return_requests` table: order_id, customer_id,
-  line items, reason, status, requested_at, resolved_at.
-- `commerce_return_request_items` table for per-line returns.
-- `/account/returns` page with tabs:
-    Apply           - start a return
-    In Processing   - returns awaiting merchant action
-    Closed          - resolved returns
-- 14-day window enforcement. Requests beyond the window are
-  rejected with a clear message (unless the merchant has
-  configured a longer policy).
-- Reason picker: "Damaged", "Wrong item", "Not as described",
-  "Changed my mind" (the last one is the Widerrufsrecht
-  path, the others are warranty).
-- Admin approval workflow: view requests, approve, generate
-  refund, mark received.
-- Integration with Widerrufsrecht legal text: the Apply form
-  links to /legal/widerruf.
-- Refund tracking: refunded_total on the order updates when
-  a return is resolved. Feeds the payment_status track.
-
-**Out of scope (later):**
-
-- Actual payment provider refunds (Stage 010 - the payment
-  providers land there).
-- Return shipment labels (Stage 010 or 011).
-
-**Depends on:** Stage 008F (order detail page), Stage 008F.1
-(account shell), Stage 008E.1 (Widerrufsrecht content).
-
-**Compliance:** closes COMPLIANCE-DE.md entry 8 (the 14-day
-window enforcement), which is currently the only open German
-compliance item with a stage assigned.
-
-**Sequenced:** opens 2026-10-05, immediately after 008J
-closed. The `commerce_order_*` schema already carries
-`refunded_total`, `refunded`, and `partial_refunded` from
-Stage 007B, so the data model is ready.
+No stage currently open. 008K.1 - Admin Orders - opens next.
 
 ## Planned Stages
+
+### Stage 008K - Admin Surface Completion
+
+**Goal:** Complete the merchant-facing admin surfaces. The
+platform has a full customer-facing storefront (008C through
+008H) but the merchant cannot see orders, customers, coupons,
+or their own team. Five sidebar entries have been placeholders
+since Stage 005.
+
+**Why this stage exists now:** Stage 008H (Returns & Refunds)
+was paused because its admin queue references an orders page
+that does not exist. The admin surface gap is bigger than
+returns - it is the merchant-facing half of the platform that
+was never built. Completing the admin surface first gives
+008H and every subsequent stage a coherent neighborhood to
+land in.
+
+**Sub-stages, in delivery order:**
+
+| # | Sub-stage | Scope |
+|---|---|---|
+| 008K.1 | Admin Orders | List with filters, detail with line items and status history, status transition actions. Feeds 008H and Stage 010. |
+| 008K.2 | Admin Customers | List, detail, address book view, order history, group assignment, account state management. |
+| 008K.3 | Admin Users | List, invite, role assignment, deactivate/reactivate, password reset trigger. |
+| 008K.4 | Admin Roles | List, create custom roles, permission matrix editor. |
+| 008K.5 | Admin Coupons | New commerce_coupons schema, admin CRUD, storefront apply at cart and checkout. |
+
+Each sub-stage is a session or two. The whole stage is
+roughly five sessions.
+
+**Depends on:** Stage 007B (order schema), Stage 007A
+(customer groups), Stage 005 (admin shell and RBAC schema).
+Does not depend on 008H.
+
+**Blocks:** Stage 008H resumption. Stage 010 (payments deep)
+needs an order detail surface to display payment state.
+Stage 011 (store builder) assumes customers and orders exist
+as first-class admin surfaces.
+
+**Sequenced:** opens 2026-10-05, immediately after the 008H
+pause.
+
+**See also:** docs/stages/008k.1_admin-orders-plan.md (to be
+written at 008K.1 open). Per-sub-stage plans are written at
+each sub-stage's open.
+
+**Appendix - surfaces a complete admin needs but are not in
+008K:**
+
+  - Dashboard reporting (sales over time, top products,
+    low stock velocity). Currently the dashboard shows
+    counters only.
+  - Audit log viewer. core_audit_logs is written on every
+    state-changing request but no admin page reads it.
+  - Notification rules editor. core_notification_rules
+    exists; the admin UI does not.
+  - Settings groups beyond compliance and general.
+  - A search-everything bar across admin.
+  - A global admin action log (who did what, when).
+
+  These are the fuller picture. They are not in 008K
+  because the sidebar does not promise them and the
+  current stages do not need them. They are logged here so
+  the roadmap reflects what a merchant would eventually
+  expect.
 
 ### Stage 007C - Procurement (Suppliers, LPOs, GRN, Expenses)
 
@@ -450,40 +471,58 @@ the 008G.4d plan document before code is written.
 
 ### Stage 008H - Returns & Refunds
 
+**Status:** Paused 2026-10-05. Resuming after Stage 008K.
+
 **Goal:** Customer-initiated return requests. Integrates the
-German Widerrufsrecht (14-day right of withdrawal) with a
-real workflow.
+German Widerrufsrecht (14-day right of withdrawal) with a real
+workflow.
 
-**Deliverables:**
+**What shipped (Sessions 1 and 2):**
 
-- `commerce_return_requests` table: order_id, customer_id,
-  line items, reason, status, requested_at, resolved_at.
-- `commerce_return_request_items` table for per-line returns.
-- `/account/returns` page with tabs:
-    Apply           - start a return
-    In Processing   - returns awaiting merchant action
-    Closed          - resolved returns
-- 14-day window enforcement. Requests beyond the window are
-  rejected with a clear message (unless the merchant has
-  configured a longer policy).
-- Reason picker: "Damaged", "Wrong item", "Not as described",
-  "Changed my mind" (the last one is the Widerrufsrecht
-  path, the others are warranty).
-- Admin approval workflow: view requests, approve, generate
-  refund, mark received.
-- Integration with Widerrufsrecht legal text: the Apply form
-  links to /legal/widerruf.
-- Refund tracking: refunded_total on the order updates when
-  a return is resolved. Feeds the payment_status track.
+  - `commerce_return_requests` and
+    `commerce_return_request_items` tables.
+  - Models, repositories, and `ReturnRequestService`.
+  - Three store settings for the return window,
+    pre-delivery requests, and auto-approval.
+  - Customer surface: `/account/returns` three-tab landing,
+    submission form, detail page, cancel action.
+  - Returns nav item and breadcrumb.
+  - "Return in progress" badges on the order list and order
+    detail header.
+  - Per-line "N being returned" annotation.
+  - Refund / net-paid rows in the order totals (dormant
+    until the admin processes a refund).
 
-**Out of scope (later):**
+**Commits:** 50f77b6 (Session 1, backend) and 8a3e56b
+(Session 2, customer surface).
 
-- Actual payment provider refunds (Stage 010 - the payment
-  providers land there).
-- Return shipment labels (Stage 010 or 011).
+**What remains (Session 3):**
 
-**Depends on:** Stage 008F (order detail page), Stage 008F.1
-(account shell), Stage 008E.1 (Widerrufsrecht content).
+  - `AdminReturnController` at `/commerce/ca-admin/returns`.
+  - List with filters, detail with line items.
+  - Approve, reject (with reason), mark received, process
+    refund.
+  - The refund action calls
+    `ReturnRequestService::processRefund()`, which updates
+    `refunded_total`, `payment_status`, and the order item's
+    `returned_quantity`. The customer-facing annotations
+    will start rendering for the first time.
+  - Permission: `returns.moderate`.
+  - Sidebar item under Sales.
+
+**Why paused:** the admin return queue references an orders
+page that does not exist. Building returns on a foundation
+without orders is half a workflow. Stage 008K.1 (Admin
+Orders) unblocks this.
+
+**Depends on:** Stage 008K.1 (admin orders detail page).
+
+**Compliance:** closes COMPLIANCE-DE.md entry 8 (the 14-day
+Widerrufsrecht window). The entry moves from Deferred to
+Done when Session 3 closes.
+
+**See also:** docs/stages/008h_returns-refunds-plan.md (to be
+written at Session 3 open).
 
 ### Stage 009 - Forms & Submissions
 

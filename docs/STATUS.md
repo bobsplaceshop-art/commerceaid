@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-10-05
-**Version:** 0.19.1-alpha
-**Stage:** 008J complete. Next: 008H (returns & refunds).
+**Version:** 0.19.2-alpha
+**Stage:** 008H paused. Next: 008K.1 (admin orders).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -125,52 +125,56 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008H
+## Current Focus — Stage 008K.1 (Admin Orders)
 
-**Deliverable:** Returns & Refunds.
+**Deliverable:** The merchant-facing admin orders surface.
 
-Customer-initiated return requests. Integrates the German
-Widerrufsrecht (14-day right of withdrawal) with a real
-workflow. This is compliance item 8 in `docs/COMPLIANCE-DE.md`,
-currently the only open German compliance item with a stage
-assigned.
+The platform shipped a complete customer-facing order
+lifecycle in Stages 008E and 008F. The merchant side was
+never built. `/commerce/ca-admin/orders` has been a locked
+sidebar placeholder since Stage 005. There is no order list,
+no order detail, and no way to move an order through its
+status transitions.
 
-**Scope:**
+Stage 008H (Returns & Refunds) was paused because its admin
+queue references an orders page that does not exist. The
+returns work on disk (Sessions 1 and 2, commits 50f77b6 and
+8a3e56b) stays on `main`. It resumes after 008K.1.
 
-  - `commerce_return_requests` and
-    `commerce_return_request_items` tables.
-  - Customer-facing return initiation from the order detail
-    page. The 14-day window is enforced from delivery.
-  - `/account/returns` with tabs: Apply, In Processing,
-    Closed.
-  - Admin approval queue. Approve, reject, mark received,
-    process refund.
-  - Refund tracking. `commerce_orders.refunded_total`
-    already exists; the stage updates it when a return
-    resolves.
-  - Integration with the Widerrufsrecht legal page already
-    shipped in 008E.1.
+**Scope:** the admin orders sub-stage of Stage 008K (Admin
+Surface Completion). Detail is in the ROADMAP under Planned
+Stages -> 008K.
 
-**Out of scope:**
+  - `AdminOrderController` with four actions: `index`,
+    `show`, `updateStatus`, `addNote`.
+  - `OrderRepository::paginate()` already exists and
+    accepts filters (status, payment_status, customer_id,
+    q). No new repository methods needed for the list.
+  - `OrderStatusHistoryRepository` and
+    `OrderItemRepository` already exist.
+  - Two views: `admin/orders/index.php` (list with status
+    tabs and filters) and `admin/orders/show.php` (detail
+    with line items, status cards, status history timeline,
+    action buttons).
+  - Two new permissions: `orders.view` and `orders.manage`.
+    Assigned to super-admin, store-admin, and order-manager.
+  - Status transitions: the order's `status` enum is
+    `pending_payment`, `paid`, `processing`, `packed`,
+    `shipped`, `delivered`, `completed`, `cancelled`,
+    `failed`, `refunded`, `partially_refunded`, `on_hold`.
+    Each transition writes a row to
+    `commerce_order_status_history` with the acting admin's
+    user_id. Atomic.
 
-  - Actual payment provider refunds. Those land with the
-    providers in Stage 010.
-  - Return shipment labels.
-  - Multi-currency refunds.
+**Cascade:** the returns work depends on it. Stage 010
+(payments deep) needs an order detail surface to display
+payment state. Stage 011 (store builder) assumes orders are
+a first-class admin surface. 008K.1 is the smallest stage
+that unblocks the most.
 
-Full scope in `docs/ROADMAP.md` under In Progress -> 008H.
-
-**Why next:** it closes the last open German compliance item
-with a stage assigned. The customer-facing order surface from
-008F is the natural home. The `commerce_order_*` schema already
-carries `refunded_total` and the `refunded` /
-`partial_refunded` status values from 007B, so the data model
-is ready.
-
-The 008G.4 series closed 2026-10-05. Stage 008J (container
-auto-construction) closed the same day and eliminated the
-"forgot to bind" bug class that had hit the project four
-times.
+**After 008K.1:** 008K.2 (Admin Customers), 008K.3 (Admin
+Users), 008K.4 (Admin Roles), 008K.5 (Admin Coupons). Then
+008H resumes and closes its remaining session.
 ---
 
 ## Database State
