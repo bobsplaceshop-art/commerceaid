@@ -258,6 +258,34 @@ final class StoreSettingDefinitions
                        . 'reconciliation benefit outweighs this risk for '
                        . 'your business.',
         ],
+        // Returns & refunds (Stage 008H)
+        'compliance.returns.window_days' => [
+            'label'   => 'Return window (days)',
+            'type'    => 'number',
+            'default' => 14,
+            'group'   => 'compliance',
+            'hint'    => 'Number of days from delivery during which a customer '
+                       . 'can return an item. German stores must offer at least '
+                       . '14 days. Set higher to give a longer policy.',
+        ],
+        'compliance.returns.allow_before_delivery' => [
+            'label'   => 'Allow return requests before delivery',
+            'type'    => 'boolean',
+            'default' => true,
+            'group'   => 'compliance',
+            'hint'    => 'When on, customers can start a return request any time '
+                       . 'after ordering. The return window still opens on delivery.',
+        ],
+        'compliance.returns.auto_approve' => [
+            'label'   => 'Auto-approve return requests',
+            'type'    => 'boolean',
+            'default' => false,
+            'group'   => 'compliance',
+            'hint'    => 'When on, return requests are approved as soon as the '
+                       . 'customer submits them. When off, every request enters '
+                       . 'the admin approval queue.',
+        ],
+
     ];
 
     /**

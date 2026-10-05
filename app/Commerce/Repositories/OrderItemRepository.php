@@ -107,4 +107,21 @@ final class OrderItemRepository extends CommerceRepository
             [$this->storeId(), $orderId]
         );
     }
+
+    /**
+     * Increment returned_quantity on an order line. Called by
+     * ReturnRequestService::processRefund() once per refunded line.
+     * The returned_quantity column is capped by the schema at the
+     * line's quantity; the caller is responsible for not exceeding it
+     * (outstandingQuantity() is checked before the request is opened).
+     */
+    public function incrementReturned(int $orderItemId, int $quantity): void
+    {
+        $this->db->execute(
+            "UPDATE `commerce_order_items`
+                SET `returned_quantity` = `returned_quantity` + ?
+              WHERE `store_id` = ? AND `id` = ?",
+            [$quantity, $this->storeId(), $orderItemId]
+        );
+    }
 }
