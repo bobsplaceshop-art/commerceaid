@@ -1,8 +1,8 @@
 # Project Status
 
-**As of:** 2026-10-05
-**Version:** 0.19.2-alpha
-**Stage:** 008H paused. Next: 008K.1 (admin orders).
+**As of:** 2026-10-06
+**Version:** 0.20.0-alpha
+**Stage:** 008K.2 complete. Next: 008K.3 (admin users).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -28,9 +28,39 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 - Grouped collapsible sidebar with localStorage persistence
 - Sidebar active item scrolls into view on load
 - Dark / light / system theme with per-user preference
-- Dashboard with inventory health card
+- Dashboard with product / order / customer tiles wired
+  to real counts, plus an inventory health card
 - Responsive across all viewports down to 375px
 - Sticky action bars on all edit pages
+
+#### Admin - Orders (008K.1)
+
+- Order list with status tabs, payment-state filter,
+  search
+- Order detail with line items, totals, addresses,
+  internal notes, and status history
+- Status transitions with a reason note, written to the
+  history ledger
+- Internal notes on any order
+- Permission-gated by `orders.view` (reads) and
+  `orders.manage` (writes)
+
+#### Admin - Customers (008K.2)
+
+- Customer list with approval-status tabs, search, group
+  filter, account-state filter, pagination
+- Customer detail with contact, group, addresses,
+  recent orders, and approval history
+- Profile editing (name, phone, company, tax ID, date of
+  birth; email is read-only by design)
+- Group change with modal
+- Account state change: enable, disable, archive
+- Address management: create, edit, delete, set-default,
+  with automatic default handling
+- Approval actions (approve, reject, reset to pending)
+  reuse the existing CustomerApprovals controller
+- Permission-gated by `customers.view` (reads) and
+  `customers.manage` (writes)
 
 ### Catalog
 
@@ -125,56 +155,45 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008K.1 (Admin Orders)
+## Current Focus — Stage 008K.2 complete
 
-**Deliverable:** The merchant-facing admin orders surface.
+**Deliverable shipped:** the merchant-facing customers
+surface. Orders shipped at 008K.1. Both are now real.
 
-The platform shipped a complete customer-facing order
-lifecycle in Stages 008E and 008F. The merchant side was
-never built. `/commerce/ca-admin/orders` has been a locked
-sidebar placeholder since Stage 005. There is no order list,
-no order detail, and no way to move an order through its
-status transitions.
+The merchant can browse orders, filter them by status
+tab, open one, transition its status, and add internal
+notes. They can browse customers, filter by approval
+status, open a profile, edit it, change group, change
+account state, and manage addresses.
 
-Stage 008H (Returns & Refunds) was paused because its admin
-queue references an orders page that does not exist. The
-returns work on disk (Sessions 1 and 2, commits 50f77b6 and
-8a3e56b) stays on `main`. It resumes after 008K.1.
+**Stage close:** 008K.2 shipped in two sessions.
 
-**Scope:** the admin orders sub-stage of Stage 008K (Admin
-Surface Completion). Detail is in the ROADMAP under Planned
-Stages -> 008K.
+  - Session 1 (commit 8263f1f): list, profile edit,
+    group change, account-state change, validation
+    tightening, layout overflow guard.
+  - Session 2 (commit 06ab56b): address management
+    with create, edit, delete, set-default, and
+    automatic first-address default.
 
-  - `AdminOrderController` with four actions: `index`,
-    `show`, `updateStatus`, `addNote`.
-  - `OrderRepository::paginate()` already exists and
-    accepts filters (status, payment_status, customer_id,
-    q). No new repository methods needed for the list.
-  - `OrderStatusHistoryRepository` and
-    `OrderItemRepository` already exist.
-  - Two views: `admin/orders/index.php` (list with status
-    tabs and filters) and `admin/orders/show.php` (detail
-    with line items, status cards, status history timeline,
-    action buttons).
-  - Two new permissions: `orders.view` and `orders.manage`.
-    Assigned to super-admin, store-admin, and order-manager.
-  - Status transitions: the order's `status` enum is
-    `pending_payment`, `paid`, `processing`, `packed`,
-    `shipped`, `delivered`, `completed`, `cancelled`,
-    `failed`, `refunded`, `partially_refunded`, `on_hold`.
-    Each transition writes a row to
-    `commerce_order_status_history` with the acting admin's
-    user_id. Atomic.
+**Next sub-stage:** 008K.3 (Admin Users). List, invite,
+role assignment, deactivate/reactivate, password reset
+trigger. After that, 008K.4 (Admin Roles) and 008K.5
+(Admin Coupons). Then 008H resumes and closes its
+remaining session.
 
-**Cascade:** the returns work depends on it. Stage 010
-(payments deep) needs an order detail surface to display
-payment state. Stage 011 (store builder) assumes orders are
-a first-class admin surface. 008K.1 is the smallest stage
-that unblocks the most.
+**008H status:** paused. The returns work on disk
+(commits 50f77b6 and 8a3e56b) stays on `main`.
+Session 3 (the admin returns queue) is unblocked now
+that the orders surface exists. It can resume before
+008K.3 if the queue is needed sooner.
 
-**After 008K.1:** 008K.2 (Admin Customers), 008K.3 (Admin
-Users), 008K.4 (Admin Roles), 008K.5 (Admin Coupons). Then
-008H resumes and closes its remaining session.
+**Blocked:** 008K.3 (Admin Users) needs the
+`AdminUserController` surface. Users exist in the RBAC
+schema since Stage 005. The admin shell shows a Users
+placeholder in the sidebar. The list, invite flow, role
+assignment, deactivate/reactivate, and password-reset
+trigger are the work.
+
 ---
 
 ## Database State
@@ -182,9 +201,10 @@ Users), 008K.4 (Admin Roles), 008K.5 (Admin Coupons). Then
 - 47 `core_*` tables
 - 28 `commerce_*` tables
 - 29 migrations applied (`0001` through `0208`)
-- 6 seeders applied:
+- 7 seeders applied:
   - currencies, roles + permissions, admin user,
-    default store, customer groups, test B2B customer
+    default store, customer groups, test B2B customer,
+    order + review + customer permissions
 
 Test data in dev:
 
@@ -271,9 +291,11 @@ new code.
 
 ## Next 3 Stages
 
-- **008G.1** (now): Wishlist
-- **008G.2**: Recently Viewed
-- **008G.3**: Message Center
+- **008K.3** (now): Admin Users
+- **008K.4**: Admin Roles
+- **008K.5**: Admin Coupons
+
+Then 008H resumes and closes its remaining session.
 
 ---
 
