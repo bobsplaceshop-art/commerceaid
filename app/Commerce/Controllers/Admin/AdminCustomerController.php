@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CorporateAid\Commerce\Controllers\Admin;
 
 use CorporateAid\Commerce\Models\Customer;
+use CorporateAid\Commerce\Models\CustomerAddress;
 use CorporateAid\Commerce\Repositories\CustomerAddressRepository;
 use CorporateAid\Commerce\Repositories\CustomerGroupRepository;
 use CorporateAid\Commerce\Repositories\CustomerRepository;
@@ -17,13 +18,19 @@ use CorporateAid\Core\Session;
  *
  * Routes (all under /commerce/ca-admin/customers):
  *
- *   GET  /                    index (filtered list)
- *   GET  /{id}                show (profile, addresses,
- *                             recent orders, approval history)
- *   GET  /{id}/edit           edit (profile form)
- *   POST /{id}                update (save profile changes)
- *   POST /{id}/group          changeGroup
- *   POST /{id}/status         changeStatus
+ *   GET  /                            index
+ *   GET  /{id}                        show
+ *   GET  /{id}/edit                   edit
+ *   POST /{id}                        update
+ *   POST /{id}/group                  changeGroup
+ *   POST /{id}/status                 changeStatus
+ *
+ *   GET  /{id}/addresses/create       addressCreate
+ *   POST /{id}/addresses              addressStore
+ *   GET  /{id}/addresses/{aid}/edit   addressEdit
+ *   POST /{id}/addresses/{aid}        addressUpdate
+ *   POST /{id}/addresses/{aid}/delete addressDelete
+ *   POST /{id}/addresses/{aid}/default addressDefault
  *
  * Permissions: customers.view for GETs, customers.manage
  * for POSTs.
@@ -34,9 +41,11 @@ use CorporateAid\Core\Session;
  *
  * Email address is read-only on the admin side. The customer
  * owns their email; changing it is a security concern that
- * requires verification. A merchant who needs to change a
- * customer's email uses the customer-side forgot-password
- * flow. See the profile edit form for the operator note.
+ * requires verification.
+ *
+ * Address writes mirror the storefront's AccountController
+ * shape exactly so the two surfaces behave the same for the
+ * customer and for the merchant.
  */
 final class AdminCustomerController extends AdminController
 {
@@ -47,6 +56,7 @@ final class AdminCustomerController extends AdminController
     private const VALID_TABS = ['all', 'pending', 'approved', 'rejected'];
     private const VALID_ACCOUNT_STATUSES = ['all', 'active', 'disabled', 'archived'];
     private const VALID_TRANSITION_STATUSES = ['active', 'disabled', 'archived'];
+    private const VALID_ADDRESS_TYPES = ['billing', 'shipping', 'both'];
 
     // =================================================================
     // GET /commerce/ca-admin/customers
@@ -226,9 +236,6 @@ final class AdminCustomerController extends AdminController
             return Response::redirect('/commerce/ca-admin/customers/' . $customer->id . '/edit');
         }
 
-        // Email is not written here. The customer owns their
-        // email; the admin cannot change it. The update() method
-        // writes the current value back unchanged.
         $customer->firstName   = $data['first_name']    !== '' ? $data['first_name']    : null;
         $customer->lastName    = $data['last_name']     !== '' ? $data['last_name']     : null;
         $customer->phone       = $data['phone']         !== '' ? $data['phone']         : null;
@@ -328,12 +335,261 @@ final class AdminCustomerController extends AdminController
     }
 
     // =================================================================
+    // GET /commerce/ca-admin/customers/{id}/addresses/create
+    // =================================================================
+
+    /** @param array<string,string> $params */
+    public function addressCreate(Request $request, array $params = []): Response
+    {
+        $id = (int) ($params['id'] ?? 0);
+        if ($id <= 0) {
+            return $this->fail('Invalid customer reference.');
+        }
+
+        $customers = $this->container->get(CustomerRepository::class);
+        $customer  = $customers->findById($id);
+        if ($customer === null) {
+            return $this->fail('Customer not found.');
+        }
+
+        return $this->render('admin.customers.address-form', [
+            'title'    => 'Add address for ' . ($customer->fullName() ?: $customer->email),
+            'customer' => $customer,
+            'address'  => null,
+            'mode'     => 'create',
+            'errors'   => $this->container->get(Session::class)->getFlash('address_errors', []),
+            'old'      => $_SESSION['_old'] ?? [],
+        ]);
+    }
+
+    // =================================================================
+    // POST /commerce/ca-admin/customers/{id}/addresses
+    // =================================================================
+
+    /** @param array<string,string> $params */
+    public function addressStore(Request $request, array $params = []): Response
+    {
+        $id      = (int) ($params['id'] ?? 0);
+        $session = $this->container->get(Session::class);
+
+        if ($id <= 0) {
+            return $this->fail('Invalid customer reference.');
+        }
+
+        $customers = $this->container->get(CustomerRepository::class);
+        $customer  = $customers->findById($id);
+        if ($customer === null) {
+            return $this->fail('Customer not found.');
+        }
+
+        $repo = $this->container->get(CustomerAddressRepository::class);
+
+        $data   = $this->collectAddressInput($request);
+        $errors = $this->validateAddress($data);
+
+        if ($errors !== []) {
+            $session->flash('address_errors', $errors);
+            $session->flashOldInput($data);
+            return Response::redirect('/commerce/ca-admin/customers/' . $customer->id . '/addresses/create');
+        }
+
+        $address = $this->hydrateAddress(new CustomerAddress(), $data);
+        $address->customerId = $customer->id;
+        $address->storeId    = $customer->storeId;
+
+        // First address becomes the default automatically.
+        if ($repo->countForCustomer($customer->id) === 0) {
+            $address->isDefault = true;
+        }
+
+        $addressId = $repo->create($address);
+        $address->id = $addressId;
+
+        if ($address->isDefault) {
+            $repo->setDefault($address);
+        }
+
+        $session->clearOldInput();
+        $session->flash('success', 'Address added.');
+        return Response::redirect('/commerce/ca-admin/customers/' . $customer->id);
+    }
+
+    // =================================================================
+    // GET /commerce/ca-admin/customers/{id}/addresses/{aid}/edit
+    // =================================================================
+
+    /** @param array<string,string> $params */
+    public function addressEdit(Request $request, array $params = []): Response
+    {
+        $id  = (int) ($params['id']  ?? 0);
+        $aid = (int) ($params['aid'] ?? 0);
+
+        if ($id <= 0 || $aid <= 0) {
+            return $this->fail('Invalid reference.');
+        }
+
+        $customers = $this->container->get(CustomerRepository::class);
+        $customer  = $customers->findById($id);
+        if ($customer === null) {
+            return $this->fail('Customer not found.');
+        }
+
+        $repo    = $this->container->get(CustomerAddressRepository::class);
+        $address = $repo->findForCustomer($aid, $customer->id);
+        if ($address === null) {
+            $this->container->get(Session::class)->flash('error', 'Address not found.');
+            return Response::redirect('/commerce/ca-admin/customers/' . $customer->id);
+        }
+
+        return $this->render('admin.customers.address-form', [
+            'title'    => 'Edit address for ' . ($customer->fullName() ?: $customer->email),
+            'customer' => $customer,
+            'address'  => $address,
+            'mode'     => 'edit',
+            'errors'   => $this->container->get(Session::class)->getFlash('address_errors', []),
+            'old'      => $_SESSION['_old'] ?? [],
+        ]);
+    }
+
+    // =================================================================
+    // POST /commerce/ca-admin/customers/{id}/addresses/{aid}
+    // =================================================================
+
+    /** @param array<string,string> $params */
+    public function addressUpdate(Request $request, array $params = []): Response
+    {
+        $id      = (int) ($params['id']  ?? 0);
+        $aid     = (int) ($params['aid'] ?? 0);
+        $session = $this->container->get(Session::class);
+
+        if ($id <= 0 || $aid <= 0) {
+            return $this->fail('Invalid reference.');
+        }
+
+        $customers = $this->container->get(CustomerRepository::class);
+        $customer  = $customers->findById($id);
+        if ($customer === null) {
+            return $this->fail('Customer not found.');
+        }
+
+        $repo     = $this->container->get(CustomerAddressRepository::class);
+        $existing = $repo->findForCustomer($aid, $customer->id);
+        if ($existing === null) {
+            $session->flash('error', 'Address not found.');
+            return Response::redirect('/commerce/ca-admin/customers/' . $customer->id);
+        }
+
+        $data   = $this->collectAddressInput($request);
+        $errors = $this->validateAddress($data);
+
+        if ($errors !== []) {
+            $session->flash('address_errors', $errors);
+            $session->flashOldInput($data);
+            return Response::redirect('/commerce/ca-admin/customers/' . $customer->id . '/addresses/' . $aid . '/edit');
+        }
+
+        $address = $this->hydrateAddress($existing, $data);
+        $repo->update($address);
+
+        // If the form asked for this address to be default, honour it.
+        if (!empty($data['is_default']) && !$existing->isDefault) {
+            $repo->setDefault($address);
+        }
+
+        $session->clearOldInput();
+        $session->flash('success', 'Address updated.');
+        return Response::redirect('/commerce/ca-admin/customers/' . $customer->id);
+    }
+
+    // =================================================================
+    // POST /commerce/ca-admin/customers/{id}/addresses/{aid}/delete
+    // =================================================================
+
+    /** @param array<string,string> $params */
+    public function addressDelete(Request $request, array $params = []): Response
+    {
+        $id      = (int) ($params['id']  ?? 0);
+        $aid     = (int) ($params['aid'] ?? 0);
+        $session = $this->container->get(Session::class);
+
+        if ($id <= 0 || $aid <= 0) {
+            return $this->fail('Invalid reference.');
+        }
+
+        $customers = $this->container->get(CustomerRepository::class);
+        $customer  = $customers->findById($id);
+        if ($customer === null) {
+            return $this->fail('Customer not found.');
+        }
+
+        $repo    = $this->container->get(CustomerAddressRepository::class);
+        $address = $repo->findForCustomer($aid, $customer->id);
+        if ($address === null) {
+            $session->flash('error', 'Address not found.');
+            return Response::redirect('/commerce/ca-admin/customers/' . $customer->id);
+        }
+
+        // Capture default state before the delete, so we can clear
+        // the customer row's default id column if this was the
+        // default address for a type.
+        $wasDefault  = $address->isDefault;
+        $wasBilling  = $address->isBilling();
+        $wasShipping = $address->isShipping();
+
+        $repo->delete($aid, $customer->id);
+
+        if ($wasDefault) {
+            if ($wasBilling) {
+                $repo->clearCustomerDefault($customer->id, 'billing');
+            }
+            if ($wasShipping) {
+                $repo->clearCustomerDefault($customer->id, 'shipping');
+            }
+        }
+
+        $session->flash('success', 'Address removed.');
+        return Response::redirect('/commerce/ca-admin/customers/' . $customer->id);
+    }
+
+    // =================================================================
+    // POST /commerce/ca-admin/customers/{id}/addresses/{aid}/default
+    // =================================================================
+
+    /** @param array<string,string> $params */
+    public function addressDefault(Request $request, array $params = []): Response
+    {
+        $id      = (int) ($params['id']  ?? 0);
+        $aid     = (int) ($params['aid'] ?? 0);
+        $session = $this->container->get(Session::class);
+
+        if ($id <= 0 || $aid <= 0) {
+            return $this->fail('Invalid reference.');
+        }
+
+        $customers = $this->container->get(CustomerRepository::class);
+        $customer  = $customers->findById($id);
+        if ($customer === null) {
+            return $this->fail('Customer not found.');
+        }
+
+        $repo    = $this->container->get(CustomerAddressRepository::class);
+        $address = $repo->findForCustomer($aid, $customer->id);
+        if ($address === null) {
+            $session->flash('error', 'Address not found.');
+            return Response::redirect('/commerce/ca-admin/customers/' . $customer->id);
+        }
+
+        $repo->setDefault($address);
+        $session->flash('success', 'Default address updated.');
+        return Response::redirect('/commerce/ca-admin/customers/' . $customer->id);
+    }
+
+    // =================================================================
     // Helpers
     // =================================================================
 
     /**
-     * Flash an error and redirect to the list. Convenience for the
-     * early-exit paths.
+     * Flash an error and redirect to the customer list.
      */
     private function fail(string $message): Response
     {
@@ -342,9 +598,126 @@ final class AdminCustomerController extends AdminController
     }
 
     /**
+     * Read every address field from the request. Mirrors the
+     * storefront AccountController's collectAddressInput().
+     *
+     * @return array<string,string>
+     */
+    private function collectAddressInput(Request $request): array
+    {
+        return [
+            'label'          => trim((string) $request->input('label', '')),
+            'type'           => trim((string) $request->input('type', 'both')),
+            'first_name'     => trim((string) $request->input('first_name', '')),
+            'last_name'      => trim((string) $request->input('last_name', '')),
+            'company'        => trim((string) $request->input('company', '')),
+            'address_line_1' => trim((string) $request->input('address_line_1', '')),
+            'address_line_2' => trim((string) $request->input('address_line_2', '')),
+            'city'           => trim((string) $request->input('city', '')),
+            'state'          => trim((string) $request->input('state', '')),
+            'postal_code'    => trim((string) $request->input('postal_code', '')),
+            'country_code'   => strtoupper(trim((string) $request->input('country_code', ''))),
+            'phone'          => trim((string) $request->input('phone', '')),
+            'email'          => trim((string) $request->input('email', '')),
+            'is_default'     => (string) $request->input('is_default', ''),
+        ];
+    }
+
+    /**
+     * Validate address input. Mirrors the storefront validation.
+     *
+     * @param array<string,string> $data
+     * @return array<string,string>
+     */
+    private function validateAddress(array $data): array
+    {
+        $errors = [];
+
+        if (!in_array($data['type'], self::VALID_ADDRESS_TYPES, true)) {
+            $errors['type'] = 'Invalid address type.';
+        }
+
+        if ($data['address_line_1'] === '') {
+            $errors['address_line_1'] = 'Address line 1 is required.';
+        } elseif (mb_strlen($data['address_line_1']) > 255) {
+            $errors['address_line_1'] = 'Address line 1 must be 255 characters or fewer.';
+        }
+
+        if ($data['city'] === '') {
+            $errors['city'] = 'City is required.';
+        } elseif (mb_strlen($data['city']) > 120) {
+            $errors['city'] = 'City must be 120 characters or fewer.';
+        }
+
+        if ($data['country_code'] === '') {
+            $errors['country_code'] = 'Country code is required.';
+        } elseif (!preg_match('/^[A-Z]{2}$/', $data['country_code'])) {
+            $errors['country_code'] = 'Country code must be a two-letter ISO code.';
+        }
+
+        if ($data['label'] !== '' && mb_strlen($data['label']) > 60) {
+            $errors['label'] = 'Label must be 60 characters or fewer.';
+        }
+        if ($data['first_name'] !== '' && mb_strlen($data['first_name']) > 100) {
+            $errors['first_name'] = 'First name must be 100 characters or fewer.';
+        }
+        if ($data['last_name'] !== '' && mb_strlen($data['last_name']) > 100) {
+            $errors['last_name'] = 'Last name must be 100 characters or fewer.';
+        }
+        if ($data['company'] !== '' && mb_strlen($data['company']) > 200) {
+            $errors['company'] = 'Company must be 200 characters or fewer.';
+        }
+        if ($data['address_line_2'] !== '' && mb_strlen($data['address_line_2']) > 255) {
+            $errors['address_line_2'] = 'Address line 2 must be 255 characters or fewer.';
+        }
+        if ($data['state'] !== '' && mb_strlen($data['state']) > 120) {
+            $errors['state'] = 'State must be 120 characters or fewer.';
+        }
+        if ($data['postal_code'] !== '' && mb_strlen($data['postal_code']) > 20) {
+            $errors['postal_code'] = 'Postal code must be 20 characters or fewer.';
+        }
+        if ($data['phone'] !== '' && mb_strlen($data['phone']) > 50) {
+            $errors['phone'] = 'Phone must be 50 characters or fewer.';
+        }
+        if ($data['email'] !== '' && mb_strlen($data['email']) > 190) {
+            $errors['email'] = 'Email must be 190 characters or fewer.';
+        } elseif ($data['email'] !== '' && filter_var($data['email'], FILTER_VALIDATE_EMAIL) === false) {
+            $errors['email'] = 'Email is not a valid address.';
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Copy validated input onto a CustomerAddress model.
+     *
+     * @param array<string,string> $data
+     */
+    private function hydrateAddress(CustomerAddress $address, array $data): CustomerAddress
+    {
+        $address->label         = $data['label']          !== '' ? $data['label']          : null;
+        $address->type          = $data['type']           !== '' ? $data['type']           : 'both';
+        $address->firstName     = $data['first_name']     !== '' ? $data['first_name']     : null;
+        $address->lastName      = $data['last_name']      !== '' ? $data['last_name']      : null;
+        $address->company       = $data['company']        !== '' ? $data['company']        : null;
+        $address->addressLine1  = $data['address_line_1'];
+        $address->addressLine2  = $data['address_line_2'] !== '' ? $data['address_line_2'] : null;
+        $address->city          = $data['city'];
+        $address->state         = $data['state']          !== '' ? $data['state']          : null;
+        $address->postalCode    = $data['postal_code']    !== '' ? $data['postal_code']    : null;
+        $address->countryCode   = $data['country_code'];
+        $address->phone         = $data['phone']          !== '' ? $data['phone']          : null;
+        $address->email         = $data['email']          !== '' ? $data['email']          : null;
+        $address->isDefault     = $data['is_default'] === '1';
+
+        return $address;
+    }
+
+    /**
      * Validate the profile fields the admin can edit. Length
      * limits match the schema: VARCHAR(100) for names, VARCHAR(50)
      * for phone, VARCHAR(200) for company, VARCHAR(60) for tax id.
+     * Tightened to realistic human values in 008K.2 Session 1.
      *
      * @param array<string,string> $data
      * @return array<string,string>

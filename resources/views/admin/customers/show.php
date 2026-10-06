@@ -220,7 +220,10 @@ $fmtDate = function (?string $dt): string {
     <div class="ra-card-body">
         <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
             <h2 class="h6 mb-0">Addresses (<?= count($addresses) ?>)</h2>
-            <span class="muted small">Address management ships in Session 2.</span>
+            <a href="/commerce/ca-admin/customers/<?= (int) $customer->id ?>/addresses/create"
+               class="ra-btn ra-btn-primary ra-btn-sm">
+                <i class="bi bi-plus-lg me-1"></i> Add address
+            </a>
         </div>
         <?php if (empty($addresses)): ?>
             <p class="muted mb-0">No saved addresses.</p>
@@ -242,7 +245,7 @@ $fmtDate = function (?string $dt): string {
                                 </div>
                                 <span class="ra-badge ra-badge-muted"><?= e(ucfirst($a->type)) ?></span>
                             </div>
-                            <address class="mb-0" style="font-style:normal;line-height:1.6;">
+                            <address class="mb-3" style="font-style:normal;line-height:1.6;">
                                 <?php if ($a->recipientName() !== ''): ?>
                                     <?= e($a->recipientName()) ?><br>
                                 <?php endif; ?>
@@ -259,8 +262,35 @@ $fmtDate = function (?string $dt): string {
                                 <?php endif; ?>
                                 <?= e($a->countryCode) ?>
                             </address>
+
+                            <div class="d-flex flex-wrap gap-2 pt-2 border-top" style="border-color:var(--ra-border,#e5e1d8) !important;">
+                                <a href="/commerce/ca-admin/customers/<?= (int) $customer->id ?>/addresses/<?= (int) $a->id ?>/edit"
+                                   class="ra-btn ra-btn-outline ra-btn-sm">
+                                    <i class="bi bi-pencil me-1"></i> Edit
+                                </a>
+                                <?php if (!$a->isDefault): ?>
+                                    <form method="POST"
+                                          action="/commerce/ca-admin/customers/<?= (int) $customer->id ?>/addresses/<?= (int) $a->id ?>/default"
+                                          class="d-inline">
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="ra-btn ra-btn-outline ra-btn-sm">
+                                            <i class="bi bi-star me-1"></i> Set default
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                                <button type="button" class="ra-btn ra-btn-outline ra-btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#ra-address-delete-modal-<?= (int) $a->id ?>">
+                                    <i class="bi bi-trash me-1"></i> Delete
+                                </button>
+                            </div>
                         </div>
                     </div>
+
+                    <?= view_partial('admin/customers/_address-delete-modal', [
+                        'customer' => $customer,
+                        'address'  => $a,
+                    ]) ?>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>

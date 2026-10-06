@@ -257,6 +257,36 @@ $router->get('/commerce/ca-admin/customers/{id}',
     [AdminCustomerController::class, 'show'],
     ['store', 'auth', 'permission:customers.view']);
 
+// =====================================================================
+// Admin - Customer addresses (Stage 008K.2 session 2)
+// =====================================================================
+// Address writes mirror the storefront's AccountController shape.
+// Every route is gated by customers.manage; view-only users see
+// the addresses on the detail page but cannot change them.
+$router->get('/commerce/ca-admin/customers/{id}/addresses/create',
+    [AdminCustomerController::class, 'addressCreate'],
+    ['store', 'auth', 'permission:customers.manage']);
+
+$router->post('/commerce/ca-admin/customers/{id}/addresses',
+    [AdminCustomerController::class, 'addressStore'],
+    ['store', 'auth', 'csrf', 'permission:customers.manage']);
+
+$router->get('/commerce/ca-admin/customers/{id}/addresses/{aid}/edit',
+    [AdminCustomerController::class, 'addressEdit'],
+    ['store', 'auth', 'permission:customers.manage']);
+
+$router->post('/commerce/ca-admin/customers/{id}/addresses/{aid}',
+    [AdminCustomerController::class, 'addressUpdate'],
+    ['store', 'auth', 'csrf', 'permission:customers.manage']);
+
+$router->post('/commerce/ca-admin/customers/{id}/addresses/{aid}/delete',
+    [AdminCustomerController::class, 'addressDelete'],
+    ['store', 'auth', 'csrf', 'permission:customers.manage']);
+
+$router->post('/commerce/ca-admin/customers/{id}/addresses/{aid}/default',
+    [AdminCustomerController::class, 'addressDefault'],
+    ['store', 'auth', 'csrf', 'permission:customers.manage']);
+
 $router->get('/commerce/ca-admin/brands/{id}/delete-info',
     [BrandController::class, 'deleteInfo'],
     ['store', 'auth']);
