@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin customer detail (read-only).
+ * Admin customer detail.
  *
  * Context (from AdminCustomerController::show):
  *   $customer        Customer
@@ -8,18 +8,24 @@
  *   $group           ?CustomerGroup
  *   $recentOrders    array{items,total,page,per_page,pages}
  *   $approvalHistory array<int, CustomerApprovalHistory>
+ *   $groupOptions    array<int,array{id:int,name:string,is_default:int}>
+ *
+ * Approval actions (approve, reject, reset) POST to the
+ * existing routes owned by CustomerApprovalController. This
+ * page does not duplicate that workflow.
  */
 $customer        = $customer        ?? null;
 $addresses       = $addresses       ?? [];
 $group           = $group           ?? null;
 $recentOrders    = $recentOrders    ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 20, 'pages' => 0];
 $approvalHistory = $approvalHistory ?? [];
+$groupOptions    = $groupOptions    ?? [];
 
 if ($customer === null) {
     return;
 }
 
-$orders = $recentOrders['items'];
+$orders      = $recentOrders['items'];
 $ordersTotal = (int) $recentOrders['total'];
 
 $statusLabels = [
@@ -63,14 +69,15 @@ $fmtDate = function (?string $dt): string {
     return $ts === false ? '—' : date('M j, Y', $ts);
 };
 ?>
+
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
     <div>
         <nav class="muted small mb-2" aria-label="Breadcrumb">
-            <span>Customers</span>
+            <a href="/commerce/ca-admin/customers" class="text-decoration-none">Customers</a>
             <span class="mx-1">&rsaquo;</span>
-            <span><?= e($customer->fullName() ?: $customer->email) ?></span>
+            <span style="overflow-wrap:anywhere;"><?= e($customer->fullName() ?: $customer->email) ?></span>
         </nav>
-        <h1 class="h3 mb-1"><?= e($customer->fullName() ?: $customer->email) ?></h1>
+        <h1 class="h3 mb-1" style="overflow-wrap:anywhere;"><?= e($customer->fullName() ?: $customer->email) ?></h1>
         <p class="muted mb-0">
             <?= e($customer->email) ?>
             <?php if ($customer->company !== null && $customer->company !== ''): ?>
@@ -81,6 +88,66 @@ $fmtDate = function (?string $dt): string {
     <div class="d-flex gap-2 flex-wrap">
         <?= $accountBadge ?>
         <?= $approvalBadge ?>
+    </div>
+</div>
+
+<!-- ============================ ACTION BAR ============================ -->
+<div class="ra-card mb-4">
+    <div class="ra-card-body">
+        <div class="d-flex flex-wrap gap-2">
+
+            <a href="/commerce/ca-admin/customers/<?= (int) $customer->id ?>/edit"
+               class="ra-btn ra-btn-outline">
+                <i class="bi bi-pencil me-1"></i> Edit profile
+            </a>
+
+            <button type="button" class="ra-btn ra-btn-outline"
+                    data-bs-toggle="modal" data-bs-target="#ra-customer-group-modal">
+                <i class="bi bi-people me-1"></i> Change group
+            </button>
+
+            <button type="button" class="ra-btn ra-btn-outline"
+                    data-bs-toggle="modal" data-bs-target="#ra-customer-status-modal">
+                <i class="bi bi-sliders me-1"></i>
+                <?= $customer->status === 'active' ? 'Change account state' : 'Enable account' ?>
+            </button>
+
+            <?php if ($customer->approvalStatus !== 'approved'): ?>
+                <form method="POST"
+                      action="/commerce/ca-admin/customer-approvals/<?= (int) $customer->id ?>/approve"
+                      class="d-inline">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="ra-btn ra-btn-primary">
+                        <i class="bi bi-check-lg me-1"></i> Approve
+                    </button>
+                </form>
+            <?php endif; ?>
+
+            <?php if ($customer->approvalStatus !== 'rejected'): ?>
+                <form method="POST"
+                      action="/commerce/ca-admin/customer-approvals/<?= (int) $customer->id ?>/reject"
+                      class="d-inline">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="ra-btn ra-btn-danger"
+                            onclick="return confirm('Reject this customer? They can still log in but cannot place orders.');">
+                        <i class="bi bi-x-lg me-1"></i> Reject
+                    </button>
+                </form>
+            <?php endif; ?>
+
+            <?php if ($customer->approvalStatus !== 'pending'): ?>
+                <form method="POST"
+                      action="/commerce/ca-admin/customer-approvals/<?= (int) $customer->id ?>/reset"
+                      class="d-inline">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="ra-btn ra-btn-outline"
+                            onclick="return confirm('Reset this customer back to pending?');">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset to pending
+                    </button>
+                </form>
+            <?php endif; ?>
+
+        </div>
     </div>
 </div>
 
@@ -122,7 +189,13 @@ $fmtDate = function (?string $dt): string {
 <!-- ============================ GROUP ============================ -->
 <div class="ra-card mb-4">
     <div class="ra-card-body">
-        <h2 class="h6 mb-3">Group</h2>
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <h2 class="h6 mb-0">Group</h2>
+            <button type="button" class="ra-btn ra-btn-outline ra-btn-sm"
+                    data-bs-toggle="modal" data-bs-target="#ra-customer-group-modal">
+                <i class="bi bi-arrow-left-right me-1"></i> Change
+            </button>
+        </div>
         <?php if ($group !== null): ?>
             <div class="row g-3">
                 <div class="col-md-6">
@@ -145,7 +218,10 @@ $fmtDate = function (?string $dt): string {
 <!-- ============================ ADDRESSES ============================ -->
 <div class="ra-card mb-4">
     <div class="ra-card-body">
-        <h2 class="h6 mb-3">Addresses (<?= count($addresses) ?>)</h2>
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <h2 class="h6 mb-0">Addresses (<?= count($addresses) ?>)</h2>
+            <span class="muted small">Address management ships in Session 2.</span>
+        </div>
         <?php if (empty($addresses)): ?>
             <p class="muted mb-0">No saved addresses.</p>
         <?php else: ?>
@@ -278,7 +354,17 @@ $fmtDate = function (?string $dt): string {
 
 <!-- ============================ FOOTER ============================ -->
 <div class="d-flex gap-2 mb-4">
-    <a href="/commerce/ca-admin/orders" class="ra-btn ra-btn-outline">
-        <i class="bi bi-arrow-left me-1"></i> Back to orders
+    <a href="/commerce/ca-admin/customers" class="ra-btn ra-btn-outline">
+        <i class="bi bi-arrow-left me-1"></i> Back to customers
     </a>
 </div>
+
+<?= view_partial('admin/customers/_group-modal', [
+    'customer'     => $customer,
+    'groupOptions' => $groupOptions,
+    'group'        => $group,
+]) ?>
+
+<?= view_partial('admin/customers/_status-modal', [
+    'customer' => $customer,
+]) ?>

@@ -220,6 +220,39 @@ $router->post('/commerce/ca-admin/orders/{id}/note',
 // The list page lands in 008K.2. This detail page is the
 // target of the "View customer profile" link on the order
 // detail page.
+// =====================================================================
+// Admin - Customers (Stage 008K.2)
+// =====================================================================
+// List gated by customers.view. Profile edit, group change, and
+// account state change gated by customers.manage.
+//
+// The detail route (show) was added in 008K.1 and is preserved
+// below. It now passes $groupOptions to the view for the group
+// change modal.
+//
+// Approval actions (approve, reject, reset) are NOT declared here.
+// They live in the CustomerApprovalController block and are reused
+// by the detail page's action bar.
+$router->get('/commerce/ca-admin/customers',
+    [AdminCustomerController::class, 'index'],
+    ['store', 'auth', 'permission:customers.view']);
+
+$router->get('/commerce/ca-admin/customers/{id}/edit',
+    [AdminCustomerController::class, 'edit'],
+    ['store', 'auth', 'permission:customers.manage']);
+
+$router->post('/commerce/ca-admin/customers/{id}',
+    [AdminCustomerController::class, 'update'],
+    ['store', 'auth', 'csrf', 'permission:customers.manage']);
+
+$router->post('/commerce/ca-admin/customers/{id}/group',
+    [AdminCustomerController::class, 'changeGroup'],
+    ['store', 'auth', 'csrf', 'permission:customers.manage']);
+
+$router->post('/commerce/ca-admin/customers/{id}/status',
+    [AdminCustomerController::class, 'changeStatus'],
+    ['store', 'auth', 'csrf', 'permission:customers.manage']);
+
 $router->get('/commerce/ca-admin/customers/{id}',
     [AdminCustomerController::class, 'show'],
     ['store', 'auth', 'permission:customers.view']);
