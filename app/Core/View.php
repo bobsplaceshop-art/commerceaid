@@ -51,12 +51,24 @@ final class View
         return $content;
     }
 
-    /** @param array<string,mixed> $data */
-    private function renderFile(string $name, array $data): string
+    /**
+     * Render a single view file.
+     *
+     * The parameter names here ($viewName, $viewData) deliberately do
+     * not match common view-variable names. Before this rename, a
+     * view that read `$name` from its render data received the
+     * view's dot-notation name instead, because `extract()` uses
+     * EXTR_SKIP and would not overwrite the parameter `$name`
+     * already in scope. Renaming the parameter removes that
+     * collision class entirely.
+     *
+     * @param array<string,mixed> $viewData
+     */
+    private function renderFile(string $viewName, array $viewData): string
     {
-        $file = $this->resolvePath($name);
+        $file = $this->resolvePath($viewName);
 
-        $vars = array_merge($this->shared, $data);
+        $vars = array_merge($this->shared, $viewData);
         extract($vars, EXTR_SKIP);
 
         ob_start();
