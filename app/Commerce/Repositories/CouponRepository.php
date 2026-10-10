@@ -106,7 +106,7 @@ final class CouponRepository extends CommerceRepository
         [$where, $params] = $this->buildFilters($filters);
 
         $total = (int) $this->db->scalar(
-            "SELECT COUNT(*) FROM `commerce_coupons` WHERE {$where}",
+            "SELECT COUNT(*) FROM `commerce_coupons` c WHERE {$where}",
             $params
         );
 
