@@ -5,6 +5,8 @@ namespace CorporateAid\Commerce\Controllers\Storefront;
 
 use CorporateAid\Commerce\Exceptions\CartException;
 use CorporateAid\Commerce\Services\CartService;
+use CorporateAid\Commerce\Services\CouponService;
+use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Support\StorefrontController;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
@@ -125,6 +127,77 @@ final class CartController extends StorefrontController
         $cart->clear();
 
         return $this->respondToCartAction($request, true, 'Cart emptied.');
+    }
+
+    // =================================================================
+    // Coupon apply / remove
+    // =================================================================
+
+    /**
+     * Validate a coupon code against the current cart and,
+     * on success, store it in the session. Validation is
+     * repeated at checkout; this endpoint is a preview.
+     *
+     * Guests get a null guest email here - the per-customer
+     * limit is not checked at cart-apply time. It runs at
+     * checkout when the guest email is known.
+     *
+     * @param array<string,string> $params
+     */
+    public function applyCoupon(Request $request, array $params = []): Response
+    {
+        $cart     = $this->container->get(CartService::class);
+        $coupons  = $this->container->get(CouponService::class);
+        $auth     = $this->container->get(CustomerAuthService::class);
+
+        $code = trim((string) $request->input('code', ''));
+
+        $lines    = $cart->items();
+        $subtotal = $cart->subtotal();
+
+        if ($lines === []) {
+            return $this->respondToCartAction(
+                $request,
+                false,
+                'Add items to your cart before applying a coupon.'
+            );
+        }
+
+        $customer   = $auth->user();
+        $customerId = $customer !== null ? $customer->id : null;
+
+        $result = $coupons->validate(
+            $code,
+            $lines,
+            $subtotal,
+            $customerId,
+            null
+        );
+
+        if (!($result['ok'] ?? false)) {
+            return $this->respondToCartAction(
+                $request,
+                false,
+                (string) ($result['reason'] ?? 'Coupon could not be applied.')
+            );
+        }
+
+        $cart->setCouponCode($code);
+
+        return $this->respondToCartAction($request, true, 'Coupon applied.');
+    }
+
+    /**
+     * Remove the applied coupon from the cart session.
+     *
+     * @param array<string,string> $params
+     */
+    public function removeCoupon(Request $request, array $params = []): Response
+    {
+        $cart = $this->container->get(CartService::class);
+        $cart->clearCouponCode();
+
+        return $this->respondToCartAction($request, true, 'Coupon removed.');
     }
 
     // =================================================================

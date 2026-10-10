@@ -23,6 +23,9 @@ use CorporateAid\Commerce\Repositories\StoreRepository;
 use CorporateAid\Commerce\Repositories\CustomerRepository;
 use CorporateAid\Commerce\Repositories\StoreSettingsRepository;
 use CorporateAid\Commerce\Services\CustomerNotificationService;
+use CorporateAid\Commerce\Services\CouponService;
+use CorporateAid\Commerce\Services\OrderPricingService;
+use CorporateAid\Commerce\Services\TaxService;
 use CorporateAid\Platform\Support\CodeGenerator;
 
 /**
@@ -73,6 +76,9 @@ final class CheckoutService
         private CustomerRepository $customerRepository,
         private StoreSettingsRepository $storeSettings,
         private CustomerNotificationService $customerNotifications,
+        private OrderPricingService $pricing,
+        private CouponService $coupons,
+        private TaxService $taxes,
     ) {
     }
 
@@ -216,24 +222,52 @@ final class CheckoutService
         }
 
         // -----------------------------------------------------------------
-        // Determine shipping totals (stub for now)
+        // Compute the totals via the pricing engine.
+        //
+        // OrderPricingService runs the six-step sequence:
+        //   subtotal, discount, taxable base, shipping, tax,
+        //   grand total.
+        //
+        // The engine is the single source of truth. Nothing
+        // else in this file computes order arithmetic.
+        //
+        // computeOrFail throws CheckoutException when a coupon
+        // has become invalid or a shipping method is no longer
+        // available. That happens before the transaction
+        // opens, so a failure leaves the cart untouched.
         // -----------------------------------------------------------------
-        $shippingTotal = 0.0;
-        $shippingMethodKey = 'standard';
-        $shippingMethodLabel = 'Standard shipping';
+        $shippingAddress = is_array($input['shipping_address'] ?? null)
+            ? $input['shipping_address']
+            : [];
 
-        // -----------------------------------------------------------------
-        // Compute the totals from the cart
-        // -----------------------------------------------------------------
-        $subtotal = 0.0;
-        foreach ($lines as $line) {
-            $subtotal += $line->effectiveSubtotal();
-        }
-        $subtotal = round($subtotal, 4);
+        $pricingContext = [
+            'coupon_code'          => $this->cart->couponCode(),
+            'shipping_method_code' => (string) ($input['shipping_method_code'] ?? ''),
+            'country_code'         => (string) ($shippingAddress['country_code'] ?? ''),
+            'state_code'           => $shippingAddress['state_code'] ?? null,
+            'customer_id'          => $customer instanceof Customer ? $customer->id : null,
+            'guest_email'          => $customer instanceof Customer
+                                        ? null
+                                        : (string) ($input['guest_email'] ?? ''),
+        ];
 
-        $taxTotal      = 0.0;
-        $discountTotal = 0.0;
-        $grandTotal    = round($subtotal + $taxTotal + $shippingTotal - $discountTotal, 4);
+        $pricing = $this->pricing->computeOrFail($lines, $pricingContext);
+
+        $subtotal          = (float) $pricing['subtotal'];
+        $discountTotal     = (float) $pricing['discount_total'];
+        $taxTotal          = (float) $pricing['tax_total'];
+        $shippingTotal     = (float) $pricing['shipping_total'];
+        $grandTotal        = (float) $pricing['grand_total'];
+        $coupon            = $pricing['coupon'];
+        $shippingMethod    = $pricing['shipping_method'];
+        $taxClasses        = $pricing['tax_classes'];
+
+        $shippingMethodKey   = $shippingMethod !== null
+            ? (string) $shippingMethod['code']
+            : '';
+        $shippingMethodLabel = $shippingMethod !== null
+            ? (string) $shippingMethod['label']
+            : '';
 
         $currencyCode = 'EUR';
 
@@ -358,6 +392,9 @@ final class CheckoutService
                 'customer_note'         => $input['customer_note'] ?? null,
                 'billing_address_json'  => $billingJson,
                 'shipping_address_json' => $shippingJson,
+                'coupon_code'           => $coupon !== null
+                                            ? (string) $coupon['code']
+                                            : null,
                 'shipping_method_key'   => $shippingMethodKey,
                 'shipping_method_label' => $shippingMethodLabel,
                 'payment_provider_key'  => $paymentKey,
@@ -419,6 +456,28 @@ final class CheckoutService
                     $orderNumber,
                     $orderId
                 );
+            }
+
+            // Step 6.5. Coupon redemption and tax ledger.
+            //
+            // Both writes are inside the transaction. If
+            // either fails, the order rolls back. A coupon
+            // cannot be consumed without an order; tax lines
+            // cannot exist for an order that does not.
+            if ($coupon !== null && $discountTotal > 0.0) {
+                $this->coupons->recordRedemption(
+                    (int) $coupon['id'],
+                    $orderId,
+                    $customer instanceof Customer ? $customer->id : null,
+                    $customer instanceof Customer
+                        ? null
+                        : (string) ($input['guest_email'] ?? ''),
+                    $discountTotal
+                );
+            }
+
+            if ($taxClasses !== []) {
+                $this->taxes->persistOrderTaxes($orderId, $taxClasses);
             }
 
             // Step 7. Reserve inventory. One call per line.

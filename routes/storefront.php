@@ -169,11 +169,13 @@ $router->post('/account/claims/dismiss',  [CustomerClaimController::class, 'dism
 // The /cart/count route is JSON-only and powers the mini-cart
 // badge in the header.
 $router->get('/cart',        [CartController::class, 'index'],  ['store']);
-$router->post('/cart/add',   [CartController::class, 'add'],    ['store', 'csrf']);
-$router->post('/cart/update',[CartController::class, 'update'], ['store', 'csrf']);
-$router->post('/cart/remove',[CartController::class, 'remove'], ['store', 'csrf']);
-$router->post('/cart/clear', [CartController::class, 'clear'],  ['store', 'csrf']);
-$router->get('/cart/count',  [CartController::class, 'count'],  ['store']);
+$router->post('/cart/add',           [CartController::class, 'add'],          ['store', 'csrf']);
+$router->post('/cart/update',        [CartController::class, 'update'],       ['store', 'csrf']);
+$router->post('/cart/remove',        [CartController::class, 'remove'],       ['store', 'csrf']);
+$router->post('/cart/clear',         [CartController::class, 'clear'],        ['store', 'csrf']);
+$router->post('/cart/apply-coupon',  [CartController::class, 'applyCoupon'],  ['store', 'csrf']);
+$router->post('/cart/remove-coupon', [CartController::class, 'removeCoupon'], ['store', 'csrf']);
+$router->get('/cart/count',          [CartController::class, 'count'],        ['store']);
 
 // Wishlist (Stage 008G.1)
 //

@@ -39,6 +39,14 @@ use CorporateAid\Commerce\Repositories\AttributeRepository;
 use CorporateAid\Commerce\Repositories\CategoryAttributeRepository;
 use CorporateAid\Commerce\Services\CatalogService;
 use CorporateAid\Commerce\Services\CheckoutService;
+use CorporateAid\Commerce\Repositories\CouponRepository;
+use CorporateAid\Commerce\Repositories\CouponRedemptionRepository;
+use CorporateAid\Commerce\Repositories\TaxRepository;
+use CorporateAid\Commerce\Repositories\ShippingRepository;
+use CorporateAid\Commerce\Services\CouponService;
+use CorporateAid\Commerce\Services\TaxService;
+use CorporateAid\Commerce\Services\ShippingService;
+use CorporateAid\Commerce\Services\OrderPricingService;
 use CorporateAid\Commerce\Repositories\CartItemRepository;
 use CorporateAid\Commerce\Repositories\CartRepository;
 use CorporateAid\Commerce\Services\CartService;
@@ -216,7 +224,73 @@ final class CommerceServiceProvider
                 $c->get(StoreRepository::class),
                 $c->get(CustomerRepository::class),
                 $c->get(StoreSettingsRepository::class),
-                $c->get(CustomerNotificationService::class)
+                $c->get(CustomerNotificationService::class),
+                $c->get(OrderPricingService::class),
+                $c->get(CouponService::class),
+                $c->get(TaxService::class)
+            ));
+
+        // ---------- Services: pricing engine ----------
+        //
+        // The pricing engine is the single source of truth
+        // for the six-step order totals computation:
+        //   subtotal, discount, taxable base, tax,
+        //   shipping, grand total.
+        //
+        // Four repositories and four services. The three
+        // subsystem services (Coupon, Tax, Shipping) each
+        // own one table family. OrderPricingService is the
+        // orchestrator that composes them; nothing else
+        // computes order totals.
+        //
+        // See docs/stages/008k.5_order-pricing-engine-plan.md.
+
+        $c->singleton(CouponRepository::class,
+            fn() => new CouponRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(CouponRedemptionRepository::class,
+            fn() => new CouponRedemptionRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(TaxRepository::class,
+            fn() => new TaxRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(ShippingRepository::class,
+            fn() => new ShippingRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(CouponService::class,
+            fn() => new CouponService(
+                $c->get(CouponRepository::class),
+                $c->get(CouponRedemptionRepository::class),
+                $c->get(ProductRepository::class)
+            ));
+
+        $c->singleton(TaxService::class,
+            fn() => new TaxService(
+                $c->get(TaxRepository::class)
+            ));
+
+        $c->singleton(ShippingService::class,
+            fn() => new ShippingService(
+                $c->get(ShippingRepository::class)
+            ));
+
+        $c->singleton(OrderPricingService::class,
+            fn() => new OrderPricingService(
+                $c->get(CouponService::class),
+                $c->get(TaxService::class),
+                $c->get(ShippingService::class)
             ));
 
         // ---------- Customers ----------

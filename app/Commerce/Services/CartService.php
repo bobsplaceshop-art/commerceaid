@@ -43,6 +43,13 @@ final class CartService
 {
     private const SESSION_CART_KEY = 'cart';
 
+    /**
+     * Session key for the applied coupon code. Lives in the
+     * customer session (or the guest session - they are the
+     * same object). Cleared when the cart is emptied.
+     */
+    private const SESSION_COUPON_KEY = 'cart_coupon_code';
+
     public function __construct(
         private Session $session,
         private CartRepository $carts,
@@ -149,6 +156,10 @@ final class CartService
         } else {
             $this->session->forget(self::SESSION_CART_KEY);
         }
+
+        // Clearing the cart clears any applied coupon. The
+        // coupon refers to a subtotal that no longer exists.
+        $this->clearCouponCode();
     }
 
     // =================================================================
@@ -232,6 +243,48 @@ final class CartService
     public function isEmpty(): bool
     {
         return $this->rawItems() === [];
+    }
+
+    // =================================================================
+    // Coupon state (session-backed, both guest and customer)
+    // =================================================================
+
+    /**
+     * The coupon code currently applied to the cart, if any.
+     * Returns null when unset or empty.
+     *
+     * The code is stored raw (uppercase, trimmed). The service
+     * re-validates it against the coupon table on every render,
+     * so an expiry between pages is caught immediately.
+     */
+    public function couponCode(): ?string
+    {
+        $code = (string) $this->session->get(self::SESSION_COUPON_KEY, '');
+        return $code !== '' ? $code : null;
+    }
+
+    /**
+     * Apply a coupon code to the cart. The code is uppercased
+     * and trimmed before storage. Validation happens in
+     * CouponService - this method records the customer's
+     * intent only.
+     */
+    public function setCouponCode(string $code): void
+    {
+        $code = strtoupper(trim($code));
+        if ($code === '') {
+            $this->clearCouponCode();
+            return;
+        }
+        $this->session->set(self::SESSION_COUPON_KEY, $code);
+    }
+
+    /**
+     * Remove any applied coupon code from the cart.
+     */
+    public function clearCouponCode(): void
+    {
+        $this->session->forget(self::SESSION_COUPON_KEY);
     }
 
     // =================================================================
