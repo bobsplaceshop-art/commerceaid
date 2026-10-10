@@ -70,7 +70,7 @@ final class User
 
     public function isSuperAdmin(): bool
     {
-        return in_array('super_admin', $this->roleSlugs, true);
+        return in_array('super-admin', $this->roleSlugs, true);
     }
 
     public function hasRole(string $slug): bool

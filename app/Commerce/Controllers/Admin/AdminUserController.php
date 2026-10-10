@@ -297,8 +297,8 @@ final class AdminUserController extends AdminController
 
         // Guard: cannot demote the last super-admin.
         $currentRoles = $users->loadRoles($user)->roleSlugs;
-        $isSuperAdmin = in_array('super_admin', $currentRoles, true);
-        if ($isSuperAdmin && $newRoleSlug !== 'super_admin' && $this->isLastSuperAdmin($users, $id)) {
+        $isSuperAdmin = in_array('super-admin', $currentRoles, true);
+        if ($isSuperAdmin && $newRoleSlug !== 'super-admin' && $this->isLastSuperAdmin($users, $id)) {
             $session->flash('user_errors', ['role_id' => 'Cannot change the role of the last remaining super-admin.']);
             $session->flashOldInput($data);
             return Response::redirect('/commerce/ca-admin/users/' . $id . '/edit');
@@ -648,7 +648,7 @@ final class AdminUserController extends AdminController
      */
     private function isLastSuperAdmin(UserRepository $users, int $userId): bool
     {
-        $superAdminIds = $users->findActiveUserIdsByRole('super_admin');
+        $superAdminIds = $users->findActiveUserIdsByRole('super-admin');
         return count($superAdminIds) === 1 && $superAdminIds[0] === $userId;
     }
 
