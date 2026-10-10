@@ -135,6 +135,25 @@ Commerce owns two aliases:
 Both live in app/Commerce/Middleware/. They may use Platform
 services (Auth, Session) and Core services (Request, Response).
 
+## GuestMiddleware Is Bound Per-Product
+
+The 'guest' alias resolves to Platform\Middleware\GuestMiddleware.
+The Platform class carries a default redirect target of '/'.
+
+Commerce rebinds GuestMiddleware in CommerceServiceProvider with
+the target '/commerce/ca-admin'. This is why an authenticated
+admin who visits /login is sent to the admin dashboard, not the
+storefront.
+
+Any future product that uses the 'guest' alias must make the
+same choice explicitly. The Platform default is a placeholder,
+not a correct destination. When the same origin serves two
+authenticated audiences, the middleware default chosen for one
+audience is a trap for the other.
+
+See docs/REMEMBER.md Pattern 35 for the full failure mode and
+prevention checklist.
+
 ## Platform Middleware
 
 Platform owns the rest:

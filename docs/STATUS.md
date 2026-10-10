@@ -1,8 +1,8 @@
 # Project Status
 
-**As of:** 2026-10-06
-**Version:** 0.20.0-alpha
-**Stage:** 008K.2 complete. Next: 008K.3 (admin users).
+**As of:** 2026-10-10
+**Version:** 0.21.0-alpha
+**Stage:** 008K.3 complete. Next: 008K.4 (admin roles).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -155,44 +155,53 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008K.2 complete
+## Current Focus — Stage 008K.3 complete
 
-**Deliverable shipped:** the merchant-facing customers
-surface. Orders shipped at 008K.1. Both are now real.
+**Deliverable shipped:** the merchant-facing users
+surface. Orders, Customers, and Users are now real
+admin pages. Only Roles and Coupons remain as
+placeholders in the sidebar.
 
-The merchant can browse orders, filter them by status
-tab, open one, transition its status, and add internal
-notes. They can browse customers, filter by approval
-status, open a profile, edit it, change group, change
-account state, and manage addresses.
+The merchant can invite team members by email, assign
+roles from the six seeded defaults, edit profile
+fields, deactivate and reactivate accounts, and
+trigger password resets. Invitees activate their
+account via a tokenized link and set their own
+password. The admin password reset flow is also live
+(new `/password/forgot` and `/login/reset/{token}`).
 
-**Stage close:** 008K.2 shipped in two sessions.
+**Stage close:** 008K.3 shipped in two commits.
 
-  - Session 1 (commit 8263f1f): list, profile edit,
-    group change, account-state change, validation
-    tightening, layout overflow guard.
-  - Session 2 (commit 06ab56b): address management
-    with create, edit, delete, set-default, and
-    automatic first-address default.
+  - `f71cac1` feat(admin): user management surface (008K.3).
+    The controller, five views, email template, five
+    UserRepository methods, and ten routes.
+  - `5c156cb` feat(auth): admin password reset, sign-out
+    page, correct redirects. Three related fixes:
+    the admin forgot/reset flow, the dedicated
+    `/logout/done` page, and per-audience redirect
+    targets (GuestMiddleware binding override,
+    completeInvite session clear, AppUrl extraction).
 
-**Next sub-stage:** 008K.3 (Admin Users). List, invite,
-role assignment, deactivate/reactivate, password reset
-trigger. After that, 008K.4 (Admin Roles) and 008K.5
-(Admin Coupons). Then 008H resumes and closes its
-remaining session.
+**Next sub-stage:** 008K.4 (Admin Roles). List, create
+custom roles, permission matrix editor. Same shape as
+Users: index + edit + permission checkboxes. After
+that, 008K.5 (Admin Coupons) closes the 008K stage.
+Then 008H (Returns & Refunds) resumes with the admin
+queue that was paused at the start of 008K.
 
 **008H status:** paused. The returns work on disk
 (commits 50f77b6 and 8a3e56b) stays on `main`.
 Session 3 (the admin returns queue) is unblocked now
-that the orders surface exists. It can resume before
-008K.3 if the queue is needed sooner.
+that both the orders surface (008K.1) and the users
+surface (008K.3) exist. It can resume before 008K.4
+if the queue is needed sooner.
 
-**Blocked:** 008K.3 (Admin Users) needs the
-`AdminUserController` surface. Users exist in the RBAC
-schema since Stage 005. The admin shell shows a Users
-placeholder in the sidebar. The list, invite flow, role
-assignment, deactivate/reactivate, and password-reset
-trigger are the work.
+**Pattern 35 recorded:** two audiences on one origin
+share a cookie jar. The `GuestMiddleware` default
+redirect target of `/` was wrong for the admin
+audience. Fixed in this stage. See `docs/REMEMBER.md`
+Pattern 35 for the full writeup and prevention
+checklist.
 
 ---
 
@@ -291,11 +300,11 @@ new code.
 
 ## Next 3 Stages
 
-- **008K.3** (now): Admin Users
-- **008K.4**: Admin Roles
+- **008K.4** (now): Admin Roles
 - **008K.5**: Admin Coupons
+- **008H**: Returns & Refunds (resumes; admin queue)
 
-Then 008H resumes and closes its remaining session.
+Then 008K closes and 008H closes its remaining session.
 
 ---
 

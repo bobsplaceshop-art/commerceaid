@@ -80,14 +80,14 @@ Stage 008K - Admin Surface Completion.
 
   008K.1  Admin Orders        complete 2026-10-06
   008K.2  Admin Customers     complete 2026-10-06
-  008K.3  Admin Users         opens next
-  008K.4  Admin Roles         planned
+  008K.3  Admin Users         complete 2026-10-10
+  008K.4  Admin Roles         opens next
   008K.5  Admin Coupons       planned
 
 Stage 008H (Returns & Refunds) is paused. Its Session 3
 (the admin returns queue) is unblocked by 008K.1 and
-resumes after 008K.5, or earlier if the queue is needed
-sooner.
+008K.3. Resumes after 008K.5, or earlier if the queue is
+needed sooner.
 
 ## Planned Stages
 
@@ -113,8 +113,8 @@ land in.
 |---|---|---|---|
 | 008K.1 | Admin Orders | List with filters, detail with line items and status history, status transition actions. Feeds 008H and Stage 010. | Complete 2026-10-06 |
 | 008K.2 | Admin Customers | List, detail, address book management, order history, group assignment, account state management. | Complete 2026-10-06 |
-| 008K.3 | Admin Users | List, invite, role assignment, deactivate/reactivate, password reset trigger. | Next |
-| 008K.4 | Admin Roles | List, create custom roles, permission matrix editor. | Planned |
+| 008K.3 | Admin Users | List, invite, role assignment, deactivate/reactivate, password reset trigger. | Complete 2026-10-10 |
+| 008K.4 | Admin Roles | List, create custom roles, permission matrix editor. | Next |
 | 008K.5 | Admin Coupons | New commerce_coupons schema, admin CRUD, storefront apply at cart and checkout. | Planned |
 
 Each sub-stage is a session or two. The whole stage is
@@ -125,6 +125,9 @@ roughly five sessions.
   008K.1  dd6bf4c  feat(admin): orders + customer detail
   008K.2  8263f1f  feat(admin): customers list, profile edit, group + state
   008K.2  06ab56b  feat(admin): customer address management
+  008K.3  f71cac1  feat(admin): user management surface
+  008K.3  5c156cb  feat(auth): admin password reset, sign-out page,
+                   correct redirects
 
 **Depends on:** Stage 007B (order schema), Stage 007A
 (customer groups), Stage 005 (admin shell and RBAC schema).

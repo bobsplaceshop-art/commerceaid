@@ -4,7 +4,7 @@
 **Path (Windows):** C:\projects\commerceaid
 **Path (WSL):** /mnt/c/projects/commerceaid
 **Document date:** 2026-09-28
-**Current status:** Stage 008G complete. Next: 008G.1 (wishlist).
+**Current status:** Stage 008K.3 complete. Next: 008K.4 (admin roles).
 
 ---
 
@@ -1939,3 +1939,87 @@ has no way to reach it. Same error message, different cause.
      for any route that reaches it. The CLI test boots
      faster than a browser and gives the same failure mode
      for container errors.
+
+---
+
+### Pattern 35 - Two audiences on one origin share a cookie jar
+
+**Problem:** When the same origin serves two authenticated audiences
+(admin at `/commerce/ca-admin` and customers at `/account`), the
+browser sends the same cookies with every request. A session cookie
+scoped to the origin is sent to *every* path on that origin, not just
+the path that issued it. This is correct HTTP behaviour and it is the
+source of a subtle bug class.
+
+**The tell:** an authenticated user from audience A visits a login or
+password-reset route belonging to audience B, and is silently redirected
+to a wrong destination (often the storefront home or a generic landing
+page) rather than the login form. The user is not told why. The redirect
+target is often a default chosen for the *other* audience.
+
+**Concretely in this codebase:** `GuestMiddleware` guards `/login` (admin). Its default redirect target is `/`. When an admin with a live
+session visits `/login` - after logout, after a forwarded link, after a
+bookmark - the middleware fires, `Auth::check()` returns true, and the
+admin is redirected to `/`, the storefront home. From the merchant's
+point of view, clicking "Sign out" seemed to land on "a generic page."
+The actual sequence: logout succeeded, `/login` was reached, `guest`
+bounced to `/`.
+
+**The fix has two parts:**
+
+1. **Per-audience middleware bindings.** `GuestMiddleware` must be bound
+   by the product that knows its audience, with an explicit redirect
+   target. In `CommerceServiceProvider`:
+
+   ```php
+   $c->singleton(GuestMiddleware::class,
+       fn() => new GuestMiddleware(
+           $c->get(Auth::class),
+           '/commerce/ca-admin'
+       ));
+   ```
+
+   The Platform default (`'/'`) is correct for a product without a
+   distinct admin dashboard. Commerce has one, so it overrides.
+
+2. **Cross-audience flows must clear the previous session.** When a
+   route's purpose is to hand off to an audience that is not the
+   currently authenticated one, explicitly log the current user out
+   first. In `AdminUserController::completeInvite()`:
+
+   ```php
+   $this->container->get(Auth::class)->logout();
+   ```
+
+   This ensures the invitee lands on the login form even if they arrived
+   in a browser that was already authenticated as a different user. In
+   production (fresh device, no session), the call is a no-op.
+
+**What also helps:** a dedicated post-logout page (`GET /logout/done`)
+instead of redirecting to `/login`. The login route is a guest route.
+Sending a freshly-logged-out user there is a subtle double-signal: the
+user is both "logged out" and "not a guest." A dedicated page reads
+cleanly and does not depend on the guest middleware's behaviour.
+
+**Where we hit it:** Stage 008K.3, session 2026-10-10. Fresh Tester
+invite-accept in the merchant's browser landed on `/` instead of
+`/login`. Root cause: the admin session cookie was still present,
+`guest` fired, and the middleware's default target was `/`.
+
+**Related patterns:**
+
+  - Pattern 22 (prefix-match active state) - a different kind of
+    "wrong target by default."
+  - The `RedirectGuardhelper - validates `?intended=` values so a
+    stale or malicious redirect target cannot cross audiences.
+
+**Prevention checklist when adding an authenticated surface:**
+
+1. Ask: is there a second authenticated audience on this origin?
+   If yes, the middleware default is a trap.
+2. Any `guest`-style middleware needs an explicit redirect target
+   matching the audience it protects.
+3. Any flow that ends at another audience's login page must log out
+   the current session first.
+4. Any post-logout redirect must go somewhere that is not a guest
+   route.
