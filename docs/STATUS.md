@@ -2,7 +2,7 @@
 
 **As of:** 2026-10-10
 **Version:** 0.22.0-alpha
-**Stage:** 008K.4 complete. Next: 008K.5 (admin coupons).
+**Stage:** 008K.4 complete. Next: 008K.5 (Order Pricing Engine).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -182,11 +182,13 @@ visible everywhere, custom roles scoped to their store.
     defaults), AdminRoleController, four views, seven
     routes, sidebar swap, and the permission matrix CSS.
 
-**Next sub-stage:** 008K.5 (Admin Coupons). Last sub-stage
-of the 008K stage. New commerce_coupons schema, admin
-CRUD, storefront apply at cart and checkout. After that,
-008H (Returns & Refunds) resumes with the admin queue
-that was paused at the start of 008K.
+**Next sub-stage:** 008K.5 (Order Pricing Engine). Last
+sub-stage of the 008K stage. Delivers coupons, tax, and
+shipping as one coupled feature - they all compute into
+the same totals formula in CheckoutService::placeOrder().
+Three sessions. After that, 008H (Returns & Refunds)
+resumes with the admin queue that was paused at the start
+of 008K.
 
 **008H status:** paused. The returns work on disk
 (commits 50f77b6 and 8a3e56b) stays on `main`. Session 3

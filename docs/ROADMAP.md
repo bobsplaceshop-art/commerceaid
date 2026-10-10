@@ -15,6 +15,66 @@ Adding a stage or reordering requires updating this document first.
 
 ---
 
+## Coupling Principle
+
+Features that share a schema, a calculation, or a workflow are
+shipped as one stage. The test is: would shipping A first
+require rewriting code when B ships? If yes, they are one
+stage.
+
+The principle exists because shipping half a computation
+means the second half rewrites the first. Two examples:
+
+  Coupons, tax, and shipping all compute into the same
+  totals formula in CheckoutService::placeOrder(). Shipping
+  coupons alone puts discount before tax in the code. Then
+  the tax engine ships and the formula has to change to
+  compute tax on the discounted base. The coupon work is
+  rewritten. The three subsystems ship together as the
+  Order Pricing Engine (008K.5).
+
+  Store builder and theme engine both define the
+  storefront's visual layer. The store builder edits the
+  sections a theme renders. Shipping the builder without
+  the theme engine means the section registry is written
+  twice. They ship together.
+
+The principle is a guideline, not a law. Three cases where
+separate shipping is correct:
+
+  - When the shared surface is trivially small. A two-line
+    helper shared by two features does not justify merging
+    the stages.
+  - When one feature is a dependency of the other but the
+    coupling is one-directional. Newsletter (008I) depends
+    on Message Center (008G.3) but Message Center ships
+    standalone and uses nothing from Newsletter.
+  - When the feature sets are large enough that shipping
+    them together would produce an unreviewable stage.
+    Splitting is correct if the split is clean.
+
+Applying the principle to the current roadmap:
+
+  - 008K.5 becomes Order Pricing Engine: Coupons, Tax,
+    Shipping. The three subsystems compute the same totals
+    formula.
+
+  - Stage 010 loses tax and shipping. It becomes Payments
+    (Deep) only. It gains the responsibility of wiring
+    refunds to the payment provider (consuming
+    ReturnRequestService::processRefund() from 008H).
+
+  - Stage 011 splits into 011 Advanced Commerce and
+    012 Store Builder. Subscriptions, gift cards, and
+    loyalty share nothing with the store builder UI. They
+    were bundled under a single name because they were
+    scheduled at the same time, not because they are
+    coupled.
+
+  - Stage 012 renumbers to 013. Theme Engine and Page
+    Builder merge with Store Builder's section registry,
+    which is what the original 012 plan already required.
+
 ## Completed Stages
 
 | Stage | Title                                  | Completed  |
@@ -78,11 +138,11 @@ Also completed outside the staged sequence:
 
 Stage 008K - Admin Surface Completion.
 
-  008K.1  Admin Orders        complete 2026-10-06
-  008K.2  Admin Customers     complete 2026-10-06
-  008K.3  Admin Users         complete 2026-10-10
-  008K.4  Admin Roles         complete 2026-10-10
-  008K.5  Admin Coupons       opens next
+  008K.1  Admin Orders             complete 2026-10-06
+  008K.2  Admin Customers          complete 2026-10-06
+  008K.3  Admin Users              complete 2026-10-10
+  008K.4  Admin Roles              complete 2026-10-10
+  008K.5  Order Pricing Engine     opens next
 
 Stage 008H (Returns & Refunds) is paused. Its Session 3
 (the admin returns queue) is fully unblocked now that
@@ -116,10 +176,13 @@ land in.
 | 008K.2 | Admin Customers | List, detail, address book management, order history, group assignment, account state management. | Complete 2026-10-06 |
 | 008K.3 | Admin Users | List, invite, role assignment, deactivate/reactivate, password reset trigger. | Complete 2026-10-10 |
 | 008K.4 | Admin Roles | List, create custom roles, permission matrix editor, multi-store scoping, full permission vocabulary. | Complete 2026-10-10 |
-| 008K.5 | Admin Coupons | New commerce_coupons schema, admin CRUD, storefront apply at cart and checkout. | Next |
+| 008K.5 | Order Pricing Engine | Coupons (schema, admin CRUD, storefront apply), tax classes and rates, shipping methods and zones. Rebuilds the totals computation in CheckoutService::placeOrder() in the correct sequence: subtotal, then discount, then tax on the discounted base, then shipping. | Next |
 
-Each sub-stage is a session or two. The whole stage is
-roughly five sessions.
+008K.1 through 008K.4 were each a session or two. 008K.5
+is a larger stage - roughly three sessions - because the
+coupling principle merges three subsystems that share the
+same totals computation. The whole 008K stage is roughly
+eight sessions.
 
 **Commits:**
 
@@ -249,68 +312,6 @@ These are captured as Open Questions, to be resolved in the
 007C plan document before code is written.
 
 
-### Stage 008G.1 - Wishlist
-
-**Goal:** Customers can save products for later. Per-customer
-for logged-in customers, per-session for guests. Merge on
-login, same pattern as the cart.
-
-**Deliverables:**
-
-- `commerce_wishlists` table (store_id, customer_id, session_id,
-  created_at, updated_at) or a simpler per-customer table.
-- `WishlistRepository` + `WishlistService`.
-- Add/remove from the product card (heart icon always visible)
-  and the product detail page.
-- `/account/wishlist` page.
-- Optional: "Add all to cart" button on the wishlist page.
-- Merge guest session wishlist into the customer's DB wishlist
-  on login (same pattern as CartService::mergeGuestCartOnLogin).
-
-**Depends on:** Stage 008F.1 (account shell).
-
-### Stage 008G.2 - Recently Viewed
-
-**Goal:** Track products the customer viewed. Show them on
-/account/recent. A returning customer can pick up where they
-left off.
-
-**Deliverables:**
-
-- `commerce_recently_viewed` table. Per-session for guests,
-  per-customer for logged-in. Bounded to N most recent
-  (e.g. 50), oldest rotates out.
-- Record on each product detail page load (deduplicated by
-  product_id within a 24h window).
-- `/account/recent` page with clear history option.
-- Merge guest session history into the customer history on
-  login (same pattern as wishlist).
-
-**Depends on:** Stage 008F.1 (account shell).
-
-### Stage 008G.3 - Message Center
-
-**Goal:** A unified notification surface for the customer.
-System messages, order updates, promotions. Reads from
-`core_notifications` (already exists from Platform).
-
-**Deliverables:**
-
-- `/account/messages` page with tabs:
-    System Message    - platform announcements, policy changes
-    Order Updates     - order status transitions
-    Promotions        - marketing, opt-in only
-- Unread count badge in the account sidebar (F.1 placeholder
-  filled here).
-- Mark as read, bulk mark-all-read.
-- Preferences page: which categories the customer wants by
-  email vs in-app. Ties into the Platform's
-  NotificationRuleService.
-- Email digest stub (real sending is Stage 010).
-
-**Depends on:** Stage 008F (order status events feed the
-Order Updates tab), Stage 008F.1 (shell).
-
 ### Stage 008I - Newsletter & Email Campaigns
 
 **Goal:** An inbuilt newsletter and campaign system. No
@@ -435,63 +436,6 @@ order lifecycle; returns are not.
 These are captured as Open Questions, to be resolved in
 the 008I plan document before code is written.
 
-### Stage 008G.4d - Category Filters
-
-**Goal:** Add product filtering on the category detail page
-(`/categories/{slug}`). The category detail currently shows
-a bare product grid. Add the same filter surface the
-`/products` catalog page has: search, brand, price range,
-attribute facets.
-
-**Why:** the `/products` page already has filters. The
-category detail page has none. A merchant's customers
-browsing by category have no way to narrow the results.
-For a category with 200 products, that is unusable.
-
-**Scope:**
-
-  - Reuse the filter component from `/products`. The
-    CatalogFilterBar partial (`_filters.php` or similar)
-    becomes shared between the catalog index and the
-    category detail.
-  - Search box: filters products by name or SKU within
-    the category.
-  - Brand filter: dropdown of brands that have products
-    in this category.
-  - Price range: min/max numeric inputs.
-  - Attribute facets: variant-axis and informational
-    attributes mapped to the category. Each renders as
-    checkboxes for its values.
-  - Sort dropdown: newest, price ascending, price
-    descending, name.
-  - URL state: filters live in query parameters so
-    bookmarked URLs work.
-  - Active filter chips: a row above the grid showing
-    which filters are applied, each with an X to remove.
-  - Pagination preserves the filter set.
-
-**Depends on:** 008G (storefront polish). No dependency on
-the media library stage; runs in parallel with 008G.4a.2.
-
-**Sequenced:** after 008G.4a.2 (product media), before
-008G.4b (PWA). Filters on a page full of placeholder images
-is less useful than filters on a page full of real product
-photos.
-
-**Open questions:**
-
-  - Should the filter component be a shared partial or a
-    view model passed by both controllers?
-  - Should attribute facets come from the product's
-    informational attributes only, or also from variant
-    axes (Color / Size, which are already variant
-    attributes)?
-  - Should the filters be AJAX-driven (partial page
-    update) or full page reload?
-
-These are captured as Open Questions, to be resolved in
-the 008G.4d plan document before code is written.
-
 ### Stage 008H - Returns & Refunds
 
 **Status:** Paused 2026-10-05. Resuming after Stage 008K.
@@ -538,7 +482,25 @@ page that does not exist. Building returns on a foundation
 without orders is half a workflow. Stage 008K.1 (Admin
 Orders) unblocks this.
 
-**Depends on:** Stage 008K.1 (admin orders detail page).
+**Resumes after:** Stage 008K.5 (Order Pricing Engine). Once
+the pricing engine ships, the order totals and the refund
+arithmetic share one source of truth. Before that, the
+customer-facing refund rows stay dormant.
+
+**Refund API wiring is deferred to Stage 010.** Session 3
+of this stage ships the admin return queue and calls
+`ReturnRequestService::processRefund()`. That method updates
+`refunded_total`, `payment_status`, and the order item's
+`returned_quantity`. The actual money movement - calling
+the payment provider's refund API - lands with the
+Payments (Deep) stage. Splitting the intent from the money
+movement is correct because the payment providers do not
+exist until Stage 010. The `refunded_total` column becomes
+the authoritative record of what is owed; Stage 010
+reconciles it against the provider.
+
+**Depends on:** Stage 008K.1 (admin orders detail page),
+Stage 008K.5 (pricing engine).
 
 **Compliance:** closes COMPLIANCE-DE.md entry 8 (the 14-day
 Widerrufsrecht window). The entry moves from Deferred to
@@ -563,27 +525,44 @@ written at Session 3 open).
 
 **Depends on:** Stages 008 (storefront), 007 (customers)
 
-### Stage 010 - Payments & Shipping (Deep)
+### Stage 010 - Payments (Deep)
 
-**Goal:** Full payment provider integrations and shipping engine.
+**Goal:** Full payment provider integrations. Real money
+movement: charging cards, moving M-Pesa, calling Stripe,
+handling webhooks, issuing refunds through the provider.
+
+**Why shipping and tax are not here:** both move to
+008K.5 (Order Pricing Engine). They compute into the same
+totals formula that coupons compute into. Shipping them
+in a later stage would force a rewrite of the coupon code
+from 008K.5. The coupling principle places them where they
+belong.
 
 **Deliverables:**
 
 - Payment provider registry
 - Reference implementations: M-Pesa, Stripe, PayPal, Pesapal,
   Flutterwave, Manual, COD, Bank Transfer
-- Webhook handling per provider, refund processing
-- Shipping zones, methods, rates (flat, free-over, weight-based,
-  price-based, local pickup)
-- Shipping carrier integrations (DHL, FedEx optional)
-- Tax engine: tax classes, rates per region, inclusive/exclusive
+- Webhook handling per provider
+- Refund processing: consume `ReturnRequestService::processRefund()`
+  from 008H Session 3 and call the provider's refund API.
+  The `refunded_total` column is the authoritative record of
+  what is owed; the provider's response is the confirmation
+  that it moved.
+- Payment state on the order: `paid_total` incremented as
+  payments clear. `payment_status` transitions from
+  `unpaid` to `paid` (or `partial_refunded` / `refunded`
+  when applicable).
 
-**Depends on:** Stage 008E (checkout)
+**Depends on:** Stage 008E (checkout), Stage 008K.5 (pricing
+engine - the order totals are now the source of truth),
+Stage 008H (returns - the refund intent is written).
 
-### Stage 011 - Advanced Commerce + Store Builder
+### Stage 011 - Advanced Commerce
 
-**Goal:** Subscriptions, gift cards, multi-location inventory,
-and the store builder admin UI.
+**Goal:** Consumer features that extend the basic purchase
+flow. Subscriptions, gift cards, multi-location inventory,
+and loyalty programs.
 
 **Deliverables:**
 
@@ -592,36 +571,83 @@ and the store builder admin UI.
 - Multi-location inventory: warehouses, transfers
 - BOPIS: buy online pick up in store
 - Store credit, loyalty points
-- **Store builder admin UI:**
-  - `commerce_homepage_sections` table (section type, order,
-    config JSON)
-  - `commerce_navigation_menu_items` table (header + footer nav)
-  - `commerce_store_trust_badges`, `commerce_store_social_links`
-  - Drag-drop section editor
-  - Live preview using the storefront views
-  - Section type registry
 
-**Depends on:** Stages 006-010
+**Depends on:** Stages 006-010. The store builder (012) and
+the theme engine (013) are separate concerns.
 
-### Stage 012 - Theme Engine & Page Builder
+**Why separate from the store builder:** subscriptions,
+gift cards, and loyalty change what a customer can buy and
+how. The store builder changes how the storefront looks.
+They share no schema, no calculation, and no workflow. The
+coupling principle does not apply.
 
-**Goal:** Full storefront theming system with 20+ industry themes.
+### Stage 012 - Store Builder
+
+**Goal:** The admin UI for editing the storefront's
+structure and content without touching code. The homepage
+sections, navigation menus, trust badges, and social links.
+
+**Deliverables:**
+
+- `commerce_homepage_sections` table (section type, order,
+  config JSON)
+- `commerce_navigation_menu_items` table (header + footer nav)
+- `commerce_store_trust_badges`, `commerce_store_social_links`
+- Drag-drop section editor
+- Live preview using the storefront views
+- Section type registry (the block types a merchant can
+  place on the homepage)
+- Per-section configuration forms (which category, how many
+  products, sort order, etc.)
+
+**Companion to:** Stage 013 (Theme Engine & Page Builder).
+The store builder edits the sections; the theme engine
+renders them in different visual styles. The data model
+(the section registry) is shared between the two. They are
+coupled and should be built with the second in mind. The
+Store Builder ships the editing surface; the Theme Engine
+ships the visual templates and the page builder that
+renders the same sections on non-homepage pages.
+
+**Depends on:** Stages 006-011.
+
+### Stage 013 - Theme Engine & Page Builder
+
+**Goal:** Full storefront theming system with 20+ industry
+themes. This is the layer that consumes the section registry
+defined by the Store Builder.
 
 **Deliverables:**
 
 - Theme contract (directory structure, theme.json manifest)
 - Theme registry: install, activate, list, preview
 - Theme customizer: colours, fonts, layout, live preview
-- Page builder: section registry, drag-drop ordering
-- Section types: hero, product grid, category grid, testimonials,
-  rich text, video, banner, newsletter, FAQ, form, spacer
-- Navigation management
+- Page builder: renders the same section types as the
+  Store Builder, but on arbitrary pages (not just the
+  homepage)
+- Section types: hero, product grid, category grid,
+  testimonials, rich text, video, banner, newsletter,
+  FAQ, form, spacer
+- Navigation management (reads the menu data written by
+  the Store Builder)
 - At least 20 themes: Modern, Minimal, Fashion, Luxury,
-  Electronics, Furniture, Grocery, Restaurant, Services, Beauty,
-  Home & Living, Gifts, Pharmacy, Wholesale/B2B, Kids, Sports,
-  Auto Parts, Real Estate, Digital Products, Marketplace
+  Electronics, Furniture, Grocery, Restaurant, Services,
+  Beauty, Home & Living, Gifts, Pharmacy, Wholesale/B2B,
+  Kids, Sports, Auto Parts, Real Estate, Digital Products,
+  Marketplace
 
-**Depends on:** All prior stages
+**Depends on:** All prior stages. In particular the Store
+Builder (012) defines the section registry that the theme
+engine renders.
+
+**Why paired with the Store Builder:** the two stages
+define one layer - how the storefront is composed and
+displayed. The Store Builder is the editing UI. The Theme
+Engine is the rendering layer plus the style catalogue.
+Shipping the Store Builder alone produces a data model
+nothing renders. Shipping the Theme Engine alone produces
+templates with no editable source. They ship as adjacent
+stages with a shared data model.
 
 ---
 
@@ -643,7 +669,8 @@ search without code changes. Defaults remain the current set.
 
 The `data-sf-section` attributes are already in place on every
 homepage section. The UI to reorder them from the admin panel
-lands with Stage 011 (Advanced Commerce + Store Builder).
+lands with Stage 012 (Store Builder) and Stage 013
+(Theme Engine & Page Builder).
 
 ### Media Library
 
@@ -727,7 +754,7 @@ the themed version) the theme engine. Small feature, but it
 spans three layers.
 
 Likely stage: 008G (PWA, Search, Storefront Polish) for the
-basic version, or 011 (Advanced Commerce + Store Builder)
+basic version, or 012 (Store Builder)
 for the themed version with per-store templates.
 
 ### Data Import (CSV / Excel)
