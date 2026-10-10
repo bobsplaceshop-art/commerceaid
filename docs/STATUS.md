@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-10-10
-**Version:** 0.21.0-alpha
-**Stage:** 008K.3 complete. Next: 008K.4 (admin roles).
+**Version:** 0.22.0-alpha
+**Stage:** 008K.4 complete. Next: 008K.5 (admin coupons).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -155,53 +155,56 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008K.3 complete
+## Current Focus — Stage 008K.4 complete
 
-**Deliverable shipped:** the merchant-facing users
-surface. Orders, Customers, and Users are now real
-admin pages. Only Roles and Coupons remain as
-placeholders in the sidebar.
+**Deliverable shipped:** the complete RBAC layer. Roles is
+now a real admin surface with list, create, edit, delete,
+and a permission matrix covering every capability in the
+platform. Only Coupons remains as a sidebar placeholder.
 
-The merchant can invite team members by email, assign
-roles from the six seeded defaults, edit profile
-fields, deactivate and reactivate accounts, and
-trigger password resets. Invitees activate their
-account via a tokenized link and set their own
-password. The admin password reset flow is also live
-(new `/password/forgot` and `/login/reset/{token}`).
+The merchant can create custom roles, toggle any subset of
+the 49 seeded permissions, and assign roles to users. The
+super-admin role is locked as the platform's recovery
+anchor. Multi-store scoping is in place: global roles
+visible everywhere, custom roles scoped to their store.
 
-**Stage close:** 008K.3 shipped in two commits.
+**Stage close:** 008K.4 shipped in two commits.
 
-  - `f71cac1` feat(admin): user management surface (008K.3).
-    The controller, five views, email template, five
-    UserRepository methods, and ten routes.
-  - `5c156cb` feat(auth): admin password reset, sign-out
-    page, correct redirects. Three related fixes:
-    the admin forgot/reset flow, the dedicated
-    `/logout/done` page, and per-audience redirect
-    targets (GuestMiddleware binding override,
-    completeInvite session clear, AppUrl extraction).
+  - `f637871` fix(rbac): standardize super-admin slug checks.
+    The seeded slug is 'super-admin' (hyphenated); four
+    code locations checked 'super_admin'. Two guards in
+    the user surface were inert. Found during the 008K.4
+    read pass.
+  - `ff6bd9c` feat(rbac): roles editor and full permission
+    vocabulary. Migration 0018 (store_id on core_roles),
+    seeders 0011 (role management permissions) and 0012
+    (49 permissions across 11 modules plus curated role
+    defaults), AdminRoleController, four views, seven
+    routes, sidebar swap, and the permission matrix CSS.
 
-**Next sub-stage:** 008K.4 (Admin Roles). List, create
-custom roles, permission matrix editor. Same shape as
-Users: index + edit + permission checkboxes. After
-that, 008K.5 (Admin Coupons) closes the 008K stage.
-Then 008H (Returns & Refunds) resumes with the admin
-queue that was paused at the start of 008K.
+**Next sub-stage:** 008K.5 (Admin Coupons). Last sub-stage
+of the 008K stage. New commerce_coupons schema, admin
+CRUD, storefront apply at cart and checkout. After that,
+008H (Returns & Refunds) resumes with the admin queue
+that was paused at the start of 008K.
 
 **008H status:** paused. The returns work on disk
-(commits 50f77b6 and 8a3e56b) stays on `main`.
-Session 3 (the admin returns queue) is unblocked now
-that both the orders surface (008K.1) and the users
-surface (008K.3) exist. It can resume before 008K.4
-if the queue is needed sooner.
+(commits 50f77b6 and 8a3e56b) stays on `main`. Session 3
+(the admin returns queue) is fully unblocked - orders,
+customers, users, and roles all exist. It resumes after
+008K.5 closes.
 
-**Pattern 35 recorded:** two audiences on one origin
-share a cookie jar. The `GuestMiddleware` default
-redirect target of `/` was wrong for the admin
-audience. Fixed in this stage. See `docs/REMEMBER.md`
-Pattern 35 for the full writeup and prevention
-checklist.
+**Pattern 35 recorded earlier in this session** (in the
+008K.3 arc): two audiences on one origin share a cookie
+jar. The `GuestMiddleware` default redirect target of `/`
+was wrong for the admin audience. Fixed at that time.
+
+**Permission vocabulary grew to 49.** Across 11 modules:
+core (10), commerce (4), catalog (16), inventory (4),
+orders (2), customers (2), groups (2), approvals (2),
+media (3), review (2), legal (2). Future stages that add
+admin surfaces add slugs to this family and assign
+defaults; the roles editor picks them up automatically.
 
 ---
 
@@ -300,9 +303,9 @@ new code.
 
 ## Next 3 Stages
 
-- **008K.4** (now): Admin Roles
-- **008K.5**: Admin Coupons
+- **008K.5** (now): Admin Coupons
 - **008H**: Returns & Refunds (resumes; admin queue)
+- **009**: Forms & Submissions
 
 Then 008K closes and 008H closes its remaining session.
 

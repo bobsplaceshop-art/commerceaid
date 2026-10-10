@@ -81,13 +81,14 @@ Stage 008K - Admin Surface Completion.
   008K.1  Admin Orders        complete 2026-10-06
   008K.2  Admin Customers     complete 2026-10-06
   008K.3  Admin Users         complete 2026-10-10
-  008K.4  Admin Roles         opens next
-  008K.5  Admin Coupons       planned
+  008K.4  Admin Roles         complete 2026-10-10
+  008K.5  Admin Coupons       opens next
 
 Stage 008H (Returns & Refunds) is paused. Its Session 3
-(the admin returns queue) is unblocked by 008K.1 and
-008K.3. Resumes after 008K.5, or earlier if the queue is
-needed sooner.
+(the admin returns queue) is fully unblocked now that
+orders, customers, users, and roles all exist as real
+admin surfaces. It resumes after 008K.5 closes, or
+earlier if the queue is needed sooner.
 
 ## Planned Stages
 
@@ -114,8 +115,8 @@ land in.
 | 008K.1 | Admin Orders | List with filters, detail with line items and status history, status transition actions. Feeds 008H and Stage 010. | Complete 2026-10-06 |
 | 008K.2 | Admin Customers | List, detail, address book management, order history, group assignment, account state management. | Complete 2026-10-06 |
 | 008K.3 | Admin Users | List, invite, role assignment, deactivate/reactivate, password reset trigger. | Complete 2026-10-10 |
-| 008K.4 | Admin Roles | List, create custom roles, permission matrix editor. | Next |
-| 008K.5 | Admin Coupons | New commerce_coupons schema, admin CRUD, storefront apply at cart and checkout. | Planned |
+| 008K.4 | Admin Roles | List, create custom roles, permission matrix editor, multi-store scoping, full permission vocabulary. | Complete 2026-10-10 |
+| 008K.5 | Admin Coupons | New commerce_coupons schema, admin CRUD, storefront apply at cart and checkout. | Next |
 
 Each sub-stage is a session or two. The whole stage is
 roughly five sessions.
@@ -128,6 +129,8 @@ roughly five sessions.
   008K.3  f71cac1  feat(admin): user management surface
   008K.3  5c156cb  feat(auth): admin password reset, sign-out page,
                    correct redirects
+  008K.4  f637871  fix(rbac): standardize super-admin slug checks
+  008K.4  ff6bd9c  feat(rbac): roles editor and full permission vocabulary
 
 **Depends on:** Stage 007B (order schema), Stage 007A
 (customer groups), Stage 005 (admin shell and RBAC schema).
