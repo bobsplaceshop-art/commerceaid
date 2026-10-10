@@ -19,6 +19,9 @@ use CorporateAid\Commerce\Controllers\Admin\AdminOrderController;
 use CorporateAid\Commerce\Controllers\Admin\AdminCustomerController;
 use CorporateAid\Commerce\Controllers\Admin\AdminUserController;
 use CorporateAid\Commerce\Controllers\Admin\AdminRoleController;
+use CorporateAid\Commerce\Controllers\Admin\AdminCouponController;
+use CorporateAid\Commerce\Controllers\Admin\AdminTaxController;
+use CorporateAid\Commerce\Controllers\Admin\AdminShippingController;
 
 /** @var Router $router */
 
@@ -388,6 +391,146 @@ $router->post('/commerce/ca-admin/roles/{id}/delete',
 $router->post('/commerce/ca-admin/roles/{id}',
     [AdminRoleController::class, 'update'],
     ['store', 'auth', 'csrf', 'permission:core.roles.edit']);
+
+// =====================================================================
+// Admin - Coupons (Stage 008K.5)
+// =====================================================================
+// Granular permissions:
+//   coupons.view    - list, edit view
+//   coupons.create  - new, create
+//   coupons.edit    - update
+//   coupons.delete  - delete, delete-info
+//
+// Specific routes (create, delete-info) must precede the {id}
+// wildcard routes. See Pattern 7.
+$router->get('/commerce/ca-admin/coupons',
+    [AdminCouponController::class, 'index'],
+    ['store', 'auth', 'permission:coupons.view']);
+
+$router->get('/commerce/ca-admin/coupons/create',
+    [AdminCouponController::class, 'showCreate'],
+    ['store', 'auth', 'permission:coupons.create']);
+
+$router->post('/commerce/ca-admin/coupons',
+    [AdminCouponController::class, 'store'],
+    ['store', 'auth', 'csrf', 'permission:coupons.create']);
+
+$router->get('/commerce/ca-admin/coupons/{id}/edit',
+    [AdminCouponController::class, 'showEdit'],
+    ['store', 'auth', 'permission:coupons.view']);
+
+$router->get('/commerce/ca-admin/coupons/{id}/delete-info',
+    [AdminCouponController::class, 'deleteInfo'],
+    ['store', 'auth', 'permission:coupons.delete']);
+
+$router->post('/commerce/ca-admin/coupons/{id}/delete',
+    [AdminCouponController::class, 'destroy'],
+    ['store', 'auth', 'csrf', 'permission:coupons.delete']);
+
+$router->post('/commerce/ca-admin/coupons/{id}',
+    [AdminCouponController::class, 'update'],
+    ['store', 'auth', 'csrf', 'permission:coupons.edit']);
+
+// =====================================================================
+// Admin - Tax (Stage 008K.5)
+// =====================================================================
+// Granular permissions:
+//   tax.view    - list, edit views
+//   tax.manage  - create, update, delete
+//
+// The specific routes (classes, rates/create, rates/{id}/edit)
+// must precede the wildcard {type}/{id} routes. See Pattern 7.
+$router->get('/commerce/ca-admin/tax',
+    [AdminTaxController::class, 'index'],
+    ['store', 'auth', 'permission:tax.view']);
+
+$router->post('/commerce/ca-admin/tax/classes',
+    [AdminTaxController::class, 'storeClass'],
+    ['store', 'auth', 'csrf', 'permission:tax.manage']);
+
+$router->post('/commerce/ca-admin/tax/classes/{id}',
+    [AdminTaxController::class, 'updateClass'],
+    ['store', 'auth', 'csrf', 'permission:tax.manage']);
+
+$router->get('/commerce/ca-admin/tax/rates/create',
+    [AdminTaxController::class, 'showCreateRate'],
+    ['store', 'auth', 'permission:tax.view']);
+
+$router->post('/commerce/ca-admin/tax/rates',
+    [AdminTaxController::class, 'storeRate'],
+    ['store', 'auth', 'csrf', 'permission:tax.manage']);
+
+$router->get('/commerce/ca-admin/tax/rates/{id}/edit',
+    [AdminTaxController::class, 'showEditRate'],
+    ['store', 'auth', 'permission:tax.view']);
+
+$router->post('/commerce/ca-admin/tax/rates/{id}',
+    [AdminTaxController::class, 'updateRate'],
+    ['store', 'auth', 'csrf', 'permission:tax.manage']);
+
+// Wildcard routes last.
+$router->get('/commerce/ca-admin/tax/{type}/{id}/delete-info',
+    [AdminTaxController::class, 'deleteInfo'],
+    ['store', 'auth', 'permission:tax.manage']);
+
+$router->post('/commerce/ca-admin/tax/{type}/{id}/delete',
+    [AdminTaxController::class, 'destroy'],
+    ['store', 'auth', 'csrf', 'permission:tax.manage']);
+
+// =====================================================================
+// Admin - Shipping (Stage 008K.5)
+// =====================================================================
+// Granular permissions:
+//   shipping.view    - list, edit views
+//   shipping.manage  - create, update, delete
+//
+// The specific routes (methods/create, methods/{id}/edit,
+// zones/create, zones/{id}/edit) must precede the wildcard
+// {type}/{id} routes. See Pattern 7.
+$router->get('/commerce/ca-admin/shipping',
+    [AdminShippingController::class, 'index'],
+    ['store', 'auth', 'permission:shipping.view']);
+
+$router->get('/commerce/ca-admin/shipping/methods/create',
+    [AdminShippingController::class, 'showCreateMethod'],
+    ['store', 'auth', 'permission:shipping.view']);
+
+$router->post('/commerce/ca-admin/shipping/methods',
+    [AdminShippingController::class, 'storeMethod'],
+    ['store', 'auth', 'csrf', 'permission:shipping.manage']);
+
+$router->get('/commerce/ca-admin/shipping/methods/{id}/edit',
+    [AdminShippingController::class, 'showEditMethod'],
+    ['store', 'auth', 'permission:shipping.view']);
+
+$router->post('/commerce/ca-admin/shipping/methods/{id}',
+    [AdminShippingController::class, 'updateMethod'],
+    ['store', 'auth', 'csrf', 'permission:shipping.manage']);
+
+$router->get('/commerce/ca-admin/shipping/zones/create',
+    [AdminShippingController::class, 'showCreateZone'],
+    ['store', 'auth', 'permission:shipping.view']);
+
+$router->post('/commerce/ca-admin/shipping/zones',
+    [AdminShippingController::class, 'storeZone'],
+    ['store', 'auth', 'csrf', 'permission:shipping.manage']);
+
+$router->get('/commerce/ca-admin/shipping/zones/{id}/edit',
+    [AdminShippingController::class, 'showEditZone'],
+    ['store', 'auth', 'permission:shipping.view']);
+
+$router->post('/commerce/ca-admin/shipping/zones/{id}',
+    [AdminShippingController::class, 'updateZone'],
+    ['store', 'auth', 'csrf', 'permission:shipping.manage']);
+
+// Wildcard routes last.
+$router->get('/commerce/ca-admin/shipping/{type}/{id}/delete-info',
+    [AdminShippingController::class, 'deleteInfo'],
+    ['store', 'auth', 'permission:shipping.manage']);
+
+$router->post('/commerce/ca-admin/shipping/{type}/{id}/delete',
+    [AdminShippingController::class, 'destroy'],
+    ['store', 'auth', 'csrf', 'permission:shipping.manage']);
 
 $router->get('/commerce/ca-admin/brands/{id}/delete-info',
     [BrandController::class, 'deleteInfo'],

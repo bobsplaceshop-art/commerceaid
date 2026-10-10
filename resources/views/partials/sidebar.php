@@ -109,7 +109,7 @@ $groups = [
             ['label' => 'Customers',           'href' => '/commerce/ca-admin/customers',           'icon' => 'bi-people',            'permission' => 'customers.view'],
             ['label' => 'Customer Groups',     'href' => '/commerce/ca-admin/customer-groups',     'icon' => 'bi-people-fill'],
             ['label' => 'Customer Approvals',  'href' => '/commerce/ca-admin/customer-approvals',  'icon' => 'bi-check2-square'],
-            ['label' => 'Coupons',             'href' => '/commerce/ca-admin/coupons',             'icon' => 'bi-ticket-perforated', 'locked' => true],
+            ['label' => 'Coupons',             'href' => '/commerce/ca-admin/coupons',             'icon' => 'bi-ticket-perforated', 'permission' => 'coupons.view'],
         ],
     ],
     [
@@ -118,6 +118,8 @@ $groups = [
         'items' => [
             ['label' => 'Store Settings', 'href' => '/commerce/ca-admin/settings',      'icon' => 'bi-gear',         'permission' => 'core.settings.manage'],
             ['label' => 'Legal Pages',    'href' => '/commerce/ca-admin/legal-pages',   'icon' => 'bi-file-earmark-text', 'permission' => 'core.settings.manage'],
+            ['label' => 'Tax',            'href' => '/commerce/ca-admin/tax',      'icon' => 'bi-percent',      'permission' => 'tax.view'],
+            ['label' => 'Shipping',       'href' => '/commerce/ca-admin/shipping', 'icon' => 'bi-truck',        'permission' => 'shipping.view'],
             ['label' => 'Users',          'href' => '/commerce/ca-admin/users',    'icon' => 'bi-person-badge', 'permission' => 'core.users.view'],
             ['label' => 'Roles',          'href' => '/commerce/ca-admin/roles',    'icon' => 'bi-shield-lock',  'permission' => 'core.roles.view'],
         ],

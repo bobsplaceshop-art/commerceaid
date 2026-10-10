@@ -87,6 +87,19 @@ final class ShippingRepository extends CommerceRepository
      * either '' or NULL region (both are normalized to '' by
      * the migration).
      *
+     * Precedence: when more than one zone matches for the same
+     * method (e.g., a Berlin zone and a Germany zone both
+     * match a Berlin address), the zone with the lowest
+     * sort_order wins. This is the industry-standard
+     * most-specific-first rule. The merchant orders their
+     * zones accordingly.
+     *
+     * The correlated subquery in the WHERE clause picks the
+     * single winning zone id per method. Only that zone's row
+     * survives the outer join condition. Without this, a
+     * method with two matching zones would appear twice in
+     * the result.
+     *
      * @return array<int,array<string,mixed>>
      */
     public function methodsForDestination(string $countryCode, string $region = ''): array
@@ -98,7 +111,8 @@ final class ShippingRepository extends CommerceRepository
         return $this->db->select(
             "SELECT m.*, z.`id` AS zone_id,
                     z.`rate_override` AS zone_rate_override,
-                    z.`region` AS zone_region
+                    z.`region` AS zone_region,
+                    z.`sort_order` AS zone_sort_order
                FROM `commerce_shipping_methods` m
                INNER JOIN `commerce_shipping_zones` z
                  ON z.`method_id` = m.`id`
@@ -107,8 +121,24 @@ final class ShippingRepository extends CommerceRepository
                 AND z.`is_active` = 1
                 AND z.`country_code` = ?
                 AND (z.`region` = '' OR z.`region` = ?)
+                AND z.`id` = (
+                    SELECT z2.`id`
+                      FROM `commerce_shipping_zones` z2
+                     WHERE z2.`method_id` = m.`id`
+                       AND z2.`is_active` = 1
+                       AND z2.`country_code` = ?
+                       AND (z2.`region` = '' OR z2.`region` = ?)
+                     ORDER BY z2.`sort_order` ASC, z2.`id` ASC
+                     LIMIT 1
+                )
               ORDER BY m.`sort_order` ASC, m.`label` ASC",
-            [$this->storeId(), $countryCode, $region]
+            [
+                $this->storeId(),
+                $countryCode,
+                $region,
+                $countryCode,
+                $region,
+            ]
         );
     }
 
@@ -257,13 +287,14 @@ final class ShippingRepository extends CommerceRepository
         return $this->db->insert(
             "INSERT INTO `commerce_shipping_zones`
                 (`store_id`, `method_id`, `country_code`, `region`,
-                 `rate_override`, `is_active`)
-             VALUES (?, ?, ?, ?, ?, ?)",
+                 `sort_order`, `rate_override`, `is_active`)
+             VALUES (?, ?, ?, ?, ?, ?, ?)",
             [
                 $this->storeId(),
                 (int) $data['method_id'],
                 (string) $data['country_code'],
                 (string) ($data['region'] ?? ''),
+                (int) ($data['sort_order'] ?? 0),
                 $data['rate_override'] ?? null,
                 !empty($data['is_active']) ? 1 : 0,
             ]
@@ -278,6 +309,7 @@ final class ShippingRepository extends CommerceRepository
                 SET `method_id` = ?,
                     `country_code` = ?,
                     `region` = ?,
+                    `sort_order` = ?,
                     `rate_override` = ?,
                     `is_active` = ?
               WHERE `store_id` = ? AND `id` = ?",
@@ -285,6 +317,7 @@ final class ShippingRepository extends CommerceRepository
                 (int) $data['method_id'],
                 (string) $data['country_code'],
                 (string) ($data['region'] ?? ''),
+                (int) ($data['sort_order'] ?? 0),
                 $data['rate_override'] ?? null,
                 !empty($data['is_active']) ? 1 : 0,
                 $this->storeId(),
