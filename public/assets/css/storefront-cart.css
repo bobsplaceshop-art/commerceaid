@@ -481,3 +481,81 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* ------------------------------------------------------------
+   Coupon form and totals additions (Stage 008K.5)
+   ------------------------------------------------------------ */
+
+.sf-cart-coupon {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--sf-border, #e5e1d8);
+}
+
+.sf-cart-coupon-form .sf-field-label {
+    display: block;
+    margin-bottom: .35rem;
+}
+
+.sf-cart-coupon-row {
+    display: flex;
+    gap: .5rem;
+    align-items: stretch;
+}
+
+.sf-cart-coupon-row .sf-input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sf-cart-coupon-row .sf-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.sf-cart-coupon-applied {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .5rem .75rem;
+    background: var(--sf-surface-alt, #f8f5ef);
+    border: 1px solid var(--sf-border, #e5e1d8);
+    border-radius: 4px;
+    font-size: .9rem;
+}
+
+.sf-cart-coupon-applied code {
+    padding: .05rem .35rem;
+    background: rgba(198, 161, 91, 0.15);
+    border-radius: 3px;
+    color: var(--sf-accent, #C6A15B);
+    font-weight: 600;
+}
+
+.sf-link-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--sf-muted, #777777);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: .85rem;
+    font-family: inherit;
+}
+
+.sf-link-btn:hover {
+    color: var(--sf-accent, #C6A15B);
+}
+
+.sf-cart-summary-discount {
+    color: #7a9a5e;
+    font-weight: 500;
+}
+
+.sf-cart-summary-note {
+    margin-top: .75rem;
+    margin-bottom: 0;
+    line-height: 1.4;
+    font-size: .8rem;
+}

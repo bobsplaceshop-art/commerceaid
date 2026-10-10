@@ -7,6 +7,9 @@
  *   $subtotal  float
  *   $count     int
  *   $isEmpty   bool
+ *   $pricing   array<string,mixed>  totals preview from
+ *                                   OrderPricingService. Empty
+ *                                   when the cart is empty.
  *
  * The layout renders flash messages globally. This view does
  * not render flash.
@@ -18,6 +21,11 @@ $lines    = $lines    ?? [];
 $subtotal = $subtotal ?? 0.0;
 $count    = $count    ?? 0;
 $isEmpty  = $isEmpty  ?? true;
+$pricing  = $pricing  ?? [];
+
+$discountTotal = (float) ($pricing['discount_total'] ?? 0.0);
+$grandTotal    = (float) ($pricing['grand_total']    ?? $subtotal);
+$coupon        = $pricing['coupon'] ?? null;
 ?>
 
 <div class="sf-cart-page" data-sf-page="cart">
@@ -50,25 +58,60 @@ $isEmpty  = $isEmpty  ?? true;
                 <aside class="sf-cart-summary">
                     <h2 class="sf-cart-summary-title">Order summary</h2>
 
+                    <div class="sf-cart-coupon">
+                        <?php if ($coupon !== null): ?>
+                            <div class="sf-cart-coupon-applied">
+                                <span>
+                                    Coupon
+                                    <code><?= e((string) ($coupon['code'] ?? '')) ?></code>
+                                    applied
+                                </span>
+                                <form method="POST" action="/cart/remove-coupon"
+                                      style="margin:0;">
+                                    <?= csrf_field() ?>
+                                    <button type="submit" class="sf-link-btn">Remove</button>
+                                </form>
+                            </div>
+                        <?php else: ?>
+                            <form method="POST" action="/cart/apply-coupon"
+                                  class="sf-cart-coupon-form">
+                                <?= csrf_field() ?>
+                                <label for="coupon-code" class="sf-field-label">
+                                    Coupon code
+                                </label>
+                                <div class="sf-cart-coupon-row">
+                                    <input type="text" id="coupon-code" name="code"
+                                           class="sf-input"
+                                           placeholder="Enter code"
+                                           autocomplete="off">
+                                    <button type="submit" class="sf-btn sf-btn-outline">
+                                        Apply
+                                    </button>
+                                </div>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+
                     <dl class="sf-cart-summary-list">
                         <dt>Subtotal</dt>
                         <dd><?= e(number_format($subtotal, 2)) ?></dd>
 
-                        <dt class="sf-cart-summary-note-label">Shipping</dt>
-                        <dd class="sf-cart-summary-note-value">
-                            Calculated at checkout
-                        </dd>
-
-                        <dt class="sf-cart-summary-note-label">Tax</dt>
-                        <dd class="sf-cart-summary-note-value">
-                            Calculated at checkout
-                        </dd>
+                        <?php if ($discountTotal > 0 && $coupon !== null): ?>
+                            <dt>Discount</dt>
+                            <dd class="sf-cart-summary-discount">
+                                -<?= e(number_format($discountTotal, 2)) ?>
+                            </dd>
+                        <?php endif; ?>
                     </dl>
 
                     <div class="sf-cart-summary-total">
                         <span>Total</span>
-                        <span><?= e(number_format($subtotal, 2)) ?></span>
+                        <span><?= e(number_format($grandTotal, 2)) ?></span>
                     </div>
+
+                    <p class="sf-cart-summary-note muted small">
+                        Shipping and VAT calculated at checkout.
+                    </p>
 
                     <?php
                     // Checkout link — disabled until Stage 008E.

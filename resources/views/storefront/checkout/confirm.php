@@ -6,17 +6,42 @@
  *   $state    array<string,mixed>
  *   $lines    array<int, CartLineItem>
  *   $subtotal float
+ *   $pricing  array<string,mixed>  totals from OrderPricingService
  *   $errors   array<string,string>
  */
 $state    = $state    ?? [];
 $lines    = $lines    ?? [];
 $subtotal = $subtotal ?? 0.0;
+$pricing  = $pricing  ?? [];
 $errors   = $errors   ?? [];
 
 $shipping = $state['shipping_address'] ?? [];
 $billing  = $state['billing_address']  ?? [];
 $payment  = (string) ($state['payment_method'] ?? '');
 $poNumber = (string) ($state['po_number'] ?? '');
+
+$discountTotal = (float) ($pricing['discount_total'] ?? 0.0);
+$taxTotal      = (float) ($pricing['tax_total']      ?? 0.0);
+$shippingTotal = (float) ($pricing['shipping_total'] ?? 0.0);
+$grandTotal    = (float) ($pricing['grand_total']    ?? $subtotal);
+$coupon        = $pricing['coupon'] ?? null;
+$shippingMethod = $pricing['shipping_method'] ?? null;
+$taxClasses    = is_array($pricing['tax_classes'] ?? null) ? $pricing['tax_classes'] : [];
+
+$fmt = function ($v): string {
+    return number_format((float) $v, 2);
+};
+
+$vatLabel = '';
+$vatParts = [];
+foreach ($taxClasses as $c) {
+    $rate = (float) ($c['rate_percent'] ?? 0);
+    if ($rate <= 0) continue;
+    $vatParts[] = 'inkl. ' . rtrim(rtrim(number_format($rate, 2, '.', ''), '0'), '.') . '% MwSt.';
+}
+if ($vatParts !== []) {
+    $vatLabel = implode(' · ', $vatParts);
+}
 
 $paymentLabels = [
     'cod'            => 'Cash on delivery',
@@ -84,6 +109,18 @@ $addrLine = function (array $addr): string {
                     <pre class="sf-checkout-address-preview"><?= e($addrLine($billing)) ?></pre>
                 </section>
 
+                <?php if ($shippingMethod !== null): ?>
+                    <section class="sf-checkout-block">
+                        <h2 class="sf-checkout-block-title">Shipping method</h2>
+                        <p class="mb-0"><?= e((string) ($shippingMethod['label'] ?? '')) ?></p>
+                        <?php if ($shippingTotal > 0): ?>
+                            <p class="muted small mb-0"><?= e($fmt($shippingTotal)) ?></p>
+                        <?php else: ?>
+                            <p class="muted small mb-0">Free</p>
+                        <?php endif; ?>
+                    </section>
+                <?php endif; ?>
+
                 <section class="sf-checkout-block">
                     <h2 class="sf-checkout-block-title">Payment</h2>
                     <p class="mb-0"><?= e($paymentLabel) ?></p>
@@ -98,16 +135,41 @@ $addrLine = function (array $addr): string {
                 <h2 class="sf-checkout-summary-title">Order total</h2>
                 <dl class="sf-checkout-summary-list">
                     <dt>Subtotal</dt>
-                    <dd><?= e(number_format($subtotal, 2)) ?></dd>
-                    <dt>Shipping</dt>
-                    <dd class="muted">Free</dd>
-                    <dt>VAT (incl.)</dt>
-                    <dd class="muted">Included in price</dd>
+                    <dd><?= e($fmt($subtotal)) ?></dd>
+
+                    <?php if ($discountTotal > 0 && $coupon !== null): ?>
+                        <dt>Discount</dt>
+                        <dd class="sf-checkout-summary-discount">
+                            -<?= e($fmt($discountTotal)) ?>
+                        </dd>
+                    <?php endif; ?>
+
+                    <?php if ($shippingTotal > 0): ?>
+                        <dt>Shipping</dt>
+                        <dd><?= e($fmt($shippingTotal)) ?></dd>
+                    <?php elseif ($shippingMethod !== null): ?>
+                        <dt>Shipping</dt>
+                        <dd class="muted">Free</dd>
+                    <?php endif; ?>
+
+                    <?php if ($taxTotal > 0): ?>
+                        <dt>VAT</dt>
+                        <dd><?= e($fmt($taxTotal)) ?></dd>
+                    <?php endif; ?>
                 </dl>
                 <div class="sf-checkout-summary-total">
                     <span>Total</span>
-                    <span><?= e(number_format($subtotal, 2)) ?></span>
+                    <span><?= e($fmt($grandTotal)) ?></span>
                 </div>
+
+                <?php if ($vatLabel !== ''): ?>
+                    <p class="sf-checkout-summary-note muted small">
+                        <?= e($vatLabel) ?>
+                        <?php if ($shippingTotal > 0): ?>
+                            , zzgl. Versandkosten
+                        <?php endif; ?>
+                    </p>
+                <?php endif; ?>
 
                 <form method="POST" action="/checkout/place" class="mt-3">
                     <?= csrf_field() ?>

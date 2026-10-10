@@ -7,6 +7,7 @@ use CorporateAid\Commerce\Exceptions\CartException;
 use CorporateAid\Commerce\Services\CartService;
 use CorporateAid\Commerce\Services\CouponService;
 use CorporateAid\Commerce\Services\CustomerAuthService;
+use CorporateAid\Commerce\Services\OrderPricingService;
 use CorporateAid\Commerce\Support\StorefrontController;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
@@ -46,12 +47,37 @@ final class CartController extends StorefrontController
     {
         $cart = $this->container->get(CartService::class);
 
+        // Pricing preview: the totals the customer would pay if
+        // they checked out from here. Coupon (if any) is applied
+        // and the shipping + tax lines are computed against the
+        // store defaults (no shipping address yet, so shipping is
+        // zero).
+        $pricing = [];
+        $lines   = $cart->items();
+        if ($lines !== []) {
+            $auth     = $this->container->get(CustomerAuthService::class);
+            $customer = $auth->user();
+
+            $pricing = $this->container->get(OrderPricingService::class)->preview(
+                $lines,
+                [
+                    'coupon_code'          => $cart->couponCode(),
+                    'shipping_method_code' => '',
+                    'country_code'         => '',
+                    'state_code'           => null,
+                    'customer_id'          => $customer?->id,
+                    'guest_email'          => null,
+                ]
+            );
+        }
+
         return $this->render('storefront.cart.index', [
-            'title'      => 'Your Cart',
-            'lines'      => $cart->items(),
-            'subtotal'   => $cart->subtotal(),
-            'count'      => $cart->count(),
-            'isEmpty'    => $cart->isEmpty(),
+            'title'    => 'Your Cart',
+            'lines'    => $lines,
+            'subtotal' => $cart->subtotal(),
+            'count'    => $cart->count(),
+            'isEmpty'  => $cart->isEmpty(),
+            'pricing'  => $pricing,
         ]);
     }
 

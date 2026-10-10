@@ -6,6 +6,11 @@
  *   $lines     array<int, CartLineItem>
  *   $subtotal  float
  *   $blocking  array<int, string>  blocking warnings
+ *   $pricing   array<string,mixed> totals preview from
+ *                                  OrderPricingService. No
+ *                                  address or shipping yet,
+ *                                  so shipping is zero. Coupon
+ *                                  discount applies.
  *
  * Legal links are in the page footer (rendered by the layout).
  * The customer cannot proceed to the next step until any
@@ -14,6 +19,11 @@
 $lines    = $lines    ?? [];
 $subtotal = $subtotal ?? 0.0;
 $blocking = $blocking ?? [];
+$pricing  = $pricing  ?? [];
+
+$discountTotal = (float) ($pricing['discount_total'] ?? 0.0);
+$grandTotal    = (float) ($pricing['grand_total']    ?? $subtotal);
+$coupon        = $pricing['coupon'] ?? null;
 ?>
 <div class="sf-checkout" data-sf-page="checkout-review">
 
@@ -72,15 +82,22 @@ $blocking = $blocking ?? [];
                 <dl class="sf-checkout-summary-list">
                     <dt>Subtotal</dt>
                     <dd><?= e(number_format($subtotal, 2)) ?></dd>
-                    <dt>Shipping</dt>
-                    <dd class="muted">Calculated next</dd>
-                    <dt>VAT (incl.)</dt>
-                    <dd class="muted">Included in price</dd>
+
+                    <?php if ($discountTotal > 0 && $coupon !== null): ?>
+                        <dt>Discount</dt>
+                        <dd class="sf-checkout-summary-discount">
+                            -<?= e(number_format($discountTotal, 2)) ?>
+                        </dd>
+                    <?php endif; ?>
                 </dl>
                 <div class="sf-checkout-summary-total">
                     <span>Total</span>
-                    <span><?= e(number_format($subtotal, 2)) ?></span>
+                    <span><?= e(number_format($grandTotal, 2)) ?></span>
                 </div>
+
+                <p class="sf-checkout-summary-note muted small">
+                    Shipping and VAT calculated at checkout.
+                </p>
 
                 <?php if ($blocking === []): ?>
                     <a href="/checkout/info" class="sf-btn sf-btn-primary sf-btn-block mt-3">

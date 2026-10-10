@@ -15,6 +15,8 @@ use CorporateAid\Commerce\Repositories\OrderRepository;
 use CorporateAid\Commerce\Services\CartService;
 use CorporateAid\Commerce\Services\CheckoutService;
 use CorporateAid\Commerce\Services\CustomerAuthService;
+use CorporateAid\Commerce\Services\ShippingService;
+use CorporateAid\Commerce\Services\OrderPricingService;
 use CorporateAid\Commerce\Support\StorefrontController;
 
 /**
@@ -60,12 +62,18 @@ final class CheckoutController extends StorefrontController
 
         $blocking = $this->blockingWarnings($lines);
 
+        // Pricing preview for step 1. No address or shipping
+        // method yet, so the shipping total is zero. Discount
+        // (coupon) still applies.
+        $pricing = $this->resolvePricingPreview($this->state(), '');
+
         return $this->render('storefront.checkout.review', [
             'title'    => 'Checkout',
             'step'     => 1,
             'lines'    => $lines,
             'subtotal' => $cart->subtotal(),
             'blocking' => $blocking,
+            'pricing'  => $pricing,
         ]);
     }
 
@@ -226,13 +234,35 @@ final class CheckoutController extends StorefrontController
         $customer = $this->currentCustomer();
         $availableMethods = $this->availablePaymentMethods($customer);
 
+        // Resolve available shipping methods for the address
+        // captured on step 3. Empty when the address is missing
+        // or the country has no methods configured.
+        $availableShippingMethods = $this->resolveAvailableShippingMethods($state);
+
+        // Preselect: whatever the customer already chose, or the
+        // first available method (lowest sort_order).
+        $selectedShippingMethod = (string) ($state['shipping_method_code'] ?? '');
+        if ($selectedShippingMethod === '' && $availableShippingMethods !== []) {
+            $selectedShippingMethod = (string) $availableShippingMethods[0]['code'];
+        }
+
+        // Pricing preview: the totals the customer will pay if
+        // they proceed from here.
+        $pricing = $this->resolvePricingPreview(
+            $state,
+            $selectedShippingMethod
+        );
+
         return $this->render('storefront.checkout.payment', [
-            'title'            => 'Payment',
-            'step'             => 4,
-            'state'            => $state,
-            'customer'         => $customer,
-            'availableMethods' => $availableMethods,
-            'errors'           => $this->pullErrors('payment'),
+            'title'                    => 'Payment',
+            'step'                     => 4,
+            'state'                    => $state,
+            'customer'                 => $customer,
+            'availableMethods'         => $availableMethods,
+            'availableShippingMethods' => $availableShippingMethods,
+            'selectedShippingMethod'   => $selectedShippingMethod,
+            'pricing'                  => $pricing,
+            'errors'                   => $this->pullErrors('payment'),
         ]);
     }
 
@@ -252,6 +282,28 @@ final class CheckoutController extends StorefrontController
         $poNumber = trim((string) $request->input('po_number', ''));
         $agbAccepted = (bool) $request->input('agb_accepted', false);
         $widerrufAccepted = (bool) $request->input('widerruf_accepted', false);
+
+        // Shipping method selection. Only validated when the
+        // store has any methods configured for this address.
+        // A store with zero methods charges no shipping.
+        $availableShippingMethods = $this->resolveAvailableShippingMethods($state);
+        $shippingMethodCode = (string) $request->input('shipping_method_code', '');
+        if ($availableShippingMethods !== []) {
+            $valid = false;
+            foreach ($availableShippingMethods as $m) {
+                if ((string) $m['code'] === $shippingMethodCode) {
+                    $valid = true;
+                    break;
+                }
+            }
+            if (!$valid) {
+                // Default to the first available when the customer
+                // did not choose (or chose a stale one).
+                $shippingMethodCode = (string) $availableShippingMethods[0]['code'];
+            }
+        } else {
+            $shippingMethodCode = '';
+        }
 
         $errors = [];
 
@@ -278,6 +330,7 @@ final class CheckoutController extends StorefrontController
 
         $state['payment_method'] = $method;
         $state['po_number'] = $poNumber;
+        $state['shipping_method_code'] = $shippingMethodCode;
         $state['agb_accepted'] = true;
         $state['widerruf_accepted'] = true;
         $state['completed_payment'] = true;
@@ -305,12 +358,18 @@ final class CheckoutController extends StorefrontController
             return Response::redirect('/cart');
         }
 
+        // Pricing preview for step 5. Address and shipping
+        // method are both known at this point.
+        $shippingMethodCode = (string) ($state['shipping_method_code'] ?? '');
+        $pricing = $this->resolvePricingPreview($state, $shippingMethodCode);
+
         return $this->render('storefront.checkout.confirm', [
             'title'    => 'Confirm your order',
             'step'     => 5,
             'state'    => $state,
             'lines'    => $lines,
             'subtotal' => $cart->subtotal(),
+            'pricing'  => $pricing,
             'errors'   => $this->pullErrors('confirm'),
         ]);
     }
@@ -337,6 +396,7 @@ final class CheckoutController extends StorefrontController
                 'guest_email'          => $state['guest_email'] ?? '',
                 'billing_address'      => $state['billing_address'] ?? null,
                 'shipping_address'     => $state['shipping_address'] ?? null,
+                'shipping_method_code' => $state['shipping_method_code'] ?? '',
                 'payment_provider_key' => $state['payment_method'] ?? '',
                 'po_number'            => $state['po_number'] ?? null,
                 'customer_note'        => $state['customer_note'] ?? null,
@@ -423,16 +483,17 @@ final class CheckoutController extends StorefrontController
             $stored = [];
         }
         return array_merge([
-            'customer_data'       => [],
-            'guest_email'         => '',
-            'shipping_address'    => null,
-            'billing_address'     => null,
-            'payment_method'      => '',
-            'po_number'           => '',
-            'customer_note'       => '',
-            'completed_info'      => false,
-            'completed_shipping'  => false,
-            'completed_payment'   => false,
+            'customer_data'        => [],
+            'guest_email'          => '',
+            'shipping_address'     => null,
+            'billing_address'      => null,
+            'shipping_method_code' => '',
+            'payment_method'       => '',
+            'po_number'            => '',
+            'customer_note'        => '',
+            'completed_info'       => false,
+            'completed_shipping'   => false,
+            'completed_payment'    => false,
         ], $stored);
     }
 
@@ -522,6 +583,87 @@ final class CheckoutController extends StorefrontController
      * approved B2B customers whose group has net terms.
      *
      * @return array<string,string>
+     */
+    /**
+     * Resolve the pricing preview for the current checkout
+     * state. Uses the pricing engine so cart, checkout, and
+     * order totals all come from one source of truth.
+     *
+     * @param array<string,mixed> $state
+     * @return array<string,mixed>
+     */
+    private function resolvePricingPreview(array $state, string $shippingMethodCode): array
+    {
+        $cart  = $this->container->get(CartService::class);
+        $lines = $cart->items();
+        if ($lines === []) {
+            return [
+                'ok'              => false,
+                'reason'          => 'Your cart is empty.',
+                'subtotal'        => 0.0,
+                'discount_total'  => 0.0,
+                'taxable_base'    => 0.0,
+                'tax_total'       => 0.0,
+                'shipping_total'  => 0.0,
+                'grand_total'     => 0.0,
+                'coupon'          => null,
+                'shipping_method' => null,
+                'tax_classes'     => [],
+            ];
+        }
+
+        $shippingAddress = $state['shipping_address'] ?? null;
+        $country = is_array($shippingAddress) ? (string) ($shippingAddress['country_code'] ?? '') : '';
+        $region  = is_array($shippingAddress) ? (string) ($shippingAddress['region'] ?? '') : '';
+
+        $customer = $this->currentCustomer();
+
+        $context = [
+            'coupon_code'          => $cart->couponCode(),
+            'shipping_method_code' => $shippingMethodCode,
+            'country_code'         => $country,
+            'state_code'           => $region,
+            'customer_id'          => $customer?->id,
+            'guest_email'          => $customer === null ? (string) ($state['guest_email'] ?? '') : null,
+        ];
+
+        $pricing = $this->container->get(OrderPricingService::class);
+        return $pricing->preview($lines, $context);
+    }
+
+    /**
+     * Resolve the shipping methods available for the address
+     * captured on step 3. Returns an empty array when the
+     * address is missing or the destination has no methods.
+     *
+     * @param array<string,mixed> $state
+     * @return array<int,array<string,mixed>>
+     */
+    private function resolveAvailableShippingMethods(array $state): array
+    {
+        $address = $state['shipping_address'] ?? null;
+        if (!is_array($address) || empty($address['country_code'])) {
+            return [];
+        }
+
+        $cart     = $this->container->get(CartService::class);
+        $shipping = $this->container->get(ShippingService::class);
+
+        $lines    = $cart->items();
+        $subtotal = $cart->subtotal();
+
+        if ($lines === []) {
+            return [];
+        }
+
+        $country = (string) $address['country_code'];
+        $region  = (string) ($address['region'] ?? '');
+
+        return $shipping->availableMethods($lines, $subtotal, $country, $region);
+    }
+
+    /**
+     * @return array<string,string>  Payment method slug => human label.
      */
     private function availablePaymentMethods(?Customer $customer): array
     {

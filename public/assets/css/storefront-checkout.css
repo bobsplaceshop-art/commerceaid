@@ -319,3 +319,26 @@
     color: #1e3a8a;
     padding: .85rem 1rem;
 }
+
+/* ------------------------------------------------------------
+   Totals breakdown additions (Stage 008K.5)
+   Discount row, grand total emphasis, and the PAngV § 6
+   VAT note under the total.
+   ------------------------------------------------------------ */
+
+.sf-checkout-summary-discount {
+    color: #7a9a5e;   /* muted olive, distinct from the accent gold */
+    font-weight: 500;
+}
+
+.sf-checkout-summary-grand {
+    font-weight: 600;
+    color: var(--sf-ink, #111111);
+}
+
+.sf-checkout-summary-note {
+    margin-top: .5rem;
+    margin-bottom: 0;
+    line-height: 1.4;
+    font-size: .8rem;
+}

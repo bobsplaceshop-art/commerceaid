@@ -40,8 +40,41 @@ $paymentLabel = $paymentLabels[$order->paymentProviderKey ?? ''] ?? 'Payment';
                 <dt>Order number</dt>
                 <dd><?= e($order->orderNumber) ?></dd>
 
-                <dt>Total</dt>
-                <dd><?= e(number_format($order->grandTotal, 2)) ?> <?= e($order->currencyCode) ?></dd>
+                <dt>Subtotal</dt>
+                <dd><?= e(number_format($order->subtotal, 2)) ?> <?= e($order->currencyCode) ?></dd>
+
+                <?php if ($order->discountTotal > 0): ?>
+                    <dt>
+                        Discount
+                        <?php if ($order->couponCode !== null && $order->couponCode !== ''): ?>
+                            (<code><?= e($order->couponCode) ?></code>)
+                        <?php endif; ?>
+                    </dt>
+                    <dd class="sf-checkout-summary-discount">
+                        &minus;<?= e(number_format($order->discountTotal, 2)) ?> <?= e($order->currencyCode) ?>
+                    </dd>
+                <?php endif; ?>
+
+                <?php if ($order->shippingMethodLabel !== null && $order->shippingMethodLabel !== ''): ?>
+                    <dt>Shipping &mdash; <?= e($order->shippingMethodLabel) ?></dt>
+                    <dd>
+                        <?php if ($order->shippingTotal > 0): ?>
+                            <?= e(number_format($order->shippingTotal, 2)) ?> <?= e($order->currencyCode) ?>
+                        <?php else: ?>
+                            <span class="muted">Free</span>
+                        <?php endif; ?>
+                    </dd>
+                <?php endif; ?>
+
+                <?php if ($order->taxTotal > 0): ?>
+                    <dt>VAT</dt>
+                    <dd><?= e(number_format($order->taxTotal, 2)) ?> <?= e($order->currencyCode) ?></dd>
+                <?php endif; ?>
+
+                <dt class="sf-checkout-summary-grand">Total</dt>
+                <dd class="sf-checkout-summary-grand">
+                    <?= e(number_format($order->grandTotal, 2)) ?> <?= e($order->currencyCode) ?>
+                </dd>
 
                 <dt>Payment method</dt>
                 <dd><?= e($paymentLabel) ?></dd>
