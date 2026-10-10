@@ -330,7 +330,7 @@ if ($gallery !== []) {
                                                         <?php if ($imageUrl !== null): ?>
                                                             data-swap-image="<?= e($imageUrl) ?>"
                                                         <?php endif; ?>>
-                                                    <?php if ($swapMedia !== null): ?>
+                                                    <?php if ($isColor && $swapMedia !== null): ?>
                                                         <?= media_picture_tag($swapMedia, 'product-image', [
                                                             'variant' => 'card',
                                                             'sizes'   => '56px',

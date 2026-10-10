@@ -611,6 +611,20 @@
     line-height: 1;
 }
 
+/* Defensive: a chip should never render a full-size image.
+   If a swap image is attached to a non-color value (bad data
+   from the admin variant-images card), constrain it to a
+   chip-sized square instead of letting it render at natural
+   gallery size. The color swatch has its own rule
+   (.sf-swatch-color img, 56x56). See Pattern 32. */
+.sf-swatch-chip img {
+    display: block;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
 /* =====================================================================
    Product tabs (008G.5 session A, tab layout)
    Description | Specifications | Reviews
