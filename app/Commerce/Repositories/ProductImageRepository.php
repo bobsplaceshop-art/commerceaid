@@ -12,11 +12,33 @@ use CorporateAid\Commerce\Models\ProductImage;
  * store_id comes from StoreContext; the product_id is a
  * parameter on every method.
  *
- * Three image shapes live in the same table:
+ * An image row can carry more than one role at once:
  *
- *   gallery image    - variant_id null, attribute_value_id null
- *   swatch preview   - attribute_value_id set
- *   variant override - variant_id set
+ *   - is_primary = 1           hero image
+ *   - attribute_value_id set   swatch preview for that
+ *                              attribute value (e.g. Red)
+ *   - variant_id set           override for that specific
+ *                              combination
+ *
+ * These are not mutually exclusive. A single row can be
+ * the primary image AND the swatch preview for Red. The
+ * merchant uploads one image; the storefront renders it
+ * wherever it is needed (hero, thumbnail strip, color
+ * swatch).
+ *
+ * Readers by intent:
+ *   listForProduct()     - admin Images tab. Product
+ *                          photos only (rows with no
+ *                          attribute_value_id), so the
+ *                          admin grid does not mix product
+ *                          photos with swatch previews.
+ *   listAllForProduct()  - storefront gallery (hero +
+ *                          thumbnail strip). Every row
+ *                          for the product.
+ *   swatchPreviewsFor()  - storefront swatch row. Only
+ *                          rows with attribute_value_id,
+ *                          keyed by value id.
+ *   variantImagesFor()   - variant combination overrides.
  *
  * The repository does not resolve file_id to a MediaItem.
  * Callers pair the ProductImage rows with MediaItem via
@@ -58,6 +80,43 @@ final class ProductImageRepository extends CommerceRepository
               WHERE `store_id` = ? AND `product_id` = ?
                 AND `attribute_value_id` IS NULL
               ORDER BY `sort_order` ASC, `id` ASC",
+            [$this->storeId(), $productId]
+        );
+
+        return array_map(fn ($r) => ProductImage::fromRow($r), $rows);
+    }
+
+    /**
+     * Every image assigned to a product, regardless of
+     * whether it is also assigned to an attribute value or
+     * a variant. This is what the storefront gallery reads
+     * (hero + thumbnail strip).
+     *
+     * The admin Images tab uses listForProduct() instead,
+     * which filters to rows with no attribute_value_id so
+     * that product photos and swatch previews are not
+     * visually mixed in the admin grid. That filter must
+     * not reach the storefront: a merchant can upload a
+     * photo that is both a product image and a swatch
+     * preview, and the storefront must show it in both
+     * places.
+     *
+     * Ordered primary-first, then by sort_order, then id,
+     * so the hero picks the primary row and the strip
+     * preserves the merchant's chosen order.
+     *
+     * @return array<int, ProductImage>
+     */
+    public function listAllForProduct(int $productId): array
+    {
+        if ($productId <= 0) {
+            return [];
+        }
+
+        $rows = $this->db->select(
+            "SELECT * FROM `commerce_product_images`
+              WHERE `store_id` = ? AND `product_id` = ?
+              ORDER BY `is_primary` DESC, `sort_order` ASC, `id` ASC",
             [$this->storeId(), $productId]
         );
 

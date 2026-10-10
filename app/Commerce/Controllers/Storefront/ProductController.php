@@ -159,7 +159,7 @@ final class ProductController extends StorefrontController
         $imageRepo = $this->container->get(ProductImageRepository::class);
         $mediaRepo = $this->container->get(MediaRepository::class);
 
-        $rows = $imageRepo->listForProduct($product->id);
+        $rows = $imageRepo->listAllForProduct($product->id);
         if ($rows !== []) {
             $fileIds = [];
             foreach ($rows as $row) {
