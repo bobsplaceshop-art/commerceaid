@@ -119,7 +119,7 @@ $groups = [
             ['label' => 'Store Settings', 'href' => '/commerce/ca-admin/settings',      'icon' => 'bi-gear',         'permission' => 'core.settings.manage'],
             ['label' => 'Legal Pages',    'href' => '/commerce/ca-admin/legal-pages',   'icon' => 'bi-file-earmark-text', 'permission' => 'core.settings.manage'],
             ['label' => 'Users',          'href' => '/commerce/ca-admin/users',    'icon' => 'bi-person-badge', 'permission' => 'core.users.view'],
-            ['label' => 'Roles',          'href' => '/commerce/ca-admin/roles',    'icon' => 'bi-shield-lock',  'permission' => 'core.settings.manage'],
+            ['label' => 'Roles',          'href' => '/commerce/ca-admin/roles',    'icon' => 'bi-shield-lock',  'permission' => 'core.roles.view'],
         ],
     ],
 ];

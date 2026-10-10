@@ -18,6 +18,7 @@ use CorporateAid\Commerce\Controllers\Admin\CustomerApprovalController;
 use CorporateAid\Commerce\Controllers\Admin\AdminOrderController;
 use CorporateAid\Commerce\Controllers\Admin\AdminCustomerController;
 use CorporateAid\Commerce\Controllers\Admin\AdminUserController;
+use CorporateAid\Commerce\Controllers\Admin\AdminRoleController;
 
 /** @var Router $router */
 
@@ -348,6 +349,45 @@ $router->post('/commerce/ca-admin/users/{id}/reactivate',
 $router->post('/commerce/ca-admin/users/{id}/send-password-reset',
     [AdminUserController::class, 'sendPasswordReset'],
     ['store', 'auth', 'csrf', 'permission:core.users.edit']);
+
+// =====================================================================
+// Admin - Roles (Stage 008K.4)
+// =====================================================================
+// Granular permissions:
+//   core.roles.view    - list, edit view
+//   core.roles.create  - new, create
+//   core.roles.edit    - update
+//   core.roles.delete  - delete, delete-info
+//
+// Specific routes (create, delete-info) must precede the {id}
+// wildcard routes. See Pattern 7.
+$router->get('/commerce/ca-admin/roles',
+    [AdminRoleController::class, 'index'],
+    ['store', 'auth', 'permission:core.roles.view']);
+
+$router->get('/commerce/ca-admin/roles/create',
+    [AdminRoleController::class, 'showCreate'],
+    ['store', 'auth', 'permission:core.roles.create']);
+
+$router->post('/commerce/ca-admin/roles',
+    [AdminRoleController::class, 'store'],
+    ['store', 'auth', 'csrf', 'permission:core.roles.create']);
+
+$router->get('/commerce/ca-admin/roles/{id}/edit',
+    [AdminRoleController::class, 'showEdit'],
+    ['store', 'auth', 'permission:core.roles.view']);
+
+$router->get('/commerce/ca-admin/roles/{id}/delete-info',
+    [AdminRoleController::class, 'deleteInfo'],
+    ['store', 'auth', 'permission:core.roles.delete']);
+
+$router->post('/commerce/ca-admin/roles/{id}/delete',
+    [AdminRoleController::class, 'destroy'],
+    ['store', 'auth', 'csrf', 'permission:core.roles.delete']);
+
+$router->post('/commerce/ca-admin/roles/{id}',
+    [AdminRoleController::class, 'update'],
+    ['store', 'auth', 'csrf', 'permission:core.roles.edit']);
 
 $router->get('/commerce/ca-admin/brands/{id}/delete-info',
     [BrandController::class, 'deleteInfo'],
