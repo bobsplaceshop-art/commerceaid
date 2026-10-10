@@ -14,12 +14,13 @@ $errors     = $errors     ?? [];
 $old        = $old        ?? [];
 $csrf       = $csrf       ?? '';
 
-$val = fn(string $k, $d = '') => e((string) ($old[$k] ?? $store[$k] ?? $d));
+use CorporateAid\Commerce\Support\StoreFieldReader;
+$val = fn(string $k, $d = '') => e((string) ($old[$k] ?? StoreFieldReader::read($store, $k, $d)));
 $err = fn(string $k) => isset($errors[$k])
     ? '<div class="text-danger small mt-1">' . e((string) $errors[$k]) . '</div>'
     : '';
 
-$currentCurrency = (int) ($old['default_currency_id'] ?? $store['default_currency_id'] ?? 0);
+$currentCurrency = (int) ($old['default_currency_id'] ?? StoreFieldReader::read($store, 'default_currency_id', 0));
 $currentTz       = $val('timezone', 'Africa/Nairobi');
 $currentLocale   = $val('locale', 'en_KE');
 $currentCountry  = $val('country_code', '');

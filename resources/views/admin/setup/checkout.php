@@ -12,9 +12,10 @@ $errors = $errors ?? [];
 $old    = $old    ?? [];
 $csrf   = $csrf   ?? '';
 
-$guestCheckout = (int) ($old['allow_guest_checkout'] ?? $store['allow_guest_checkout'] ?? 1);
-$requirePhone  = (int) ($old['require_phone']        ?? $store['require_phone']        ?? 0);
-$requireComp   = (int) ($old['require_company']      ?? $store['require_company']      ?? 0);
+use CorporateAid\Commerce\Support\StoreFieldReader;
+$guestCheckout = (int) ($old['allow_guest_checkout'] ?? StoreFieldReader::read($store, 'allow_guest_checkout', 1));
+$requirePhone  = (int) ($old['require_phone']        ?? StoreFieldReader::read($store, 'require_phone', 0));
+$requireComp   = (int) ($old['require_company']      ?? StoreFieldReader::read($store, 'require_company', 0));
 ?>
 
 <form method="POST" action="/commerce/ca-admin/setup/checkout" novalidate>
