@@ -13,6 +13,7 @@ use CorporateAid\Commerce\Repositories\BrandRepository;
 use CorporateAid\Commerce\Repositories\CategoryRepository;
 use CorporateAid\Commerce\Repositories\InventoryRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
+use CorporateAid\Commerce\Repositories\TaxRepository;
 use CorporateAid\Commerce\Repositories\ProductImageRepository;
 use CorporateAid\Commerce\Repositories\MediaRepository;
 use CorporateAid\Commerce\Repositories\ProductVariantRepository;
@@ -100,6 +101,9 @@ final class ProductController extends AdminController
             'mediaLibrary'   => $this->resolveMediaLibrary(),
             'variantAxes'    => [],
             'variantImages'  => [],
+            'taxClasses'     => $this->container
+                ->get(TaxRepository::class)
+                ->listClasses(),
             'activeTab'      => (string) $request->query('tab', 'basic'),
         ]);
     }
@@ -152,6 +156,9 @@ final class ProductController extends AdminController
                 ->get(ProductVariantRepository::class)
                 ->swatchAxesFor($product->id),
             'variantImages'  => $this->resolveVariantImages($product->id),
+            'taxClasses'     => $this->container
+                ->get(TaxRepository::class)
+                ->listClasses(),
             'activeTab'      => (string) $request->query('tab', 'basic'),
         ]);
     }
@@ -887,6 +894,8 @@ final class ProductController extends AdminController
             'cost_price'          => $this->nullableFloat($request->input('cost_price')),
             'tax_status'          => (string) $request->input('tax_status', 'taxable'),
             'tax_class_id'        => $this->nullableInt($request->input('tax_class_id')),
+            'tax_rate_override_percent' => $this->nullableFloat($request->input('tax_rate_override_percent')),
+            'tax_rate_override_inclusive' => $this->nullableInt($request->input('tax_rate_override_inclusive')),
             'is_featured'         => (bool) $request->input('is_featured', false),
             'is_new'              => (bool) $request->input('is_new', false),
             'manage_stock'        => (bool) $request->input('manage_stock', false),
@@ -1004,6 +1013,19 @@ final class ProductController extends AdminController
             $errors['tax_status'] = 'Tax status is invalid.';
         }
 
+        if ($data['tax_rate_override_percent'] !== null) {
+            if ($data['tax_rate_override_percent'] < 0
+                || $data['tax_rate_override_percent'] > 100) {
+                $errors['tax_rate_override_percent'] =
+                    'Tax rate override must be between 0 and 100.';
+            }
+        }
+
+        if ($data['tax_rate_override_inclusive'] !== null
+            && !in_array($data['tax_rate_override_inclusive'], [0, 1], true)) {
+            $errors['tax_rate_override_inclusive'] = 'Inclusive flag is invalid.';
+        }
+
         return $errors;
     }
 
@@ -1021,8 +1043,12 @@ final class ProductController extends AdminController
         $product->price             = $data['price'];
         $product->compareAtPrice    = $data['compare_at_price'];
         $product->costPrice         = $data['cost_price'];
-        $product->taxStatus         = $data['tax_status'];
-        $product->taxClassId        = $data['tax_class_id'];
+        $product->taxStatus             = $data['tax_status'];
+        $product->taxClassId            = $data['tax_class_id'];
+        $product->taxRateOverridePercent = $data['tax_rate_override_percent'];
+        $product->taxRateOverrideInclusive = $data['tax_rate_override_inclusive'] === null
+            ? null
+            : (bool) $data['tax_rate_override_inclusive'];
         $product->isFeatured        = $data['is_featured'];
         $product->isNew             = $data['is_new'];
         $product->manageStock       = $data['manage_stock'];

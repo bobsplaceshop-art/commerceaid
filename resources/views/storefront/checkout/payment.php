@@ -48,18 +48,11 @@ $grandTotal    = (float) ($pricing['grand_total']    ?? $subtotal);
 $coupon        = $pricing['coupon'] ?? null;
 $taxClasses    = is_array($pricing['tax_classes'] ?? null) ? $pricing['tax_classes'] : [];
 
-// VAT display: build a compact string from the tax_classes
-// breakdown. For Germany this becomes "inkl. 19% MwSt."
-// with the exact rate shown.
-$vatLines = [];
-foreach ($taxClasses as $c) {
-    $rate = (float) ($c['rate_percent'] ?? 0);
-    if ($rate <= 0) continue;
-    $vatLines[] = 'inkl. '
-        . rtrim(rtrim(number_format($rate, 2, '.', ''), '0'), '.')
-        . '% MwSt.';
-}
-$vatLabel = implode(' · ', $vatLines);
+// PAngV § 6 note. tax_note() reads the tax classes and
+// picks the correct wording: "inkl." for inclusive pricing,
+// "zzgl." for exclusive, or both for a mixed cart.
+// See app/Helpers/functions.php.
+$vatLabel = tax_note($pricing);
 ?>
 <div class="sf-checkout" data-sf-page="checkout-payment">
 

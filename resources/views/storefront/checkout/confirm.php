@@ -32,16 +32,11 @@ $fmt = function ($v): string {
     return number_format((float) $v, 2);
 };
 
-$vatLabel = '';
-$vatParts = [];
-foreach ($taxClasses as $c) {
-    $rate = (float) ($c['rate_percent'] ?? 0);
-    if ($rate <= 0) continue;
-    $vatParts[] = 'inkl. ' . rtrim(rtrim(number_format($rate, 2, '.', ''), '0'), '.') . '% MwSt.';
-}
-if ($vatParts !== []) {
-    $vatLabel = implode(' · ', $vatParts);
-}
+// PAngV § 6 note. Reads the tax classes and produces either
+// "inkl. X% MwSt." for inclusive pricing, "zzgl. X% MwSt."
+// for exclusive, or both for a mixed cart. See tax_note() in
+// app/Helpers/functions.php.
+$vatLabel = tax_note($pricing);
 
 $paymentLabels = [
     'cod'            => 'Cash on delivery',

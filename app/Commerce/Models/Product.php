@@ -33,6 +33,8 @@ final class Product
     public ?float $costPrice = null;
     public ?int $taxClassId = null;
     public string $taxStatus = 'taxable';       // 'taxable' | 'none'
+    public ?float $taxRateOverridePercent = null; // 0.000 - 100.000, or null
+    public ?bool $taxRateOverrideInclusive = null; // null=inherit, false=exclusive, true=inclusive
     public bool $isFeatured = false;
     public bool $isNew = false;
     public ?float $weight = null;
@@ -76,6 +78,12 @@ final class Product
         $p->costPrice         = isset($row['cost_price']) ? (float) $row['cost_price'] : null;
         $p->taxClassId        = isset($row['tax_class_id']) ? (int) $row['tax_class_id'] : null;
         $p->taxStatus         = (string) ($row['tax_status'] ?? 'taxable');
+        $p->taxRateOverridePercent = isset($row['tax_rate_override_percent'])
+            ? (float) $row['tax_rate_override_percent']
+            : null;
+        $p->taxRateOverrideInclusive = isset($row['tax_rate_override_inclusive'])
+            ? ((int) $row['tax_rate_override_inclusive']) === 1
+            : null;
         $p->isFeatured        = (bool) ($row['is_featured'] ?? false);
         $p->isNew             = (bool) ($row['is_new'] ?? false);
         $p->weight            = isset($row['weight']) ? (float) $row['weight'] : null;

@@ -51,11 +51,22 @@ final class TaxService
      * Resolve the tax rate applicable to a product at a
      * destination.
      *
+     * Precedence:
+     *   1. tax_status = 'none'              -> exempt (zero rate)
+     *   2. tax_rate_override_percent set    -> use this rate,
+     *                                          flags from the
+     *                                          class's rate
+     *   3. tax class rate for the destination
+     *   4. zero rate (no class, no rate)
+     *
+     * The product-level override changes only the rate
+     * percent. The is_inclusive and is_shipping_taxable
+     * flags always come from the class's rate for the
+     * destination, so the store's inclusive-pricing
+     * convention is unchanged by an override.
+     *
      * If the product's taxStatus is 'none', a zero rate is
-     * returned regardless of class. Otherwise the product's
-     * class is used; if the product has no class, the store
-     * default is used. If no rate matches the destination, a
-     * zero rate on the resolved class is returned.
+     * returned regardless of class or override.
      *
      * @param \CorporateAid\Commerce\Models\Product|null $product
      * @return array{tax_class_id:?int, tax_rate_id:?int,
@@ -116,6 +127,41 @@ final class TaxService
 
         // Look up a rate for the destination.
         $rate = $this->taxes->resolveRate($classId, $countryCode, $stateCode);
+
+        // Resolve the product-level override, if set. The
+        // override replaces the rate_percent. For the
+        // is_inclusive flag, precedence is:
+        //   1. the override's own inclusive flag if set
+        //   2. the class rate's is_inclusive
+        //   3. false
+        // is_shipping_taxable is always taken from the class
+        // rate (or false when there is no rate).
+        $override = $product !== null ? $product->taxRateOverridePercent : null;
+
+        if ($override !== null) {
+            $overrideInclusive = $product !== null
+                ? $product->taxRateOverrideInclusive
+                : null;
+
+            $isInclusive = $overrideInclusive !== null
+                ? $overrideInclusive
+                : ($rate !== null
+                    ? ((int) $rate['is_inclusive']) === 1
+                    : false);
+
+            return [
+                'tax_class_id'         => $classId,
+                'tax_rate_id'          => $rate !== null ? (int) $rate['id'] : null,
+                'label'                => $className !== ''
+                                            ? $className
+                                            : 'Override',
+                'rate_percent'         => (float) $override,
+                'is_inclusive'         => $isInclusive,
+                'is_shipping_taxable'  => $rate !== null
+                                            ? ((int) $rate['is_shipping_taxable']) === 1
+                                            : false,
+            ];
+        }
 
         if ($rate === null) {
             // No rate for this country/state. Zero rate on the

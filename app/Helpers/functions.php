@@ -1339,3 +1339,62 @@ if (!function_exists('admin_pending_review_count')) {
         }
     }
 }
+
+if (!function_exists('tax_note')) {
+    /**
+     * Render the PAngV § 6 note for a pricing breakdown.
+     *
+     * Reads the tax classes returned by the pricing engine
+     * and produces one of:
+     *
+     *   "inkl. 19% MwSt."              inclusive-only cart
+     *   "zzgl. 19% MwSt."              exclusive-only cart
+     *   "inkl. 19% MwSt. zzgl. 7% MwSt."  mixed cart
+     *   ""                              no tax
+     *
+     * The rate percent comes from the class entries. When
+     * multiple classes exist with different rates, each
+     * regime lists its own rates joined by " + ".
+     *
+     * @param array<string,mixed> $pricing The pricing result
+     *        from OrderPricingService (either preview() or
+     *        compute()).
+     */
+    function tax_note(array $pricing): string
+    {
+        $classes = $pricing['tax_classes'] ?? [];
+        if (!is_array($classes) || $classes === []) {
+            return '';
+        }
+
+        $inclusiveRates = [];
+        $exclusiveRates = [];
+
+        foreach ($classes as $c) {
+            if (!is_array($c)) {
+                continue;
+            }
+            $rate = (float) ($c['rate_percent'] ?? 0);
+            if ($rate <= 0.0) {
+                continue;
+            }
+            $isInc = !empty($c['is_inclusive']);
+            $label = rtrim(rtrim(number_format($rate, 2, '.', ''), '0'), '.');
+            if ($isInc) {
+                $inclusiveRates[$label] = true;
+            } else {
+                $exclusiveRates[$label] = true;
+            }
+        }
+
+        $parts = [];
+        if ($inclusiveRates !== []) {
+            $parts[] = 'inkl. ' . implode(' + ', array_keys($inclusiveRates)) . '% MwSt.';
+        }
+        if ($exclusiveRates !== []) {
+            $parts[] = 'zzgl. ' . implode(' + ', array_keys($exclusiveRates)) . '% MwSt.';
+        }
+
+        return implode(' ', $parts);
+    }
+}
