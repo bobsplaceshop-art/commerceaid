@@ -18,7 +18,14 @@ use CorporateAid\Commerce\Models\CartLineItem;
  *   4. shippingTotal = shipping method rate
  *   5. taxTotal      = tax computed on (taxableBase + shipping
  *                       when the rate is shipping-taxable)
- *   6. grandTotal    = taxableBase + taxTotal + shippingTotal
+ *   6. grandTotal    = taxableBase + shippingTotal + exclusiveTax
+ *
+ * Where exclusiveTax is the portion of taxTotal that comes
+ * from exclusive-priced lines (US-style net pricing). For
+ * inclusive-priced lines (German PAngV), the tax is already
+ * inside taxableBase and is not added again. A cart can
+ * contain both regimes; the pricing engine handles each line
+ * according to its own tax class.
  *
  * Every other service (CartService, CheckoutService, the
  * cart and checkout views) reads the totals from this
@@ -174,13 +181,22 @@ final class OrderPricingService
             $discountTotal
         );
 
-        $taxTotal = (float) ($taxResult['total'] ?? 0.0);
-        $taxClasses = $taxResult['classes'] ?? [];
+        $taxTotal     = (float) ($taxResult['total'] ?? 0.0);
+        $exclusiveTax = (float) ($taxResult['exclusive_total'] ?? 0.0);
+        $taxClasses   = $taxResult['classes'] ?? [];
 
         // -----------------------------------------------------------------
         // Step 6 - grand total
+        //
+        // Only the exclusive portion of the tax is added on top
+        // of taxableBase. Inclusive tax (German PAngV) is
+        // already inside the gross line amounts and inside the
+        // shipping charge, so adding it again would double
+        // count. taxTotal is preserved in the response for
+        // reporting (invoice lines, order_taxes rows) but the
+        // grand total uses only exclusiveTax.
         // -----------------------------------------------------------------
-        $grandTotal = round($taxableBase + $taxTotal + $shippingTotal, 4);
+        $grandTotal = round($taxableBase + $shippingTotal + $exclusiveTax, 4);
         if ($grandTotal < 0.0) {
             $grandTotal = 0.0;
         }

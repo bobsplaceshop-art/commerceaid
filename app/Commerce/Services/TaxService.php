@@ -149,12 +149,33 @@ final class TaxService
      *                                   be taxed when
      *                                   is_shipping_taxable
      * @param float $discountTotal       the discount applied
+     * The total field is the sum of every class's tax amount.
+     * The inclusive_total and exclusive_total fields split
+     * that sum by regime:
+     *
+     *   inclusive_total  - tax that is already inside the
+     *                      gross amounts (German PAngV). The
+     *                      pricing engine does NOT add this
+     *                      to the grand total.
+     *   exclusive_total  - tax that must be added on top of
+     *                      the gross amounts (US-style net
+     *                      pricing). The pricing engine adds
+     *                      this to the grand total.
+     *
+     * A cart can carry both if products use different tax
+     * classes with different is_inclusive flags. The pricing
+     * engine uses the split to compute the grand total
+     * correctly per line.
+     *
      * @return array{
      *   total:float,
+     *   inclusive_total:float,
+     *   exclusive_total:float,
      *   classes:array<int,array{
      *     tax_class_id:?int, tax_rate_id:?int,
      *     label:string, rate_percent:float,
-     *     taxable_base:float, amount:float
+     *     taxable_base:float, amount:float,
+     *     is_inclusive:bool
      *   }>
      * }
      */
@@ -245,10 +266,13 @@ final class TaxService
         /** @var array<int,array{
          *   tax_class_id:?int, tax_rate_id:?int,
          *   label:string, rate_percent:float,
-         *   taxable_base:float, amount:float
+         *   taxable_base:float, amount:float,
+         *   is_inclusive:bool
          * }> $classes */
         $classes = [];
         $grandTax = 0.0;
+        $inclusiveTaxTotal = 0.0;
+        $exclusiveTaxTotal = 0.0;
 
         foreach ($byClass as $c) {
             // Scaled gross after discount.
@@ -282,14 +306,23 @@ final class TaxService
                 'rate_percent' => $c['rate_percent'],
                 'taxable_base' => $taxableGross,
                 'amount'       => $taxAmount,
+                'is_inclusive' => (bool) $c['is_inclusive'],
             ];
 
             $grandTax = round($grandTax + $taxAmount, 4);
+
+            if ($c['is_inclusive']) {
+                $inclusiveTaxTotal = round($inclusiveTaxTotal + $taxAmount, 4);
+            } else {
+                $exclusiveTaxTotal = round($exclusiveTaxTotal + $taxAmount, 4);
+            }
         }
 
         return [
-            'total'   => $grandTax,
-            'classes' => $classes,
+            'total'           => $grandTax,
+            'inclusive_total' => $inclusiveTaxTotal,
+            'exclusive_total' => $exclusiveTaxTotal,
+            'classes'         => $classes,
         ];
     }
 
