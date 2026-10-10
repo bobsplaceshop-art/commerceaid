@@ -224,4 +224,172 @@ final class UserRepository
         );
         return array_map(fn ($r) => (int) $r['id'], $rows);
     }
+
+    // =================================================================
+    // Admin user management (Stage 008K.3)
+    // =================================================================
+
+    /**
+     * Paginated list of users with optional filters.
+     *
+     * @param array<string,string> $filters
+     *   q      - name or email LIKE
+     *   status - active | pending | suspended | disabled | all
+     * @return array{items:array<int,User>,total:int,page:int,per_page:int,pages:int}
+     */
+    public function paginate(array $filters = [], int $page = 1, int $perPage = 25): array
+    {
+        $page    = max(1, $page);
+        $perPage = min(100, max(1, $perPage));
+        $offset  = ($page - 1) * $perPage;
+
+        [$where, $params] = $this->buildUserFilters($filters);
+
+        $total = (int) $this->db->scalar(
+            "SELECT COUNT(*) FROM `core_users` WHERE {$where}",
+            $params
+        );
+
+        // Fetch the users (paginated)
+        $rows = $this->db->select(
+            "SELECT * FROM `core_users`
+              WHERE {$where}
+              ORDER BY `name` ASC
+              LIMIT {$perPage} OFFSET {$offset}",
+            $params
+        );
+
+        $items = array_map(static fn ($r) => User::fromRow($r), $rows);
+
+        // Bulk-load role slugs and primary role display name for each
+        // user, avoiding N+1. Two queries: one for all role links,
+        // one to fetch the roles.
+        if ($items !== []) {
+            $ids = array_map(static fn (User $u) => $u->id, $items);
+            $in  = implode(',', array_fill(0, count($ids), '?'));
+
+            $roleRows = $this->db->select(
+                "SELECT ur.`user_id`, r.`slug`, r.`name`
+                   FROM `core_user_roles` ur
+                   JOIN `core_roles` r ON r.`id` = ur.`role_id`
+                  WHERE ur.`user_id` IN ({$in})
+                  ORDER BY r.`name` ASC",
+                $ids
+            );
+
+            $byUser = [];
+            foreach ($roleRows as $rr) {
+                $uid = (int) $rr['user_id'];
+                $byUser[$uid][] = [
+                    'slug' => (string) $rr['slug'],
+                    'name' => (string) $rr['name'],
+                ];
+            }
+            foreach ($items as $u) {
+                $u->roleSlugs = array_map(
+                    static fn (array $r) => $r['slug'],
+                    $byUser[$u->id] ?? []
+                );
+            }
+            // Stash the display names on the users as a temporary
+            // property map for the view to read. The User model has
+            // no property for this, so we rely on the view computing
+            // a display name from the user's roles via a separate
+            // helper. Since we're adding nothing to the model, the
+            // view reads roleSlugs only. That is enough for the
+            // list — role display names can be joined via the roles
+            // map the controller passes.
+        }
+
+        return [
+            'items'    => $items,
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'pages'    => max(1, (int) ceil($total / $perPage)),
+        ];
+    }
+
+    /**
+     * Update a user's editable fields (name, phone, timezone).
+     * Email is NOT changed here — it is the login identifier.
+     */
+    public function update(User $user): void
+    {
+        $this->db->execute(
+            "UPDATE `core_users`
+                SET `name` = ?, `phone` = ?, `timezone` = ?
+              WHERE `id` = ? AND `deleted_at` IS NULL",
+            [
+                $user->name,
+                $user->phone,
+                $user->timezone,
+                $user->id,
+            ]
+        );
+    }
+
+    /**
+     * Remove every role from a user. Used before re-attaching a
+     * single role so the user has exactly one.
+     */
+    public function detachAllRoles(int $userId): void
+    {
+        $this->db->execute(
+            "DELETE FROM `core_user_roles` WHERE `user_id` = ?",
+            [$userId]
+        );
+    }
+
+    /**
+     * Return the user's roles with their numeric IDs. The admin edit
+     * form uses the id as the value of the role <select>; the slug is
+     * for display.
+     *
+     * @return array<int,array{id:int,slug:string,name:string}>
+     */
+    public function rolesWithIdsForUser(int $userId): array
+    {
+        $rows = $this->db->select(
+            "SELECT r.`id`, r.`slug`, r.`name`
+               FROM `core_roles` r
+               JOIN `core_user_roles` ur ON ur.`role_id` = r.`id`
+              WHERE ur.`user_id` = ?
+              ORDER BY r.`name` ASC",
+            [$userId]
+        );
+        return array_map(static fn ($r) => [
+            'id'   => (int) $r['id'],
+            'slug' => (string) $r['slug'],
+            'name' => (string) $r['name'],
+        ], $rows);
+    }
+
+    /**
+     * Build the WHERE clause for the admin user list.
+     *
+     * @param array<string,string> $filters
+     * @return array{0:string,1:array<int,mixed>}
+     */
+    private function buildUserFilters(array $filters): array
+    {
+        $where  = ["`deleted_at` IS NULL"];
+        $params = [];
+
+        $status = (string) ($filters['status'] ?? 'all');
+        if ($status !== 'all' && $status !== '') {
+            $where[]  = "`status` = ?";
+            $params[] = $status;
+        }
+
+        $q = trim((string) ($filters['q'] ?? ''));
+        if ($q !== '') {
+            $like = '%' . $q . '%';
+            $where[]  = "(`name` LIKE ? OR `email` LIKE ?)";
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        return [implode(' AND ', $where), $params];
+    }
 }

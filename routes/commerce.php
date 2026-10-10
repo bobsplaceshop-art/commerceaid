@@ -17,6 +17,7 @@ use CorporateAid\Commerce\Controllers\Admin\ProductController;
 use CorporateAid\Commerce\Controllers\Admin\CustomerApprovalController;
 use CorporateAid\Commerce\Controllers\Admin\AdminOrderController;
 use CorporateAid\Commerce\Controllers\Admin\AdminCustomerController;
+use CorporateAid\Commerce\Controllers\Admin\AdminUserController;
 
 /** @var Router $router */
 
@@ -286,6 +287,67 @@ $router->post('/commerce/ca-admin/customers/{id}/addresses/{aid}/delete',
 $router->post('/commerce/ca-admin/customers/{id}/addresses/{aid}/default',
     [AdminCustomerController::class, 'addressDefault'],
     ['store', 'auth', 'csrf', 'permission:customers.manage']);
+
+// =====================================================================
+// Admin - Users (Stage 008K.3)
+// =====================================================================
+// Granular permissions:
+//   core.users.view    - list
+//   core.users.create  - invite
+//   core.users.edit    - edit, reactivate, password reset
+//   core.users.delete  - deactivate
+//
+// Specific routes (invite, accept-invite) must precede the {id}
+// wildcard routes. See Pattern 7.
+$router->get('/commerce/ca-admin/users',
+    [AdminUserController::class, 'index'],
+    ['store', 'auth', 'permission:core.users.view']);
+
+$router->get('/commerce/ca-admin/users/invite',
+    [AdminUserController::class, 'showInvite'],
+    ['store', 'auth', 'permission:core.users.create']);
+
+$router->post('/commerce/ca-admin/users/invite',
+    [AdminUserController::class, 'invite'],
+    ['store', 'auth', 'csrf', 'permission:core.users.create']);
+
+// Public: the invitee is not logged in. The token is the proof.
+//
+// No 'guest' middleware. GuestMiddleware redirects any authenticated
+// user to '/'. That is correct for /login and /register, where a
+// logged-in user has no business. It is wrong for invite acceptance:
+// the invitee is defined by the token, not by session state. A
+// logged-in admin clicking their own invite link (or a forwarded
+// one) should see the page. Removing 'guest' allows that.
+//
+// No 'store' middleware either - the invite is not store-scoped.
+$router->get('/commerce/ca-admin/users/accept-invite/{token}',
+    [AdminUserController::class, 'acceptInvite'],
+    []);
+
+$router->post('/commerce/ca-admin/users/accept-invite/{token}',
+    [AdminUserController::class, 'completeInvite'],
+    ['csrf']);
+
+$router->get('/commerce/ca-admin/users/{id}/edit',
+    [AdminUserController::class, 'showEdit'],
+    ['store', 'auth', 'permission:core.users.edit']);
+
+$router->post('/commerce/ca-admin/users/{id}',
+    [AdminUserController::class, 'update'],
+    ['store', 'auth', 'csrf', 'permission:core.users.edit']);
+
+$router->post('/commerce/ca-admin/users/{id}/deactivate',
+    [AdminUserController::class, 'deactivate'],
+    ['store', 'auth', 'csrf', 'permission:core.users.delete']);
+
+$router->post('/commerce/ca-admin/users/{id}/reactivate',
+    [AdminUserController::class, 'reactivate'],
+    ['store', 'auth', 'csrf', 'permission:core.users.edit']);
+
+$router->post('/commerce/ca-admin/users/{id}/send-password-reset',
+    [AdminUserController::class, 'sendPasswordReset'],
+    ['store', 'auth', 'csrf', 'permission:core.users.edit']);
 
 $router->get('/commerce/ca-admin/brands/{id}/delete-info',
     [BrandController::class, 'deleteInfo'],
