@@ -77,6 +77,12 @@ Short. 30-80 lines. Five sections, in order:
 | 2026-09-30-2 | 006 | 008G.4a.1 Media Library - store scoping via entity_files |
 | 2026-09-30-3 | 007 | 008G.4a.2 session 1/3 - product media backend (schema, model, repo, category image) |
 | 2026-09-30-4 | 008 | 008G.4a.2 session 3/3 - storefront consumption (real images on every surface) |
+| 2026-10-04 | 009 | 008G.4c sessions 3/4a/4b/5 - self-hosted fonts, icons, theme fixes |
+| 2026-10-05 | 010 | 008G.5 reviews, 008G.4b PWA, 008G.4d category filters, 008J container |
+| 2026-10-06 | 011 | 008J close, 008K.1 orders, 008K.2 customers, 008H pause |
+| 2026-10-07 | 012 | 008K.3 admin users, password reset, redirect-target fixes |
+| 2026-10-10 | 013 | 008K.4 admin roles - RBAC surface, permission vocabulary, multi-store |
+| 2026-10-10-2 | 014 | Product page bug arc - swatch gate, gallery reader split (008K.5 s3 in flight) |
 
 **Naming:** the `Date` column matches the file name
 (without extension). If two sessions happened on the same

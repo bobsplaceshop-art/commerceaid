@@ -1777,6 +1777,113 @@ render. No error, no log line, no console warning.
 
 ---
 
+**Second manifestation: a WHERE clause encodes an invariant
+the schema never declared.**
+
+When a repository method returns a filtered slice of a table
+based on a nullable column the schema does not treat as
+exclusive, the filter is a hidden contract. Every consumer
+of that method inherits the filter whether it knows it or
+not. If one consumer needs the full set and another needs
+the slice, the filtered method is the wrong shape to expose.
+
+The tell: a record renders correctly in one view (hero,
+primary image, summary) but not in another (gallery,
+thumbnail strip, detail list) - with no error, no
+exception, no log entry. The two views read the same table
+through different repository methods, and only one method's
+WHERE clause is excluding the row. The data is present. The
+filter is hiding it.
+
+This is the same underlying failure as the original
+manifestation above: a consumer assumes a contract the
+producer does not enforce. In the original case the contract
+was a key shape. Here it is a row shape - the producer's
+WHERE clause silently declares "these rows do not belong to
+this concept," but the schema never said so.
+
+**The rule:**
+
+1. When a repository method returns a filtered slice of a
+   table, name it for the consumer's intent, not for the
+   rows it returns. `listForProduct()` sounds like "every
+   image for this product." It actually returns "images
+   that are not assigned to any attribute value." Those
+   are different things and the name lies about which
+   one is returned.
+2. Before pointing a new consumer at an existing method,
+   read the method's WHERE clause. Not the docblock. The
+   docblock may describe intent that the WHERE clause
+   does not match, or vice versa.
+3. If two consumers need different slices, expose two
+   methods. Do not widen the existing one and do not
+   narrow the new one. One method, one intent.
+4. When the docblock and the WHERE clause disagree, the
+   WHERE clause wins at runtime. Fix whichever is wrong
+   in the same commit that surfaces the bug.
+
+**Where we hit it:** 2026-10-10. Two bugs in one session,
+same class.
+
+  `ProductImageRepository::listForProduct()` filtered on
+  `attribute_value_id IS NULL`. Its docblock called the
+  result "gallery images for a product." The storefront
+  gallery reader inherited the filter. A product whose
+  images were all assigned to color values (SHJO) had
+  every row excluded, so the thumbnail strip rendered
+  empty. The hero rendered anyway because it used a
+  different resolver. Two views of the same data, one
+  worked, one did not, no error anywhere.
+
+  The class-level docblock declared three exclusive image
+  shapes: "gallery image" (attribute null), "swatch preview"
+  (attribute set), "variant override" (variant set). The
+  schema carries the three as independent nullable columns
+  on the same row. A single row can be the primary image
+  AND the color red's swatch preview. Nothing in the schema
+  prevents it and nothing should. The docblock described a
+  mental model the schema never encoded, and the WHERE
+  clause enforced a model the schema never required.
+
+  Fixed by adding `listAllForProduct()` (unfiltered) for
+  the storefront and keeping `listForProduct()` (filtered)
+  for the admin Images tab. Commit `54034c3`.
+
+**Related:**
+
+  - The original Pattern 32 manifestation (shape drift in
+    keys). Same debugging motion: read the consumer, read
+    the producer, find the mismatch.
+  - Pattern 15 (snake_case vs camelCase in views). Also
+    the same motion, at the view layer.
+  - Pattern 23 (cascade check before every patch). Every
+    consumer of a filtered method is a caller whose
+    assumption may be wrong. The cascade grep is how the
+    full consumer set was enumerated before the 2026-10-10
+    fix landed.
+
+**Prevention checklist when a repository method returns a
+filtered slice:**
+
+  1. Read the WHERE clause. Confirm every column in it is
+     doing what the method name suggests.
+  2. Grep for every caller of the method. For each caller,
+     decide: does this consumer want the full set or the
+     slice? If the answer differs between callers, the
+     method is being asked to serve two intents.
+  3. Before pointing a new consumer at the method, read
+     its WHERE clause and its docblock side by side. If
+     they disagree, they disagree about what the method
+     promises. Fix the discrepancy before adding the
+     caller.
+  4. When a filter encodes "these rows belong to this
+     concept" and the schema does not enforce the same
+     distinction, the filter is a bug waiting to surface.
+     The correct fix is usually a second method named
+     for the other intent.
+
+---
+
 ## 19. Documents to Read First When Joining
 
 If you are new to this project and need to get up to speed
