@@ -885,3 +885,44 @@ uniq_{module_short}_{entity_short}_{purpose}
 **Rule for new tables:** every index and unique key on a new table MUST follow the convention. This is not optional for new code.
 
 **Rule for existing tables:** index renames happen opportunistically when a table is refactored. They do not happen as a standalone pass.
+
+### Numbering Ranges
+
+Numbers are allocated by domain:
+
+    00xx   Core platform. Framework bootstrap, authentication,
+           RBAC, settings, files, notifications, custom fields,
+           workflow, modules, licensing, updates.
+
+    01xx   Store and setup. The multi-tenant anchor
+           (commerce_stores and its satellites), store-scoped
+           columns added to core tables, country configuration.
+
+    02xx   Catalog and B2B. Products, variants, categories,
+           brands, attributes, inventory, customer groups,
+           customer and order schema.
+
+    03xx   Storefront and customer-facing. Carts, order
+           runtime, store settings, legal pages, wishlist,
+           recently viewed, message center, media pipeline,
+           fonts, reviews, returns.
+
+**Rule:** a new migration takes the next free number in
+the range that matches the feature's primary domain. The
+primary domain is the one whose tables are being created
+or altered. A migration that touches multiple domains goes
+in the range of the one that motivates it.
+
+**Example.** Stage 008K.5 (Order Pricing Engine) creates
+coupons, tax classes, tax rates, shipping methods, and
+shipping zones. All five are storefront-runtime
+configuration. The next free numbers in the 03xx range are
+0321, 0322, 0323. They are allocated there, not in the
+00xx range.
+
+**Never reuse a number.** A rolled-back or abandoned
+migration still consumes its number. The history of what
+was tried and discarded is part of the record.
+
+---
+
