@@ -12,7 +12,10 @@ return [
 
     'env'   => 'production',
     'debug' => false,
-    'url'   => '',
+    // Absolute base URL. Used by AppUrl::absolute() as a fallback
+    // when the request's Host header is missing. Override in
+    // config/local.php for any real deployment (e.g. https://shop.example.com).
+    'url'   => 'http://localhost:8084',
 
     'key' => '',
 

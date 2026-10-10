@@ -10,6 +10,7 @@ use CorporateAid\Platform\Support\CodeGenerator;
 use CorporateAid\Core\Router;
 use CorporateAid\Core\Session;
 use CorporateAid\Commerce\Context\StoreContext;
+use CorporateAid\Platform\Middleware\GuestMiddleware;
 use CorporateAid\Commerce\Middleware\CustomerAuthMiddleware;
 use CorporateAid\Commerce\Middleware\SetupGateMiddleware;
 use CorporateAid\Commerce\Middleware\StoreResolutionMiddleware;
@@ -323,6 +324,26 @@ final class CommerceServiceProvider
                 $c->get(StoreService::class),
                 $c->get(StoreContext::class),
                 $c->get(Session::class)
+            ));
+
+        // Guest-only guard for the admin login and password-reset
+        // routes. Redirects authenticated users (i.e. an admin who
+        // visits /login while still signed in) to the admin dashboard,
+        // not the storefront.
+        //
+        // The Platform default is '/', which is wrong for the admin
+        // audience. Overriding it here keeps the middleware
+        // product-agnostic while making the admin-facing behaviour
+        // correct.
+        //
+        // The /login route, /password/forgot, and any future admin
+        // guest route resolve through this binding. Customer-side
+        // auth routes do not use 'guest' - they are gated by their
+        // own logic in the storefront controllers.
+        $c->singleton(GuestMiddleware::class,
+            fn() => new GuestMiddleware(
+                $c->get(Auth::class),
+                '/commerce/ca-admin'
             ));
 
         // Customer-side guard. Uses CustomerAuthService (customer

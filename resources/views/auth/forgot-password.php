@@ -1,7 +1,15 @@
 <?php
-use RecruitAid\Core\App;
-$session = App::instance()->container()->get(\RecruitAid\Core\Session::class);
-$sentTo = $session->getFlash('reset_sent_to');
+/**
+ * Forgot password form.
+ *
+ * Context (from AuthController::showForgot):
+ *   $sentTo  ?string   the email a link was sent to, if any
+ *   $error   ?string   validation error, if any
+ *   $email   string    repopulated email value on error
+ */
+$sentTo = $sentTo ?? null;
+$error  = $error  ?? null;
+$email  = $email  ?? '';
 ?>
 
 <?php if ($sentTo): ?>

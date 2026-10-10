@@ -46,6 +46,9 @@ $err      = fn(string $k) => isset($errors[$k])
             <input class="form-check-input" type="checkbox" id="remember" name="remember" value="1">
             <label class="form-check-label" for="remember">Remember me</label>
         </div>
+        <a href="/password/forgot" class="muted small text-decoration-none">
+            Forgot password?
+        </a>
     </div>
 
     <button type="submit" class="btn btn-primary w-100">
