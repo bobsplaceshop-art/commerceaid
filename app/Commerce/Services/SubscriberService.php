@@ -42,6 +42,7 @@ use CorporateAid\Platform\Support\SignedToken;
 final class SubscriberService
 {
     private const CONFIRM_TTL_SECONDS = 86400; // 24 hours
+    private const MAX_SOFT_BOUNCES = 3;
 
     public function __construct(
         private Database $db,
@@ -253,7 +254,7 @@ final class SubscriberService
 
         $next = $subscriber->softBounceCount + 1;
 
-        if ($next >= 3) {
+        if ($next >= self::MAX_SOFT_BOUNCES) {
             $this->suppress($subscriber->id, 'Repeated soft bounces');
             return $this->subscribers->findById($subscriber->id);
         }

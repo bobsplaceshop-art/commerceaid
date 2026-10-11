@@ -23,6 +23,8 @@ use CorporateAid\Commerce\Controllers\Admin\AdminCouponController;
 use CorporateAid\Commerce\Controllers\Admin\AdminTaxController;
 use CorporateAid\Commerce\Controllers\Admin\AdminShippingController;
 use CorporateAid\Commerce\Controllers\Admin\AdminReturnController;
+use CorporateAid\Commerce\Controllers\Admin\AdminSubscriberController;
+use CorporateAid\Commerce\Controllers\Admin\AdminSubscriberListController;
 
 /** @var Router $router */
 
@@ -812,3 +814,51 @@ $router->post('/commerce/ca-admin/returns/{id}/receive',
 $router->post('/commerce/ca-admin/returns/{id}/refund',
     [AdminReturnController::class, 'refund'],
     ['store', 'auth', 'csrf', 'permission:returns.moderate']);
+
+// =====================================================================
+// Admin newsletter: subscribers and lists (Stage 008I)
+// =====================================================================
+
+$router->get('/commerce/ca-admin/subscribers',
+    [AdminSubscriberController::class, 'index'],
+    ['store', 'auth', 'permission:newsletter.subscribers.view']);
+
+$router->get('/commerce/ca-admin/subscribers/export',
+    [AdminSubscriberController::class, 'exportCsv'],
+    ['store', 'auth', 'permission:newsletter.subscribers.view']);
+
+$router->get('/commerce/ca-admin/subscribers/{id}',
+    [AdminSubscriberController::class, 'show'],
+    ['store', 'auth', 'permission:newsletter.subscribers.view']);
+
+$router->post('/commerce/ca-admin/subscribers/{id}/unsubscribe',
+    [AdminSubscriberController::class, 'unsubscribe'],
+    ['store', 'auth', 'csrf', 'permission:newsletter.subscribers.manage']);
+
+$router->get('/commerce/ca-admin/subscriber-lists',
+    [AdminSubscriberListController::class, 'index'],
+    ['store', 'auth', 'permission:newsletter.subscribers.view']);
+
+$router->get('/commerce/ca-admin/subscriber-lists/create',
+    [AdminSubscriberListController::class, 'showCreate'],
+    ['store', 'auth', 'permission:newsletter.subscribers.manage']);
+
+$router->post('/commerce/ca-admin/subscriber-lists',
+    [AdminSubscriberListController::class, 'store'],
+    ['store', 'auth', 'csrf', 'permission:newsletter.subscribers.manage']);
+
+$router->get('/commerce/ca-admin/subscriber-lists/{id}/delete-info',
+    [AdminSubscriberListController::class, 'deleteInfo'],
+    ['store', 'auth', 'permission:newsletter.subscribers.manage']);
+
+$router->get('/commerce/ca-admin/subscriber-lists/{id}/edit',
+    [AdminSubscriberListController::class, 'showEdit'],
+    ['store', 'auth', 'permission:newsletter.subscribers.manage']);
+
+$router->post('/commerce/ca-admin/subscriber-lists/{id}/delete',
+    [AdminSubscriberListController::class, 'destroy'],
+    ['store', 'auth', 'csrf', 'permission:newsletter.subscribers.manage']);
+
+$router->post('/commerce/ca-admin/subscriber-lists/{id}',
+    [AdminSubscriberListController::class, 'update'],
+    ['store', 'auth', 'csrf', 'permission:newsletter.subscribers.manage']);

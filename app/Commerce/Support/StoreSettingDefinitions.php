@@ -328,6 +328,16 @@ final class StoreSettingDefinitions
                        . 'stays valid. Longer is friendlier. 90 days is '
                        . 'standard.',
         ],
+        'newsletter.footer_address' => [
+            'label'   => 'Physical address in campaign footer',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_NEWSLETTER,
+            'hint'    => 'Required by German UWG § 7 in every marketing '
+                       . 'email. The operator\'s postal address. Falls '
+                       . 'back to the store legal name if empty, but a '
+                       . 'proper address is recommended.',
+        ],
 
     ];
 

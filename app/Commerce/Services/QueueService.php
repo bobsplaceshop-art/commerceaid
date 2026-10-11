@@ -31,7 +31,6 @@ use CorporateAid\Platform\Support\EmailService;
 final class QueueService
 {
     private const MAX_ATTEMPTS = 5;
-    private const MAX_SOFT_BOUNCES = 3;
 
     public function __construct(
         private Database $db,
@@ -193,12 +192,23 @@ final class QueueService
         return $store !== null && $store->name !== '' ? $store->name : 'Store';
     }
 
+    /**
+     * The physical address shown in the campaign footer.
+     * Required by German UWG § 7 for marketing emails.
+     * Read from the store setting; falls back to the store
+     * legal name if the setting is empty.
+     */
     private function storeAddress(): string
     {
+        $address = trim($this->settings->string('newsletter.footer_address', ''));
+        if ($address !== '') {
+            return $address;
+        }
+
         $store = $this->stores->findById($this->storeContext->id());
-        if ($store === null) return '';
-        // The legal address is on the store or in a setting.
-        // For now return the store's legal name.
-        return method_exists($store, 'legalName') ? (string) $store->legalName() : '';
+        if ($store === null || $store->legalName === null) {
+            return '';
+        }
+        return (string) $store->legalName;
     }
 }
