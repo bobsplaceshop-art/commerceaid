@@ -172,6 +172,24 @@ final class EmailQueueRepository extends CommerceRepository
         );
     }
 
+    /**
+     * Look up a queue entry by its signed unsubscribe token.
+     * Used by NewsletterController::unsubscribe() to resolve
+     * a Path A unsubscribe back to the subscriber.
+     */
+    public function findByUnsubscribeToken(string $token): ?EmailQueueEntry
+    {
+        if ($token === '') return null;
+
+        $row = $this->db->selectOne(
+            "SELECT * FROM `commerce_email_queue`
+              WHERE `store_id` = ? AND `unsubscribe_token` = ? LIMIT 1",
+            [$this->storeId(), $token]
+        );
+
+        return $row !== null ? EmailQueueEntry::fromRow($row) : null;
+    }
+
     public function countByStatusForCampaign(int $campaignId, string $status): int
     {
         return (int) $this->db->scalar(
