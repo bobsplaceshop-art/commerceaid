@@ -321,6 +321,32 @@ Mailchimp, no Klaviyo, no third-party marketing processor.
 The subscriber list, the campaigns, and the sending
 infrastructure all live inside the store's own deployment.
 
+**Status:** In progress. Sessions 1 and 2 shipped 2026-10-11.
+
+**Shipped (2026-10-11):**
+
+  78f926b  schema for subscribers, lists, campaigns, queue
+  203d720  models and repositories (008I session 1b)
+  f740f69  subscriber service and signing infrastructure
+  a9c5d85  campaign and queue services, CLI worker
+  594a4f2  subscriber and list admin surfaces
+  da0aced  subscriber and list admin views
+  ff96583  campaign admin surface (008I session 2)
+  39995af  campaign detail + preview iframe
+  ea0812b  docs(admin-guide): cover Returns, Coupons, Tax,
+           Shipping, Newsletter
+  cfe6a44  docs(session): 2026-10-11-4
+
+**Remaining:**
+
+  Session 3 - storefront subscribe endpoint, double
+  opt-in confirm, unsubscribe page, three email
+  templates, account preferences toggle, wiring the
+  footer and home subscribe forms.
+
+  Session 4 - optional tracking (default off for
+  German deployments), CLI worker test, stage close.
+
 **Why inbuilt:**
 
   1. DSGVO data transfer. Sending email addresses to a

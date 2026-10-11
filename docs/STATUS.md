@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-10-11
-**Version:** 0.24.0-alpha
-**Stage:** 008H complete. Next: 008I (Newsletter & Email Campaigns).
+**Version:** 0.25.0-alpha
+**Stage:** 008I in progress. Sessions 1 and 2 shipped (schema, services, subscriber + list + campaign admin surfaces, campaign preview iframe). Session 3 (storefront subscribe, confirm, unsubscribe, email templates) next.
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -112,6 +112,42 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 - Permission-gated by `returns.view` (reads) and
   `returns.moderate` (writes).
 
+#### Admin - Newsletter & Campaigns (008I Sessions 1+2)
+
+- **Subscriber list** at /commerce/ca-admin/subscribers.
+  Filters by status, source, list, and date range. A
+  search box matches the email. CSV export includes
+  every field relevant to a DSGVO audit (email, name,
+  status, consent timestamp, consent IP, consent source).
+- **Subscriber detail** shows the consent record, list
+  memberships, and event history. A manual unsubscribe
+  action records a reason.
+- **Subscriber lists** at /commerce/ca-admin/subscriber-lists.
+  Named lists with membership. The default list
+  ("Newsletter") is seeded per store and joined by the
+  footer signup form.
+- **Campaign list** at /commerce/ca-admin/campaigns.
+  Drafts, sent, cancelled.
+- **Campaign composer** uses the shared rich-text
+  editor (the same one used by Legal Pages).
+- **Campaign detail** shows stats tiles (sent, pending,
+  opens, clicks) and a body preview rendered in a
+  sandboxed same-origin iframe. The iframe loads a bare
+  email document from
+  /commerce/ca-admin/campaigns/{id}/preview?raw=1 and
+  autogrows via postMessage.
+- **CLI queue worker** at bin/send-emails.php. Drains
+  the queue, applies the retry, bounce, and suppression
+  rules.
+- Permission-gated by `newsletter.subscribers.view` /
+  `.manage` and `newsletter.campaigns.view` / `.manage`.
+
+**Not yet shipped (008I Session 3):** the storefront
+subscribe endpoint, double opt-in confirm, unsubscribe
+page, the three newsletter email templates, and wiring
+the footer and home subscribe forms off their current
+disabled placeholder state.
+
 ### Catalog
 
 - Categories: tree with attribute mapping
@@ -205,59 +241,74 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008K complete
+## Current Focus — Stage 008I in progress
 
-**Deliverable shipped:** the full merchant-facing half
-of the platform. Stage 008K completed all five admin
-surfaces that had been placeholders since Stage 005:
+**Sessions 1 and 2 of 008I shipped 2026-10-11.**
+Session 3 (the storefront subscribe side) opens next.
 
-  008K.1  Admin Orders            2026-10-06
-  008K.2  Admin Customers         2026-10-06
-  008K.3  Admin Users             2026-10-10
-  008K.4  Admin Roles             2026-10-10
-  008K.5  Order Pricing Engine    2026-10-11
+**Shipped in 008I Sessions 1 and 2:**
 
-Every sidebar entry is now a live surface. A merchant
-can operate the platform end to end without the
-developer.
+  Schema (migrations 0328-0333):
+    commerce_subscribers, commerce_subscriber_lists,
+    commerce_subscriber_list_members,
+    commerce_email_campaigns, commerce_email_queue,
+    commerce_email_events.
 
-**Stage 008K.5 shipped in three sessions plus a fix
-arc:**
+  Services and infrastructure:
+    SubscriberService, CampaignService (which contains
+    the queue logic), SignedToken, NewsletterException,
+    bin/send-emails.php (the CLI queue worker).
 
-  Session 1  backend (services, schema)          e5c43a8
-  Session 2  admin CRUD (Coupons, Tax, Shipping)  prior commits
-  Session 3  storefront integration               970f4a0
-  Fix arc    inclusive/exclusive grand total      00d6e81
-  Feature    per-product tax rate override        464ed45
-  Fix        admin theme (form-text, aliases)     a5bdf74, e7e73ea
+  Admin surfaces:
+    Subscriber list with filters, CSV export, and
+    consent record detail.
+    Named subscriber lists with membership.
+    Campaign list, composer (shared rich-text editor),
+    send action.
+    Campaign detail with stats tiles and a body preview
+    rendered in a sandboxed iframe. The iframe loads a
+    bare email document from
+    /commerce/ca-admin/campaigns/{id}/preview?raw=1
+    and autogrows via postMessage.
 
-The pricing engine computes the six-step totals
-sequence once: subtotal, discount, taxable base, tax,
-shipping, grand total. Coupons, tax, and shipping all
-feed it. The order totals on every admin surface read
-from the same source of truth.
+  Permissions (seeder 0016):
+    newsletter.subscribers.view / .manage
+    newsletter.campaigns.view / .manage
 
-The inclusive/exclusive distinction was the arc's P0
-bug. German stores (inclusive, PAngV § 4) were
-overcharged 19% on every order that reached the
-payment step. Fixed by splitting the tax total into
-inclusive and exclusive portions and adding only the
-exclusive portion to the grand total. Documented as
-Pattern 32, third manifestation.
+**What 008I Session 3 must ship:**
 
-**008H status:** ready to resume. The returns work on
-disk (commits 50f77b6 and 8a3e56b) stays on `main`.
-Session 3 (the admin returns queue) is fully
-unblocked now that the pricing engine and admin orders
-are live. It opens next.
+  - POST /newsletter/subscribe — creates a pending
+    subscriber and sends the double opt-in email.
+  - GET /newsletter/confirm/{token} — verifies the
+    token and moves the subscriber to confirmed.
+  - GET and POST /newsletter/unsubscribe/{token} —
+    renders a confirmation page and performs the
+    unsubscribe.
+  - Three email templates under
+    resources/views/emails/newsletter/:
+    opt-in-confirmation.php, unsubscribe-confirm.php,
+    campaign.php.
+  - Wiring the two storefront subscribe forms off
+    their current disabled placeholder state (footer.php
+    and home.php).
+  - The account preferences newsletter toggle at
+    /account/messages/preferences.
+
+**008H status:** Complete. The admin returns queue
+shipped at d10b39d. COMPLIANCE-DE entry 8 (the 14-day
+Widerrufsrecht window) moved from Deferred to Done at
+the stage close. The Widerrufsbutton (entry 22) remains
+open with a 19 June 2026 deadline.
 
 **Next 3 stages:**
 
-  - **008H** (next): Returns & Refunds, Session 3 -
-    the admin returns queue. Closes COMPLIANCE-DE
-    entry 8 (14-day Widerrufsrecht).
-  - **008I**: Newsletter & Email Campaigns. Inbuilt.
-    Double opt-in, no third-party transfer.
+  - **008I** (in progress): Newsletter & Email
+    Campaigns. Session 3 is the storefront subscribe
+    side. Session 4 is optional tracking, the worker
+    test, and the stage close.
+  - **009**: Forms & Submissions.
+  - **010**: Payments (Deep). Wires refunds from the
+    returns workflow to the payment provider.
   - **009**: Forms & Submissions.
 
 **Permission vocabulary grew to 49** across 11 modules.
