@@ -2250,3 +2250,165 @@ invite-accept in the merchant's browser landed on `/` instead of
    the current session first.
 4. Any post-logout redirect must go somewhere that is not a guest
    route.
+
+---
+
+### Pattern 36 - Apache conditional directives no-op after internal mod_rewrite
+
+**Problem:** A conditional directive in `.htaccess` — either
+a `SetEnvIf`-guarded `Header` line or a `<If>` block —
+silently fails to fire on the intended requests. The
+default header set elsewhere in the same file wins.
+Nothing in Apache's error log. Nothing in the browser
+console except the downstream symptom (a CSP violation,
+a wrong redirect, a missing header).
+
+This is not a syntax error. `php -l` and `apachectl -t`
+do not see it. The `.htaccess` file is correct on disk.
+`AllowOverride` is set correctly. `mod_headers` and
+`mod_setenvif` are loaded. Every diagnostic signal says
+the block should work.
+
+**Cause:** On some Apache 2.4 builds (observed on
+`2.4.68 Win64`), the values of `%{REQUEST_URI}` and
+`%{QUERY_STRING}` inside a `.htaccess` conditional are
+unreliable once `mod_rewrite` has internally rewritten
+the URI to `/index.php`. Apache documents
+`%{REQUEST_URI}` as the original request URI, but the
+observed behavior after an internal rewrite contradicts
+this. `<If>` and `SetEnvIf` both read the same unreliable
+value.
+
+**The tell:** the conditional exists, the file parses,
+`.htaccess` is being read (proven by the fact that other
+directives from the same file are applying), and the
+conditional is simply not firing. Two different
+conditional mechanisms fail the same way. This narrows
+the cause to the variable, not the directive.
+
+**The fix:** match on `%{THE_REQUEST}`, which is the raw
+request line from the client. It is never modified by
+`mod_rewrite`. Anchor with the HTTP method so only GET
+requests match. Add a trailing space after the query
+string so a longer prefix does not accidentally match.
+
+The working directive lives in `public/.htaccess`, in
+the `mod_headers.c` block, near the default Content
+Security Policy line. Its shape:
+
+  - An If block whose condition matches the
+    THE_REQUEST variable against the raw request line
+    anchored at the intended endpoint path plus its
+    identifying query string.
+  - Inside the block, unset each header the default
+    set, then set the override value.
+  - Anchor the trailing query string with a trailing
+    space so a longer prefix does not match.
+
+Read the actual `.htaccess` block for the exact bytes.
+The live file is the source of truth. Do not reproduce
+the block here; it would drift.
+
+**Where we hit it:** Session 2026-10-11-4. The campaign
+preview iframe was blocked by the default
+`frame-ancestors 'none'` and `X-Frame-Options: DENY`.
+Two conditional override attempts (SetEnvIf with an
+env-guarded Header, then an If block on REQUEST_URI)
+silently no-op'd. Matching on THE_REQUEST fixed it on
+the first try. Two hours of investigation compressed
+into one working directive.
+
+**Prevention checklist for conditional Apache headers:**
+
+1. If a conditional header directive does not fire,
+   suspect the variable before the directive.
+2. Prefer THE_REQUEST over REQUEST_URI in `.htaccess`
+   when the request goes through any `mod_rewrite`
+   rule.
+3. Verify with the browser Network tab, not by reading
+   the `.htaccess` file. The response headers are the
+   source of truth.
+4. Confirm the default header is not also being sent.
+   Browsers intersect multiple CSP headers; a default
+   `frame-ancestors 'none'` plus an override
+   `frame-ancestors 'self'` produces a blocked frame.
+
+**Related:**
+
+  - Pattern 22 (prefix-match active state breaks on
+    strict-prefix routes). A different silent failure
+    where the code looks right and the behavior is
+    wrong.
+  - The `Header always unset` plus `Header always set`
+    pattern that also failed in this session. The
+    unset line is only meaningful if the conditional
+    fires; the conditional was the problem, not the
+    unset.
+
+---
+
+### Pattern 37 - loading="lazy" on an iframe triggers a HEAD request that GET-only routers reject
+
+**Problem:** An iframe with a valid src and
+loading="lazy" renders the browser's broken-document
+icon. Opening the same URL in a new browser tab returns
+200 and the expected HTML. The Network tab shows a
+HEAD request to the iframe URL, status 404, before any
+GET is attempted.
+
+**Cause:** Chrome sends a HEAD request first when
+lazy-loading an iframe, before committing to the GET.
+Many minimal routers register only GET routes. A
+request to the route with method HEAD finds no
+matching registration and returns 404. The browser then
+treats the resource as unreachable and does not send
+the GET. This failure is cached for the iframe's
+lifetime.
+
+**The tell:** the iframe URL works perfectly in a new
+browser tab (GET, 200, correct body) but shows the
+broken-document icon inside the iframe on the page.
+The Network tab shows a HEAD request to the URL with
+status 404, immediately followed by no further request.
+Removing loading="lazy" resolves it.
+
+**The fix:** remove loading="lazy" from the iframe.
+The browser then sends a GET directly. If lazy loading
+is a performance requirement, use display: none plus
+a scroll listener plus a script that sets the src on
+intersection, rather than the native loading attribute.
+The native attribute does not help here because the
+router cannot service the HEAD preflight.
+
+**Where we hit it:** Session 2026-10-11-4. The campaign
+preview iframe partial at
+`resources/views/admin/campaigns/_body-preview.php`
+had loading="lazy" on the iframe. The iframe URL routed
+to AdminCampaignController::preview, which registers
+only a GET route. The HEAD returned 404 and the browser
+cached the failure. Removing the attribute forced the
+GET.
+
+**Prevention checklist for embedding iframes in this
+codebase:**
+
+1. Never use loading="lazy" on an iframe whose src
+   points at a PHP-routed URL. The router does not
+   register HEAD routes.
+2. If the iframe must be lazy, use IntersectionObserver
+   on a placeholder div and set the iframe's src on
+   the first intersection. That defers the browser's
+   request entirely, avoiding the HEAD preflight.
+3. Verify an iframe's load path in the Network tab,
+   not by reading the view. The browser's behavior
+   differs from the markup.
+4. When an iframe shows the broken-document icon but
+   the URL works in a new tab, look at the request
+   method first. It is often a HEAD or a preflight.
+
+**Related:**
+
+  - Pattern 36. Both fixes are for the same session,
+    but they are independent: one is Apache, one is
+    the browser. Neither masked the other; both had
+    to be fixed for the iframe to render.
