@@ -1,8 +1,8 @@
 # Project Status
 
-**As of:** 2026-10-11
-**Version:** 0.26.0-alpha
-**Stage:** 008I complete. Newsletter & Email Campaigns shipped end to end: schema, services, admin surfaces, campaign preview iframe, storefront subscribe + double opt-in + unsubscribe, account preferences toggle, queue worker, campaign send, and the campaign-email unsubscribe link. Next: 008I.1 (small hygiene fixes) then 009 (Forms & Submissions).
+**As of:** 2026-10-12
+**Version:** 0.27.0-alpha
+**Stage:** 008I.1 complete. Newsletter & Email Campaigns shipped end to end, including the two hygiene fixes (GET/POST symmetry in the unsubscribe GET handler, and an unsubscribe link in the confirmation email). Next: 009 (Forms & Submissions).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -155,10 +155,11 @@ suppressed addresses, authenticated resubscribe), and
 the campaign send test through the CLI queue worker.
 Campaign-email unsubscribe links verified end to end.
 
-**Remaining (008I.1):** GET/POST symmetry in the
+**Shipped (008I.1):** GET/POST symmetry in the
 unsubscribe GET handler, and a "did not ask to
 subscribe" link in the confirmation email template.
-Both are small, customer-facing polish.
+Both shipped 2026-10-12 (commit d99021b). Stage 008I
+has no outstanding follow-ups.
 
 ### Catalog
 

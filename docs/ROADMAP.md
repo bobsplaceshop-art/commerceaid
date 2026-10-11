@@ -346,20 +346,22 @@ shipped 2026-10-11.
   648d962  resubscribeUrl points at /#newsletter
   1264676  docs(session): 2026-10-11-6
 
-**Post-stage follow-up (008I.1):**
+**Shipped (008I.1), 2026-10-12:**
 
-  Two small hygiene fixes deferred from the stage:
+  d99021b  GET/POST symmetry in
+           NewsletterController::showUnsubscribe() -
+           the GET now looks up the subscriber and
+           renders the neutral error page directly
+           when the row is gone.
 
-    1. GET/POST symmetry in
-       NewsletterController::showUnsubscribe() - the
-       GET verifies the token only; the POST verifies
-       the token and looks up the subscriber. A stale
-       token renders a form that always fails.
+  d99021b  "Did not ask to subscribe" link in
+           resources/emails/newsletter/opt-in-confirmation.php.
+           Every confirmation email now carries a
+           one-click unsubscribe path, not just
+           campaigns.
 
-    2. Add a "did not ask to subscribe" link to
-       resources/emails/newsletter/opt-in-confirmation.php
-       so every confirmation email carries an
-       unsubscribe path, not just campaigns.
+  With these two fixes, 008I has no outstanding
+  follow-ups.
 
 **What 008I delivered:**
 
