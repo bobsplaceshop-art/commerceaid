@@ -969,3 +969,70 @@ deletion flow is built (Stage 008G.6 or 008H).
 tested at the repository layer. The account-deletion
 flow that invokes it is deferred. In the meantime, a
 manual SQL call can anonymize a customer's reviews.
+
+---
+
+## 22. Widerrufsbutton (Digital Withdrawal Button)
+
+**Requirement:** Effective 19 June 2026, German
+consumers must be able to declare a distance-contract
+withdrawal through a digital button ("Widerrufsbutton")
+on the merchant's website. The button must be visible
+from every page without login. On click, the consumer
+is taken to a confirmation page and enters only the
+minimum data: name, order number, and preferred
+communication channel. The merchant must send an
+automatic email confirming receipt of the declaration,
+including the timestamp and the content of the
+declaration.
+
+The underlying 14-day withdrawal right (Widerrufsrecht)
+is unchanged. Only the digital entry channel is new.
+
+**Exposure:** A merchant who fails to provide the
+Widerrufsbutton in the required form may be subject
+to Abmahnung risk. Courts may treat a declaration
+submitted through an informal channel as valid
+regardless, but the presence of the button is a legal
+requirement on its own.
+
+**How we address it:** Not built. The current
+customer-facing flow at `/account/returns` requires a
+logged-in customer and does not provide a standalone
+button from every page, an unauthenticated declaration
+route, or the automatic confirmation email.
+
+The gap will be closed in a dedicated compliance
+sub-stage. It touches:
+  - the storefront layout (a visible button on every
+    page, no login required)
+  - a new public route for the declaration form
+  - the confirmation page and the minimum-data form
+  - an automatic confirmation email with the
+    declaration timestamp and content
+  - legal page updates (the withdrawal instruction
+    must reference the button)
+
+**Where the code lives:** Not yet built. The current
+withdrawal-related code:
+  - `app/Commerce/Controllers/Storefront/ReturnController.php`
+    (customer-authenticated flow, not the button)
+  - `docs/COMPLIANCE-DE.md` entry 3 (the Widerrufsrecht
+    instruction page)
+
+**Deadline:** 19 June 2026.
+
+**Stage:** Not scheduled.
+
+**Status:** Not started. Logged here so the deadline
+does not pass silently.
+
+**References:**
+  - IHK: Widerrufsbutton requirement
+  - Händlerbund: implementation guidance
+  - § 356a BGB (new section on the digital withdrawal
+    declaration)
+
+**See also:** entry 3 (Widerrufsrecht instruction page),
+which supplies the legal text; this entry supplies
+the mechanism.
