@@ -19,11 +19,23 @@
 (function () {
     'use strict';
 
-    function initEditor() {
-        var surface = document.getElementById('legal-body-surface');
-        var hidden  = document.getElementById('legal-body-hidden');
-        var toolbar = document.getElementById('legal-editor-toolbar');
-        var form    = document.getElementById('ra-legal-edit-form');
+    // Default element IDs for the legal page editor.
+    // Other views (e.g. the newsletter campaign composer)
+    // call window.RA.initRichEditor({...}) with their own
+    // IDs. The wiring is identical.
+    var DEFAULT_IDS = {
+        surface: 'legal-body-surface',
+        hidden:  'legal-body-hidden',
+        toolbar: 'legal-editor-toolbar',
+        form:    'ra-legal-edit-form'
+    };
+
+    function initEditor(ids) {
+        ids = ids || DEFAULT_IDS;
+        var surface = document.getElementById(ids.surface);
+        var hidden  = document.getElementById(ids.hidden);
+        var toolbar = document.getElementById(ids.toolbar);
+        var form    = document.getElementById(ids.form);
 
         if (!surface || !hidden || !toolbar || !form) {
             return;
@@ -135,8 +147,18 @@
         });
     }
 
+    // Public API. Views that need a rich-text editor with
+    // different element IDs call window.RA.initRichEditor()
+    // explicitly. The default behavior for the legal page
+    // editor is preserved: on DOMContentLoaded, if the
+    // legal IDs exist, they are wired.
+    window.RA = window.RA || {};
+    window.RA.initRichEditor = initEditor;
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initEditor);
+        document.addEventListener('DOMContentLoaded', function () {
+            initEditor();
+        });
     } else {
         initEditor();
     }

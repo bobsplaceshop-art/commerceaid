@@ -25,6 +25,7 @@ use CorporateAid\Commerce\Controllers\Admin\AdminShippingController;
 use CorporateAid\Commerce\Controllers\Admin\AdminReturnController;
 use CorporateAid\Commerce\Controllers\Admin\AdminSubscriberController;
 use CorporateAid\Commerce\Controllers\Admin\AdminSubscriberListController;
+use CorporateAid\Commerce\Controllers\Admin\AdminCampaignController;
 
 /** @var Router $router */
 
@@ -862,3 +863,43 @@ $router->post('/commerce/ca-admin/subscriber-lists/{id}/delete',
 $router->post('/commerce/ca-admin/subscriber-lists/{id}',
     [AdminSubscriberListController::class, 'update'],
     ['store', 'auth', 'csrf', 'permission:newsletter.subscribers.manage']);
+
+// =====================================================================
+// Admin newsletter: campaigns (Stage 008I)
+// =====================================================================
+
+$router->get('/commerce/ca-admin/campaigns',
+    [AdminCampaignController::class, 'index'],
+    ['store', 'auth', 'permission:newsletter.campaigns.view']);
+
+$router->get('/commerce/ca-admin/campaigns/create',
+    [AdminCampaignController::class, 'showCreate'],
+    ['store', 'auth', 'permission:newsletter.campaigns.manage']);
+
+$router->post('/commerce/ca-admin/campaigns',
+    [AdminCampaignController::class, 'store'],
+    ['store', 'auth', 'csrf', 'permission:newsletter.campaigns.manage']);
+
+$router->get('/commerce/ca-admin/campaigns/{id}/edit',
+    [AdminCampaignController::class, 'showEdit'],
+    ['store', 'auth', 'permission:newsletter.campaigns.view']);
+
+$router->get('/commerce/ca-admin/campaigns/{id}/preview',
+    [AdminCampaignController::class, 'preview'],
+    ['store', 'auth', 'permission:newsletter.campaigns.view']);
+
+$router->post('/commerce/ca-admin/campaigns/{id}/send',
+    [AdminCampaignController::class, 'send'],
+    ['store', 'auth', 'csrf', 'permission:newsletter.campaigns.manage']);
+
+$router->post('/commerce/ca-admin/campaigns/{id}/delete',
+    [AdminCampaignController::class, 'destroy'],
+    ['store', 'auth', 'csrf', 'permission:newsletter.campaigns.manage']);
+
+$router->get('/commerce/ca-admin/campaigns/{id}',
+    [AdminCampaignController::class, 'show'],
+    ['store', 'auth', 'permission:newsletter.campaigns.view']);
+
+$router->post('/commerce/ca-admin/campaigns/{id}',
+    [AdminCampaignController::class, 'update'],
+    ['store', 'auth', 'csrf', 'permission:newsletter.campaigns.manage']);
