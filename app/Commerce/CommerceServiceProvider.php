@@ -7,6 +7,7 @@ use CorporateAid\Core\Auth;
 use CorporateAid\Core\Container;
 use CorporateAid\Core\Database;
 use CorporateAid\Platform\Support\CodeGenerator;
+use CorporateAid\Platform\Support\SignedToken;
 use CorporateAid\Core\Router;
 use CorporateAid\Core\Session;
 use CorporateAid\Commerce\Context\StoreContext;
@@ -78,6 +79,15 @@ final class CommerceServiceProvider
     {
         // ---------- Context ----------
         $c->singleton(StoreContext::class, fn() => new StoreContext());
+
+        // HMAC-SHA256 signing for the newsletter confirm and
+        // unsubscribe tokens. Captures config('app.key') once
+        // at registration time. The constructor throws when
+        // the key is missing or shorter than 32 bytes.
+        $c->singleton(SignedToken::class,
+            fn() => new SignedToken(
+                (string) $c->get('config')->get('app.key', '')
+            ));
 
         // ---------- Repositories: catalog ----------
         $c->singleton(ProductReviewService::class,

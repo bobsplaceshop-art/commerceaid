@@ -39,6 +39,7 @@ final class StoreSettingDefinitions
     public const GROUP_BRANDING   = 'branding';
     public const GROUP_FONTS      = 'fonts';
     public const GROUP_COMPLIANCE = 'compliance';
+    public const GROUP_NEWSLETTER = 'newsletter';
 
     /**
      * Every known setting, keyed by dotted key name.
@@ -286,6 +287,48 @@ final class StoreSettingDefinitions
                        . 'the admin approval queue.',
         ],
 
+        // -------------------------------------------------------------
+        // Newsletter (Stage 008I)
+        // -------------------------------------------------------------
+        'newsletter.double_opt_in' => [
+            'label'   => 'Require double opt-in',
+            'type'    => 'boolean',
+            'default' => true,
+            'group'   => self::GROUP_NEWSLETTER,
+            'hint'    => 'Strongly recommended for German stores. '
+                       . 'The subscriber must click a confirmation link '
+                       . 'in an email before receiving campaigns.',
+        ],
+        'newsletter.tracking_enabled' => [
+            'label'   => 'Track opens and clicks',
+            'type'    => 'boolean',
+            'default' => false,
+            'group'   => self::GROUP_NEWSLETTER,
+            'hint'    => 'When on, each campaign email embeds a tracking '
+                       . 'pixel and rewrites links. Under TTDSG § 25 this '
+                       . 'requires the subscriber\'s consent. Leave off '
+                       . 'for German deployments unless you have a legal '
+                       . 'basis.',
+        ],
+        'newsletter.rate_limit_per_minute' => [
+            'label'   => 'Send rate per minute',
+            'type'    => 'number',
+            'default' => 60,
+            'group'   => self::GROUP_NEWSLETTER,
+            'hint'    => 'The worker sends at most this many emails per '
+                       . 'minute. Lower for shared SMTP, higher for a '
+                       . 'dedicated relay.',
+        ],
+        'newsletter.unsubscribe_token_days' => [
+            'label'   => 'Unsubscribe link validity (days)',
+            'type'    => 'number',
+            'default' => 90,
+            'group'   => self::GROUP_NEWSLETTER,
+            'hint'    => 'How long an unsubscribe link in a sent campaign '
+                       . 'stays valid. Longer is friendlier. 90 days is '
+                       . 'standard.',
+        ],
+
     ];
 
     /**
@@ -377,6 +420,7 @@ final class StoreSettingDefinitions
             self::GROUP_BRANDING   => 'Branding',
             self::GROUP_FONTS      => 'Fonts',
             self::GROUP_COMPLIANCE => 'Compliance',
+            self::GROUP_NEWSLETTER => 'Newsletter',
             default                => ucfirst($group),
         };
     }

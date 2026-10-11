@@ -24,6 +24,15 @@ return [
         'debug'    => true,
         'url'      => 'http://localhost:8081',
         'timezone' => 'Africa/Nairobi',
+
+        // Application signing key. Used by SignedToken for
+        // the newsletter confirm and unsubscribe links.
+        //
+        // Generate one with:
+        //   php -r "echo bin2hex(random_bytes(32));"
+        //
+        // At least 32 bytes. Do not commit a real key.
+        'key'      => '',
     ],
 
     'mail' => [
