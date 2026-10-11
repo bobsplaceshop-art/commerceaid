@@ -2,7 +2,7 @@
 
 **As of:** 2026-10-11
 **Version:** 0.25.0-alpha
-**Stage:** 008I in progress. Sessions 1 and 2 shipped (schema, services, subscriber + list + campaign admin surfaces, campaign preview iframe). Session 3 (storefront subscribe, confirm, unsubscribe, email templates) next.
+**Stage:** 008I in progress. Sessions 1, 2, and 3a shipped (schema, services, admin surfaces, campaign preview iframe, storefront subscribe + double opt-in + unsubscribe). Session 3b (account preferences toggle) next.
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -142,11 +142,16 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 - Permission-gated by `newsletter.subscribers.view` /
   `.manage` and `newsletter.campaigns.view` / `.manage`.
 
-**Not yet shipped (008I Session 3):** the storefront
-subscribe endpoint, double opt-in confirm, unsubscribe
-page, the three newsletter email templates, and wiring
-the footer and home subscribe forms off their current
-disabled placeholder state.
+**Shipped (008I Session 3a):** the storefront subscribe
+endpoint (POST /newsletter/subscribe), double opt-in
+confirm (GET /newsletter/confirm/{token}), unsubscribe
+(GET and POST /newsletter/unsubscribe/{token}), the
+three newsletter email templates, and both footer and
+home subscribe forms wired to the live endpoint.
+
+**Not yet shipped (008I Sessions 3b and 4):** the
+account preferences newsletter toggle, and the campaign
+send test with the queue worker.
 
 ### Catalog
 

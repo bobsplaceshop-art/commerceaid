@@ -321,7 +321,7 @@ Mailchimp, no Klaviyo, no third-party marketing processor.
 The subscriber list, the campaigns, and the sending
 infrastructure all live inside the store's own deployment.
 
-**Status:** In progress. Sessions 1 and 2 shipped 2026-10-11.
+**Status:** In progress. Sessions 1, 2, and 3a shipped 2026-10-11.
 
 **Shipped (2026-10-11):**
 
@@ -339,13 +339,19 @@ infrastructure all live inside the store's own deployment.
 
 **Remaining:**
 
-  Session 3 - storefront subscribe endpoint, double
-  opt-in confirm, unsubscribe page, three email
-  templates, account preferences toggle, wiring the
-  footer and home subscribe forms.
+  Session 3b - account preferences newsletter toggle.
+  Reads and writes the subscriber row from the
+  existing /account/messages/preferences page.
 
-  Session 4 - optional tracking (default off for
-  German deployments), CLI worker test, stage close.
+  Session 4 - campaign send test through the queue
+  worker (bin/send-emails.php), then stage close.
+
+**Session 3a shipped 2026-10-11** (commit b17f7bf):
+  storefront subscribe endpoint with IP + per-email
+  rate limits and a honeypot, double opt-in confirm,
+  unsubscribe (GET renders a form, POST performs the
+  action), and the two storefront subscribe forms
+  wired off their placeholder state.
 
 **Why inbuilt:**
 
