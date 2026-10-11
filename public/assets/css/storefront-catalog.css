@@ -1394,6 +1394,12 @@ select.sf-filter-input {
     color: #1f6f1f;
 }
 
+.sf-account-flash-error {
+    background: var(--sf-danger-soft, #FBE9E7);
+    border: 1px solid var(--sf-danger, #9B2C2C);
+    color: var(--sf-danger, #9B2C2C);
+}
+
 /* Screen-reader-only utility, used by the toggle labels */
 .sr-only {
     position: absolute;

@@ -279,6 +279,156 @@ final class SubscriberService
     }
 
     /**
+     * Read the current subscription state for an email
+     * address without changing it. Used by the account
+     * preferences page to render the newsletter toggle.
+     *
+     * Returns 'none' when no subscriber row exists at all.
+     * That state is distinct from 'unsubscribed' because a
+     * customer who has never signed up and a customer who
+     * has opted out are shown different copy.
+     *
+     * @return array{status:string, subscriber:?Subscriber}
+     */
+    public function stateFor(string $email): array
+    {
+        $email = strtolower(trim($email));
+        if ($email === '') {
+            return ['status' => 'none', 'subscriber' => null];
+        }
+
+        $subscriber = $this->subscribers->findByEmail($email);
+        if ($subscriber === null) {
+            return ['status' => 'none', 'subscriber' => null];
+        }
+
+        return [
+            'status'     => $subscriber->status,
+            'subscriber' => $subscriber,
+        ];
+    }
+
+    /**
+     * Re-subscribe an existing subscriber who is currently
+     * unsubscribed. Called only from the authenticated
+     * account preferences toggle - never from a public
+     * route.
+     *
+     * This is deliberately separate from subscribe(). The
+     * public subscribe() path refuses to re-subscribe an
+     * unsubscribed address, because a public form can be
+     * filled in by anyone: allowing it would let a third
+     * party undo a subscriber's opt-out. The account
+     * preferences path is different - the customer is
+     * authenticated and toggling their own account - so the
+     * refusal does not apply.
+     *
+     * Suppressed addresses cannot be re-subscribed even
+     * here. A suppression is a hard bounce or a spam
+     * complaint; the operator must clear it deliberately.
+     *
+     * @param array<string,mixed> $consent { source, ip, user_agent }
+     * @return array{ok:bool, subscriber:?Subscriber, status:string, message:string}
+     */
+    public function resubscribe(string $email, array $consent): array
+    {
+        $email = strtolower(trim($email));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new NewsletterException('Please enter a valid email address.');
+        }
+
+        $existing = $this->subscribers->findByEmail($email);
+
+        // No row: this is not a re-subscribe, it is a fresh
+        // subscribe. Delegate.
+        if ($existing === null) {
+            return $this->subscribe($email, null, $consent, null);
+        }
+
+        // Already subscribed or already waiting on a
+        // confirmation. Nothing to do; the row is in the
+        // right state.
+        if ($existing->isConfirmed() || $existing->isPending()) {
+            return [
+                'ok'         => true,
+                'subscriber' => $existing,
+                'status'     => $existing->status,
+                'message'    => $existing->isConfirmed()
+                                    ? 'You are already subscribed.'
+                                    : 'Check your inbox to confirm your subscription.',
+            ];
+        }
+
+        // Suppressed: refuse. The operator must clear it.
+        if ($existing->isSuppressed()) {
+            return [
+                'ok'         => false,
+                'subscriber' => $existing,
+                'status'     => 'suppressed',
+                'message'    => 'This address cannot be re-subscribed automatically. '
+                              . 'Contact support if this is a mistake.',
+            ];
+        }
+
+        // Unsubscribed: re-open. The consent evidence is
+        // refreshed because the customer is giving consent
+        // again, now. The old consent record is not erased;
+        // consent_at is updated, and the flow records the
+        // new moment of consent.
+        $list = $this->lists->defaultForStore();
+        if ($list === null) {
+            throw new NewsletterException('The newsletter list is not available.');
+        }
+
+        $requiresDoubleOptIn = $this->settings->bool('newsletter.double_opt_in', true);
+        $now = date('Y-m-d H:i:s');
+
+        if (!$requiresDoubleOptIn) {
+            $this->subscribers->update($existing->id, [
+                'status'             => 'confirmed',
+                'confirmed_at'       => $now,
+                'unsubscribed_at'    => null,
+                'unsubscribe_reason' => null,
+                'consent_source'     => (string) ($consent['source'] ?? 'account'),
+                'consent_ip'         => (string) ($consent['ip'] ?? ''),
+                'consent_user_agent' => (string) ($consent['user_agent'] ?? ''),
+                'consent_at'         => $now,
+            ]);
+
+            $this->members->addMember($existing->id, $list->id);
+
+            $fresh = $this->subscribers->findById($existing->id);
+
+            return [
+                'ok'         => true,
+                'subscriber' => $fresh,
+                'status'     => 'confirmed',
+                'message'    => 'You are subscribed.',
+            ];
+        }
+
+        // Double opt-in: reopen, clear the unsubscribe
+        // timestamp, and send a fresh confirmation email.
+        // sendConfirmation() writes the token and updates
+        // status to 'pending'.
+        $this->subscribers->update($existing->id, [
+            'unsubscribed_at'    => null,
+            'unsubscribe_reason' => null,
+            'consent_source'     => (string) ($consent['source'] ?? 'account'),
+            'consent_ip'         => (string) ($consent['ip'] ?? ''),
+            'consent_user_agent' => (string) ($consent['user_agent'] ?? ''),
+            'consent_at'         => $now,
+        ]);
+
+        $refreshed = $this->subscribers->findById($existing->id);
+        if ($refreshed === null) {
+            throw new NewsletterException('Could not update the subscription.');
+        }
+
+        return $this->sendConfirmation($refreshed, $list->id);
+    }
+
+    /**
      * Sign an unsubscribe token for a subscriber and return
      * the full unsubscribe URL. Called by the campaign queue
      * when rendering the campaign email, and by the

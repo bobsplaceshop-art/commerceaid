@@ -6,6 +6,7 @@ namespace CorporateAid\Commerce\Controllers\Storefront;
 use CorporateAid\Commerce\Repositories\CustomerRepository;
 use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\CustomerNotificationService;
+use CorporateAid\Commerce\Services\SubscriberService;
 use CorporateAid\Commerce\Support\StorefrontController;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
@@ -152,10 +153,19 @@ final class MessageController extends StorefrontController
 
         $session = $this->container->get(Session::class);
 
+        // Current newsletter subscription state. Read from
+        // commerce_subscribers via the service; the
+        // preferences page does not write to that table.
+        $newsletterState = $this->container->get(SubscriberService::class)
+            ->stateFor($customer->email);
+
         return $this->renderAccount('storefront.account.message-preferences', [
-            'title'    => 'Message Preferences',
-            'customer' => $customer,
-            'flashOk'  => $session->getFlash('prefs_success'),
+            'title'             => 'Message Preferences',
+            'customer'          => $customer,
+            'flashOk'           => $session->getFlash('prefs_success'),
+            'flashError'        => $session->getFlash('prefs_error'),
+            'newsletterStatus'  => $newsletterState['status'],
+            'newsletterToggleable' => $newsletterState['status'] !== 'suppressed',
         ]);
     }
 
@@ -178,10 +188,135 @@ final class MessageController extends StorefrontController
         $this->container->get(CustomerRepository::class)
             ->updateNotificationPrefs($customer->id, $orderUpdates, $promotions);
 
+        // Newsletter subscription. This writes to
+        // commerce_subscribers, not commerce_customers; the
+        // two are distinct systems on purpose.
+        $newsletterResult = $this->applyNewsletterPreference(
+            $customer->email,
+            (bool) $request->input('notify_newsletter', false)
+        );
+
         $session = $this->container->get(Session::class);
-        $session->flash('prefs_success', 'Preferences saved.');
+        if ($newsletterResult['ok']) {
+            $session->flash('prefs_success', 'Preferences saved.');
+        } else {
+            $session->flash('prefs_error', $newsletterResult['message']);
+        }
 
         return Response::redirect('/account/messages/preferences');
+    }
+
+    /**
+     * Apply the newsletter toggle.
+     *
+     *   on,  no subscriber or unsubscribed  -> resubscribe()
+     *   on,  pending                        -> no-op
+     *   on,  confirmed                      -> no-op
+     *   on,  suppressed                     -> refuse
+     *   off, pending or confirmed           -> unsubscribe()
+     *                                          + acknowledgement
+     *                                          email
+     *   off, unsubscribed or none           -> no-op
+     *
+     * Returns a result the caller can surface as a flash:
+     *   ok = true  -> 'Preferences saved.'
+     *   ok = false -> the service's message
+     *
+     * @return array{ok:bool, message:string}
+     */
+    private function applyNewsletterPreference(string $email, bool $enabled): array
+    {
+        $service = $this->container->get(SubscriberService::class);
+        $state   = $service->stateFor($email);
+        $status  = $state['status'];
+
+        if ($enabled) {
+            if ($status === 'confirmed' || $status === 'pending') {
+                return ['ok' => true, 'message' => 'Preferences saved.'];
+            }
+            if ($status === 'suppressed') {
+                return [
+                    'ok'      => false,
+                    'message' => 'This address is suppressed and cannot be re-subscribed. '
+                               . 'Contact support if this is a mistake.',
+                ];
+            }
+
+            // Unsubscribed or no row. resubscribe() handles
+            // both: it delegates to subscribe() when there
+            // is no row, and re-opens an unsubscribed row
+            // with a fresh consent record.
+            $result = $service->resubscribe($email, [
+                'source'     => 'account',
+                'ip'         => $_SERVER['REMOTE_ADDR'] ?? '',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            ]);
+
+            return [
+                'ok'      => (bool) $result['ok'],
+                'message' => (string) $result['message'],
+            ];
+        }
+
+        // Toggle off. Only act if the subscriber is in a
+        // state where the toggle is meaningful.
+        if ($status === 'confirmed' || $status === 'pending') {
+            $subscriber = $state['subscriber'];
+            if ($subscriber !== null) {
+                $service->unsubscribe(
+                    $subscriber->id,
+                    'Unsubscribed from account preferences'
+                );
+                $this->sendUnsubscribeAcknowledgement($subscriber);
+            }
+        }
+
+        return ['ok' => true, 'message' => 'Preferences saved.'];
+    }
+
+    /**
+     * Send the unsubscribe acknowledgement email. Same
+     * template the token-based unsubscribe uses. Kept
+     * private to this controller; it is only called from
+     * the authenticated preferences flow.
+     */
+    private function sendUnsubscribeAcknowledgement(
+        \CorporateAid\Commerce\Models\Subscriber $subscriber
+    ): void {
+        try {
+            $storeContext = $this->container->get(
+                \CorporateAid\Commerce\Context\StoreContext::class
+            );
+            $stores = $this->container->get(
+                \CorporateAid\Commerce\Repositories\StoreRepository::class
+            );
+            $store = $stores->findById($storeContext->id());
+            $storeName = $store !== null && $store->name !== ''
+                            ? $store->name
+                            : 'Store';
+
+            $urlBase = rtrim((string) config('app.url', ''), '/');
+
+            $this->container->get(\CorporateAid\Platform\Support\EmailService::class)
+                ->sendTemplate(
+                    [$subscriber->email => $subscriber->name ?? $subscriber->email],
+                    'You have been unsubscribed from ' . $storeName,
+                    'newsletter/unsubscribe-confirm',
+                    [
+                        'storeName'       => $storeName,
+                        'subscriberEmail' => $subscriber->email,
+                        'resubscribeUrl'  => $urlBase . '/',
+                    ]
+                );
+        } catch (\Throwable $e) {
+            // The unsubscribe itself succeeded; the
+            // acknowledgement email is best-effort. Log
+            // and continue.
+            $this->container->get(\CorporateAid\Platform\Support\Logger::class)
+                ->error('Unsubscribe acknowledgement email failed', [
+                    'error' => $e->getMessage(),
+                ]);
+        }
     }
 
     // =================================================================

@@ -4,25 +4,55 @@
  * MessageController::preferences().
  *
  * Context:
- *   $customer ?Customer
- *   $flashOk  ?string
+ *   $customer           ?Customer
+ *   $flashOk            ?string
+ *   $flashError         ?string
+ *   $newsletterStatus   string  'none'|'pending'|'confirmed'|
+ *                                'unsubscribed'|'suppressed'
+ *   $newsletterToggleable bool  false when suppressed
  *
- * Two preferences only:
+ * Three preferences:
  *   notify_order_updates  - order placed, and future status
- *                           changes
- *   notify_promotions     - marketing messages
+ *                           changes (commerce_customers)
+ *   notify_promotions     - in-app marketing messages
+ *                           (commerce_customers)
+ *   notify_newsletter     - email newsletter subscription
+ *                           (commerce_subscribers, keyed on
+ *                           the customer's email)
  *
- * System messages are not a preference. They always deliver.
- * The page explains this so the customer is not surprised by
- * a welcome message they cannot turn off.
+ * The first two are the in-app message center. The third
+ * is the email newsletter. They are distinct systems on
+ * purpose: a customer may want one and not the other.
  *
- * See docs/stages/008g.3_message-center-plan.md.
+ * System messages are not a preference. They always
+ * deliver. The page explains this so the customer is not
+ * surprised by a welcome message they cannot turn off.
+ *
+ * See docs/stages/008g.3_message-center-plan.md and
+ * docs/stages/008i_newsletter-plan.md.
  */
-$customer = $customer ?? null;
-$flashOk  = $flashOk  ?? null;
+$customer             = $customer             ?? null;
+$flashOk              = $flashOk              ?? null;
+$flashError           = $flashError           ?? null;
+$newsletterStatus     = $newsletterStatus     ?? 'none';
+$newsletterToggleable = $newsletterToggleable ?? true;
 
 $orderUpdates = $customer !== null ? $customer->notifyOrderUpdates : true;
 $promotions   = $customer !== null ? $customer->notifyPromotions   : false;
+
+$newsletterChecked = in_array(
+    $newsletterStatus,
+    ['pending', 'confirmed'],
+    true
+);
+
+$newsletterDesc = match ($newsletterStatus) {
+    'pending'      => 'We have sent a confirmation email. Click the link in it to finish subscribing.',
+    'confirmed'    => 'You are subscribed to our newsletter. Uncheck to stop receiving it.',
+    'unsubscribed' => 'You have unsubscribed. Check the box to subscribe again.',
+    'suppressed'   => 'This email address has been suppressed because previous messages bounced or were marked as spam. Contact support to re-subscribe.',
+    default        => 'Receive our newsletter with offers, new arrivals, and store updates.',
+};
 ?>
 
 <div class="sf-account-page-header">
@@ -41,6 +71,12 @@ $promotions   = $customer !== null ? $customer->notifyPromotions   : false;
 <?php if ($flashOk !== null && $flashOk !== ''): ?>
     <div class="sf-account-flash sf-account-flash-ok" role="status">
         <?= e($flashOk) ?>
+    </div>
+<?php endif; ?>
+
+<?php if ($flashError !== null && $flashError !== ''): ?>
+    <div class="sf-account-flash sf-account-flash-error" role="alert">
+        <?= e($flashError) ?>
     </div>
 <?php endif; ?>
 
@@ -91,6 +127,33 @@ $promotions   = $customer !== null ? $customer->notifyPromotions   : false;
         </label>
     </div>
 
+    <div class="sf-pref-row">
+        <div class="sf-pref-info">
+            <h2 class="sf-pref-title">
+                <i class="bi bi-envelope-paper" aria-hidden="true"></i>
+                Newsletter and Promotions
+            </h2>
+            <p class="sf-pref-desc">
+                <?= e($newsletterDesc) ?>
+            </p>
+        </div>
+        <?php if ($newsletterToggleable): ?>
+            <label class="sf-pref-toggle">
+                <input type="hidden" name="notify_newsletter" value="0">
+                <input type="checkbox"
+                       name="notify_newsletter"
+                       value="1"
+                       <?= $newsletterChecked ? 'checked' : '' ?>>
+                <span class="sf-pref-toggle-track" aria-hidden="true"></span>
+                <span class="sr-only">Subscribe to the newsletter</span>
+            </label>
+        <?php else: ?>
+            <div class="sf-pref-locked" aria-label="Suppressed">
+                <i class="bi bi-slash-circle" aria-hidden="true"></i>
+            </div>
+        <?php endif; ?>
+    </div>
+
     <div class="sf-pref-row sf-pref-row-static">
         <div class="sf-pref-info">
             <h2 class="sf-pref-title">
@@ -118,6 +181,7 @@ $promotions   = $customer !== null ? $customer->notifyPromotions   : false;
 
 <p class="sf-message-prefs-note">
     <i class="bi bi-info-circle" aria-hidden="true"></i>
-    Email delivery is not yet active. Preferences are stored
-    now and will apply when email notifications launch.
+    Order Updates and Promotions control the messages you
+    see in your account. The Newsletter toggle controls
+    the marketing emails we send to your address.
 </p>
