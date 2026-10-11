@@ -591,19 +591,65 @@ entry 22) is a separate compliance stage; deadline
 
 ### Stage 009 - Forms & Submissions
 
-**Goal:** Native form builder as a differentiator.
+**Status:** In progress. Session 1 of 4 shipped
+2026-10-12.
 
-**Deliverables:**
+**Goal:** Native form builder. The merchant creates
+forms without code, embeds them in the storefront, and
+manages the submissions they receive. Targets the
+paid-tier feature set of the Shopify form-builder
+marketplace at no additional cost: no submission caps,
+no storage limits.
 
-- commerce_forms, commerce_form_fields, commerce_form_submissions
-- Field type registry with 12+ input types
-- Conditional logic engine
-- Form builder admin with drag-drop and live preview
-- Submission management with filters and CSV export
-- Form rendering in themes
-- Webhook + notification on submission
+**Shipped (Session 1, 2026-10-12):**
 
-**Depends on:** Stages 008 (storefront), 007 (customers)
+  913ec60  docs(009): stage plan
+  8478468  feat(forms): schema, models, repositories
+  90073f2  docs(session): 009 session 1
+
+  Session 1 delivered:
+
+    - Three tables: commerce_forms,
+      commerce_form_fields, commerce_form_submissions.
+    - Three models: Form, FormField, FormSubmission.
+    - Three repositories: FormRepository,
+      FormFieldRepository, FormSubmissionRepository.
+    - Permissions seeded (seeder 0017): forms.view,
+      forms.manage, forms.submissions.view,
+      forms.submissions.manage.
+
+**Remaining:**
+
+  Session 2 - FormService, FormRenderer, admin editor
+  (list, create, field editor, preview).
+
+  Session 3 - public surface, submission processing,
+  conditional logic JS, multi-step rendering.
+
+  Session 4 - submissions admin with filters and CSV
+  export, domain event firing, notification and webhook
+  integration, stage close.
+
+**Deferred sub-stages:**
+
+  009.1  Drag-and-drop field editor.
+  009.2  Field calculations and scoring.
+  009.3  Payment fields (belongs in Stage 010).
+  009.4  Form templates gallery.
+  009.5  Analytics (views, conversion, abandon rate).
+  009.6  PDF export of submissions.
+
+**Industry reference:** the paid-tier feature set of
+the Shopify form-builder marketplace (Form Builder,
+Typeform, Jotform, Powr). Forminator is the conceptual
+model for the field type registry and the conditional
+logic operators. Shopify native Forms is not the
+benchmark (email/SMS capture only).
+
+**Depends on:** Stage 008 (storefront), Stage 008I
+(honeypot + rate-limit patterns).
+
+**See also:** docs/stages/009_forms-plan.md
 
 ### Stage 010 - Payments (Deep)
 

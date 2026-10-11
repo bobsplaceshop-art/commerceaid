@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-10-12
-**Version:** 0.27.0-alpha
-**Stage:** 008I.1 complete. Newsletter & Email Campaigns shipped end to end, including the two hygiene fixes (GET/POST symmetry in the unsubscribe GET handler, and an unsubscribe link in the confirmation email). Next: 009 (Forms & Submissions).
+**Version:** 0.28.0-alpha
+**Stage:** 009 (Forms & Submissions) in progress. Session 1 of 4 shipped: three tables, three models, three repositories, four permission slugs. Session 2 (FormService, FormRenderer, admin editor) next.
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -160,6 +160,30 @@ unsubscribe GET handler, and a "did not ask to
 subscribe" link in the confirmation email template.
 Both shipped 2026-10-12 (commit d99021b). Stage 008I
 has no outstanding follow-ups.
+
+#### Admin - Forms (009 Session 1)
+
+**Backend only.** Session 1 of Stage 009 shipped the
+schema, models, and repositories. No admin UI yet.
+
+- `commerce_forms`, `commerce_form_fields`,
+  `commerce_form_submissions` tables (migrations
+  0334-0336).
+- `Form`, `FormField`, `FormSubmission` models.
+- `FormRepository`, `FormFieldRepository`,
+  `FormSubmissionRepository` (all resolve via the
+  container through ADR-018 auto-construction).
+- Permissions seeded (seeder 0017): `forms.view`,
+  `forms.manage`, `forms.submissions.view`,
+  `forms.submissions.manage`. Granted to super-admin,
+  store-admin, marketing (all four) and support
+  (submissions.view only).
+
+The admin editor (list, create, field editor,
+preview) ships in Session 2. The public surface and
+submission processing ship in Session 3. The
+submissions admin and webhook integration ship in
+Session 4.
 
 ### Catalog
 
