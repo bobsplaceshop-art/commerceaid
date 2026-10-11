@@ -321,7 +321,8 @@ Mailchimp, no Klaviyo, no third-party marketing processor.
 The subscriber list, the campaigns, and the sending
 infrastructure all live inside the store's own deployment.
 
-**Status:** In progress. Sessions 1, 2, and 3a shipped 2026-10-11.
+**Status:** Complete. Sessions 1, 2, 3a, 3b, and 4
+shipped 2026-10-11.
 
 **Shipped (2026-10-11):**
 
@@ -336,22 +337,59 @@ infrastructure all live inside the store's own deployment.
   ea0812b  docs(admin-guide): cover Returns, Coupons, Tax,
            Shipping, Newsletter
   cfe6a44  docs(session): 2026-10-11-4
+  b17f7bf  storefront subscribe, confirm, unsubscribe
+           (008I session 3a)
+  50b9eaf  docs(session): 2026-10-11-5
+  97cb3bf  docs: update STATUS and ROADMAP for 008I s3a
+  3e840db  account preferences newsletter toggle
+           (008I session 3b)
+  648d962  resubscribeUrl points at /#newsletter
+  1264676  docs(session): 2026-10-11-6
 
-**Remaining:**
+**Post-stage follow-up (008I.1):**
 
-  Session 3b - account preferences newsletter toggle.
-  Reads and writes the subscriber row from the
-  existing /account/messages/preferences page.
+  Two small hygiene fixes deferred from the stage:
 
-  Session 4 - campaign send test through the queue
-  worker (bin/send-emails.php), then stage close.
+    1. GET/POST symmetry in
+       NewsletterController::showUnsubscribe() - the
+       GET verifies the token only; the POST verifies
+       the token and looks up the subscriber. A stale
+       token renders a form that always fails.
 
-**Session 3a shipped 2026-10-11** (commit b17f7bf):
-  storefront subscribe endpoint with IP + per-email
-  rate limits and a honeypot, double opt-in confirm,
-  unsubscribe (GET renders a form, POST performs the
-  action), and the two storefront subscribe forms
-  wired off their placeholder state.
+    2. Add a "did not ask to subscribe" link to
+       resources/emails/newsletter/opt-in-confirmation.php
+       so every confirmation email carries an
+       unsubscribe path, not just campaigns.
+
+**What 008I delivered:**
+
+  An inbuilt newsletter and campaign system with no
+  third-party marketing processor. Subscriber list,
+  campaigns, and sending all live inside the store's
+  own infrastructure.
+
+    - Subscriber list, subscriber lists, campaigns
+      admin surfaces.
+    - Campaign composer, preview iframe, send action.
+    - Campaign detail with stats tiles.
+    - Storefront subscribe form on the footer and home
+      page.
+    - Double opt-in confirm flow.
+    - Unsubscribe from a token link or from the account
+      preferences toggle.
+    - Per-email rate limit on confirmation sends
+      (subscription-bomb protection).
+    - Honeypot on the public subscribe form.
+    - CLI queue worker at bin/send-emails.php.
+    - Consent evidence captured per subscriber
+      (source, IP, user agent, timestamp).
+    - Unsubscribe acknowledgement email on every
+      unsubscribe.
+
+  German compliance satisfied: double opt-in by
+  default, consent evidence retained, unsubscribe link
+  in every campaign and (after 008I.1) every
+  confirmation email, no data leaves the store.
 
 **Why inbuilt:**
 
