@@ -40,6 +40,7 @@ html[data-theme="dark"] {
     --ra-text-strong:   #ffffff;
     --ra-muted:         #94a3b8;
     --ra-muted-2:       #64748b;
+    --ra-text-soft:     #cbd5e1;
     --ra-primary:       #0f4c81;
     --ra-primary-hover: #0d416e;
     --ra-accent:        #f5a623;
@@ -65,6 +66,15 @@ html[data-theme="dark"] {
     --ra-shadow-lg:     0 20px 60px rgba(0,0,0,.5);
     --ra-input-bg:      #0b1424;
     --ra-page-band-bg:  linear-gradient(180deg, #0b1424 0%, transparent 100%);
+
+    /* Legacy aliases. --ra-card-bg and --ra-fg are referenced
+       by twelve admin views and two rules in this file, but
+       were never defined. The fallbacks (#fff, #0f172a) are
+       light-theme values, which is why the product editor's
+       tab content rendered cream on the dark theme. Bind the
+       aliases to their semantic equivalents. */
+    --ra-card-bg:       #111c33;   /* == --ra-surface */
+    --ra-fg:            #e2e8f0;   /* == --ra-text */
 }
 
 /* ---------- Light (explicit) ---------- */
@@ -80,6 +90,7 @@ html[data-theme="light"] {
     --ra-text-strong:   #020617;
     --ra-muted:         #475569;
     --ra-muted-2:       #64748b;
+    --ra-text-soft:     #5b6675;
     --ra-primary:       #0f4c81;
     --ra-primary-hover: #0d416e;
     --ra-accent:        #f5a623;
@@ -105,6 +116,9 @@ html[data-theme="light"] {
     --ra-shadow-lg:     0 20px 60px rgba(15,23,42,.15);
     --ra-input-bg:      #ffffff;
     --ra-page-band-bg:  linear-gradient(180deg, #dbeafe 0%, #f8fafc 100%);
+
+    --ra-card-bg:       #ffffff;   /* == --ra-surface */
+    --ra-fg:            #0f172a;   /* == --ra-text */
 }
 
 /* ---------- System (respects OS) ---------- */
@@ -121,6 +135,7 @@ html[data-theme="light"] {
         --ra-text-strong:   #020617;
         --ra-muted:         #475569;
         --ra-muted-2:       #64748b;
+        --ra-text-soft:     #5b6675;
         --ra-primary:       #0f4c81;
         --ra-primary-hover: #0d416e;
         --ra-accent:        #f5a623;
@@ -146,6 +161,9 @@ html[data-theme="light"] {
         --ra-shadow-lg:     0 20px 60px rgba(15,23,42,.15);
         --ra-input-bg:      #ffffff;
         --ra-page-band-bg:  linear-gradient(180deg, #dbeafe 0%, #f8fafc 100%);
+
+        --ra-card-bg:       #ffffff;   /* == --ra-surface */
+        --ra-fg:            #0f172a;   /* == --ra-text */
     }
 }
 
