@@ -591,7 +591,7 @@ entry 22) is a separate compliance stage; deadline
 
 ### Stage 009 - Forms & Submissions
 
-**Status:** In progress. Session 1 of 4 shipped
+**Status:** In progress. Sessions 1 and 2a shipped
 2026-10-12.
 
 **Goal:** Native form builder. The merchant creates
@@ -601,11 +601,15 @@ paid-tier feature set of the Shopify form-builder
 marketplace at no additional cost: no submission caps,
 no storage limits.
 
-**Shipped (Session 1, 2026-10-12):**
+**Shipped (2026-10-12):**
 
   913ec60  docs(009): stage plan
   8478468  feat(forms): schema, models, repositories
   90073f2  docs(session): 009 session 1
+  fc8a992  docs: mark Stage 009 Session 1 shipped
+  e7263b6  feat(forms): FormService, admin controller,
+           list + editor
+  d4e157c  docs(session): 009 session 2a
 
   Session 1 delivered:
 
@@ -618,12 +622,32 @@ no storage limits.
       forms.manage, forms.submissions.view,
       forms.submissions.manage.
 
+  Session 2a delivered:
+
+    - FormService with form CRUD, duplicate, and
+      status transitions (publish, unpublish,
+      archive, soft delete).
+    - AdminFormController with eleven actions.
+    - Three admin views: index (list with status
+      tabs and counts), create, edit (metadata +
+      status card + fields/submissions placeholders
+      + danger zone).
+    - Eleven admin routes, gated by forms.view /
+      forms.manage.
+    - Sidebar item under Marketing.
+
 **Remaining:**
 
-  Session 2 - FormService, FormRenderer, admin editor
-  (list, create, field editor, preview).
+  Session 2b - the field editor. Four new methods on
+  FormService (addField, updateField, deleteField,
+  reorderFields), four new controller actions, the
+  field modal with type-conditional config rendered
+  from InputType::configFields(), up/down reorder
+  controls, and a small JS module to toggle the
+  visible config section on type change.
 
-  Session 3 - public surface, submission processing,
+  Session 3 - public surface (GET /forms/{slug}),
+  submission processing (POST /forms/{slug}),
   conditional logic JS, multi-step rendering.
 
   Session 4 - submissions admin with filters and CSV

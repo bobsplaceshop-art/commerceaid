@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-10-12
-**Version:** 0.28.0-alpha
-**Stage:** 009 (Forms & Submissions) in progress. Session 1 of 4 shipped: three tables, three models, three repositories, four permission slugs. Session 2 (FormService, FormRenderer, admin editor) next.
+**Version:** 0.29.0-alpha
+**Stage:** 009 (Forms & Submissions) in progress. Sessions 1 and 2a shipped. Forms admin surface is live: list, create, metadata editor, status transitions (publish/unpublish/archive), duplicate, soft delete, status tab counts. Session 2b (field editor) next, then Sessions 3 and 4 (public surface + submissions).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -161,10 +161,15 @@ subscribe" link in the confirmation email template.
 Both shipped 2026-10-12 (commit d99021b). Stage 008I
 has no outstanding follow-ups.
 
-#### Admin - Forms (009 Session 1)
+#### Admin - Forms (009 Sessions 1 + 2a)
 
-**Backend only.** Session 1 of Stage 009 shipped the
-schema, models, and repositories. No admin UI yet.
+**Sessions 1 and 2a shipped.** Schema, models,
+repositories, plus the first user-visible surface:
+list, create, edit, and status transitions. The field
+editor ships in Session 2b. The submissions viewer
+ships in Session 4.
+
+Backend (Session 1):
 
 - `commerce_forms`, `commerce_form_fields`,
   `commerce_form_submissions` tables (migrations
@@ -179,9 +184,28 @@ schema, models, and repositories. No admin UI yet.
   store-admin, marketing (all four) and support
   (submissions.view only).
 
-The admin editor (list, create, field editor,
-preview) ships in Session 2. The public surface and
-submission processing ship in Session 3. The
+Admin surface (Session 2a):
+
+- Forms list at /commerce/ca-admin/forms with status
+  tabs (All / Draft / Published / Archived), numeric
+  counts on each tab, search by name or slug, and
+  pagination.
+- Create form page.
+- Edit page: status card with contextual publish /
+  unpublish / archive / duplicate actions, metadata
+  editor (name, slug, description, success message,
+  notify email), honeypot and auth-required toggles,
+  danger zone for delete.
+- `FormService` handles all writes. Slug is normalised
+  and unique per store; the slug is immutable after
+  publish; publish() refuses a form with zero fields;
+  duplicate() clones every field and suffixes the slug
+  with `-copy`; delete() is a soft delete.
+- Sidebar item under Marketing, gated by `forms.view`.
+
+The field editor (add / edit / reorder fields) ships
+in Session 2b. The public surface and submission
+processing ship in Session 3. The
 submissions admin and webhook integration ship in
 Session 4.
 
