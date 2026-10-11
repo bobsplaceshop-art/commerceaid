@@ -1075,3 +1075,23 @@
         opacity: 1;
     }
 }
+
+/* ================================================================
+   Campaign preview iframe (Stage 008I)
+   ================================================================
+   The campaign body renders inside a sandboxed iframe pointing
+   at /commerce/ca-admin/campaigns/{id}/preview?raw=1. The raw
+   document is a standalone email HTML file with no admin CSS,
+   no admin theme, and no access to the admin's session.
+   campaign-preview.js sets the height from the inner
+   document's postMessage; there is no scrollbar.
+   ================================================================ */
+
+.campaign-preview-iframe {
+    display: block;
+    width: 100%;
+    min-height: 320px;
+    border: 1px solid var(--ra-border, #1f2a44);
+    border-radius: 8px;
+    background: #fff;
+}

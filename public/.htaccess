@@ -66,6 +66,42 @@ DirectoryIndex index.php
     #   object-src  'none'      - block Flash, Java, and other plugins
     # ============================================================
     Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' data:; img-src 'self' data: https://picsum.photos https://fastly.picsum.photos; connect-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';"
+
+    # ----------------------------------------------------------
+    # CSP and X-Frame-Options exception for the campaign raw
+    # preview endpoint.
+    #
+    # The admin campaign detail page embeds this endpoint in a
+    # same-origin iframe. The default frame-ancestors 'none'
+    # and X-Frame-Options: DENY block that iframe from
+    # rendering.
+    #
+    # The condition matches on %{THE_REQUEST}, the raw request
+    # line sent by the client. It is never modified by
+    # mod_rewrite. %{REQUEST_URI} and %{QUERY_STRING} are both
+    # observed to be unreliable for this purpose on this Apache
+    # build after the internal rewrite to index.php. Do not
+    # substitute them back.
+    #
+    # The trailing space in the regex separates the URI from
+    # the HTTP protocol version in the request line, so
+    # ?raw=1something does not accidentally match.
+    #
+    # Scope: only the raw preview (?raw=1) receives the
+    # exemption. The full preview page keeps the default
+    # frame-ancestors 'none' and X-Frame-Options: DENY.
+    #
+    # The raw preview is admin-only (behind the store, auth,
+    # and permission middleware). It renders the merchant's
+    # own campaign HTML inside a sandboxed iframe with no
+    # same-origin access to the admin page.
+    # ----------------------------------------------------------
+    <If "%{THE_REQUEST} =~ m#^GET /commerce/ca-admin/campaigns/[0-9]+/preview\?raw=1 #">
+        Header always unset X-Frame-Options
+        Header always set X-Frame-Options "SAMEORIGIN"
+        Header always unset Content-Security-Policy
+        Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none';"
+    </If>
 </IfModule>
 
 <IfModule mod_expires.c>
