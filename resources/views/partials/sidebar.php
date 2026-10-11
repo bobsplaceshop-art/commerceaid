@@ -120,6 +120,7 @@ $groups = [
             ['label' => 'Subscribers',         'href' => '/commerce/ca-admin/subscribers',          'icon' => 'bi-envelope-paper',    'permission' => 'newsletter.subscribers.view'],
             ['label' => 'Subscriber lists',    'href' => '/commerce/ca-admin/subscriber-lists',     'icon' => 'bi-list-ul',           'permission' => 'newsletter.subscribers.view'],
             ['label' => 'Campaigns',           'href' => '/commerce/ca-admin/campaigns',            'icon' => 'bi-envelope-at',       'permission' => 'newsletter.campaigns.view'],
+            ['label' => 'Forms',               'href' => '/commerce/ca-admin/forms',                'icon' => 'bi-ui-checks',         'permission' => 'forms.view'],
         ],
     ],
     [

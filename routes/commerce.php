@@ -26,6 +26,7 @@ use CorporateAid\Commerce\Controllers\Admin\AdminReturnController;
 use CorporateAid\Commerce\Controllers\Admin\AdminSubscriberController;
 use CorporateAid\Commerce\Controllers\Admin\AdminSubscriberListController;
 use CorporateAid\Commerce\Controllers\Admin\AdminCampaignController;
+use CorporateAid\Commerce\Controllers\Admin\AdminFormController;
 
 /** @var Router $router */
 
@@ -903,3 +904,51 @@ $router->get('/commerce/ca-admin/campaigns/{id}',
 $router->post('/commerce/ca-admin/campaigns/{id}',
     [AdminCampaignController::class, 'update'],
     ['store', 'auth', 'csrf', 'permission:newsletter.campaigns.manage']);
+
+// =====================================================================
+// Admin forms (Stage 009)
+// =====================================================================
+
+$router->get('/commerce/ca-admin/forms',
+    [AdminFormController::class, 'index'],
+    ['store', 'auth', 'permission:forms.view']);
+
+$router->get('/commerce/ca-admin/forms/create',
+    [AdminFormController::class, 'showCreate'],
+    ['store', 'auth', 'permission:forms.manage']);
+
+$router->post('/commerce/ca-admin/forms',
+    [AdminFormController::class, 'store'],
+    ['store', 'auth', 'csrf', 'permission:forms.manage']);
+
+$router->get('/commerce/ca-admin/forms/{id}/edit',
+    [AdminFormController::class, 'showEdit'],
+    ['store', 'auth', 'permission:forms.view']);
+
+$router->get('/commerce/ca-admin/forms/{id}/delete-info',
+    [AdminFormController::class, 'deleteInfo'],
+    ['store', 'auth', 'permission:forms.manage']);
+
+$router->post('/commerce/ca-admin/forms/{id}/publish',
+    [AdminFormController::class, 'publish'],
+    ['store', 'auth', 'csrf', 'permission:forms.manage']);
+
+$router->post('/commerce/ca-admin/forms/{id}/unpublish',
+    [AdminFormController::class, 'unpublish'],
+    ['store', 'auth', 'csrf', 'permission:forms.manage']);
+
+$router->post('/commerce/ca-admin/forms/{id}/archive',
+    [AdminFormController::class, 'archive'],
+    ['store', 'auth', 'csrf', 'permission:forms.manage']);
+
+$router->post('/commerce/ca-admin/forms/{id}/duplicate',
+    [AdminFormController::class, 'duplicate'],
+    ['store', 'auth', 'csrf', 'permission:forms.manage']);
+
+$router->post('/commerce/ca-admin/forms/{id}/delete',
+    [AdminFormController::class, 'destroy'],
+    ['store', 'auth', 'csrf', 'permission:forms.manage']);
+
+$router->post('/commerce/ca-admin/forms/{id}',
+    [AdminFormController::class, 'update'],
+    ['store', 'auth', 'csrf', 'permission:forms.manage']);

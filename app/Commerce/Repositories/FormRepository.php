@@ -121,6 +121,51 @@ final class FormRepository extends CommerceRepository
         ];
     }
 
+    /**
+     * Status counts for the admin tab bar. Reflects every
+     * active filter EXCEPT status, so the counts stay stable
+     * when the merchant changes tabs.
+     *
+     * One GROUP BY query. Four statuses plus a total.
+     *
+     * @param array<string,mixed> $filters
+     * @return array{all:int, draft:int, published:int, archived:int}
+     */
+    public function countsForFilters(array $filters = []): array
+    {
+        $counts = ['all' => 0, 'draft' => 0, 'published' => 0, 'archived' => 0];
+
+        $where  = "`store_id` = ? AND `deleted_at` IS NULL";
+        $params = [$this->storeId()];
+
+        $search = trim((string) ($filters['search'] ?? ''));
+        if ($search !== '') {
+            $where   .= " AND (`name` LIKE ? OR `slug` LIKE ?)";
+            $like     = '%' . $search . '%';
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        $rows = $this->db->select(
+            "SELECT `status`, COUNT(*) AS `c`
+               FROM `commerce_forms`
+              WHERE {$where}
+              GROUP BY `status`",
+            $params
+        );
+
+        foreach ($rows as $r) {
+            $status = (string) $r['status'];
+            $c      = (int) $r['c'];
+            if (array_key_exists($status, $counts)) {
+                $counts[$status] = $c;
+            }
+            $counts['all'] += $c;
+        }
+
+        return $counts;
+    }
+
     public function slugExists(string $slug, ?int $excludeId = null): bool
     {
         $sql    = "SELECT COUNT(*) FROM `commerce_forms`

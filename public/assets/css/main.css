@@ -930,6 +930,27 @@ html[data-theme="light"] .ra-table-wrap {
     cursor: not-allowed;
 }
 
+.ra-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 1.25rem;
+    padding: 0 .4rem;
+    margin-left: .5rem;
+    border-radius: 999px;
+    background: var(--ra-surface-alt, rgba(148,163,184,0.15));
+    color: var(--ra-muted, #94a3b8);
+    font-size: .72rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.ra-tab.is-active .ra-tab-count {
+    background: var(--ra-primary, #0f4c81);
+    color: #fff;
+}
+
 /* ============================================================
    Danger button (used in deletion confirmation modal)
    Two visual states:
