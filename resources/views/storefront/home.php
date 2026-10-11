@@ -347,7 +347,7 @@ $trustRow = [
 <!-- ============================================================= -->
 <!-- NEWSLETTER (always renders - placeholder for theme builder)   -->
 <!-- ============================================================= -->
-<section class="sf-home-newsletter" data-sf-section="newsletter">
+<section id="newsletter" class="sf-home-newsletter" data-sf-section="newsletter">
     <div class="sf-container sf-home-newsletter-inner">
         <div class="sf-home-newsletter-text">
             <h2 class="sf-home-newsletter-title">Stay in Style</h2>

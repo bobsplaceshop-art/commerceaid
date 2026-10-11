@@ -305,7 +305,7 @@ final class MessageController extends StorefrontController
                     [
                         'storeName'       => $storeName,
                         'subscriberEmail' => $subscriber->email,
-                        'resubscribeUrl'  => $urlBase . '/',
+                        'resubscribeUrl'  => $urlBase . '/#newsletter',
                     ]
                 );
         } catch (\Throwable $e) {

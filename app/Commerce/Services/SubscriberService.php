@@ -567,7 +567,7 @@ final class SubscriberService
                     [
                         'storeName'       => $storeName,
                         'subscriberEmail' => $fresh->email,
-                        'resubscribeUrl'  => $urlBase . '/',
+                        'resubscribeUrl'  => $urlBase . '/#newsletter',
                     ]
                 );
             }
