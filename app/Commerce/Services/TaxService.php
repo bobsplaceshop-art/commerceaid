@@ -139,9 +139,12 @@ final class TaxService
         $override = $product !== null ? $product->taxRateOverridePercent : null;
 
         if ($override !== null) {
-            $overrideInclusive = $product !== null
-                ? $product->taxRateOverrideInclusive
-                : null;
+            // $product is non-null here: the ternary that
+            // computed $override above would have produced null
+            // if $product were null, so the outer guard already
+            // proved it. PHPStan enforces this reasoning at
+            // level 8 via notIdentical.alwaysTrue.
+            $overrideInclusive = $product->taxRateOverrideInclusive;
 
             $isInclusive = $overrideInclusive !== null
                 ? $overrideInclusive
