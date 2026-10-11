@@ -1,8 +1,8 @@
 # Project Status
 
-**As of:** 2026-10-10
-**Version:** 0.23.0-alpha
-**Stage:** 008K.4 complete. Next: 008K.5 (Order Pricing Engine).
+**As of:** 2026-10-11
+**Version:** 0.24.0-alpha
+**Stage:** 008H complete. Next: 008I (Newsletter & Email Campaigns).
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -87,6 +87,30 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
   and confirmation pages. Subtotal, discount, shipping,
   VAT note ("inkl." or "zzgl."), grand total.
 - Permission-gated by `coupons.*`, `tax.*`, `shipping.*`.
+
+#### Admin - Returns (008H)
+
+- **Returns queue** at /commerce/ca-admin/returns. Four
+  status tabs (open, received, closed, all), a
+  request-number search, and a date range.
+- **Detail page** with state-aware action buttons:
+  Requested -> Approve, Reject. Approved -> Reject, Mark
+  received. Received -> Process refund. Terminal -> no
+  actions.
+- **Mark received** with per-line received quantities. A
+  customer who requested three and the warehouse counted
+  two is refunded for two. Lines not adjusted default to
+  the requested quantity.
+- **Process refund** updates the order's `refunded_total`,
+  `payment_status`, and each line's `returned_quantity`.
+  The customer's order detail and the admin order detail
+  show the change immediately.
+- Customer-initiated from `/account/returns`. The
+  14-day Widerrufsrecht window is enforced by
+  `ReturnRequestService::isWithinWindow()` with a hard
+  14-day floor for German deployments.
+- Permission-gated by `returns.view` (reads) and
+  `returns.moderate` (writes).
 
 ### Catalog
 
@@ -338,11 +362,16 @@ new code.
 
 ## Next 3 Stages
 
-- **008K.5** (now): Admin Coupons
-- **008H**: Returns & Refunds (resumes; admin queue)
-- **009**: Forms & Submissions
+- **008I** (now): Newsletter & Email Campaigns. Inbuilt.
+  Double opt-in, no third-party transfer.
+- **009**: Forms & Submissions.
+- **010**: Payments (Deep). Wires refunds from the returns
+  workflow to the payment provider.
 
-Then 008K closes and 008H closes its remaining session.
+The platform has completed the commerce loop end to end:
+browse, cart, checkout, order, return; and on the
+merchant side: products, orders, customers, returns,
+users, roles, coupons, tax, shipping.
 
 ---
 

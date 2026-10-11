@@ -312,17 +312,53 @@ inside the window exposes the operator to a
 Verbraucherschutz complaint and, in some cases, a court
 order.
 
-**How we address it:** This is deferred to Stage 008H
-(Returns & Refunds). The plan for 008H enforces a 14-day
-window from delivery, with a configurable override per
-store.
+**How we address it:** The 14-day window is enforced by
+`ReturnRequestService::isWithinWindow()`. The window opens
+when the order's status history records a `delivered`
+transition and closes `windowDays()` days later. A hard
+floor of 14 days applies for German deployments
+(`windowDays()` clamps any store setting below 14 days
+up to 14 when the store's country is DE). A store setting
+(`compliance.returns.allow_before_delivery`) can permit
+pre-delivery requests; that setting only unblocks the
+window before any delivery event is recorded.
 
-**Where the code lives:** Not yet built. The plan is in
-`docs/ROADMAP.md` under Stage 008H.
+Customer-side surface at `/account/returns` refuses to
+open a new request once the window closes. Admin-side
+list and detail at `/commerce/ca-admin/returns` show
+the request regardless of window state; the admin can
+approve or reject a late request manually if the
+merchant chooses to honour one, but the checkout path
+and the customer-facing submission do not.
 
-**Stage:** 008H (planned)
+**Where the code lives:**
+  - `app/Commerce/Services/ReturnRequestService.php`
+    - `isWithinWindow()` - the check
+    - `windowClosesAt()` - the deadline
+    - `windowDays()` - the store setting with the German
+      hard floor
+  - `app/Commerce/Controllers/Storefront/ReturnController.php`
+    - `canReturnFor()` - combines the Order model's
+      `isWithdrawalEligible()` with the service's
+      `isWithinWindow()`
+  - `app/Commerce/Controllers/Admin/AdminReturnController.php`
+    - the admin queue
+  - `database/migrations/03xx_create_return_requests.sql`
+    - the schema
+  - Store settings:
+      `compliance.returns.window_days`
+      `compliance.returns.allow_before_delivery`
+      `compliance.returns.auto_approve`
 
-**Status:** Deferred.
+**Stage:** 008H
+
+**Status:** Done. Stage 008H Session 3 at commit `d10b39d`.
+
+**Note:** the Widerrufsbutton (a separate mechanism
+required from 19 June 2026) is tracked as entry 22 and
+remains open. The 14-day window itself is enforced; the
+digital button is a new interface requirement on top of
+that window.
 
 ---
 

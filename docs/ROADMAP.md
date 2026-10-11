@@ -440,13 +440,15 @@ the 008I plan document before code is written.
 
 ### Stage 008H - Returns & Refunds
 
-**Status:** Paused 2026-10-05. Resuming after Stage 008K.
+**Status:** Complete 2026-10-11.
 
 **Goal:** Customer-initiated return requests. Integrates the
-German Widerrufsrecht (14-day right of withdrawal) with a real
-workflow.
+German Widerrufsrecht (14-day right of withdrawal) with a
+real workflow.
 
-**What shipped (Sessions 1 and 2):**
+**What shipped:**
+
+Sessions 1 and 2:
 
   - `commerce_return_requests` and
     `commerce_return_request_items` tables.
@@ -459,57 +461,61 @@ workflow.
   - "Return in progress" badges on the order list and order
     detail header.
   - Per-line "N being returned" annotation.
-  - Refund / net-paid rows in the order totals (dormant
-    until the admin processes a refund).
+  - Refund / net-paid rows in the order totals.
 
-**Commits:** 50f77b6 (Session 1, backend) and 8a3e56b
-(Session 2, customer surface).
+Session 3 (2026-10-11):
 
-**What remains (Session 3):**
-
-  - `AdminReturnController` at `/commerce/ca-admin/returns`.
-  - List with filters, detail with line items.
-  - Approve, reject (with reason), mark received, process
-    refund.
-  - The refund action calls
-    `ReturnRequestService::processRefund()`, which updates
-    `refunded_total`, `payment_status`, and the order item's
-    `returned_quantity`. The customer-facing annotations
-    will start rendering for the first time.
-  - Permission: `returns.moderate`.
+  - `AdminReturnController` at `/commerce/ca-admin/returns`
+    with six actions: index, show, approve, reject,
+    markReceived, refund.
+  - List with four status tabs (open, received, closed,
+    all), a request-number search, and a date range.
+  - Detail with line items, customer, original order,
+    audit timeline, and state-aware action buttons.
+  - Three modals: reject (with reason), receive (with
+    per-line received quantities), refund (confirmation).
+  - `markReceived` accepts received quantities per line.
+    The refund adjusts from what the warehouse actually
+    counted, not what the customer requested.
+  - `ReturnRequestRepository::buildFilters()` gained
+    `date_from` and `date_to`.
+  - Permissions: `returns.view` (list, detail) and
+    `returns.moderate` (approve, reject, receive, refund).
   - Sidebar item under Sales.
 
-**Why paused:** the admin return queue references an orders
-page that does not exist. Building returns on a foundation
-without orders is half a workflow. Stage 008K.1 (Admin
-Orders) unblocks this.
+**Commits:**
 
-**Resumes after:** Stage 008K.5 (Order Pricing Engine). Once
-the pricing engine ships, the order totals and the refund
-arithmetic share one source of truth. Before that, the
-customer-facing refund rows stay dormant.
+  50f77b6  feat(returns): schema, models, repositories, service
+  8a3e56b  feat(returns): customer-facing surface + order list
+  3a6cbcd  feat(returns): admin queue permission slugs +
+           Widerrufsbutton log
+  b2a3dae  feat(returns): markReceived accepts received
+           quantities per line
+  d10b39d  feat(returns): admin returns queue (008H session 3)
 
 **Refund API wiring is deferred to Stage 010.** Session 3
-of this stage ships the admin return queue and calls
-`ReturnRequestService::processRefund()`. That method updates
+calls `ReturnRequestService::processRefund()`, which updates
 `refunded_total`, `payment_status`, and the order item's
-`returned_quantity`. The actual money movement - calling
-the payment provider's refund API - lands with the
-Payments (Deep) stage. Splitting the intent from the money
-movement is correct because the payment providers do not
-exist until Stage 010. The `refunded_total` column becomes
-the authoritative record of what is owed; Stage 010
-reconciles it against the provider.
+`returned_quantity`. The actual money movement - calling the
+payment provider's refund API - lands with the Payments
+(Deep) stage. The `refunded_total` column is the
+authoritative record of what is owed; Stage 010 reconciles
+it against the provider.
 
 **Depends on:** Stage 008K.1 (admin orders detail page),
-Stage 008K.5 (pricing engine).
+Stage 008K.5 (pricing engine). Both shipped before this
+stage resumed.
 
 **Compliance:** closes COMPLIANCE-DE.md entry 8 (the 14-day
 Widerrufsrecht window). The entry moves from Deferred to
-Done when Session 3 closes.
+Done at this close.
 
-**See also:** docs/stages/008h_returns-refunds-plan.md (to be
-written at Session 3 open).
+**Deferred:** condition grading and resellable flags per
+line (restocking concerns, not compliance). A `statuses`
+array param on the repository to replace the multi-status
+tab merge workaround. The Widerrufsbutton (COMPLIANCE-DE
+entry 22) is a separate compliance stage; deadline
+19 June 2026.
 
 ### Stage 009 - Forms & Submissions
 
