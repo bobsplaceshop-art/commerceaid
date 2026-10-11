@@ -350,7 +350,7 @@
 }
 
 .ra-content .form-text {
-    color: var(--ra-muted, #64748b);
+    color: var(--ra-text-soft, #64748b);
     font-size: .78rem;
     margin-top: .3rem;
 }
