@@ -142,13 +142,15 @@ Stage 008K - Admin Surface Completion.
   008K.2  Admin Customers          complete 2026-10-06
   008K.3  Admin Users              complete 2026-10-10
   008K.4  Admin Roles              complete 2026-10-10
-  008K.5  Order Pricing Engine     opens next
+  008K.5  Order Pricing Engine     complete 2026-10-11
 
 Stage 008H (Returns & Refunds) is paused. Its Session 3
 (the admin returns queue) is fully unblocked now that
 orders, customers, users, and roles all exist as real
-admin surfaces. It resumes after 008K.5 closes, or
-earlier if the queue is needed sooner.
+admin surfaces. It resumes next, in its own session.
+
+The 008K stage is complete as of 2026-10-11. All five
+sub-stages (K.1 through K.5) have shipped.
 
 ## Planned Stages
 
@@ -176,7 +178,7 @@ land in.
 | 008K.2 | Admin Customers | List, detail, address book management, order history, group assignment, account state management. | Complete 2026-10-06 |
 | 008K.3 | Admin Users | List, invite, role assignment, deactivate/reactivate, password reset trigger. | Complete 2026-10-10 |
 | 008K.4 | Admin Roles | List, create custom roles, permission matrix editor, multi-store scoping, full permission vocabulary. | Complete 2026-10-10 |
-| 008K.5 | Order Pricing Engine | Coupons (schema, admin CRUD, storefront apply), tax classes and rates, shipping methods and zones. Rebuilds the totals computation in CheckoutService::placeOrder() in the correct sequence: subtotal, then discount, then tax on the discounted base, then shipping. | Next |
+| 008K.5 | Order Pricing Engine | Coupons (schema, admin CRUD, storefront apply), tax classes and rates, shipping methods and zones. Rebuilds the totals computation in CheckoutService::placeOrder() in the correct sequence: subtotal, then discount, then tax on the discounted base, then shipping. Per-product tax rate override with explicit inclusive/exclusive flag. | Complete 2026-10-11 |
 
 008K.1 through 008K.4 were each a session or two. 008K.5
 is a larger stage - roughly three sessions - because the

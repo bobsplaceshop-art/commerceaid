@@ -1,7 +1,7 @@
 # Project Status
 
 **As of:** 2026-10-10
-**Version:** 0.22.0-alpha
+**Version:** 0.23.0-alpha
 **Stage:** 008K.4 complete. Next: 008K.5 (Order Pricing Engine).
 
 One-page snapshot of where the project stands. For deeper context
@@ -61,6 +61,32 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
   reuse the existing CustomerApprovals controller
 - Permission-gated by `customers.view` (reads) and
   `customers.manage` (writes)
+
+#### Admin - Pricing Engine (008K.5)
+
+- **Coupons** at /commerce/ca-admin/coupons. CRUD for
+  code-based discounts (percentage, fixed amount, free
+  shipping). Usage limits, per-customer limits, minimum
+  order, category scope.
+- **Tax** at /commerce/ca-admin/tax. Tax classes and
+  per-country/state rates. Inclusive or exclusive flag
+  per rate. Shipping-taxable flag. Seed: Standard,
+  Reduced, Zero.
+- **Shipping** at /commerce/ca-admin/shipping. Shipping
+  methods (flat, free over, weight-based, price-based,
+  local pickup) and zones (per country/region).
+- **Per-product tax override** on the product editor's
+  Pricing tab. Rate percent override plus a three-state
+  inclusive flag (inherit / inclusive / exclusive).
+- **Storefront coupon apply** on the cart page. Enter a
+  code, see the discount line, proceed to checkout.
+- **Storefront shipping method picker** on the payment
+  step. Radio list from available methods for the
+  destination.
+- **Full totals breakdown** on cart, payment, confirm,
+  and confirmation pages. Subtotal, discount, shipping,
+  VAT note ("inkl." or "zzgl."), grand total.
+- Permission-gated by `coupons.*`, `tax.*`, `shipping.*`.
 
 ### Catalog
 
@@ -155,58 +181,65 @@ read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
 
 ---
 
-## Current Focus — Stage 008K.4 complete
+## Current Focus — Stage 008K complete
 
-**Deliverable shipped:** the complete RBAC layer. Roles is
-now a real admin surface with list, create, edit, delete,
-and a permission matrix covering every capability in the
-platform. Only Coupons remains as a sidebar placeholder.
+**Deliverable shipped:** the full merchant-facing half
+of the platform. Stage 008K completed all five admin
+surfaces that had been placeholders since Stage 005:
 
-The merchant can create custom roles, toggle any subset of
-the 49 seeded permissions, and assign roles to users. The
-super-admin role is locked as the platform's recovery
-anchor. Multi-store scoping is in place: global roles
-visible everywhere, custom roles scoped to their store.
+  008K.1  Admin Orders            2026-10-06
+  008K.2  Admin Customers         2026-10-06
+  008K.3  Admin Users             2026-10-10
+  008K.4  Admin Roles             2026-10-10
+  008K.5  Order Pricing Engine    2026-10-11
 
-**Stage close:** 008K.4 shipped in two commits.
+Every sidebar entry is now a live surface. A merchant
+can operate the platform end to end without the
+developer.
 
-  - `f637871` fix(rbac): standardize super-admin slug checks.
-    The seeded slug is 'super-admin' (hyphenated); four
-    code locations checked 'super_admin'. Two guards in
-    the user surface were inert. Found during the 008K.4
-    read pass.
-  - `ff6bd9c` feat(rbac): roles editor and full permission
-    vocabulary. Migration 0018 (store_id on core_roles),
-    seeders 0011 (role management permissions) and 0012
-    (49 permissions across 11 modules plus curated role
-    defaults), AdminRoleController, four views, seven
-    routes, sidebar swap, and the permission matrix CSS.
+**Stage 008K.5 shipped in three sessions plus a fix
+arc:**
 
-**Next sub-stage:** 008K.5 (Order Pricing Engine). Last
-sub-stage of the 008K stage. Delivers coupons, tax, and
-shipping as one coupled feature - they all compute into
-the same totals formula in CheckoutService::placeOrder().
-Three sessions. After that, 008H (Returns & Refunds)
-resumes with the admin queue that was paused at the start
-of 008K.
+  Session 1  backend (services, schema)          e5c43a8
+  Session 2  admin CRUD (Coupons, Tax, Shipping)  prior commits
+  Session 3  storefront integration               970f4a0
+  Fix arc    inclusive/exclusive grand total      00d6e81
+  Feature    per-product tax rate override        464ed45
+  Fix        admin theme (form-text, aliases)     a5bdf74, e7e73ea
 
-**008H status:** paused. The returns work on disk
-(commits 50f77b6 and 8a3e56b) stays on `main`. Session 3
-(the admin returns queue) is fully unblocked - orders,
-customers, users, and roles all exist. It resumes after
-008K.5 closes.
+The pricing engine computes the six-step totals
+sequence once: subtotal, discount, taxable base, tax,
+shipping, grand total. Coupons, tax, and shipping all
+feed it. The order totals on every admin surface read
+from the same source of truth.
 
-**Pattern 35 recorded earlier in this session** (in the
-008K.3 arc): two audiences on one origin share a cookie
-jar. The `GuestMiddleware` default redirect target of `/`
-was wrong for the admin audience. Fixed at that time.
+The inclusive/exclusive distinction was the arc's P0
+bug. German stores (inclusive, PAngV § 4) were
+overcharged 19% on every order that reached the
+payment step. Fixed by splitting the tax total into
+inclusive and exclusive portions and adding only the
+exclusive portion to the grand total. Documented as
+Pattern 32, third manifestation.
 
-**Permission vocabulary grew to 49.** Across 11 modules:
-core (10), commerce (4), catalog (16), inventory (4),
-orders (2), customers (2), groups (2), approvals (2),
-media (3), review (2), legal (2). Future stages that add
-admin surfaces add slugs to this family and assign
-defaults; the roles editor picks them up automatically.
+**008H status:** ready to resume. The returns work on
+disk (commits 50f77b6 and 8a3e56b) stays on `main`.
+Session 3 (the admin returns queue) is fully
+unblocked now that the pricing engine and admin orders
+are live. It opens next.
+
+**Next 3 stages:**
+
+  - **008H** (next): Returns & Refunds, Session 3 -
+    the admin returns queue. Closes COMPLIANCE-DE
+    entry 8 (14-day Widerrufsrecht).
+  - **008I**: Newsletter & Email Campaigns. Inbuilt.
+    Double opt-in, no third-party transfer.
+  - **009**: Forms & Submissions.
+
+**Permission vocabulary grew to 49** across 11 modules.
+008K.5 did not add new slugs; the Coupons, Tax, and
+Shipping controllers reuse the existing `coupons.*`,
+`tax.*`, and `shipping.*` families.
 
 ---
 
