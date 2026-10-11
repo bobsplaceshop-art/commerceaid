@@ -18,11 +18,12 @@ itself carries a hint below the field. Read those hints.
 1. Getting Started
 2. Catalog
 3. Sales
-4. Settings
-5. Storefront
-6. Common Tasks
-7. Troubleshooting
-8. Glossary
+4. Marketing
+5. Settings
+6. Storefront
+7. Common Tasks
+8. Troubleshooting
+9. Glossary
 
 ---
 
@@ -53,17 +54,26 @@ Everything else is reachable from the sidebar.
 
 ### The sidebar
 
-The sidebar is grouped by area:
+The sidebar is grouped by area. Groups appear in this
+order:
 
-  - **Dashboard** — the landing page.
+  - **Dashboard** — the landing page (ungrouped).
+  - **Business** — Setup.
   - **Catalog** — Products, Categories, Brands,
     Inventory, Attributes, Media, Reviews.
-  - **Sales** — Customer Groups, Customer Approvals.
-  - **Settings** — Store Settings, Legal Pages,
-    Users, Roles.
+  - **Sales** — Orders, Customers, Customer Groups,
+    Customer Approvals, Returns, Coupons.
+  - **Marketing** — Subscribers, Subscriber lists,
+    Campaigns.
+  - **Settings** — Store Settings, Legal Pages, Tax,
+    Shipping, Users, Roles.
 
 Click a group header to expand or collapse it. The
 state is remembered on this browser.
+
+Some items carry a numeric badge on the right. The
+**Orders** badge counts orders awaiting action. The
+**Reviews** badge counts reviews pending moderation.
 
 ### The setup wizard
 
@@ -84,6 +94,16 @@ Some tabs are placeholders for features that ship in
 a later stage. The wizard can be reopened any time
 from **Settings > Store Settings**. It is safe to
 skip and configure later.
+
+### Role-based visibility
+
+What you see in the sidebar depends on your role.
+A merchant with a **Customer Support** role, for
+example, sees Orders and Customers but not Settings
+or Roles. If an item you expect is missing, it is
+because your role does not have the permission for
+it. Ask a Super Administrator to grant the permission
+or assign a broader role.
 
 ---
 
@@ -290,18 +310,30 @@ completed or delivered order containing the product,
 their review carries a "Verified purchase" badge.
 The badge is automatic — nothing to configure.
 
+
 ---
 
 ## 3. Sales
 
 ### Orders
 
-`Sales > Orders` lists customer orders. Filters:
-status, payment state, date range.
+`Sales > Orders` lists customer orders. Filters at the
+top: status, payment state, date range, and a search
+box for the order number or customer name. Status tabs
+sit above the list.
 
-Click an order to see its detail page: line items,
-customer, shipping address, payment, and status
-history.
+Click an order to open its detail page. The detail
+page shows:
+
+  - **Line items** with quantity, unit price, and
+    line total.
+  - **Customer** and shipping address.
+  - **Totals breakdown** — subtotal, discount,
+    shipping, VAT (with rate), grand total. German
+    stores see the "inkl. X% MwSt." note here.
+  - **Internal notes** (only visible to admin users).
+  - **Status history** — every transition, with
+    timestamp and the acting user.
 
 **Status workflow.** Orders move through:
 
@@ -309,10 +341,55 @@ history.
   → Shipped → Delivered → Completed
 
 Refunded, cancelled, and failed are terminal states.
+A terminal order cannot be moved forward.
 
-You update status manually from the order detail
-page. The order status history records every change
-with a timestamp and the acting user.
+**To change status**, click the **Change status**
+button in the sticky action bar. A modal opens asking
+for the new status and a reason note. The reason is
+written to the status history ledger and cannot be
+edited afterward.
+
+**To add a note**, click **Add note** in the sticky
+action bar. Notes are internal — customers never see
+them.
+
+### Customers
+
+`Sales > Customers` lists customer accounts. Tabs
+across the top filter by approval status (All,
+Pending, Approved, Rejected). Filters below: search,
+group, account state, pagination.
+
+Click a customer to open their detail page. It
+shows:
+
+  - **Contact details** — name, email, phone,
+    company, tax ID, date of birth.
+  - **Group membership** and net-terms if B2B.
+  - **Addresses** — billing and shipping, with
+    default flags.
+  - **Recent orders** — the last ten.
+  - **Approval history** — every approval action.
+
+**To edit a profile**, click **Edit profile** in the
+sticky action bar. Email is read-only by design — a
+customer changes their own email from their account
+page, and the change must be verified.
+
+**To change a group**, click **Change group**. A
+modal opens. Selecting a new group changes the
+customer's pricing tier immediately (price lists are
+per-group).
+
+**To change account state**, click **Enable**,
+**Disable**, or **Archive**. A disabled customer
+cannot log in. An archived customer is hidden from
+the active list but keeps their order history.
+
+**To manage addresses**, scroll to the Addresses
+card. Each address has Edit, Delete, and Set as
+default buttons. Deleting the default address
+promotes the next address to default automatically.
 
 ### Customer Groups
 
@@ -350,9 +427,284 @@ group's pricing.
 log in but cannot place orders. The history tab on
 their row shows every approval action taken.
 
+### Returns
+
+`Sales > Returns` is the admin returns queue. It
+backs the customer-facing return flow at
+`/account/returns`, and enforces the German
+Widerrufsrecht (14-day right of withdrawal).
+
+**Four tabs** across the top:
+
+  - **Open** — new requests awaiting decision, plus
+    approved but not yet received.
+  - **Received** — the warehouse has confirmed the
+    goods arrived.
+  - **Closed** — refunded, rejected, or cancelled.
+  - **All** — every request.
+
+Filters below: search by request number, and a
+date range.
+
+Click a request to open its detail page. It shows:
+
+  - **Line items** — what the customer wants to
+    return, at what quantity.
+  - **Customer** and **original order**.
+  - **Reason** — the customer's stated reason.
+  - **Timeline** — every action taken, with
+    timestamp and actor.
+  - **State-aware action buttons** in the sticky
+    action bar.
+
+**Action buttons depend on the request's current
+state:**
+
+  - **Requested** → Approve, Reject.
+  - **Approved** → Reject, Mark received.
+  - **Received** → Process refund.
+  - **Terminal** (refunded, rejected, cancelled) →
+    no actions.
+
+**To approve**, click Approve. The customer's order
+detail and the "Return in progress" badge update
+immediately.
+
+**To reject**, click Reject. A modal asks for a
+reason. The reason is stored and visible in the
+customer's return detail page.
+
+**To mark received**, click Mark received. A modal
+opens with **per-line received quantities**. Set
+each line to what the warehouse actually counted,
+not what the customer requested. A customer who
+requested three and the warehouse received two is
+refunded for two. Lines you do not adjust default
+to the requested quantity.
+
+**To process the refund**, click Process refund.
+This updates the order's `refunded_total` and
+`payment_status`, and the per-line
+`returned_quantity`. The customer's order detail
+immediately shows the "N of M returned" annotation
+and the "Refunded" totals row.
+
+**The money movement is separate.** The refund
+action records the amount owed. Calling the payment
+provider's refund API is the Payments (Deep) stage.
+Until that ships, the recorded `refunded_total` is
+the authoritative amount you owe the customer.
+
+### Coupons
+
+`Sales > Coupons` lists discount codes. The list
+shows code, type, value, usage, and status.
+
+**To create a coupon**, click **New coupon**.
+
+Fields:
+
+  - **Code** — the string the customer enters.
+    Uppercase, no spaces.
+  - **Description** — internal, shown to admin users
+    only.
+  - **Type** — one of:
+    * **Percentage** — e.g. 15 = 15% off.
+    * **Fixed amount** — e.g. 25 = 25 currency
+      units off.
+    * **Free shipping** — waives the shipping
+      charge.
+  - **Value** — the number for the type above.
+    Ignored for free shipping.
+  - **Valid from / Valid to** — the window the code
+    can be used. Leave either blank for no bound.
+  - **Minimum order subtotal** — the cart must
+    reach this before the code applies.
+  - **Usage limit** — maximum total redemptions
+    across all customers.
+  - **Per-customer limit** — maximum redemptions
+    per customer.
+  - **Applies to** — all products, or specific
+    categories. When specific categories, pick them
+    from the list.
+
+**To disable a coupon** without deleting it, set
+status to Disabled in the editor.
+
+**To delete**, click Delete in the list. A modal
+appears. **A coupon with redemptions cannot be
+deleted** — the redemption history must be
+preserved. Disable it instead.
+
+**How customers use it.** The cart page has a
+coupon field below the subtotal. Enter the code and
+click Apply. The discount line appears in the totals.
+The customer can remove the coupon at any time.
+
+**Validation rules.** The system checks, in order:
+code exists and is active, valid window, usage
+limits, per-customer limit, minimum order. The first
+failure short-circuits with a specific message —
+"Coupon expired", "Coupon already used", "Minimum
+order not met" — not a generic rejection.
+
 ---
 
-## 4. Settings
+## 4. Marketing
+
+### Subscribers
+
+`Marketing > Subscribers` lists everyone who has
+signed up to receive email from the store. The list
+shows email, name, status, source, and consent date.
+
+**Statuses:**
+
+  - **Pending** — signed up but has not clicked the
+    confirmation link yet (double opt-in).
+  - **Confirmed** — consent is verified; the
+    subscriber receives campaigns.
+  - **Unsubscribed** — the subscriber opted out.
+  - **Suppressed** — the system opted them out
+    (hard bounce, repeated soft bounce, or a spam
+    complaint).
+
+Filters: status, source, list, date range. A search
+box matches the email.
+
+**To export the list**, click **Export CSV** at the
+top of the page. The export includes every field
+relevant to a DSGVO audit: email, name, status,
+consent timestamp, consent IP, consent source. Use
+this export as the proof of consent when your data
+protection officer asks.
+
+Click a subscriber to open their detail page. It
+shows:
+
+  - **Consent record** — when, from where, from
+    which IP the consent was collected.
+  - **List memberships** — which lists they belong
+    to.
+  - **Event history** — every email sent, opened,
+    clicked, bounced, or unsubscribed.
+
+**To unsubscribe a subscriber manually**, click
+**Unsubscribe** in the sticky action bar. A modal
+asks for a reason. The reason is stored and shown
+in the subscriber's event history. Use this when a
+customer asks by phone or email to be removed.
+
+**Never delete a subscriber record.** The consent
+record is a legal artefact. Use Unsubscribe.
+
+### Subscriber Lists
+
+`Marketing > Subscriber lists` manages named lists.
+A subscriber can belong to more than one list.
+
+**The default list** is created for you when the
+store is set up. It is called "Newsletter" and the
+footer signup form joins new subscribers to it. You
+cannot delete the default list, but you can rename
+it.
+
+**To create a list**, click **New list**. Fields:
+name, slug, description. The slug appears in URLs
+and cannot contain spaces.
+
+**To edit a list**, click its row. You can rename,
+change the description, or mark it as the new
+default.
+
+**To delete a list**, click Delete. **A list with
+members cannot be deleted.** Remove members first,
+or archive the list by renaming it (e.g. prefix
+with "Archived —").
+
+**What lists are for.** Different audiences get
+different campaigns. A "Product updates" list gets
+launch announcements. A "Promotions" list gets sale
+alerts. The default "Newsletter" list is the widest
+— anyone who signed up from the footer.
+
+### Campaigns
+
+`Marketing > Campaigns` lists every campaign the
+store has drafted, sent, or cancelled. Statuses:
+Draft, Scheduled, Sending, Sent, Cancelled.
+
+**To compose a campaign**, click **New campaign**.
+
+Fields:
+
+  - **Subject** — the email subject line.
+  - **Preheader** — the preview text most email
+    clients show next to the subject. Optional but
+    recommended.
+  - **List** — which subscriber list receives it.
+  - **Body** — the rich-text editor. Same editor as
+    the legal pages.
+
+**The composer uses the same editor as Legal Pages.**
+Formatting toolbar: bold, italic, headings, lists,
+links, and a code view for raw HTML. Click the
+`< >` icon to switch between visual and HTML modes.
+
+**To save a draft**, click **Save draft** in the
+sticky action bar.
+
+**To preview**, click **Preview**. A new tab opens
+with the full preview page on the admin shell. This
+shows what the campaign will look like with the
+store header, the body, and the unsubscribe footer.
+
+**The detail page also has an inline preview.** Open
+the campaign detail page (not the editor) and scroll
+to the **Body preview** card. The body renders
+inside a framed white area, on true email-client
+defaults — white background, dark text, 600px max
+width, 24px padding. This is exactly what the
+recipient's email client will show, isolated from
+the admin theme. The preview frame grows to fit the
+content, so long campaigns show in full without an
+inner scrollbar.
+
+**To send**, click **Send campaign** in the sticky
+action bar. A confirmation modal appears. The
+campaign queues one row per confirmed subscriber
+and the CLI worker (`bin/send-emails.php`) drains
+the queue.
+
+**The worker is a cron job.** Your hosting provider
+installs a crontab entry such as:
+
+    * * * * * php /path/to/bin/send-emails.php --batch=100
+
+Without the cron, the queue fills but no email
+leaves. Ask your hosting provider to install the
+cron entry if you are not sure it is in place.
+
+**Bounce handling.** A hard bounce (user unknown,
+domain does not exist) suppresses the subscriber
+permanently. A soft bounce (mailbox full, try again
+later) increments a counter; three consecutive soft
+bounces suppress the subscriber. A successful send
+resets the counter to zero.
+
+**To cancel a campaign before it sends**, edit it
+and change status to Cancelled, or delete the
+draft. Once sending has started, cancellation stops
+the queue but does not recall emails already sent.
+
+**To delete a draft**, click Delete in the list.
+Sent campaigns cannot be deleted — the send history
+is a legal record.
+
+
+---
+
+## 5. Settings
 
 ### Store Settings
 
@@ -398,17 +750,175 @@ if any of the four pages is missing. The Compliance
 map reads the store's `country_code` to decide which
 pages are required.
 
+### Tax
+
+`Settings > Tax` manages tax classes and rates. Two
+tabs: **Classes** and **Rates**.
+
+#### Tax classes
+
+A tax class is a category of products taxed the same
+way. The store ships with three seeded classes:
+
+  - **Standard** — the default class. Most products
+    belong here. German rate: 19%.
+  - **Reduced** — for goods taxed at the reduced
+    rate. German rate: 7%. Food, books, some
+    services.
+  - **Zero** — for goods taxed at 0%. Exports,
+    certain agricultural products.
+
+**The default class cannot be deleted.** It is the
+fallback for products without an explicit
+assignment.
+
+**To create a class**, click **New class**. Give it
+a name. Save.
+
+**To assign a class to a product**, open the
+product editor's Pricing tab and pick the class.
+Products without an explicit class use the default.
+
+#### Tax rates
+
+A tax rate is the percentage applied to a class in
+a specific country (and optionally a state). The
+same class has different rates in different
+countries.
+
+**To create a rate**, click **New rate**. Fields:
+
+  - **Tax class** — which class the rate applies to.
+  - **Country** — ISO two-letter code. `DE` for
+    Germany, `US` for United States, `KE` for Kenya.
+  - **State / region** — optional. Some countries
+    (US, Canada, India, Brazil) tax by subdivision.
+    Leave blank for flat-rate countries.
+  - **Rate percent** — e.g. `19` for 19%, `7.5` for
+    7.5%. Three decimal places are supported.
+  - **Price is inclusive** — the critical flag. See
+    below.
+  - **Shipping is taxable** — whether the shipping
+    charge is included in the taxable amount.
+
+**Inclusive vs exclusive.** This is the single most
+important field on a tax rate, and getting it wrong
+mis-charges every customer.
+
+  - **Inclusive** — the price shown to the customer
+    already includes the VAT. The customer sees the
+    gross price. VAT is backed out of it for
+    reporting. This is the standard for retail in
+    Germany (PAngV § 4) and most of Europe.
+  - **Exclusive** — the price shown is net. The VAT
+    is added on top at checkout. This is the
+    standard in the United States and most B2B
+    contexts.
+
+If you are a German store selling to consumers,
+your rate is inclusive. If you are a US store, your
+rate is exclusive. If you are uncertain, ask your
+accountant.
+
+**Per-product override.** A single product can
+override its class's rate. Useful for products
+whose tax treatment differs from the rest of their
+class. Set it in the product editor's Pricing tab:
+a percent override field, plus a three-state select:
+
+  - **Inherit from class** (default) — use the
+    class rate.
+  - **Inclusive** — force inclusive pricing for this
+    product.
+  - **Exclusive** — force exclusive pricing for this
+    product.
+
+### Shipping
+
+`Settings > Shipping` manages shipping methods and
+zones. Two tabs: **Methods** and **Zones**.
+
+#### Shipping methods
+
+A method is a way of getting the goods to the
+customer. Five types ship:
+
+  - **Flat** — a fixed charge regardless of cart.
+  - **Free over** — free above a threshold, flat
+    below it.
+  - **Weight based** — a rate per unit weight.
+  - **Price based** — a rate per currency unit of
+    subtotal.
+  - **Local pickup** — always free. Use for customers
+    who collect in person.
+
+**To create a method**, click **New method**.
+Fields:
+
+  - **Code** — stable identifier. Written to orders
+    for history. Cannot be changed once orders
+    reference it.
+  - **Label** — what the customer sees, e.g.
+    "Standard shipping (2-3 days)".
+  - **Description** — optional longer text.
+  - **Type** — one of the five above.
+  - **Type-specific fields** — appear based on the
+    type. For example, flat asks for the rate;
+    free-over asks for both the rate and the
+    threshold.
+  - **Active** — inactive methods are hidden from
+    checkout but kept for history.
+  - **Sort order** — lower numbers appear first in
+    the customer's method picker.
+
+**A method with recent orders cannot be deleted.**
+Disable it instead.
+
+#### Shipping zones
+
+A zone declares where a method is available. A
+method with no zones is offered nowhere.
+
+**To create a zone**, click **New zone**. Fields:
+
+  - **Method** — which method the zone is for.
+  - **Country** — ISO two-letter code.
+  - **Region** — optional subdivision. Leave blank
+    for the whole country.
+  - **Rate override** — optional. Overrides the
+    method's computed rate for this zone. Use for
+    surcharges to remote areas or discounts to
+    nearby ones.
+  - **Active** — inactive zones are skipped.
+
+**A German store shipping nationally** needs one
+zone: method X, country DE, no region. A store
+shipping to DE, AT, CH needs three zones.
+
 ### Users
 
 `Settings > Users` lists the admin users who can log
 in. Each has a role.
 
-**To add an admin user**, click **New user**. Choose
-a role from the six defaults. Assign only as much
-permission as the user needs.
+**To invite a user**, click **New user**. Fields:
+name, email, role. Clicking Send invite emails the
+invitee a link to set their password. The invite
+link expires in 24 hours.
 
 **To change a role**, edit the user. Role changes
 take effect on the user's next page load.
+
+**To deactivate**, click Deactivate in the row's
+actions menu. A deactivated user cannot log in but
+their history is preserved.
+
+**To resend a password reset**, click **Send
+password reset** in the row's actions menu.
+
+**The last Super Administrator cannot be
+deactivated or demoted.** The system enforces this
+— without at least one Super Administrator, no one
+can recover the platform.
 
 ### Roles
 
@@ -426,14 +936,32 @@ take effect on the user's next page load.
   - **Customer Support** — customer and order
     assistance.
 
-**To create a custom role**, click **New role** and
-assign individual permissions. Custom roles are
-rarely needed unless your team has specialized
-duties.
+**To see a role's permissions**, click its row. The
+permission matrix opens, grouped by module. Every
+permission the platform knows about is listed; the
+checked ones belong to the role.
+
+**To create a custom role**, click **New role**.
+Give it a name, then check the permissions it should
+have. Custom roles are rarely needed unless your
+team has specialized duties.
+
+**To edit a role**, open it, change the checked
+permissions, and save. The change takes effect for
+all users assigned to that role on their next page
+load.
+
+**Super Administrator is read-only.** Its
+permissions are locked. Every other role is fully
+editable, including Store Administrator.
+
+**To delete a role**, click Delete in the list. **A
+role with users assigned cannot be deleted.**
+Reassign the users first.
 
 ---
 
-## 5. Storefront
+## 6. Storefront
 
 ### What customers see
 
@@ -458,9 +986,30 @@ No configuration is required. The install prompt
 appears automatically once a browser determines the
 site is installable.
 
+### Newsletter signup
+
+The footer and home page carry a newsletter signup
+form. When a customer subscribes, the platform:
+
+  1. Creates a subscriber record with status
+     **Pending**.
+  2. Sends a double opt-in confirmation email.
+  3. On click of the confirmation link, moves the
+     subscriber to **Confirmed**.
+
+Until the customer confirms, they are not on any
+campaign's recipient list. This is required for
+German compliance (UWG § 7).
+
+The confirmation link expires 24 hours after it is
+sent. If a customer asks why they did not receive
+their confirmation email, ask them to sign up again
+or resend it from the subscriber's admin detail
+page.
+
 ---
 
-## 6. Common Tasks
+## 7. Common Tasks
 
 **"I want to change my logo."**
 Settings > Branding > Logo. Upload a new image. Save.
@@ -492,17 +1041,63 @@ file may be missing. Re-select the font and save
 again. Check the Fonts tab — the select will show
 the currently active font.
 
-**"How do I add a product to the home page?"**
-The home page category grid shows top-level
-categories. Assign the product to a category that
-appears on the home page. If the category is not
-already on the home page, add it in the home page
-configuration (a future feature; in the current
-release, the home page uses a fixed category grid).
+**"How do I create a coupon?"**
+Sales > Coupons > New coupon. Enter the code, pick
+the type (percentage, fixed amount, or free
+shipping), set the value, and optionally set a
+valid window and usage limits. Save. Test it on
+the storefront by adding a product to the cart and
+entering the code in the cart page's coupon field.
+
+**"How do I set up German VAT?"**
+Settings > Tax. The three classes (Standard,
+Reduced, Zero) are seeded for you. Add a rate:
+pick the class, country `DE`, rate percent (usually
+19 for Standard, 7 for Reduced), and set **Price is
+inclusive** on. Add a second rate for the Reduced
+class if you sell any reduced-rate goods. The
+product editor's Pricing tab lets you assign each
+product to a class.
+
+**"How do I add a shipping method?"**
+Settings > Shipping > Methods > New method. Pick a
+type, set the parameters, save. Then go to the
+Zones tab and add a zone for each country the
+method serves — at minimum, `DE` if you ship
+nationally. A method with no zone is offered to no
+one.
+
+**"How do I send a newsletter campaign?"**
+Marketing > Campaigns > New campaign. Write the
+subject, preheader, and body. Pick the list. Save
+as draft, preview it, then click Send campaign.
+Make sure the cron worker is installed
+(`bin/send-emails.php`) or the queue will not
+drain.
+
+**"How do I remove a customer's data?"**
+Two steps:
+  - If the customer has an account, disable it from
+    Sales > Customers. This prevents future logins.
+  - If the customer has subscribed to the
+    newsletter, unsubscribe them from Marketing >
+    Subscribers.
+  
+  The platform does not automatically delete order
+  history — German tax law requires you to retain
+  business records for 10 years (AO § 147). If the
+  customer requests erasure of specific personal
+  data, use the data request workflow (future
+  feature) or contact your data protection officer.
+
+**"How do I change who can see what in the admin?"**
+Settings > Roles. Open the role, check or uncheck
+permissions, save. Users assigned to that role see
+the change on their next page load.
 
 ---
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 **Login problems.**
 Check that the email is correct. Use the password
@@ -511,6 +1106,12 @@ with your mail provider — some hosting providers
 block transactional email. Configure your SMTP
 settings under Settings > Store Settings > Advanced
 (if SMTP is configurable in your deployment).
+
+**Invite email not arriving.**
+The invite link expires 24 hours after send. Check
+that the email address is correct. If the invitee
+has not received it, resend the invite from
+Settings > Users.
 
 **Image upload fails.**
 Check the file size — the maximum is 5 MB for
@@ -533,9 +1134,44 @@ manually. If a status cannot be changed, the order
 may be in a terminal state (cancelled, refunded,
 failed). Terminal orders cannot be moved forward.
 
+**A coupon says "Invalid code" but the customer
+swears it is correct.**
+Check the coupon's valid window, usage limit, and
+minimum order. The most common cause is the minimum
+order threshold — the customer's cart does not
+reach it. The second most common is that the
+per-customer limit has been reached. Open Sales >
+Coupons and check the coupon's usage count.
+
+**The campaign preview is blank or shows a broken
+document.**
+Hard-refresh the page (Ctrl+Shift+R). If the
+preview still does not render, check the browser
+console for errors and contact your developer.
+The preview uses an embedded frame that loads from
+the admin — it requires the admin to be reachable
+from the browser you are using.
+
+**A campaign was sent but no emails arrived.**
+Check the queue worker. The campaign is queued
+immediately, but sends only when the cron worker
+(`bin/send-emails.php`) runs. If the cron is not
+installed, the queue fills but no email leaves.
+Ask your hosting provider to confirm the crontab
+entry exists.
+
+**A subscriber is not receiving campaigns.**
+Check their status in Marketing > Subscribers. If
+it is Pending, they never clicked the confirmation
+link. If it is Unsubscribed or Suppressed, they
+have opted out or been opted out by the system. A
+suppressed subscriber stays suppressed — a single
+hard bounce or three soft bounces is not reversible
+without direct intervention from your developer.
+
 ---
 
-## 8. Glossary
+## 9. Glossary
 
 **Product.** A catalog item. Simple or variable.
 
@@ -585,7 +1221,7 @@ B2B feature.
 installable mode on phones and desktops.
 
 **Media library.** The store's uploaded file
-collection. Browsed at Settings > Media.
+collection. Browsed at Catalog > Media.
 
 **Media pipeline.** The automatic processing every
 uploaded image goes through: multiple sizes,
@@ -594,6 +1230,73 @@ multiple formats, metadata stripping.
 **Legal pages.** The four compliance pages required
 for German stores: Impressum, AGB, Widerruf,
 Datenschutz.
+
+**Coupon.** A discount code that customers enter at
+cart to reduce the amount owed. Three types:
+percentage, fixed amount, free shipping.
+
+**Tax class.** A category of products taxed the same
+way. The store ships with Standard, Reduced, and
+Zero.
+
+**Tax rate.** The percentage applied to a class in a
+country (and optionally a state). Different
+countries have different rates for the same class.
+
+**Inclusive pricing.** The price shown to the
+customer already includes VAT. The customer sees
+the gross price. Standard for German retail.
+
+**Exclusive pricing.** The price shown is net. VAT
+is added at checkout. Standard for US retail and
+most B2B contexts.
+
+**Shipping method.** A way of getting goods to the
+customer. Five types: flat, free over, weight
+based, price based, local pickup.
+
+**Shipping zone.** The countries and regions where a
+shipping method is available.
+
+**Subscriber.** Someone who has signed up to receive
+email from the store. Has a status: pending,
+confirmed, unsubscribed, or suppressed.
+
+**Subscriber list.** A named group of subscribers.
+A subscriber can belong to more than one list.
+
+**Double opt-in.** The two-step signup process
+required for German compliance. Step 1: the customer
+signs up. Step 2: the customer clicks a confirmation
+link in the email the platform sends.
+
+**Unsubscribe.** The customer's choice to stop
+receiving campaigns. Recorded as the subscriber's
+status; never deleted.
+
+**Suppressed.** The system's choice to stop
+delivering to a subscriber — usually because of a
+hard bounce or a spam complaint.
+
+**Campaign.** A newsletter email sent to one
+subscriber list. Composed in the admin, queued for
+the CLI worker, drained by cron.
+
+**Widerrufsrecht.** The German 14-day right of
+withdrawal from a distance contract. Enforced by
+the returns flow.
+
+**PAngV.** Preisangabenverordnung — the German
+regulation on price disclosures. Requires inclusive
+pricing for consumers, and specific wording for
+VAT and shipping notes.
+
+**DSGVO.** Datenschutz-Grundverordnung — the German
+name for GDPR.
+
+**TTDSG.** Telekommunikation-Telemedien-Datenschutz-Gesetz
+— the German law on consent for cookies and similar
+technologies.
 
 ---
 
