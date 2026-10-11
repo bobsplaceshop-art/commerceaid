@@ -1884,6 +1884,126 @@ filtered slice:**
 
 ---
 
+**Third manifestation: a formula written for one regime
+applied to another.**
+
+When a computation is written against one configuration
+of the data, and that configuration is one of several
+the schema allows, the formula is wrong for every other
+configuration. The bug is silent until the second
+configuration is exercised. The first one works. The
+second one produces a number that is internally
+consistent and externally wrong.
+
+The tell: two views of the same data disagree. One page
+shows a total. Another page shows a different total for
+the same cart. Both come from the same computation, but
+each supplies a different input to a formula that
+assumed only one kind of input. The difference is not a
+bug in either page. It is that the formula was written
+for the configuration one page happens to exercise.
+
+For the grand total in particular, the tell is a
+number that matches the wrong formula. If the schema
+says the price is inclusive and the displayed total is
+the subtotal plus the tax, the formula is exclusive.
+If the schema says the price is exclusive and the
+displayed total is the subtotal, the formula is
+inclusive. The formula cannot tell which one it should
+be until someone reads the configuration.
+
+**The rule:**
+
+1. When a formula has a branch that depends on
+   configuration (is_inclusive, is_shipping_taxable,
+   country-specific rules, currency precision), the
+   branch must be read by the formula, not assumed.
+   A formula that produces the right answer for the
+   current store is not correct. It is correct for the
+   current store and wrong for every other.
+2. When the computation service already knows which
+   branch applies (per-class flags, per-store settings,
+   per-country rates), it must return that fact to its
+   caller. A service that strips configuration from its
+   return shape forces every caller to re-derive what
+   the service already computed. That re-derivation is
+   where the wrong assumption lives.
+3. When two consumers of the same computation disagree,
+   the computation is not necessarily wrong. The inputs
+   are. Read the inputs, not the outputs.
+4. When the correct answer requires knowing whether
+   the tax is included in the price, the grand total
+   formula branches on that flag. There is no single
+   formula that works for both regimes.
+
+**Where we hit it:** 2026-10-10/11. The order
+pricing engine's grand total was written for exclusive
+pricing. German stores (PAngV § 4, inclusive) were
+being overcharged 19% on every order that went through
+to payment. The cart page did not expose the bug
+because the cart passes an empty country code, so no
+tax rate resolved, so no tax was added on top. The
+checkout payment step exposed it because the address
+was known by then and the German rate resolved.
+
+Same service, same call, same cart, two different
+totals. Cart: 8,100. Payment: 9,393.28. The cart's
+correct number was correct by accident — the empty
+country code neutralised the inclusive branch before
+it could double-count.
+
+Fixed by having TaxService::calculateTax() return
+inclusive_total and exclusive_total alongside the
+overall total, and by changing the grand total
+formula to add only the exclusive portion on top of
+the taxable base. Commit 00d6e81.
+
+Followed by a companion bug: the per-product tax
+rate override (migration 0326) inherited is_inclusive
+from the class's rate for the destination. When the
+class had no rate for the destination, the flag fell
+back to false, which forced exclusive pricing even on
+an inclusive store. Migration 0327 added an explicit
+tax_rate_override_inclusive three-state column so
+the merchant can choose. Commit 464ed45.
+
+**Related:**
+
+  - The original Pattern 32 manifestation (key shape
+    drift). Same debugging motion: read the consumer,
+    read the producer, find the mismatch. Here the
+    "producer" is the tax configuration and the
+    "consumer" is the grand total formula.
+  - The second manifestation (filter enforces a
+    nonexistent invariant). Also configuration that
+    the reader assumes rather than reads.
+  - Pattern 23 (cascade check before every patch).
+    Every consumer of a shared computation is a caller
+    whose assumption may be wrong.
+
+**Prevention checklist when writing or changing a
+computation that has configuration-dependent branches:**
+
+  1. List every configuration value the formula
+     depends on (inclusive/exclusive, shipping-taxable,
+     rounding rules, currency precision).
+  2. For each value, find the source of truth. Grep
+     for the flag or setting in the schema and in the
+     service that owns it.
+  3. Confirm the formula reads that source, not a
+     default that happens to match the current store.
+  4. Test the formula under each configuration the
+     schema allows, even if the current store only
+     uses one. If the schema allows inclusive and
+     exclusive, test both, and test the mixed case.
+  5. When the computation service returns a result,
+     check whether the caller can determine the
+     configuration from the return shape alone. If
+     not, the return shape is missing a fact the
+     caller needs.
+
+---
+
 ## 19. Documents to Read First When Joining
 
 If you are new to this project and need to get up to speed
