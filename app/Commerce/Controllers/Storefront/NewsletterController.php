@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CorporateAid\Commerce\Controllers\Storefront;
 
 use CorporateAid\Commerce\Exceptions\NewsletterException;
+use CorporateAid\Commerce\Repositories\SubscriberRepository;
 use CorporateAid\Commerce\Services\SubscriberService;
 use CorporateAid\Commerce\Support\StorefrontController;
 use CorporateAid\Core\Request;
@@ -140,6 +141,25 @@ final class NewsletterController extends StorefrontController
         $claims = $tokens->verify($token, 'unsubscribe');
 
         if ($claims === null) {
+            return $this->render('storefront.newsletter.confirm-result', [
+                'title'   => 'Link not valid',
+                'ok'      => false,
+                'message' => 'This unsubscribe link is no longer valid.',
+            ]);
+        }
+
+        // The token is valid, but the subscriber row may be
+        // gone. This mirrors the POST path in
+        // SubscriberService::unsubscribeByToken(), which
+        // also refuses when the subscriber does not exist.
+        // Without this check the GET would render a form
+        // that can never be submitted successfully.
+        $subscriberId = (int) ($claims['id'] ?? 0);
+        $subscriber = $subscriberId > 0
+            ? $this->container->get(SubscriberRepository::class)->findById($subscriberId)
+            : null;
+
+        if ($subscriber === null) {
             return $this->render('storefront.newsletter.confirm-result', [
                 'title'   => 'Link not valid',
                 'ok'      => false,

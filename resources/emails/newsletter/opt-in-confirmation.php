@@ -6,7 +6,10 @@
  *   $storeName     string
  *   $confirmUrl    string
  *   $subscriberEmail string
- *   $unsubscribeUrl  string (rarely needed at this step)
+ *   $unsubscribeUrl  string  (the customer's signed
+ *                              unsubscribe URL; the
+ *                              "did not ask to subscribe"
+ *                              footer link uses it)
  */
 ?>
 <!DOCTYPE html>
@@ -39,6 +42,11 @@
         <strong><?= htmlspecialchars($subscriberEmail ?? '', ENT_QUOTES, 'UTF-8') ?></strong>
         was entered into the newsletter form on our site. If this was a mistake,
         you can ignore this message. No further email will be sent unless you click the link above.
+    </p>
+
+    <p style="color:#666;font-size:.85rem;">
+        If you did not ask to subscribe, you can
+        <a href="<?= htmlspecialchars($unsubscribeUrl ?? '#', ENT_QUOTES, 'UTF-8') ?>" style="color:#666;">unsubscribe entirely</a>.
     </p>
 
     <hr style="border:none;border-top:1px solid #e5e1d8;margin:1.5rem 0;">

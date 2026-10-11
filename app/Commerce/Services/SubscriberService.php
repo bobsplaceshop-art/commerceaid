@@ -661,7 +661,7 @@ final class SubscriberService
                 'storeName'       => $storeName,
                 'confirmUrl'      => $confirmUrl,
                 'subscriberEmail' => $subscriber->email,
-                'unsubscribeUrl'  => '',
+                'unsubscribeUrl'  => $this->unsubscribeUrlFor($subscriber->id),
             ]
         );
 
