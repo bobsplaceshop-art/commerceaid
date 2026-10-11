@@ -22,6 +22,7 @@ use CorporateAid\Commerce\Controllers\Admin\AdminRoleController;
 use CorporateAid\Commerce\Controllers\Admin\AdminCouponController;
 use CorporateAid\Commerce\Controllers\Admin\AdminTaxController;
 use CorporateAid\Commerce\Controllers\Admin\AdminShippingController;
+use CorporateAid\Commerce\Controllers\Admin\AdminReturnController;
 
 /** @var Router $router */
 
@@ -780,3 +781,34 @@ $router->post('/commerce/ca-admin/customer-approvals/{id}/reject',
 $router->post('/commerce/ca-admin/customer-approvals/{id}/reset',
     [CustomerApprovalController::class, 'reset'],
     ['store', 'auth', 'csrf']);
+
+// =====================================================================
+// Admin returns queue (Stage 008H Session 3)
+//
+// The GET list and detail are gated by returns.view. The POST
+// actions (approve, reject, receive, refund) by returns.moderate.
+// =====================================================================
+
+$router->get('/commerce/ca-admin/returns',
+    [AdminReturnController::class, 'index'],
+    ['store', 'auth', 'permission:returns.view']);
+
+$router->get('/commerce/ca-admin/returns/{id}',
+    [AdminReturnController::class, 'show'],
+    ['store', 'auth', 'permission:returns.view']);
+
+$router->post('/commerce/ca-admin/returns/{id}/approve',
+    [AdminReturnController::class, 'approve'],
+    ['store', 'auth', 'csrf', 'permission:returns.moderate']);
+
+$router->post('/commerce/ca-admin/returns/{id}/reject',
+    [AdminReturnController::class, 'reject'],
+    ['store', 'auth', 'csrf', 'permission:returns.moderate']);
+
+$router->post('/commerce/ca-admin/returns/{id}/receive',
+    [AdminReturnController::class, 'markReceived'],
+    ['store', 'auth', 'csrf', 'permission:returns.moderate']);
+
+$router->post('/commerce/ca-admin/returns/{id}/refund',
+    [AdminReturnController::class, 'refund'],
+    ['store', 'auth', 'csrf', 'permission:returns.moderate']);

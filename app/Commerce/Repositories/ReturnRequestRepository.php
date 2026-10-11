@@ -239,6 +239,21 @@ final class ReturnRequestRepository extends CommerceRepository
             $params[] = $like;
         }
 
+        // Date-range filter. The two values arrive from
+        // <input type="date"> as ISO YYYY-MM-DD strings. Append
+        // time bounds so the range is inclusive of both days.
+        // The controller validates the format before passing
+        // them; this layer assumes they are well-formed when set.
+        if (!empty($filters['date_from'])) {
+            $where[]  = "`requested_at` >= ?";
+            $params[] = (string) $filters['date_from'] . ' 00:00:00';
+        }
+
+        if (!empty($filters['date_to'])) {
+            $where[]  = "`requested_at` <= ?";
+            $params[] = (string) $filters['date_to'] . ' 23:59:59';
+        }
+
         return [implode(' AND ', $where), $params];
     }
 }

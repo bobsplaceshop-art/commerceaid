@@ -109,6 +109,7 @@ $groups = [
             ['label' => 'Customers',           'href' => '/commerce/ca-admin/customers',           'icon' => 'bi-people',            'permission' => 'customers.view'],
             ['label' => 'Customer Groups',     'href' => '/commerce/ca-admin/customer-groups',     'icon' => 'bi-people-fill'],
             ['label' => 'Customer Approvals',  'href' => '/commerce/ca-admin/customer-approvals',  'icon' => 'bi-check2-square'],
+            ['label' => 'Returns',             'href' => '/commerce/ca-admin/returns',             'icon' => 'bi-arrow-counterclockwise', 'permission' => 'returns.view'],
             ['label' => 'Coupons',             'href' => '/commerce/ca-admin/coupons',             'icon' => 'bi-ticket-perforated', 'permission' => 'coupons.view'],
         ],
     ],
