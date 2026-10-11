@@ -19,6 +19,7 @@ use CorporateAid\Commerce\Controllers\Storefront\RecentViewController;
 use CorporateAid\Commerce\Controllers\Storefront\MessageController;
 use CorporateAid\Commerce\Controllers\Storefront\ReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
+use CorporateAid\Commerce\Controllers\Storefront\NewsletterController;
 
 /** @var Router $router */
 
@@ -242,3 +243,44 @@ $router->get('/checkout/confirmation/{orderNumber}', [CheckoutController::class,
 
 // Legal pages (public, one route for all four slugs)
 $router->get('/legal/{slug}', [CheckoutController::class, 'legalPage'], ['store']);
+
+// ---------------------------------------------------------------------
+// Newsletter (public, no auth)
+// ---------------------------------------------------------------------
+//
+// The double opt-in flow, driven by signed tokens. Every
+// route here is reachable without a customer session; the
+// token in the URL is the authentication.
+//
+//   POST /newsletter/subscribe             footer + home forms
+//   GET  /newsletter/confirm/{token}       click from the opt-in email
+//   GET  /newsletter/unsubscribe/{token}   renders the confirm form
+//   POST /newsletter/unsubscribe/{token}   performs the unsubscribe
+//
+// The GET on unsubscribe exists so a two-step flow separates
+// "the customer clicked a link" from "the customer confirmed".
+// Mail scanners auto-click every link in every email; if GET
+// unsubscribed directly, every scanned email would silently
+// remove the recipient.
+//
+// Rate limit on the subscribe POST is per IP. A second layer,
+// per email address, lives inside
+// SubscriberService::sendConfirmation(). Together they stop a
+// subscription bomb: the IP limit stops a single source, the
+// email limit stops a distributed botnet.
+
+$router->post('/newsletter/subscribe',
+    [NewsletterController::class, 'subscribe'],
+    ['store', 'csrf', 'ratelimit:newsletter_subscribe,5,60']);
+
+$router->get('/newsletter/confirm/{token}',
+    [NewsletterController::class, 'showConfirm'],
+    ['store']);
+
+$router->get('/newsletter/unsubscribe/{token}',
+    [NewsletterController::class, 'showUnsubscribe'],
+    ['store']);
+
+$router->post('/newsletter/unsubscribe/{token}',
+    [NewsletterController::class, 'performUnsubscribe'],
+    ['store', 'csrf']);

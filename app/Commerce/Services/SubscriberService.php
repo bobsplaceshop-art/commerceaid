@@ -13,6 +13,7 @@ use CorporateAid\Commerce\Repositories\SubscriberRepository;
 use CorporateAid\Commerce\Repositories\StoreRepository;
 use CorporateAid\Commerce\Repositories\StoreSettingsRepository;
 use CorporateAid\Platform\Support\EmailService;
+use CorporateAid\Platform\Support\RateLimiter;
 use CorporateAid\Platform\Support\SignedToken;
 
 /**
@@ -41,7 +42,8 @@ use CorporateAid\Platform\Support\SignedToken;
  */
 final class SubscriberService
 {
-    private const CONFIRM_TTL_SECONDS = 86400; // 24 hours
+    private const CONFIRM_TTL_SECONDS     = 86400;   // 24 hours
+    private const UNSUBSCRIBE_TTL_SECONDS = 7776000; // 90 days
     private const MAX_SOFT_BOUNCES = 3;
 
     public function __construct(
@@ -54,6 +56,7 @@ final class SubscriberService
         private StoreRepository $stores,
         private EmailService $mail,
         private SignedToken $tokens,
+        private RateLimiter $limiter,
     ) {
     }
 
@@ -276,6 +279,160 @@ final class SubscriberService
     }
 
     /**
+     * Sign an unsubscribe token for a subscriber and return
+     * the full unsubscribe URL. Called by the campaign queue
+     * when rendering the campaign email, and by the
+     * preferences page when showing the current state.
+     *
+     * The token is scoped 'unsubscribe' and expires in 90
+     * days. Unsubscribe tokens are long-lived because a
+     * subscriber may open an old campaign months after it
+     * was sent.
+     */
+    public function unsubscribeUrlFor(int $subscriberId): string
+    {
+        $token = $this->tokens->sign(
+            ['id' => $subscriberId, 'scope' => 'unsubscribe'],
+            self::UNSUBSCRIBE_TTL_SECONDS
+        );
+
+        $urlBase = rtrim((string) config('app.url', ''), '/');
+
+        return $urlBase . '/newsletter/unsubscribe/' . urlencode($token);
+    }
+
+    /**
+     * Confirm a subscriber by signed token. The token is the
+     * only authorisation. The controller passes the raw token
+     * from the URL and receives a result the view can render
+     * without further branching.
+     *
+     * Returns ok = false on any failure: malformed token,
+     * wrong scope, expired, missing subscriber, or a
+     * subscriber that is not in 'pending' state. The caller
+     * is expected to render the same neutral message for
+     * every failure.
+     *
+     * @return array{ok:bool, message:string, subscriber:?Subscriber}
+     */
+    public function confirmByToken(string $token): array
+    {
+        $claims = $this->tokens->verify($token, 'confirm');
+        if ($claims === null) {
+            return [
+                'ok'         => false,
+                'subscriber' => null,
+                'message'    => 'This confirmation link is no longer valid.',
+            ];
+        }
+
+        $subscriberId = (int) ($claims['id'] ?? 0);
+        if ($subscriberId <= 0) {
+            return [
+                'ok'         => false,
+                'subscriber' => null,
+                'message'    => 'This confirmation link is no longer valid.',
+            ];
+        }
+
+        $subscriber = $this->confirm($subscriberId);
+        if ($subscriber === null) {
+            return [
+                'ok'         => false,
+                'subscriber' => null,
+                'message'    => 'This confirmation link is no longer valid.',
+            ];
+        }
+
+        return [
+            'ok'         => true,
+            'subscriber' => $subscriber,
+            'message'    => 'Thank you. Your subscription is confirmed.',
+        ];
+    }
+
+    /**
+     * Unsubscribe a subscriber by signed token, and send the
+     * acknowledgement email.
+     *
+     * Idempotent on an already-unsubscribed subscriber: the
+     * second call still returns ok = true. That way a
+     * mail-scanner double-click does not flip the page to an
+     * error.
+     *
+     * @return array{ok:bool, message:string, subscriber:?Subscriber}
+     */
+    public function unsubscribeByToken(string $token, ?string $reason = null): array
+    {
+        $claims = $this->tokens->verify($token, 'unsubscribe');
+        if ($claims === null) {
+            return [
+                'ok'         => false,
+                'subscriber' => null,
+                'message'    => 'This unsubscribe link is no longer valid.',
+            ];
+        }
+
+        $subscriberId = (int) ($claims['id'] ?? 0);
+        if ($subscriberId <= 0) {
+            return [
+                'ok'         => false,
+                'subscriber' => null,
+                'message'    => 'This unsubscribe link is no longer valid.',
+            ];
+        }
+
+        $subscriber = $this->subscribers->findById($subscriberId);
+        if ($subscriber === null) {
+            return [
+                'ok'         => false,
+                'subscriber' => null,
+                'message'    => 'This unsubscribe link is no longer valid.',
+            ];
+        }
+
+        $alreadyUnsubscribed = $subscriber->isUnsubscribed();
+
+        // Only perform the state change if the subscriber is
+        // not already unsubscribed. This keeps the audit trail
+        // honest: unsubscribed_at is the moment the user
+        // actually unsubscribed, not the moment a scanner
+        // re-clicked the link.
+        if (!$alreadyUnsubscribed) {
+            $this->unsubscribe($subscriberId, $reason);
+        }
+
+        // Send the acknowledgement email only on the first
+        // unsubscribe, not on subsequent hits.
+        if (!$alreadyUnsubscribed) {
+            $fresh = $this->subscribers->findById($subscriberId);
+            if ($fresh !== null) {
+                $storeName = $this->storeName();
+                $urlBase   = rtrim((string) config('app.url', ''), '/');
+
+                $this->mail->sendTemplate(
+                    [$fresh->email => $fresh->name ?? $fresh->email],
+                    'You have been unsubscribed from ' . $storeName,
+                    'newsletter/unsubscribe-confirm',
+                    [
+                        'storeName'       => $storeName,
+                        'subscriberEmail' => $fresh->email,
+                        'resubscribeUrl'  => $urlBase . '/',
+                    ]
+                );
+            }
+        }
+
+        $result = $this->subscribers->findById($subscriberId);
+
+        return [
+            'ok'         => true,
+            'subscriber' => $result,
+            'message'    => 'You have been unsubscribed. You will receive no further campaigns.',
+        ];
+    }
+
+    /**
      * The tenant's display name for outbound emails.
      */
     private function storeName(): string
@@ -294,6 +451,41 @@ final class SubscriberService
      */
     private function sendConfirmation(Subscriber $subscriber, int $listId): array
     {
+        // Per-email rate limit. The IP-level limiter on the
+        // route stops a single-source burst. This second
+        // layer stops a distributed attack (botnet, one IP
+        // per request) that would otherwise send unlimited
+        // confirmation emails to a single victim address.
+        //
+        // Key: sha256(email), which does not reveal the
+        // address in the rate-limit table and is stable
+        // across requests.
+        //
+        // Cap: 3 sends per 24 hours. Far below what any
+        // legitimate user needs; a victim of a subscription
+        // bomb sees at most three emails from this store,
+        // regardless of how many distinct IPs submit the
+        // form.
+        //
+        // When the cap is hit, the response is identical to
+        // a successful send. The attacker learns nothing.
+        // The subscriber keeps its existing token and
+        // remains pending; the store simply does not send
+        // another confirmation.
+        $emailKey = 'newsletter_confirm:' . hash('sha256', $subscriber->email);
+        $state    = $this->limiter->check($emailKey, 'global', 3, 1440);
+
+        if (!$state['allowed']) {
+            return [
+                'ok'         => true,
+                'subscriber' => $subscriber,
+                'status'     => 'pending',
+                'message'    => 'Check your inbox to confirm your subscription.',
+            ];
+        }
+
+        $this->limiter->hit($emailKey, 'global', 1440);
+
         $token = $this->tokens->sign(
             ['id' => $subscriber->id, 'scope' => 'confirm'],
             self::CONFIRM_TTL_SECONDS

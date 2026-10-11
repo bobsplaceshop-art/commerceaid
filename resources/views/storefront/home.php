@@ -356,17 +356,25 @@ $trustRow = [
                 <?= e($brandName) ?>.
             </p>
         </div>
-        <form class="sf-home-newsletter-form" onsubmit="return false;">
+        <form class="sf-home-newsletter-form" method="POST" action="/newsletter/subscribe">
+            <?= csrf_field() ?>
+            <input type="hidden" name="source" value="home">
+            <input type="text"
+                   name="website"
+                   tabindex="-1"
+                   autocomplete="off"
+                   aria-hidden="true"
+                   style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;"
+                   value="">
             <input type="email"
                    name="email"
                    class="sf-home-newsletter-input"
                    placeholder="Email Address"
                    aria-label="Email address"
-                   disabled>
-            <button type="button" class="sf-btn sf-btn-primary" disabled>
+                   required>
+            <button type="submit" class="sf-btn sf-btn-primary">
                 Subscribe
             </button>
         </form>
-        <p class="sf-home-newsletter-note">Newsletter signup coming soon.</p>
     </div>
 </section>

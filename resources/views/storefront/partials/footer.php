@@ -167,23 +167,39 @@ $paymentMethods = [
                 </div>
             <?php endforeach; ?>
 
-            <!-- Newsletter placeholder column. The theme builder will
-                 let the customer reposition, reconfigure, or remove
-                 this block. Today it is a stub. -->
+            <!-- Newsletter signup. Writes to commerce_subscribers
+                 via the double opt-in flow. The theme builder will
+                 let the customer reposition or remove this block. -->
             <div class="sf-footer-column sf-footer-newsletter" data-sf-section="footer-newsletter">
                 <h3 class="sf-footer-heading">Join Our Newsletter</h3>
                 <p class="sf-footer-newsletter-copy">
                     Get exclusive offers, new arrivals and style
                     inspiration straight to your inbox.
                 </p>
-                <form class="sf-footer-newsletter-form" onsubmit="return false;">
+                <form class="sf-footer-newsletter-form" method="POST" action="/newsletter/subscribe">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="source" value="footer">
+                    <input type="text"
+                           name="website"
+                           tabindex="-1"
+                           autocomplete="off"
+                           aria-hidden="true"
+                           style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;"
+                           value="">
                     <input type="email"
                            name="email"
                            class="sf-footer-newsletter-input"
                            placeholder="Enter your email address"
                            aria-label="Email address"
-                           disabled>
-                    <button type="button" class="sf-footer-newsletter-btn" disabled>
+                           required>
+                    <input type="text"
+                           name="name"
+                           class="sf-footer-newsletter-input"
+                           placeholder="Name (optional)"
+                           aria-label="Name"
+                           maxlength="120"
+                           style="margin-top:.5rem;">
+                    <button type="submit" class="sf-footer-newsletter-btn">
                         Subscribe
                     </button>
                 </form>

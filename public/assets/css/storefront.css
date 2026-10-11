@@ -984,56 +984,43 @@ h1, h2, h3, h4 {
     margin: 0 0 .85rem;
 }
 
+/* Stacked layout at every viewport. Matches the vertical
+ * rhythm of the neighbouring footer columns. The previous
+ * horizontal rule was written for a single-input form; the
+ * form now carries an email field, an optional name field,
+ * and a full-width submit button. */
 .sf-footer-newsletter-form {
     display: flex;
     flex-direction: column;
-    gap: .4rem;
-}
-
-@media (min-width: 480px) {
-    .sf-footer-newsletter-form {
-        flex-direction: row;
-        align-items: stretch;
-    }
-}
-
-/* Give the newsletter form full available width on mobile.
- * The parent column stretches (justify-items: stretch), so the
- * form fills it and the input gets a comfortable tap target. */
-.sf-footer-newsletter-form {
+    gap: .5rem;
     width: 100%;
 }
 
 .sf-footer-newsletter-input {
-    flex: 1;
-    min-width: 0;
-    padding: .7rem .85rem;
+    width: 100%;
+    padding: .8rem .9rem;
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: var(--sf-radius);
     background: rgba(255, 255, 255, 0.05);
     color: var(--sf-cream);
     font-family: var(--sf-font-body);
-    font-size: .85rem;
+    font-size: .9rem;
+    box-sizing: border-box;
 }
 
 .sf-footer-newsletter-input::placeholder {
     color: rgba(248, 241, 232, 0.5);
 }
 
-.sf-footer-newsletter-input:disabled {
-    opacity: .7;
-    cursor: not-allowed;
-}
-
 .sf-footer-newsletter-btn {
-    flex-shrink: 0;
-    padding: .7rem 1.15rem;
+    width: 100%;
+    padding: .85rem 1.15rem;
     border: 0;
     border-radius: var(--sf-radius);
     background: var(--sf-gold);
     color: var(--sf-white);
     font-family: var(--sf-font-body);
-    font-size: .72rem;
+    font-size: .78rem;
     font-weight: 600;
     letter-spacing: .1em;
     text-transform: uppercase;
@@ -1043,11 +1030,6 @@ h1, h2, h3, h4 {
 
 .sf-footer-newsletter-btn:hover:not(:disabled) {
     background: var(--sf-gold-dark);
-}
-
-.sf-footer-newsletter-btn:disabled {
-    opacity: .65;
-    cursor: not-allowed;
 }
 
 /* =====================================================================
