@@ -136,4 +136,51 @@ final class ReturnRequestItemRepository extends CommerceRepository
         }
         return $map;
     }
+
+    /**
+     * Update the quantity on a return line after the warehouse
+     * has counted what actually arrived. Recomputes line_refund
+     * from the row's existing unit_refund so the eventual refund
+     * reflects what came back, not what the customer claimed.
+     *
+     * Called from ReturnRequestService::markReceived() inside the
+     * receive transaction. Does not begin or commit anything.
+     *
+     * A quantity of zero is allowed (nothing arrived on this line).
+     * The row stays in the table so the audit trail is preserved;
+     * the line_refund becomes 0.00.
+     */
+    public function updateReceivedQuantity(int $itemId, int $quantity): void
+    {
+        if ($itemId <= 0) {
+            return;
+        }
+
+        $quantity = max(0, $quantity);
+
+        // Read the row to get unit_refund. It was frozen at
+        // request time and must not change.
+        $row = $this->db->selectOne(
+            "SELECT `unit_refund`
+               FROM `commerce_return_request_items`
+              WHERE `store_id` = ? AND `id` = ?
+              LIMIT 1",
+            [$this->storeId(), $itemId]
+        );
+
+        if ($row === null) {
+            return;
+        }
+
+        $unitRefund = (float) $row['unit_refund'];
+        $lineRefund = round($unitRefund * $quantity, 4);
+
+        $this->db->execute(
+            "UPDATE `commerce_return_request_items`
+                SET `quantity`    = ?,
+                    `line_refund` = ?
+              WHERE `store_id` = ? AND `id` = ?",
+            [$quantity, $lineRefund, $this->storeId(), $itemId]
+        );
+    }
 }

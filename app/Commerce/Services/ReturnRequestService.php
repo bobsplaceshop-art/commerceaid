@@ -208,15 +208,86 @@ final class ReturnRequestService
         return true;
     }
 
-    public function markReceived(int $requestId, int $adminUserId): bool
-    {
+    /**
+     * Mark an approved request as received, adjusting each line's
+     * quantity to what the warehouse actually counted.
+     *
+     * $receivedByOrderItem maps order_item_id => received quantity.
+     * A line not in the map defaults to the requested quantity, so
+     * a controller that only posts changed lines still works. A
+     * quantity of zero means nothing arrived on that line; the
+     * line stays in the table with line_refund = 0.00.
+     *
+     * Each line's line_refund is recomputed from the row's frozen
+     * unit_refund. The request's refund_total is updated to the sum.
+     * The eventual processRefund() reads those values and refunds
+     * what actually arrived.
+     *
+     * Returns the per-line adjustments so the controller can flash
+     * a specific message. Empty array when the transition did not
+     * apply (wrong status, not found).
+     *
+     * @param array<int, int> $receivedByOrderItem
+     * @return array<int, array{order_item_id:int, requested:int, received:int, line_refund:float}>
+     */
+    public function markReceived(
+        int $requestId,
+        int $adminUserId,
+        array $receivedByOrderItem = []
+    ): array {
         $req = $this->requests->findById($requestId);
-        if ($req === null || $req->status !== 'approved') return false;
+        if ($req === null || $req->status !== 'approved') {
+            return [];
+        }
 
-        $this->requests->update($requestId, [
-            'status' => 'received',
-        ]);
-        return true;
+        $lines = $this->items->listForRequest($requestId);
+        if ($lines === []) {
+            return [];
+        }
+
+        $adjustments = [];
+        $newRefundTotal = 0.0;
+
+        $this->db->beginTransaction();
+        try {
+            foreach ($lines as $line) {
+                $requested = $line->quantity;
+                $received  = array_key_exists($line->orderItemId, $receivedByOrderItem)
+                    ? max(0, (int) $receivedByOrderItem[$line->orderItemId])
+                    : $requested;
+
+                // Never allow more received than requested. The
+                // admin queue's form enforces this client-side;
+                // the server enforces it here as the source of truth.
+                if ($received > $requested) {
+                    $received = $requested;
+                }
+
+                $this->items->updateReceivedQuantity($line->id, $received);
+
+                $newLineRefund = round($line->unitRefund * $received, 4);
+                $newRefundTotal += $newLineRefund;
+
+                $adjustments[] = [
+                    'order_item_id' => $line->orderItemId,
+                    'requested'     => $requested,
+                    'received'      => $received,
+                    'line_refund'   => $newLineRefund,
+                ];
+            }
+
+            $this->requests->update($requestId, [
+                'status'       => 'received',
+                'refund_total' => round($newRefundTotal, 4),
+            ]);
+
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+
+        return $adjustments;
     }
 
     /**
