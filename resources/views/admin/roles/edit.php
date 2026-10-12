@@ -67,7 +67,7 @@ $err = function (string $key) use ($errors): string {
     <div class="ra-card mb-4">
         <div class="ra-card-body">
             <div class="d-flex gap-3 align-items-start">
-                <div style="font-size:1.75rem;color:var(--ra-warning-fg,#d97706);">
+                <div style="font-size:1.75rem;color:var(--ra-warn-fg,#d97706);">
                     <i class="bi bi-shield-lock" aria-hidden="true"></i>
                 </div>
                 <div>

@@ -423,7 +423,7 @@ $slugLocked = !$form->isDraft();
     </div>
 </div>
 
-<div class="ra-card mb-4" style="border-color:var(--ra-error-border,#fecaca);">
+<div class="ra-card mb-4" style="border-color:var(--ra-error-bd);">
     <div class="ra-card-body">
         <h2 class="h6 mb-3">Danger zone</h2>
         <p class="muted small mb-3">
