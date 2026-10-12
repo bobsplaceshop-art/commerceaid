@@ -119,6 +119,14 @@ Applying the principle to the current roadmap:
 | 008G.5   | Product Reviews                      | 2026-10-05 |
 | 008G.4d  | Category Filters                     | 2026-10-05 |
 | 008J     | Container Auto-Construction          | 2026-10-05 |
+| 008H     | Returns & Refunds                    | 2026-10-11 |
+| 008I     | Newsletter & Email Campaigns         | 2026-10-11 |
+| 008I.1   | Newsletter hygiene                   | 2026-10-12 |
+| 008K.1   | Admin Orders                         | 2026-10-06 |
+| 008K.2   | Admin Customers                      | 2026-10-06 |
+| 008K.3   | Admin Users                          | 2026-10-10 |
+| 008K.4   | Admin Roles                          | 2026-10-10 |
+| 008K.5   | Order Pricing Engine                 | 2026-10-11 |
 
 Also completed outside the staged sequence:
 
@@ -136,21 +144,30 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-Stage 008K - Admin Surface Completion.
+Stage 009 - Forms & Submissions.
 
-  008K.1  Admin Orders             complete 2026-10-06
-  008K.2  Admin Customers          complete 2026-10-06
-  008K.3  Admin Users              complete 2026-10-10
-  008K.4  Admin Roles              complete 2026-10-10
-  008K.5  Order Pricing Engine     complete 2026-10-11
+  009 Session 1    schema, models, repositories    complete 2026-10-12
+  009 Session 2a   FormService, admin controller,
+                   list + editor                   complete 2026-10-12
+  009 Session 2b   field editor                    complete 2026-10-12
+  009 Session 3    public surface, submission
+                   processing                      open
+  009 Session 4    submissions admin, webhooks,
+                   stage close                     open
 
-Stage 008H (Returns & Refunds) is paused. Its Session 3
-(the admin returns queue) is fully unblocked now that
-orders, customers, users, and roles all exist as real
-admin surfaces. It resumes next, in its own session.
+The admin surface of 009 is shipped. The merchant can
+create forms, add any of the twelve field types, set
+up conditional logic, edit and reorder fields, and
+publish. The public side - the actual form rendering
+and the submission pipeline - is Sessions 3 and 4.
 
-The 008K stage is complete as of 2026-10-11. All five
-sub-stages (K.1 through K.5) have shipped.
+Stage 008K (Admin Surface Completion) is fully
+complete. All five sub-stages shipped. The pricing
+engine (008K.5) shipped with the storefront
+integration and passed the end-to-end browser test:
+cart with coupon, checkout with shipping method,
+German inclusive VAT computed correctly. Tagged
+stage-008k.5-complete on 2026-10-11.
 
 ## Planned Stages
 

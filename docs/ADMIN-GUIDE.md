@@ -701,6 +701,273 @@ the queue but does not recall emails already sent.
 Sent campaigns cannot be deleted — the send history
 is a legal record.
 
+### Forms
+
+`Marketing > Forms` is the form builder. You can create
+forms without code, embed them in the storefront, and
+manage the submissions they receive. There is no
+submission cap and no storage limit — submissions live
+in your own database and are never sent to a third
+party.
+
+Common uses: contact forms, quote requests, B2B
+onboarding, event registrations, surveys, and any
+other structured input your business needs.
+
+#### Creating a form
+
+Click **New form**. The editor has two sections: the
+metadata card at the top, and the field list below.
+
+Fields on the metadata card:
+
+  - **Name** — shown in the admin list and in the
+    browser tab title. Internal.
+  - **Slug** — the public URL path. A form with slug
+    `contact` renders at `/forms/contact`. Lowercase,
+    no spaces. The slug is editable while the form is
+    a draft and becomes read-only the first time you
+    publish.
+  - **Description** — optional, shown above the form
+    to the customer.
+  - **Success message** — the text shown after a
+    successful submission. If left blank, a stock
+    message is used.
+  - **Notify email** — optional. If set, a copy of
+    every submission is emailed to that address.
+  - **Honeypot** — on by default. Renders an
+    invisible field that bots fill in and humans do
+    not. Submissions that trip the honeypot are
+    silently accepted but not stored.
+  - **Require sign-in** — off by default. When on, a
+    customer must be logged in to view or submit the
+    form. Use for B2B quote requests, account
+    enquiries, and anything that should not be public.
+
+#### Adding fields
+
+Below the metadata card is the field list. Click
+**Add field** to open the field editor modal.
+
+Each field has:
+
+  - **Label** — what the customer sees. "Email
+    address", "Company name", "How did you hear
+    about us".
+  - **Key** — the internal name used in the stored
+    submission and in any webhook payload. Lowercase,
+    underscores, no spaces. The key is generated from
+    the label the first time the field is saved and
+    is immutable from then on. Changing it would
+    orphan the old submissions.
+  - **Type** — one of twelve input types (listed
+    below).
+  - **Required** — a required field blocks submission
+    if empty.
+  - **Placeholder** — optional grey text shown inside
+    the input before the customer types.
+  - **Help text** — optional text shown below the
+    input to explain what is expected.
+  - **Step** — which step of a multi-step form the
+    field belongs to. Step 1 by default. Leave as 1
+    for a single-step form.
+  - **Conditional visibility** — optional. When set,
+    the field is only shown to a customer when another
+    field in the same form has a specific value.
+    See Conditional logic below.
+  - **Type-specific config** — depends on the type.
+    A "Dropdown" field asks for a list of options.
+    A "Number" field asks for minimum and maximum
+    values. The config sections appear and disappear
+    as you change the type.
+
+The twelve input types:
+
+  - **Text** — single-line free text.
+  - **Email** — validated as an email address.
+  - **Phone** — validated as a phone number.
+  - **Number** — accepts digits; minimum and maximum
+    are configurable.
+  - **Date** — date picker.
+  - **URL** — validated as a web address.
+  - **Long text** — multi-line free text. Use for
+    messages, descriptions, comments.
+  - **Dropdown** — a single-select list. You provide
+    the options.
+  - **Multi-select** — a list where the customer can
+    pick more than one option.
+  - **Checkbox group** — a set of checkboxes. Same
+    storage as multi-select, different presentation.
+  - **Yes / No** — a single toggle.
+  - **File upload** — lets the customer attach a
+    file. Not currently in use on the storefront;
+    reserved for a future stage.
+
+**To reorder fields**, use the up and down arrow
+buttons on each row. The position column shows the
+current order.
+
+**To edit a field**, click the pencil icon. The modal
+opens with the field's current configuration.
+
+**To delete a field**, click the trash icon. A
+confirmation modal appears. Deletion is permanent —
+the field is removed from the form and from future
+submissions. Existing submissions are preserved.
+
+#### Conditional logic
+
+Every field can be shown conditionally. For example,
+a "Tell us about your project" field can be hidden
+until the customer selects "Project enquiry" from a
+"Reason for contact" dropdown.
+
+One rule per field. Set it in the field editor under
+**Conditional visibility**:
+
+  - **When** — pick another field in the same form.
+    A field cannot depend on itself.
+  - **Operator** — one of six:
+    * **equals** — the referenced field has exactly
+      this value.
+    * **not equals** — the referenced field has any
+      value except this one.
+    * **contains** — the referenced field's value
+      includes this substring.
+    * **is empty** — the referenced field has no
+      value.
+    * **is not empty** — the referenced field has a
+      value.
+    * **greater than** / **less than** — numeric
+      comparison.
+  - **Value** — the value to compare against.
+    Ignored for "is empty" and "is not empty".
+
+Rules are evaluated on the client as the customer
+types (fields appear and disappear live) and again
+on the server when the form is submitted (fields
+whose condition is not met are neither validated nor
+stored).
+
+#### Multi-step forms
+
+A form is multi-step when any field has a step
+greater than 1.
+
+On the storefront, the form renders one step at a
+time with a **Next** button to advance and a **Back**
+button to return. A step indicator shows "Step N of
+M". The **Submit** button appears on the final step.
+
+The step structure is presentation only. The whole
+form is validated and stored as one unit. A customer
+who reloads mid-form starts again from step 1.
+
+Set a field's step in the field editor. All fields
+with the same step number render together.
+
+#### Publishing and unpublishing
+
+A form starts as a draft. Only drafts are visible in
+the admin. The public URL is not live.
+
+**To publish**, click Publish in the status card. A
+form with zero fields cannot be published — add at
+least one field first. The edit page will tell you
+this if you try.
+
+Once published, the form is reachable at
+`/forms/{slug}`. Anyone with the URL can submit it,
+unless **Require sign-in** is on.
+
+**To unpublish**, click Unpublish. The public URL
+returns a 404. Submissions already received are
+preserved.
+
+The slug becomes read-only on first publish. If you
+need a different public URL, duplicate the form and
+give the copy a new slug.
+
+#### Duplicating
+
+**To duplicate**, click Duplicate in the status card.
+A copy is created with:
+
+  - The same fields, options, and conditional rules.
+  - The same metadata (description, success message,
+    notify email, honeypot, require sign-in).
+  - A new slug suffixed with `-copy`. If a form with
+    that slug already exists, a numeric suffix is
+    added.
+  - Zero submissions. The copy starts with an empty
+    submission history.
+
+Use duplicate when you want to start a new form from
+a similar one. Event registrations for recurring
+events, contact forms for different departments, and
+similar patterns.
+
+#### Archiving and deleting
+
+**To archive**, click Archive. The form is hidden
+from the active list and the public URL returns a
+404. Submissions are preserved and still viewable
+from the submissions card.
+
+**To delete**, click Delete in the danger zone. A
+confirmation modal appears. Deleting a form soft-
+deletes it: the record is hidden from every list and
+the public URL stops working, but the row and its
+submissions stay in the database for audit.
+
+There is no undelete button in the admin. If you
+delete a form by mistake, ask your developer to
+restore it from the database.
+
+#### The public URL
+
+A published form renders at `/forms/{slug}` in the
+storefront. The customer sees:
+
+  - Your store's header and footer.
+  - The form description (if set).
+  - The form fields, in the order you defined.
+  - The Submit button.
+
+After a successful submission, the success message
+replaces the form. The customer can submit again from
+the same page unless you turn the form off.
+
+Submissions arrive in the admin at
+`Marketing > Forms > {the form} > Submissions`.
+That surface, with filters and CSV export, ships in
+a later session of the Forms stage. Until then,
+submissions are stored but not viewable from the
+admin panel.
+
+#### Permissions
+
+Forms use four permissions, seeded per store:
+
+  - `forms.view` — see the form list and read the
+    fields.
+  - `forms.manage` — create, edit, publish, unpublish,
+    archive, duplicate, and delete forms.
+  - `forms.submissions.view` — read the submissions
+    for a form.
+  - `forms.submissions.manage` — edit submission
+    status, add internal notes, export.
+
+The default roles are:
+
+  - **Super Administrator** — all four.
+  - **Store Administrator** — all four.
+  - **Marketing Manager** — all four.
+  - **Customer Support** — `forms.submissions.view`
+    only.
+
+A merchant can create a custom role with any subset.
+
 
 ---
 
