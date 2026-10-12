@@ -30,7 +30,7 @@ if ($campaign === null) return;
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/assets/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="<?= versioned_asset('css/main.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/main-v2.css') ?>" rel="stylesheet">
 
     <?php /* Pre-paint theme resolution - matches layouts/app.php. */ ?>
     <script>

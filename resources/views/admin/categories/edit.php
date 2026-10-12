@@ -349,25 +349,6 @@ $categoryId = $category !== null ? (int) $category->id : 0;
     color: var(--ra-fg, #0f172a);
     font-weight: 500;
 }
-
-.ra-sticky-actions {
-    position: sticky;
-    bottom: 0;
-    margin-top: 2rem;
-    padding: 1rem 0;
-    background: linear-gradient(to top, var(--ra-bg, #f4f6fb) 60%, transparent);
-    z-index: 10;
-}
-.ra-sticky-actions-inner {
-    display: flex;
-    justify-content: flex-end;
-    gap: .5rem;
-    background: var(--ra-card-bg, #ffffff);
-    border: 1px solid var(--ra-border, #e5e9f2);
-    border-radius: 12px;
-    padding: .75rem 1rem;
-    box-shadow: 0 -4px 20px -8px rgba(15, 23, 42, 0.1);
-}
 </style>
 
 <!-- Detach confirmation modal -->

@@ -652,8 +652,6 @@ window.RA_BulkAction = (function () {
 }
 .ra-attr-badge i { color: var(--ra-muted, #94a3b8); }
 
-.ra-btn-sm { padding: .35rem .65rem; font-size: .82rem; }
-
 .ra-group-chip {
     display: inline-flex;
     align-items: center;
@@ -712,46 +710,5 @@ window.RA_BulkAction = (function () {
 .ra-bulk-toolbar-inner .ra-btn-outline:hover {
     background: rgba(255, 255, 255, 0.15);
     color: #ffffff;
-}
-
-/* Fixed sticky action bar */
-.ra-sticky-actions {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: var(--ra-sidebar-w, 260px) !important;
-    right: 0 !important;
-    padding: 1.5rem 2rem 1rem !important;
-    background: linear-gradient(to top, #0b1220 55%, transparent 100%) !important;
-    z-index: 900 !important;
-    pointer-events: none !important;
-}
-[data-theme="light"] .ra-sticky-actions {
-    background: linear-gradient(to top, #f4f6fb 55%, transparent 100%) !important;
-}
-.ra-sticky-actions-inner {
-    display: flex !important;
-    justify-content: flex-end !important;
-    gap: .5rem !important;
-    max-width: 1400px !important;
-    margin: 0 auto !important;
-    background: var(--ra-card-bg, #111c33) !important;
-    border: 1px solid var(--ra-border, #1f2a44) !important;
-    border-radius: 12px !important;
-    padding: .75rem 1rem !important;
-    box-shadow: 0 -4px 20px -8px rgba(0, 0, 0, 0.35) !important;
-    pointer-events: auto !important;
-}
-.ra-sticky-spacer {
-    height: 6rem !important;
-}
-
-@media (max-width: 900px) {
-    .ra-sticky-actions {
-        left: 0 !important;
-        padding: 1rem !important;
-    }
-    .ra-bulk-toolbar-inner {
-        flex-wrap: wrap;
-    }
 }
 </style>
