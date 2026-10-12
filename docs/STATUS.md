@@ -334,58 +334,82 @@ Session 4.
 
 ---
 
-## Current Focus — Stage 008I in progress
+## Current Focus - Stage 009 in progress
 
-**Sessions 1 and 2 of 008I shipped 2026-10-11.**
-Session 3 (the storefront subscribe side) opens next.
+**Sessions 1, 2a, and 2b of 009 shipped 2026-10-12.**
+Session 3 (the public surface and submission
+processing) opens next.
 
-**Shipped in 008I Sessions 1 and 2:**
+**Shipped in 009 Sessions 1, 2a, and 2b:**
 
-  Schema (migrations 0328-0333):
-    commerce_subscribers, commerce_subscriber_lists,
-    commerce_subscriber_list_members,
-    commerce_email_campaigns, commerce_email_queue,
-    commerce_email_events.
+  Schema (migrations 0334-0336):
+    commerce_forms, commerce_form_fields,
+    commerce_form_submissions.
 
-  Services and infrastructure:
-    SubscriberService, CampaignService (which contains
-    the queue logic), SignedToken, NewsletterException,
-    bin/send-emails.php (the CLI queue worker).
+  Models and repositories:
+    Form, FormField, FormSubmission.
+    FormRepository, FormFieldRepository,
+    FormSubmissionRepository.
+    All resolve via ADR-018 container auto-construction.
 
-  Admin surfaces:
-    Subscriber list with filters, CSV export, and
-    consent record detail.
-    Named subscriber lists with membership.
-    Campaign list, composer (shared rich-text editor),
-    send action.
-    Campaign detail with stats tiles and a body preview
-    rendered in a sandboxed iframe. The iframe loads a
-    bare email document from
-    /commerce/ca-admin/campaigns/{id}/preview?raw=1
-    and autogrows via postMessage.
+  Services:
+    FormService - form CRUD, publish/unpublish/archive,
+    duplicate, soft delete, plus addField, updateField,
+    deleteField, and moveField.
 
-  Permissions (seeder 0016):
-    newsletter.subscribers.view / .manage
-    newsletter.campaigns.view / .manage
+  Admin surface:
+    Forms list at /commerce/ca-admin/forms with status
+    tabs (All / Draft / Published / Archived), numeric
+    counts on each tab, search by name or slug, and
+    pagination.
+    Create form page.
+    Edit page: status card, metadata editor, field
+    list, danger zone.
+    Field editor modal: add/edit/reorder/delete fields
+    across the twelve input types, type-conditional
+    config, options editor, conditional visibility.
 
-**What 008I Session 3 must ship:**
+  Permissions (seeder 0017):
+    forms.view, forms.manage,
+    forms.submissions.view, forms.submissions.manage.
 
-  - POST /newsletter/subscribe — creates a pending
-    subscriber and sends the double opt-in email.
-  - GET /newsletter/confirm/{token} — verifies the
-    token and moves the subscriber to confirmed.
-  - GET and POST /newsletter/unsubscribe/{token} —
-    renders a confirmation page and performs the
-    unsubscribe.
-  - Three email templates under
-    resources/views/emails/newsletter/:
-    opt-in-confirmation.php, unsubscribe-confirm.php,
-    campaign.php.
-  - Wiring the two storefront subscribe forms off
-    their current disabled placeholder state (footer.php
-    and home.php).
-  - The account preferences newsletter toggle at
-    /account/messages/preferences.
+  Sidebar: Forms item under Marketing.
+
+**What 009 Session 3 must ship:**
+
+  - FormSubmissionService - honeypot check,
+    server-side conditional logic, required-field
+    check, per-field validation via
+    InputType::validate(), insert into
+    commerce_form_submissions, fire the
+    form.submitted domain event, send the notify
+    email.
+  - FormRenderer - composes the input types into a
+    full form. CSRF, honeypot, submit button,
+    per-field errors, data-conditional attributes.
+    Multi-step rendering grouped by step.
+  - Public FormController - GET /forms/{slug} and
+    POST /forms/{slug}. Two routes in
+    routes/storefront.php.
+  - Conditional logic JS module.
+
+**What 009 Session 4 must ship:**
+
+  - Submissions admin list with filters, bulk
+    actions, CSV export.
+  - Submission detail page.
+  - NotificationRuleService integration.
+  - Webhook integration.
+  - Stage close: session file, STATUS, ROADMAP,
+    ADMIN-GUIDE.
+
+**008K.5 status:** Complete. Code on disk, admin
+surfaces live (Coupons, Tax, Shipping), storefront
+integration live, browser test passed end to end.
+Tag lands at the close commit.
+
+**008I status:** Complete. Sessions 1-4 plus 008I.1
+hygiene shipped. No outstanding follow-ups.
 
 **008H status:** Complete. The admin returns queue
 shipped at d10b39d. COMPLIANCE-DE entry 8 (the 14-day
@@ -395,19 +419,36 @@ open with a 19 June 2026 deadline.
 
 **Next 3 stages:**
 
-  - **008I** (in progress): Newsletter & Email
-    Campaigns. Session 3 is the storefront subscribe
-    side. Session 4 is optional tracking, the worker
-    test, and the stage close.
-  - **009**: Forms & Submissions.
+  - **009** (in progress): Forms & Submissions.
+    Sessions 3 and 4 remain. The public form surface
+    and the submissions admin.
+  - **014**: Responsive Layout System. The four
+    breakpoints, the component treatment matrix, the
+    admin list table audit, the storefront audit, and
+    the check-responsive.php enforcement script.
+    Prerequisite for every future stage that ships a
+    view.
   - **010**: Payments (Deep). Wires refunds from the
-    returns workflow to the payment provider.
-  - **009**: Forms & Submissions.
+    returns workflow to the payment provider. Consumes
+    ReturnRequestService::processRefund() from 008H
+    Session 3.
 
-**Permission vocabulary grew to 49** across 11 modules.
-008K.5 did not add new slugs; the Coupons, Tax, and
-Shipping controllers reuse the existing `coupons.*`,
-`tax.*`, and `shipping.*` families.
+**Permission vocabulary:** 67 across 17 modules. The
+seeders build it in layers: 0012 (the original 49),
+0013 (pricing: coupons, tax, shipping - 8 new),
+0014 (returns - 2), 0016 (newsletter - 4), and
+0017 (forms - 4). Counted in the database:
+`SELECT COUNT(*) FROM core_permissions` returns 67.
+The coupons.*, tax.*, and shipping.* families were
+added by the pricing engine; the newsletter.* family
+by 008I; the forms.* family by 009 sessions 1-2b.
+
+**Tooling:** composer check now runs four layers -
+syntax linter, PHPStan level 8, and the prevenger
+(theme contract, CSS structure, HTML structure). The
+prevenger is documented in docs/STATUS.md's Tooling
+section and its three checks correspond to REMEMBER
+patterns 3, 13, 26, 27, and 39.
 
 ---
 
@@ -525,16 +566,23 @@ new code.
 
 ## Next 3 Stages
 
-- **008I** (now): Newsletter & Email Campaigns. Inbuilt.
-  Double opt-in, no third-party transfer.
-- **009**: Forms & Submissions.
-- **010**: Payments (Deep). Wires refunds from the returns
-  workflow to the payment provider.
+- **009** (now): Forms & Submissions. Sessions 3 and 4
+  remain. The public form surface and the submissions
+  admin with filters and CSV export.
+- **014**: Responsive Layout System. The four
+  breakpoints, the component treatment matrix, the
+  admin list table audit, the storefront audit, and
+  the enforcement script. Prerequisite for every stage
+  that ships a view.
+- **010**: Payments (Deep). Wires refunds from the
+  returns workflow to the payment provider.
 
 The platform has completed the commerce loop end to end:
 browse, cart, checkout, order, return; and on the
 merchant side: products, orders, customers, returns,
-users, roles, coupons, tax, shipping.
+users, roles, coupons, tax, shipping, newsletter,
+forms. Every surface a merchant needs to operate the
+store is live.
 
 ---
 
