@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-10-12
-**Version:** 0.29.0-alpha
-**Stage:** 009 (Forms & Submissions) in progress. Sessions 1 and 2a shipped. Forms admin surface is live: list, create, metadata editor, status transitions (publish/unpublish/archive), duplicate, soft delete, status tab counts. Session 2b (field editor) next, then Sessions 3 and 4 (public surface + submissions).
+**Version:** 0.30.0-alpha
+**Stage:** 009 (Forms & Submissions) in progress. Sessions 1, 2a, and 2b shipped. The full admin surface is live: form CRUD, status transitions, and the field editor (add/edit/reorder/delete fields, twelve input types, conditional visibility, options editor, type-conditional config). Sessions 3 and 4 (public surface + submissions) remain.
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -161,7 +161,7 @@ subscribe" link in the confirmation email template.
 Both shipped 2026-10-12 (commit d99021b). Stage 008I
 has no outstanding follow-ups.
 
-#### Admin - Forms (009 Sessions 1 + 2a)
+#### Admin - Forms (009 Sessions 1, 2a, and 2b)
 
 **Sessions 1 and 2a shipped.** Schema, models,
 repositories, plus the first user-visible surface:
@@ -203,9 +203,41 @@ Admin surface (Session 2a):
   with `-copy`; delete() is a soft delete.
 - Sidebar item under Marketing, gated by `forms.view`.
 
-The field editor (add / edit / reorder fields) ships
-in Session 2b. The public surface and submission
-processing ship in Session 3. The
+Field editor (Session 2b):
+
+- Add, edit, reorder, and delete fields on any form.
+- Twelve input types, reused from the CustomFields
+  registry without modification.
+- Type-conditional config sections rendered from each
+  input type's `configFields()` method.
+- Options editor for Select, MultiSelect, and
+  Checkbox-group types.
+- Conditional visibility rules: one rule per field,
+  six operators, target field select populated from
+  the form's existing fields.
+- Multi-step support via the `step` column on each
+  field. Fields at the same step render together on
+  the public form (Session 3).
+- `FormService` gained `addField`, `updateField`,
+  `deleteField`, and `moveField`.
+- `AdminFormController` gained `fieldStore`,
+  `fieldUpdate`, `fieldDelete`, and `fieldMove`,
+  plus four field routes.
+- The field editor modal uses the shared `.ra-modal*`
+  system, matching every other admin modal.
+
+Also fixed in Session 2b:
+
+- `SelectType::render()` was producing a file input
+  instead of a dropdown. A stale body had been copied
+  from `FileType`. Corrected.
+- `InputType::render()`'s docblock narrowed the
+  `$options` parameter to `string[]` while every
+  consumer passed `array{value,label}[]`. Widened to
+  accept both shapes.
+
+The public surface and submission processing ship in
+Session 3. The
 submissions admin and webhook integration ship in
 Session 4.
 

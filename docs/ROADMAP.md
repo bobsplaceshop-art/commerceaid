@@ -591,7 +591,7 @@ entry 22) is a separate compliance stage; deadline
 
 ### Stage 009 - Forms & Submissions
 
-**Status:** In progress. Sessions 1 and 2a shipped
+**Status:** In progress. Sessions 1, 2a, and 2b shipped
 2026-10-12.
 
 **Goal:** Native form builder. The merchant creates
@@ -636,15 +636,35 @@ no storage limits.
       forms.manage.
     - Sidebar item under Marketing.
 
+  Session 2b delivered:
+
+    - Four new methods on FormService: addField,
+      updateField, deleteField, moveField.
+    - Four new actions on AdminFormController plus
+      four field routes.
+    - The field editor modal, using the shared
+      .ra-modal* system. Type-conditional config
+      sections generated from InputType::configFields().
+      Options editor for option-bearing types.
+      Conditional visibility select populated from
+      the form's own fields.
+    - Rebuilt field list with position, label,
+      key, type, step, required badge, and per-row
+      actions (move up, move down, edit, delete).
+    - Fixed SelectType::render() (was producing a
+      file input) and the InputType::render()
+      docblock (narrowed \$options to string[]).
+
 **Remaining:**
 
-  Session 2b - the field editor. Four new methods on
-  FormService (addField, updateField, deleteField,
-  reorderFields), four new controller actions, the
-  field modal with type-conditional config rendered
-  from InputType::configFields(), up/down reorder
-  controls, and a small JS module to toggle the
-  visible config section on type change.
+  Session 3 - the public surface and submission
+  processing. FormSubmissionService, FormRenderer,
+  public FormController, two public routes, conditional
+  logic JS, multi-step rendering.
+
+  Session 4 - submissions admin with filters and CSV
+  export, domain event firing, notification and webhook
+  integration, stage close.
 
   Session 3 - public surface (GET /forms/{slug}),
   submission processing (POST /forms/{slug}),
