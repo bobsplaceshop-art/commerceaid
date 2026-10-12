@@ -948,7 +948,7 @@ html[data-theme="light"] .ra-table-wrap {
     padding: 0 .4rem;
     margin-left: .5rem;
     border-radius: 999px;
-    background: var(--ra-surface-alt, rgba(148,163,184,0.15));
+    background: var(--ra-surface-3);
     color: var(--ra-muted, #94a3b8);
     font-size: .72rem;
     font-weight: 600;
@@ -1340,7 +1340,7 @@ html[data-theme="light"] .ra-table-wrap {
 .ra-variant-slot-thumb {
     aspect-ratio: 1 / 1;
     border-radius: .375rem;
-    background: var(--ra-cream, #f4f5f7);
+    background: var(--ra-surface-3);
     overflow: hidden;
     display: flex;
     align-items: center;
