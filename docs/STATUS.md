@@ -451,9 +451,28 @@ Test data in dev:
 
 - `composer lint` — PHP syntax check across app/ + routes/
 - `composer analyse` — PHPStan level 8 (zero errors, no baseline)
-- `composer check` — both
+- `composer prevenger` — three structural checkers in one
+  entry point (`bin/check.php`):
+    - `bin/check-theme.php` — theme variable contract.
+      Every `--ra-X:` definition has a `var(--ra-X)`
+      reference and vice versa.
+    - `bin/check-css.php` — inline `<style>` structural
+      integrity. Brace balance, declaration shape, no
+      `@media` blocks in views.
+    - `bin/check-html.php` — nested forms, modal
+      includes inside forms, unescaped JSON in `data-*`
+      attributes, unbalanced attribute quotes. Warns on
+      `<table>` missing `data-responsive` (flips to a
+      hard error when Stage 014 Session 1 ships the
+      breakpoint system).
+- `composer check` — all four: lint, analyse, prevenger
 - Pre-commit hook runs `bin/lint.php` before every commit
 - `bin/verify-file.php` — per-file post-write verification
+
+The prevenger is the structural counterpart to PHPStan.
+PHPStan catches type errors; the prevenger catches the
+structural bug classes PHPStan cannot see. Every commit
+that passes `composer check` runs both.
 
 **Commits happen from WSL**, not Laragon Terminal. See
 `docs/git-workflow.md` for the reasoning.

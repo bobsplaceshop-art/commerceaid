@@ -2500,3 +2500,98 @@ filesystem are on the same machine), the metadata
 propagates normally and the cache buster works. This
 pattern applies specifically to WSL-to-Windows file
 writes served by Laragon's Apache.
+
+---
+
+### Pattern 39 - Literal `?>` inside a PHP comment closes the PHP block
+
+**Problem:** A `?>` sequence anywhere in a PHP file - including
+inside a `//` single-line comment or a `/* */` block comment -
+is honoured by PHP's lexer as a close-tag. Everything after it
+in the file becomes HTML output. The rest of the file, including
+every block opener and closer, is no longer PHP code.
+
+The tell is a `php -l` parse error whose line number is far from
+the actual problem. The error names the block that "opened but
+never closed" - a `foreach`, an `if`, a function body. The
+reported line is where the block opened. The real problem is
+upstream, wherever the last `?>` appeared.
+
+**The specific shape:** a comment that documents a PHP short-echo
+pattern using the literal characters. For example, a docblock
+that shows both the bad form and the good form:
+
+    // Bad:  data-foo="<?= json_encode(...) ?>"
+    // Good: data-foo="<?= e(json_encode(...)) ?>"
+
+PHP stops parsing at the first `?>`, which is inside the "Bad"
+example. The "Good" example is never parsed as PHP - it is HTML
+text. The rest of the file is HTML text.
+
+`php -l` then reports a parse error at whatever block was open
+at that point. In the incident that produced this pattern, the
+error was "Unclosed '{' on line 249 in bin/check-html.php on
+line 467." Line 249 was a `foreach`. Line 467 was past EOF. The
+actual problem was four comment lines at 342-345.
+
+**Detection:** `grep -n '?>' <file>`. Any hit that is not the
+final line of a pure-PHP file, or inside a deliberate template
+string, is suspect. If it is inside a comment, it is a bug.
+
+The corresponding grep for `<?` is also worth running. A literal
+`<?` inside a comment does not by itself break parsing, but it
+usually appears in the same comment as a `?>` and is a strong
+signal.
+
+**The fix:** do not write literal `?>` or `<?=` sequences inside
+PHP comments. Describe the pattern in prose, or use a placeholder
+token like `[short-echo]`, or move the example into a docblock
+that does not contain the actual close-tag characters.
+
+**Where we hit it:** Bin write for `bin/check-html.php`,
+2026-10-12. The docblock for the data-* escaping rule documented
+the bad-vs-good pattern with literal short-echo examples. Four
+comment lines. Three hours of investigation.
+
+The first two runs of the file failed at `php -l` with the same
+message. The first fix attempt patched the wrong region because
+the parser's reported line number pointed at the walk's outer
+`foreach`, not at the comment. The second fix attempt failed
+because the heredoc re-wrote the file with a *new* instance of
+the same problem - the "fixed" comment block still used literal
+short-echo examples. The third attempt replaced the four
+comment lines with prose only.
+
+**Why `php -l` does not catch it as a comment problem:** PHP's
+lexer does not parse comments before checking for close-tags.
+It scans for `?>` character-by-character across the entire byte
+stream and treats the first one it finds as the end of the PHP
+block, regardless of what syntactic context it appears in. This
+is a documented property of the lexer, not a bug.
+
+**Related patterns:**
+
+  - Pattern 4 (php -l does not catch everything). Pattern 39
+    is a specific case: `php -l` catches the symptom (a
+    dangling block), not the cause (a close-tag inside a
+    comment).
+  - Pattern 20 (one file per message during critical work).
+    The three failed fix attempts violated this by trying to
+    patch and fix in the same heredoc.
+  - Pattern 1 (silent Python patch failures). The first fix
+    attempt's anchor did not match because it contained the
+    same `?>` sequences that had already truncated the file.
+
+**Prevention checklist for any file that documents PHP tags:**
+
+1. Never write literal `?>` inside a comment. Use prose or a
+   placeholder token.
+2. Never write literal `<?php`, `<?=`, or `<?` inside a
+   comment either. They are less dangerous but usually co-
+   occur with `?>`.
+3. After writing any file that contains the literal characters
+   `<` and `?` adjacent, run `grep -n '?>' <file>` and read
+   every hit.
+4. When `php -l` reports a parse error at a block that looks
+   closed, do not trust the reported line. Grep for `?>` in
+   the file first.
