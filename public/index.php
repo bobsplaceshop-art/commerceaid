@@ -10,6 +10,18 @@ define('CA_APP_START', microtime(true));
 define('CA_BASE_PATH', dirname(__DIR__));
 define('CA_PUBLIC_PATH', __DIR__);
 
+// A short, unique-per-request identifier. Every log line
+// written while serving this request carries it, and every
+// error response carries it as the X-Request-ID header. A
+// user quoting the reference from the error page, plus the
+// request ID visible in the browser Network tab, is
+// enough to locate the exact log entry.
+//
+// 12 hex characters = 48 bits of entropy. Collisions are
+// negligible at any scale this platform will reach. Short
+// enough to read aloud over the phone if needed.
+define('CA_REQUEST_ID', bin2hex(random_bytes(6)));
+
 // ------------------------------------------------------------------
 // PHP environment checks
 // ------------------------------------------------------------------

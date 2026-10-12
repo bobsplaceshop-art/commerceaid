@@ -27,6 +27,16 @@ final class Logger
     /** @param array<string,mixed> $context */
     public static function log(string $level, string $message, array $context = []): void
     {
+        // Every log line carries the request ID when one has been
+        // generated for the current request. The constant is
+        // defined in public/index.php at the very top of the
+        // request cycle, so it is available from the first log
+        // call onward. On CLI the constant is absent and the
+        // field is omitted.
+        if (defined('CA_REQUEST_ID')) {
+            $context['request_id'] = CA_REQUEST_ID;
+        }
+
         $ts = date('Y-m-d H:i:s');
         $line = sprintf('[%s] %s: %s', $ts, strtoupper($level), $message);
 
@@ -36,39 +46,68 @@ final class Logger
 
         $line .= PHP_EOL;
 
-        // Three-tier write path. Each tier is tried only if the
-        // previous one failed. The method returns as soon as any
-        // tier writes successfully. There is no path through this
-        // method that does not write the entry to somewhere.
+        // Candidate-walk write path. Every candidate directory
+        // is tried in priority order until one accepts the
+        // write. If all fail, the entry falls through to the
+        // SAPI's own log. There is no path through this method
+        // that does not write the entry somewhere.
         //
-        // Tier 1: the structured app log.
-        // Tier 2: error_log(), the SAPI's configured log target.
-        //         For mod_php under Apache this is the Apache
-        //         error_log. For CLI it is stderr.
-        // Tier 3: STDERR directly, when the constant is defined.
-        //         Belt and braces for CLI contexts where
-        //         error_log() may route somewhere unreachable.
+        // The list comes from logDirs(). The primary candidate
+        // is the project's storage/logs. The secondary is a
+        // subdirectory of the system temp dir. On environments
+        // where the project path is not writable by PHP (the
+        // Windows/WSL bridge, a mounted drive without write
+        // permissions, a container without a shared volume),
+        // the temp-dir candidate keeps the log alive.
         //
-        // The [ca-fallback] and [ca-stderr] prefixes make the
-        // tiers greppable in whichever log actually received
-        // them.
+        // is_writable() is deliberately not consulted. On the
+        // Windows/WSL bridge it reads the file attribute bit,
+        // not the ACL. It returns false on directories PHP can
+        // actually write to. The write itself is the
+        // authoritative test.
 
-        $dir = self::logDir();
-        if ($dir !== null) {
-            $written = @file_put_contents(
-                $dir . '/app.log',
-                $line,
-                FILE_APPEND | LOCK_EX
-            );
-            if ($written !== false) {
-                return;
+        // Detach the global error handler for the duration of
+        // the write. App::registerErrorHandling() installs a
+        // handler that converts every warning into an
+        // ErrorException. Without this detach, a warning from
+        // the fallback error_log() call would be re-thrown,
+        // caught by renderException()'s try/catch, and
+        // swallowed - the original exception never reaches the
+        // log.
+        //
+        // The replacement handler returns true for every error
+        // (silencing it). The previous handler is restored in
+        // a finally block so nothing leaks.
+        set_error_handler(static fn (): bool => true);
+        try {
+            foreach (self::logDirs() as $dir) {
+                if (!is_dir($dir)) {
+                    @mkdir($dir, 0777, true);
+                }
+                if (!is_dir($dir)) {
+                    continue;
+                }
+
+                $written = @file_put_contents(
+                    $dir . '/app.log',
+                    $line,
+                    FILE_APPEND | LOCK_EX
+                );
+                if ($written !== false) {
+                    return;
+                }
             }
-        }
 
-        error_log('[ca-fallback] ' . rtrim($line));
+            // Every candidate failed. Fall through to the SAPI's
+            // own log. Under Apache this is the Apache error_log;
+            // under CLI it is stderr.
+            @error_log('[ca-fallback] ' . rtrim($line));
 
-        if (defined('STDERR')) {
-            @fwrite(STDERR, '[ca-stderr] ' . $line);
+            if (defined('STDERR')) {
+                @fwrite(STDERR, '[ca-stderr] ' . $line);
+            }
+        } finally {
+            restore_error_handler();
         }
     }
 
@@ -114,19 +153,34 @@ final class Logger
         self::log('exception', $message, $context);
     }
 
-    private static function logDir(): ?string
+    /**
+     * Candidate directories for the log file, in priority order.
+     *
+     * The primary is the project's storage/logs. The fallback
+     * is a subdirectory of the system temp dir, which is
+     * writable by any process that can run PHP.
+     *
+     * The caller tries each in turn. is_writable() is not
+     * consulted: on the Windows/WSL bridge it reads the file
+     * attribute bit rather than the ACL, and returns false on
+     * directories PHP can actually write to. The write itself
+     * is the authoritative test.
+     *
+     * @return string[]
+     */
+    private static function logDirs(): array
     {
-        if (self::$basePath === null) {
-            return null;
+        $dirs = [];
+
+        if (self::$basePath !== null) {
+            $dirs[] = self::$basePath . '/storage/logs';
         }
-        $dir = self::$basePath . '/storage/logs';
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
+
+        $tmp = sys_get_temp_dir();
+        if ($tmp !== '' && is_dir($tmp)) {
+            $dirs[] = rtrim($tmp, '/\\') . '/commerceaid-logs';
         }
-        // After mkdir the directory may still not exist if the
-        // attempt failed. Check both conditions before returning
-        // the path; the caller falls through to error_log() and
-        // STDERR when this returns null.
-        return (is_dir($dir) && is_writable($dir)) ? $dir : null;
+
+        return $dirs;
     }
 }

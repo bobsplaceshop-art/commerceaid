@@ -351,6 +351,15 @@ final class App
             $errorRef = 'ERR-' . bin2hex(random_bytes(3));
         }
 
+        // The X-Request-ID header on the error response links the
+        // browser's Network tab to the log entry. The same ID is
+        // in every log line for this request, attached by
+        // Logger::log(). A support engineer with the request ID
+        // greps once and lands on the exception.
+        if (defined('CA_REQUEST_ID')) {
+            @header('X-Request-ID: ' . CA_REQUEST_ID);
+        }
+
         try {
             Logger::exception($e, $errorRef);
         } catch (\Throwable) {
