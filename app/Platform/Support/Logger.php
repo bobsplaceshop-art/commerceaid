@@ -27,12 +27,6 @@ final class Logger
     /** @param array<string,mixed> $context */
     public static function log(string $level, string $message, array $context = []): void
     {
-        $dir = self::logDir();
-        if ($dir === null) {
-            return; // fail silently; logging should never break the app
-        }
-
-        $file = $dir . '/app.log';
         $ts = date('Y-m-d H:i:s');
         $line = sprintf('[%s] %s: %s', $ts, strtoupper($level), $message);
 
@@ -42,23 +36,39 @@ final class Logger
 
         $line .= PHP_EOL;
 
-        // Primary target: the log file. When the write fails, fall
-        // back to error_log() so the entry is not lost. The @ on
-        // file_put_contents is intentional - PHP's warning is not
-        // useful on its own - but the return value is checked so a
-        // failure is not silent.
-        $written = @file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
+        // Three-tier write path. Each tier is tried only if the
+        // previous one failed. The method returns as soon as any
+        // tier writes successfully. There is no path through this
+        // method that does not write the entry to somewhere.
+        //
+        // Tier 1: the structured app log.
+        // Tier 2: error_log(), the SAPI's configured log target.
+        //         For mod_php under Apache this is the Apache
+        //         error_log. For CLI it is stderr.
+        // Tier 3: STDERR directly, when the constant is defined.
+        //         Belt and braces for CLI contexts where
+        //         error_log() may route somewhere unreachable.
+        //
+        // The [ca-fallback] and [ca-stderr] prefixes make the
+        // tiers greppable in whichever log actually received
+        // them.
 
-        if ($written === false) {
-            // Fallback. error_log() writes to the SAPI's configured
-            // error log. For mod_php under Apache this is Apache's
-            // error.log. For CLI it is stderr. Either is better than
-            // silence.
-            //
-            // The prefix marks entries that reached the fallback so
-            // they are greppable in whichever log actually received
-            // them.
-            error_log('[ca-fallback] ' . rtrim($line));
+        $dir = self::logDir();
+        if ($dir !== null) {
+            $written = @file_put_contents(
+                $dir . '/app.log',
+                $line,
+                FILE_APPEND | LOCK_EX
+            );
+            if ($written !== false) {
+                return;
+            }
+        }
+
+        error_log('[ca-fallback] ' . rtrim($line));
+
+        if (defined('STDERR')) {
+            @fwrite(STDERR, '[ca-stderr] ' . $line);
         }
     }
 
@@ -113,6 +123,10 @@ final class Logger
         if (!is_dir($dir)) {
             @mkdir($dir, 0755, true);
         }
-        return is_writable($dir) ? $dir : null;
+        // After mkdir the directory may still not exist if the
+        // attempt failed. Check both conditions before returning
+        // the path; the caller falls through to error_log() and
+        // STDERR when this returns null.
+        return (is_dir($dir) && is_writable($dir)) ? $dir : null;
     }
 }
