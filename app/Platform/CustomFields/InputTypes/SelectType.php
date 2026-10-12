@@ -38,20 +38,33 @@ final class SelectType implements InputType
     public function humanize(?string $value): string { return $value ?? ''; }
 
     /** @param array<string,mixed> $constraints */
-    public function render(string $fieldKey, string $fieldLabel, ?string $currentValue, array $constraints, array $options, ?string $helpText
-, bool $isRequired, array $errors = []): string
-    {
-        $exts = $constraints['extensions'] ?? 'pdf,doc,docx,png,jpg';
-        $maxMb = (int) ($constraints['max_size_mb'] ?? 8);
+    public function render(
+        string $fieldKey,
+        string $fieldLabel,
+        ?string $currentValue,
+        array $constraints,
+        array $options,
+        ?string $helpText,
+        bool $isRequired,
+        array $errors = []
+    ): string {
         $html  = '<div class="ra-field">';
         $html .= '<label class="ra-label" for="cf_' . e($fieldKey) . '">' . e($fieldLabel);
         if ($isRequired) $html .= ' <span style="color:var(--ra-error-fg)">*</span>';
         $html .= '</label>';
-        $html .= '<input type="file" id="cf_' . e($fieldKey) . '" name="cf_' . e($fieldKey) . '_file" class="ra-input"' . ($isRequired ? ' required' : '') . '>';
-        $html .= '<div class="muted small mt-1">Allowed: ' . e($exts) . ' · Max: ' . $maxMb . ' MB';
-        if ($helpText) $html .= ' · ' . e($helpText);
-        $html .= '</div>';
-        if ($currentValue) $html .= '<div class="muted small mt-1">Currently attached: #' . e($currentValue) . '</div>';
+        $html .= '<select id="cf_' . e($fieldKey) . '"'
+               . ' name="cf[' . e($fieldKey) . ']"'
+               . ' class="ra-input"' . ($isRequired ? ' required' : '') . '>';
+        $html .= '<option value="">&mdash; Select &mdash;</option>';
+        foreach ($options as $opt) {
+            $optValue    = is_array($opt) ? (string) ($opt['value'] ?? '') : (string) $opt;
+            $optLabel    = is_array($opt) ? (string) ($opt['label'] ?? $optValue) : $optValue;
+            if ($optValue === '') continue;
+            $selected    = ($optValue === (string) $currentValue) ? ' selected' : '';
+            $html .= '<option value="' . e($optValue) . '"' . $selected . '>' . e($optLabel) . '</option>';
+        }
+        $html .= '</select>';
+        if ($helpText) $html .= '<div class="muted small mt-1">' . e($helpText) . '</div>';
         foreach ($errors as $err) $html .= '<div class="small" style="color:var(--ra-error-fg);margin-top:.25rem;">' . e($err) . '</div>';
         $html .= '</div>';
         return $html;

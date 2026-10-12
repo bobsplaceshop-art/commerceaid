@@ -21,6 +21,11 @@ $maxStep   = $maxStep   ?? 1;
 $subCounts = $subCounts ?? ['new' => 0, 'read' => 0, 'spam' => 0, 'archived' => 0, 'total' => 0];
 $errors    = $errors    ?? [];
 $old       = $old       ?? [];
+$allTypes  = $allTypes  ?? [];
+
+if (empty($allTypes) && class_exists(\CorporateAid\Platform\CustomFields\InputTypeRegistry::class)) {
+    $allTypes = \CorporateAid\Platform\CustomFields\InputTypeRegistry::all();
+}
 
 if ($form === null) {
     echo '<div class="ra-alert ra-alert-error">Form not found.</div>';
@@ -251,20 +256,142 @@ $slugLocked = !$form->isDraft();
     </div>
 </form>
 
-<div class="ra-card mb-4">
+<div class="ra-card mb-4" id="fields">
     <div class="ra-card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="h6 mb-0">Fields</h2>
-            <span class="ra-badge ra-badge-muted">
-                <?= count($fields) ?> <?= count($fields) === 1 ? 'field' : 'fields' ?>
-            </span>
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h2 class="h6 mb-1">Fields</h2>
+                <p class="muted small mb-0">
+                    The order of fields here is the order customers see them.
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="ra-badge ra-badge-muted">
+                    <?= count($fields) ?> <?= count($fields) === 1 ? 'field' : 'fields' ?>
+                </span>
+                <button type="button" class="ra-btn ra-btn-primary" data-ra-field-add>
+                    <i class="bi bi-plus-lg me-1"></i> Add field
+                </button>
+            </div>
         </div>
-        <div class="ra-alert" style="background:var(--ra-surface-alt,#f8fafc);border:1px dashed var(--ra-border,#cbd5e1);">
-            <strong>The field editor ships in Session 2b.</strong>
-            This card will show the field list with add / edit / reorder controls.
-        </div>
+
+        <?php if (empty($fields)): ?>
+            <div class="text-center py-4" style="border:1px dashed var(--ra-border,#cbd5e1);border-radius:8px;">
+                <i class="bi bi-input-cursor-text" style="font-size:2rem;color:var(--ra-muted,#94a3b8);"></i>
+                <p class="muted small mb-0 mt-2">
+                    No fields yet. Add at least one field before publishing the form.
+                </p>
+            </div>
+        <?php else: ?>
+            <div class="ra-table-responsive-wrap">
+                <table class="ra-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;">#</th>
+                            <th>Label</th>
+                            <th class="ra-hide-sm" style="width:150px;">Key</th>
+                            <th class="ra-hide-sm" style="width:140px;">Type</th>
+                            <th style="width:70px;">Step</th>
+                            <th style="width:80px;">Required</th>
+                            <th style="width:180px;text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($fields as $i => $field): ?>
+                            <tr>
+                                <td class="muted small"><?= (int) ($i + 1) ?></td>
+                                <td>
+                                    <span style="font-weight:600;"><?= e($field->label) ?></span>
+                                    <?php if ($field->helpText !== null && $field->helpText !== ''): ?>
+                                        <div class="muted small"><?= e($field->helpText) ?></div>
+                                    <?php endif; ?>
+                                    <?php if ($field->isConditional()): ?>
+                                        <div class="muted small">
+                                            <i class="bi bi-funnel" aria-hidden="true"></i>
+                                            Only shown when <code><?= e($field->conditional['field']) ?></code>
+                                            <?= e(str_replace('_', ' ', $field->conditional['operator'])) ?>
+                                            <?php if ($field->conditional['value'] !== null && $field->conditional['value'] !== ''): ?>
+                                                <code><?= e((string) $field->conditional['value']) ?></code>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="ra-hide-sm"><code><?= e($field->fieldKey) ?></code></td>
+                                <td class="ra-hide-sm muted small">
+                                    <?= e(isset($allTypes[$field->inputType]) ? $allTypes[$field->inputType]->label() : $field->inputType) ?>
+                                </td>
+                                <td><?= (int) $field->step ?></td>
+                                <td>
+                                    <?php if ($field->isRequired): ?>
+                                        <span class="ra-badge ra-badge-warning">Yes</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-end" style="white-space:nowrap;">
+                                    <form method="POST"
+                                          action="/commerce/ca-admin/forms/<?= (int) $form->id ?>/fields/<?= (int) $field->id ?>/move"
+                                          style="display:inline;">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="direction" value="up">
+                                        <button type="submit" class="ra-icon-btn" title="Move up"
+                                                <?= $i === 0 ? 'disabled' : '' ?>>
+                                            <i class="bi bi-arrow-up"></i>
+                                        </button>
+                                    </form>
+                                    <form method="POST"
+                                          action="/commerce/ca-admin/forms/<?= (int) $form->id ?>/fields/<?= (int) $field->id ?>/move"
+                                          style="display:inline;">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="direction" value="down">
+                                        <button type="submit" class="ra-icon-btn" title="Move down"
+                                                <?= $i === count($fields) - 1 ? 'disabled' : '' ?>>
+                                            <i class="bi bi-arrow-down"></i>
+                                        </button>
+                                    </form>
+                                    <button type="button"
+                                            class="ra-icon-btn"
+                                            title="Edit"
+                                            data-ra-field-edit
+                                            data-field-id="<?= (int) $field->id ?>"
+                                            data-field-key="<?= e($field->fieldKey) ?>"
+                                            data-field-label="<?= e($field->label) ?>"
+                                            data-field-type="<?= e($field->inputType) ?>"
+                                            data-field-placeholder="<?= e((string) ($field->placeholder ?? '')) ?>"
+                                            data-field-help="<?= e((string) ($field->helpText ?? '')) ?>"
+                                            data-field-required="<?= $field->isRequired ? '1' : '0' ?>"
+                                            data-field-step="<?= (int) $field->step ?>"
+                                            data-field-default="<?= e((string) ($field->defaultValue ?? '')) ?>"
+                                            data-field-options='<?= e((string) json_encode($field->options)) ?>'
+                                            data-field-constraints='<?= e((string) json_encode($field->constraints)) ?>'
+                                            data-field-conditional='<?= e((string) json_encode($field->conditional)) ?>'>
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form method="POST"
+                                          action="/commerce/ca-admin/forms/<?= (int) $form->id ?>/fields/<?= (int) $field->id ?>/delete"
+                                          style="display:inline;"
+                                          data-ra-field-delete-form>
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="ra-icon-btn" title="Delete"
+                                                onclick="return confirm('Delete this field? Existing submissions keep their value, but the field will be gone from the form.');">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
+
+<?= view_partial('admin.forms._field-modal', [
+    'form'     => $form,
+    'fields'   => $fields,
+    'allTypes' => $allTypes,
+]) ?>
+
+<script src="<?= versioned_asset('js/forms-field-editor-v2.js') ?>"></script>
 
 <div class="ra-card mb-4">
     <div class="ra-card-body">
@@ -344,3 +471,4 @@ $slugLocked = !$form->isDraft();
     });
 })();
 </script>
+

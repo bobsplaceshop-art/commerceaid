@@ -55,7 +55,11 @@ interface InputType
      * @param string       $fieldLabel    e.g. 'Rwanda work permit status'
      * @param string|null  $currentValue  raw stored value (from custom_field_values)
      * @param array<string,mixed> $constraints decoded from custom_fields.constraints
-     * @param string[]     $options       decoded from custom_fields.options
+     * @param array<int,mixed> $options   decoded from custom_fields.options.
+     *                                    Two shapes are accepted:
+     *                                      - list<string> (legacy)
+     *                                      - list<array{value:string,label:string}>
+     *                                    Implementations must handle both.
      * @param string|null  $helpText
      * @param bool         $isRequired
      * @param string[]     $errors        validation messages (may be empty)

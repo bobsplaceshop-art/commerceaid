@@ -323,6 +323,122 @@ final class AdminFormController extends AdminController
     }
 
     // -----------------------------------------------------------------
+    // Fields
+    // -----------------------------------------------------------------
+
+    /** @param array<string,string> $params */
+    public function fieldStore(Request $request, array $params = []): Response
+    {
+        $id = (int) ($params['id'] ?? 0);
+        if ($id <= 0) return $this->fail('Invalid form reference.');
+
+        $repo = $this->container->get(FormRepository::class);
+        if ($repo->findById($id) === null) return $this->fail('Form not found.');
+
+        $service = $this->container->get(FormService::class);
+        $session = $this->container->get(Session::class);
+        $data    = $this->collectFieldInput($request);
+
+        $errors = $this->validateFieldInput($data);
+        if ($errors !== []) {
+            $session->flash('form_errors', $errors);
+            $session->flashOldInput($data);
+            return Response::redirect('/commerce/ca-admin/forms/' . $id . '/edit#fields');
+        }
+
+        try {
+            $service->addField($id, $data);
+            $session->flash('success', 'Field added.');
+        } catch (NewsletterException $e) {
+            $session->flash('form_errors', ['field_key' => $e->getMessage()]);
+            $session->flashOldInput($data);
+        }
+
+        return Response::redirect('/commerce/ca-admin/forms/' . $id . '/edit#fields');
+    }
+
+    /** @param array<string,string> $params */
+    public function fieldUpdate(Request $request, array $params = []): Response
+    {
+        $formId  = (int) ($params['id'] ?? 0);
+        $fieldId = (int) ($params['fieldId'] ?? 0);
+        if ($formId <= 0 || $fieldId <= 0) {
+            return $this->fail('Invalid reference.');
+        }
+
+        $service = $this->container->get(FormService::class);
+        $session = $this->container->get(Session::class);
+        $data    = $this->collectFieldInput($request);
+
+        $errors = $this->validateFieldInput($data);
+        if ($errors !== []) {
+            $session->flash('form_errors', $errors);
+            $session->flashOldInput($data);
+            return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/edit#fields');
+        }
+
+        try {
+            $service->updateField($fieldId, $data);
+            $session->flash('success', 'Field updated.');
+        } catch (NewsletterException $e) {
+            $session->flash('form_errors', ['field_key' => $e->getMessage()]);
+            $session->flashOldInput($data);
+        }
+
+        return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/edit#fields');
+    }
+
+    /** @param array<string,string> $params */
+    public function fieldDelete(Request $request, array $params = []): Response
+    {
+        $formId  = (int) ($params['id'] ?? 0);
+        $fieldId = (int) ($params['fieldId'] ?? 0);
+        if ($formId <= 0 || $fieldId <= 0) {
+            return $this->fail('Invalid reference.');
+        }
+
+        $service = $this->container->get(FormService::class);
+        $session = $this->container->get(Session::class);
+
+        try {
+            $service->deleteField($fieldId);
+            $session->flash('success', 'Field deleted.');
+        } catch (NewsletterException $e) {
+            $session->flash('error', $e->getMessage());
+        }
+
+        return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/edit#fields');
+    }
+
+    /** @param array<string,string> $params */
+    public function fieldMove(Request $request, array $params = []): Response
+    {
+        $formId  = (int) ($params['id'] ?? 0);
+        $fieldId = (int) ($params['fieldId'] ?? 0);
+        if ($formId <= 0 || $fieldId <= 0) {
+            return $this->fail('Invalid reference.');
+        }
+
+        $direction = (string) $request->input('direction', '');
+        if (!in_array($direction, ['up', 'down'], true)) {
+            $session = $this->container->get(Session::class);
+            $session->flash('error', 'Invalid move direction.');
+            return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/edit#fields');
+        }
+
+        $service = $this->container->get(FormService::class);
+        $session = $this->container->get(Session::class);
+
+        try {
+            $service->moveField($fieldId, $direction);
+        } catch (NewsletterException $e) {
+            $session->flash('error', $e->getMessage());
+        }
+
+        return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/edit#fields');
+    }
+
+    // -----------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------
 
@@ -346,6 +462,104 @@ final class AdminFormController extends AdminController
             'honeypot_enabled' => (bool) $request->input('honeypot_enabled', false),
             'requires_auth'    => (bool) $request->input('requires_auth', false),
         ];
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function collectFieldInput(Request $request): array
+    {
+        // Options arrive as parallel arrays:
+        //   option_values[]   = ['us','uk']
+        //   option_labels[]   = ['United States','United Kingdom']
+        // Zip them into [{value,label}, ...].
+        $rawValues = $request->input('option_values', []);
+        $rawLabels = $request->input('option_labels', []);
+        $options   = [];
+        if (is_array($rawValues) && is_array($rawLabels)) {
+            foreach ($rawValues as $i => $value) {
+                $value = trim((string) $value);
+                if ($value === '') continue;
+                $label = trim((string) ($rawLabels[$i] ?? ''));
+                $options[] = [
+                    'value' => $value,
+                    'label' => $label !== '' ? $label : $value,
+                ];
+            }
+        }
+
+        // Constraints arrive as a flat associative array:
+        //   constraints[max_length] = 100
+        //   constraints[min]        = 0
+        // Store only non-empty values.
+        $rawConstraints = $request->input('constraints', []);
+        $constraints    = [];
+        if (is_array($rawConstraints)) {
+            foreach ($rawConstraints as $k => $v) {
+                if ($v === '' || $v === null) continue;
+                $constraints[(string) $k] = $v;
+            }
+        }
+
+        // Conditional rule. All three keys must be set and
+        // the target field must be specified. Otherwise we
+        // store null (always visible).
+        $rawConditional = $request->input('conditional', []);
+        $conditional    = null;
+        if (is_array($rawConditional)
+            && !empty($rawConditional['field'])
+            && !empty($rawConditional['operator'])
+        ) {
+            $conditional = [
+                'field'    => (string) $rawConditional['field'],
+                'operator' => (string) $rawConditional['operator'],
+                'value'    => (string) ($rawConditional['value'] ?? ''),
+            ];
+        }
+
+        return [
+            'field_key'    => trim((string) $request->input('field_key', '')),
+            'label'        => trim((string) $request->input('label', '')),
+            'input_type'   => trim((string) $request->input('input_type', 'text')),
+            'placeholder'  => trim((string) $request->input('placeholder', '')),
+            'help_text'    => trim((string) $request->input('help_text', '')),
+            'is_required'  => (bool) $request->input('is_required', false),
+            'default_value' => trim((string) $request->input('default_value', '')),
+            'step'         => max(1, (int) $request->input('step', 1)),
+            'options'      => $options,
+            'constraints'  => $constraints,
+            'conditional'  => $conditional,
+        ];
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     * @return array<string,string>
+     */
+    private function validateFieldInput(array $data): array
+    {
+        $errors = [];
+
+        $label = (string) ($data['label'] ?? '');
+        if ($label === '') {
+            $errors['label'] = 'Label is required.';
+        } elseif (mb_strlen($label) > 190) {
+            $errors['label'] = 'Label must be 190 characters or fewer.';
+        }
+
+        $key = (string) ($data['field_key'] ?? '');
+        if ($key === '') {
+            $errors['field_key'] = 'Field key is required.';
+        } elseif (!preg_match('/^[a-z][a-z0-9_]*$/', $key)) {
+            $errors['field_key'] = 'Key must start with a letter and may contain only lowercase letters, digits, and underscores.';
+        }
+
+        $type = (string) ($data['input_type'] ?? '');
+        if ($type === '') {
+            $errors['input_type'] = 'Field type is required.';
+        }
+
+        return $errors;
     }
 
     /**

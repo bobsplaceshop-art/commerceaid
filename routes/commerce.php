@@ -952,3 +952,23 @@ $router->post('/commerce/ca-admin/forms/{id}/delete',
 $router->post('/commerce/ca-admin/forms/{id}',
     [AdminFormController::class, 'update'],
     ['store', 'auth', 'csrf', 'permission:forms.manage']);
+
+// ---------------------------------------------------------------------
+// Admin forms: field operations (Stage 009 Session 2b)
+// ---------------------------------------------------------------------
+
+$router->post('/commerce/ca-admin/forms/{id}/fields',
+    [AdminFormController::class, 'fieldStore'],
+    ['store', 'auth', 'csrf', 'permission:forms.manage']);
+
+$router->post('/commerce/ca-admin/forms/{id}/fields/{fieldId}/delete',
+    [AdminFormController::class, 'fieldDelete'],
+    ['store', 'auth', 'csrf', 'permission:forms.manage']);
+
+$router->post('/commerce/ca-admin/forms/{id}/fields/{fieldId}/move',
+    [AdminFormController::class, 'fieldMove'],
+    ['store', 'auth', 'csrf', 'permission:forms.manage']);
+
+$router->post('/commerce/ca-admin/forms/{id}/fields/{fieldId}',
+    [AdminFormController::class, 'fieldUpdate'],
+    ['store', 'auth', 'csrf', 'permission:forms.manage']);

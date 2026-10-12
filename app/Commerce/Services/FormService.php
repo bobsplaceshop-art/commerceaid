@@ -181,8 +181,187 @@ final class FormService
     }
 
     // -----------------------------------------------------------------
+    // Fields
+    // -----------------------------------------------------------------
+
+    /**
+     * Add a field to a form.
+     *
+     * @param array<string,mixed> $data  {field_key, label, input_type, ...}
+     */
+    public function addField(int $formId, array $data): int
+    {
+        $form = $this->forms->findById($formId);
+        if ($form === null) {
+            throw new NewsletterException('Form not found.');
+        }
+
+        $key = $this->normaliseFieldKey((string) ($data['field_key'] ?? ''));
+        if ($key === '') {
+            throw new NewsletterException('A field key is required.');
+        }
+        if ($this->fields->fieldKeyExists($formId, $key)) {
+            throw new NewsletterException('That field key is already used on this form.');
+        }
+
+        $step      = max(1, (int) ($data['step'] ?? 1));
+        $sortOrder = $this->fields->nextSortOrder($formId, $step);
+
+        return $this->fields->create([
+            'form_id'          => $formId,
+            'field_key'        => $key,
+            'label'            => (string) ($data['label'] ?? ''),
+            'input_type'       => (string) ($data['input_type'] ?? 'text'),
+            'placeholder'      => $this->nullable($data['placeholder'] ?? null),
+            'help_text'        => $this->nullable($data['help_text'] ?? null),
+            'is_required'      => !empty($data['is_required']) ? 1 : 0,
+            'options_json'     => !empty($data['options'])     ? json_encode($data['options'])     : null,
+            'constraints_json' => !empty($data['constraints']) ? json_encode($data['constraints']) : null,
+            'default_value'    => $this->nullable($data['default_value'] ?? null),
+            'step'             => $step,
+            'sort_order'       => $sortOrder,
+            'conditional_json' => !empty($data['conditional']) ? json_encode($data['conditional']) : null,
+            'is_active'        => 1,
+        ]);
+    }
+
+    /**
+     * Update a field. The field_key may be changed while the
+     * form is a draft; once published, the key is immutable
+     * because the payload uses it as the column name.
+     *
+     * @param array<string,mixed> $data
+     */
+    public function updateField(int $fieldId, array $data): void
+    {
+        $field = $this->fields->findById($fieldId);
+        if ($field === null) {
+            throw new NewsletterException('Field not found.');
+        }
+
+        $form = $this->forms->findById($field->formId);
+        $canChangeKey = $form !== null && $form->isDraft();
+
+        $update = [
+            'label'            => (string) ($data['label'] ?? $field->label),
+            'input_type'       => (string) ($data['input_type'] ?? $field->inputType),
+            'placeholder'      => $this->nullable($data['placeholder'] ?? null),
+            'help_text'        => $this->nullable($data['help_text'] ?? null),
+            'is_required'      => !empty($data['is_required']) ? 1 : 0,
+            'options_json'     => !empty($data['options'])     ? json_encode($data['options'])     : null,
+            'constraints_json' => !empty($data['constraints']) ? json_encode($data['constraints']) : null,
+            'default_value'    => $this->nullable($data['default_value'] ?? null),
+            'step'             => max(1, (int) ($data['step'] ?? $field->step)),
+            'conditional_json' => !empty($data['conditional']) ? json_encode($data['conditional']) : null,
+        ];
+
+        if ($canChangeKey) {
+            $newKey = $this->normaliseFieldKey((string) ($data['field_key'] ?? $field->fieldKey));
+            if ($newKey === '') {
+                throw new NewsletterException('A field key is required.');
+            }
+            if ($newKey !== $field->fieldKey
+                && $this->fields->fieldKeyExists($field->formId, $newKey, $fieldId)
+            ) {
+                throw new NewsletterException('That field key is already used on this form.');
+            }
+            $update['field_key'] = $newKey;
+        }
+
+        $this->fields->update($fieldId, $update);
+    }
+
+    public function deleteField(int $fieldId): void
+    {
+        $field = $this->fields->findById($fieldId);
+        if ($field === null) {
+            throw new NewsletterException('Field not found.');
+        }
+        $this->fields->delete($fieldId);
+    }
+
+    /**
+     * Move a field up or down within its step. Swaps the
+     * sort_order of the target field with the adjacent one.
+     *
+     * @param string $direction  'up' or 'down'. Anything else is refused.
+     */
+    public function moveField(int $fieldId, string $direction): void
+    {
+        if (!in_array($direction, ['up', 'down'], true)) {
+            throw new NewsletterException('Invalid move direction.');
+        }
+
+        $field = $this->fields->findById($fieldId);
+        if ($field === null) {
+            throw new NewsletterException('Field not found.');
+        }
+
+        $siblings = $this->fields->listForForm($field->formId);
+        // Filter to the same step; the up/down move is
+        // scoped to a step, not to the whole form.
+        $inStep = array_values(array_filter(
+            $siblings,
+            static fn ($f) => $f->step === $field->step
+        ));
+
+        $index = -1;
+        foreach ($inStep as $i => $f) {
+            if ($f->id === $field->id) { $index = $i; break; }
+        }
+        if ($index < 0) return;
+
+        $target = $direction === 'up' ? $index - 1 : $index + 1;
+        if (!isset($inStep[$target])) return; // Already at the boundary.
+
+        $neighbour = $inStep[$target];
+
+        // Swap the two sort_order values. If they are equal
+        // (rare, from a bad import) we still produce a
+        // deterministic order by renumbering the whole step
+        // by 10.
+        if ($field->sortOrder === $neighbour->sortOrder) {
+            $this->renumberStep($field->formId, $field->step, $inStep, $index, $target);
+            return;
+        }
+
+        $this->fields->update($field->id,     ['sort_order' => $neighbour->sortOrder]);
+        $this->fields->update($neighbour->id, ['sort_order' => $field->sortOrder]);
+    }
+
+    /**
+     * Fallback for the equal-sort_order edge case. Renumber
+     * the whole step sequentially with the target order.
+     *
+     * @param array<int,\CorporateAid\Commerce\Models\FormField> $inStep
+     */
+    private function renumberStep(int $formId, int $step, array $inStep, int $from, int $to): void
+    {
+        // Reorder the array by swapping the two positions.
+        $reordered = $inStep;
+        $tmp = $reordered[$from];
+        $reordered[$from] = $reordered[$to];
+        $reordered[$to] = $tmp;
+
+        $ids = array_map(static fn ($f) => $f->id, $reordered);
+        $this->fields->reorder($formId, $ids);
+    }
+
+    // -----------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------
+
+    private function normaliseFieldKey(string $key): string
+    {
+        $key = strtolower(trim($key));
+        $key = preg_replace('/[^a-z0-9_]+/', '_', $key) ?? $key;
+        $key = trim($key, '_');
+        // MySQL column-safe: must start with a letter.
+        if ($key !== '' && !preg_match('/^[a-z]/', $key)) {
+            $key = 'f_' . $key;
+        }
+        return $key;
+    }
 
     private function normaliseSlug(string $slug): string
     {
