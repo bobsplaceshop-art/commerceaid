@@ -146,6 +146,56 @@ final class Logger
             $context['ref'] = $reference;
         }
 
+        // HTTP context. Every field is optional: on CLI the
+        // REQUEST_METHOD and REQUEST_URI superglobals are
+        // absent, and a log line from a CLI script omits them
+        // cleanly. The presence of these fields is what makes
+        // a support grep actionable:
+        //
+        //   request_method + request_uri  which endpoint failed
+        //   user_agent                    which browser/client
+        //   session_id                    which visitor session
+        //   user_id                       which authenticated user
+        //
+        // A single reference ID lands on one line. A session ID
+        // lands on every line for one visitor. A user ID lands
+        // on every line for one account. All three greps are
+        // possible after this commit; only the first was before.
+        $method = (string) ($_SERVER['REQUEST_METHOD'] ?? '');
+        if ($method !== '') {
+            $context['request_method'] = $method;
+        }
+
+        $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
+        if ($uri !== '') {
+            $context['request_uri'] = $uri;
+        }
+
+        $userAgent = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
+        if ($userAgent !== '') {
+            $context['user_agent'] = $userAgent;
+        }
+
+        // session_status() returns PHP_SESSION_ACTIVE when a
+        // session has been started. Reading session_id() when
+        // no session is active returns an empty string, which
+        // is filtered out below.
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $sid = session_id();
+            if ($sid !== '') {
+                $context['session_id'] = $sid;
+            }
+        }
+
+        // Read the user ID from the session. The framework's
+        // Auth service writes it under this key. On an
+        // unauthenticated request the key is absent and the
+        // field is omitted.
+        $uid = $_SESSION['user_id'] ?? null;
+        if (is_int($uid) || is_string($uid)) {
+            $context['user_id'] = $uid;
+        }
+
         $message = $reference !== null
             ? "[{$reference}] " . $e->getMessage()
             : $e->getMessage();
