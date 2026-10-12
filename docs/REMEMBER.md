@@ -2412,3 +2412,91 @@ codebase:**
     but they are independent: one is Apache, one is
     the browser. Neither masked the other; both had
     to be fixed for the iframe to render.
+
+---
+
+### Pattern 38 - Apache on Windows serves stale file bytes after WSL writes to /mnt/c
+
+**Problem:** Edit a JS or CSS file from WSL. Reload the
+browser. The browser receives the previous version of the
+file. Full page reloads, hard reloads, Apache restarts,
+and `versioned_asset()` cache-busters all fail to force a
+refresh. The file on disk has the new bytes. The browser
+receives the old bytes.
+
+**The tell:** fetch the file from the browser console and
+compare its byte count to the file on disk.
+
+    fetch('/assets/js/foo.js?v=' + Date.now())
+        .then(r => r.text())
+        .then(t => console.log('served:', t.length, 'vs disk:', 9205));
+
+If the served length and the disk length differ, the
+server is serving stale bytes. The discrepancy can persist
+indefinitely without any error message.
+
+**Why it happens:** on this stack (WSL writing to
+`/mnt/c/projects/commerceaid`, Apache running under
+Laragon on the Windows side, Apache reading the file
+through the Windows filesystem), file metadata changes
+made by WSL do not always propagate to what Apache sees.
+`filemtime()` from PHP reflects what Apache sees, not what
+WSL wrote. So `versioned_asset()`'s cache buster reads the
+same unchanged mtime and produces the same unchanged URL.
+The browser never refetches. The stale file is served
+forever.
+
+**The fix (immediate):** rename the file.
+
+    mv public/assets/js/foo.js public/assets/js/foo-v2.js
+
+Then update every reference to point at the new filename.
+A URL the browser has never seen has no cache entry. The
+first fetch is guaranteed fresh.
+
+**The fix (durable):** change `versioned_asset()` to use a
+content hash instead of `filemtime()`.
+
+    $url .= '?v=' . substr(md5_file($file), 0, 8);
+
+`md5_file()` reads the current bytes on disk. When the
+bytes change, the hash changes, the URL changes, the
+browser refetches. The stale-metadata problem disappears
+because the metadata is no longer involved.
+
+**Where we hit it:**
+
+  - Stage 008G.4c: `app.css` was served stale after an
+    edit. Renamed to `main.css`, five references updated.
+  - Stage 009 Session 2b: `forms-field-editor.js` was
+    served stale after several edits. Renamed to
+    `forms-field-editor-v2.js`, one reference updated.
+
+**The cost of not knowing this pattern:** three hours in
+Stage 009 Session 2b. The bug masqueraded as a DOM issue,
+a JS binding issue, a Service Worker issue, and a
+DOMContentLoaded race. Every diagnostic passed. Only the
+byte-count comparison between browser-served and
+disk-resident content revealed the truth.
+
+**Prevention checklist when a JS or CSS edit does not
+appear to take effect:**
+
+1. Check the served bytes vs the disk bytes with the
+   `fetch` test above. Do this before anything else.
+2. If they match, the file is being served correctly.
+   Look elsewhere.
+3. If they differ, Apache is stale. Rename the file, or
+   save it once from Notepad on the Windows side to force
+   a metadata refresh, or edit through Windows tooling.
+4. Do not assume a hard reload, an Apache restart, or a
+   `?v=` cache buster will fix it. None of them reliably
+   do, because the metadata they read is itself the thing
+   that is stale.
+
+**Related:** this is a development-environment issue, not
+a production bug. On a Linux host (where Apache and the
+filesystem are on the same machine), the metadata
+propagates normally and the cache buster works. This
+pattern applies specifically to WSL-to-Windows file
+writes served by Laragon's Apache.
