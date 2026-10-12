@@ -38,12 +38,14 @@
         "analyse": "phpstan analyse --memory-limit=512M",
         "check": [
             "@lint",
-            "@analyse"
+            "@analyse",
+            "@prevenger"
         ],
         "hook:install": "php bin/install-hooks.php",
         "hook:uninstall": [
             "git config --unset core.hooksPath || true"
-        ]
+        ],
+        "prevenger": "php bin/check.php"
     },
     "config": {
         "optimize-autoloader": true,
