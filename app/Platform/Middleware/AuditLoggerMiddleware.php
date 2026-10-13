@@ -7,6 +7,7 @@ use CorporateAid\Core\Auth;
 use CorporateAid\Core\Container;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
+use CorporateAid\Platform\Context\StoreContextInterface;
 use CorporateAid\Platform\Support\AuditContext;
 use CorporateAid\Platform\Support\AuditLogger;
 
@@ -65,10 +66,23 @@ final class AuditLoggerMiddleware
 
             $userId = $auth->user()?->id;
 
+            // Store context, when a resolution has happened.
+            // Null on CLI, on health checks, and on any
+            // request that bypassed the StoreResolutionMiddleware
+            // (none today, but the guard is defensive).
+            $storeId = null;
+            if ($this->container->has(StoreContextInterface::class)) {
+                $ctx = $this->container->get(StoreContextInterface::class);
+                if ($ctx->has()) {
+                    $storeId = $ctx->idOrNull();
+                }
+            }
+
             $logger->log(
                 $method,
                 $path,
                 $userId,
+                $storeId,
                 $this->safeIp($request),
                 $this->safeUserAgent($request),
                 $this->requestHash($request),

@@ -5,6 +5,7 @@ namespace CorporateAid\Platform\Support;
 
 use CorporateAid\Core\Auth;
 use CorporateAid\Core\Database;
+use CorporateAid\Platform\Context\StoreContextInterface;
 
 /**
  * Writes entries into the `core_activities` table.
@@ -13,8 +14,11 @@ use CorporateAid\Core\Database;
  */
 final class ActivityLogger
 {
-    public function __construct(private Database $db, private ?Auth $auth = null)
-    {
+    public function __construct(
+        private Database $db,
+        private ?Auth $auth = null,
+        private ?StoreContextInterface $storeContext = null,
+    ) {
     }
 
     /**
@@ -47,13 +51,21 @@ final class ActivityLogger
             }
         }
 
+        // The current store, if a context is available.
+        // Null on CLI scripts and before store resolution.
+        $storeId = null;
+        if ($this->storeContext !== null && $this->storeContext->has()) {
+            $storeId = $this->storeContext->idOrNull();
+        }
+
         $this->db->execute(
             "INSERT INTO `core_activities`
-                (`user_id`, `action`, `module`, `subject_type`, `subject_id`,
+                (`user_id`, `store_id`, `action`, `module`, `subject_type`, `subject_id`,
                  `description`, `meta`, `ip_address`, `created_at`)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
             [
                 $userId,
+                $storeId,
                 $action,
                 $module,
                 $subjectType,

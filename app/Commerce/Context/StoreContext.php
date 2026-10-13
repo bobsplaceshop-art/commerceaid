@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CorporateAid\Commerce\Context;
 
 use CorporateAid\Commerce\Exceptions\StoreContextMissingException;
+use CorporateAid\Platform\Context\StoreContextInterface;
 
 /**
  * Single source of truth for "which store is the current request serving".
@@ -15,7 +16,7 @@ use CorporateAid\Commerce\Exceptions\StoreContextMissingException;
  *   4. Default   - the single store row if only one exists
  *   5. Failure   - throws StoreContextMissingException
  */
-final class StoreContext
+final class StoreContext implements StoreContextInterface
 {
     private ?int $storeId = null;
     private ?string $storeSlug = null;

@@ -22,6 +22,7 @@ final class AuditLogger
      * @param string      $method          POST | PUT | PATCH | DELETE
      * @param string      $path            Request path (may include query string)
      * @param int|null    $userId          Authenticated user ID, or null
+     * @param int|null    $storeId         Resolved store ID, or null
      * @param string|null $ipAddress       Client IP (IPv4 or IPv6)
      * @param string|null $userAgent       Raw User-Agent header (truncated to 255)
      * @param string|null $requestHash     SHA-256 of the request payload
@@ -33,6 +34,7 @@ final class AuditLogger
         string $method,
         string $path,
         ?int $userId,
+        ?int $storeId,
         ?string $ipAddress,
         ?string $userAgent,
         ?string $requestHash,
@@ -43,11 +45,12 @@ final class AuditLogger
         try {
             $this->db->execute(
                 "INSERT INTO `core_audit_logs`
-                    (`user_id`, `method`, `path`, `ip_address`, `user_agent`,
+                    (`user_id`, `store_id`, `method`, `path`, `ip_address`, `user_agent`,
                      `request_hash`, `response_status`, `entity_type`, `entity_id`)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [
                     $userId,
+                    $storeId,
                     $method,
                     $path,
                     $ipAddress,

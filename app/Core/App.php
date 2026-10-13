@@ -24,6 +24,7 @@ use CorporateAid\Platform\Deletion\DeletionService;
 use CorporateAid\Platform\CustomFields\CustomFieldRenderer;
 use CorporateAid\Platform\CustomFields\CustomFieldValueSaver;
 use CorporateAid\Platform\CustomFields\CustomFieldValueValidator;
+use CorporateAid\Platform\Context\StoreContextInterface;
 use CorporateAid\Platform\Support\ActivityLogger;
 use CorporateAid\Platform\Support\AuditLogger;
 use CorporateAid\Platform\Support\CodeGenerator;
@@ -187,7 +188,19 @@ final class App
             (array) $c->get('config')->get('mail', []),
             new Logger()
         ));
-        $c->singleton(ActivityLogger::class, fn() => new ActivityLogger($c->get(Database::class), $c->get(Auth::class)));
+        // The store context is bound by CommerceServiceProvider,
+        // which registers after this provider. The binding
+        // closure runs lazily on first get(), by which time
+        // both layers have registered. The has() guard keeps
+        // the binding safe in a bare-bones CLI context where
+        // the Commerce layer never runs.
+        $c->singleton(ActivityLogger::class, fn() => new ActivityLogger(
+            $c->get(Database::class),
+            $c->get(Auth::class),
+            $c->has(StoreContextInterface::class)
+                ? $c->get(StoreContextInterface::class)
+                : null
+        ));
         $c->singleton(AuditLogger::class,    fn() => new AuditLogger($c->get(Database::class)));
 
         // Validation

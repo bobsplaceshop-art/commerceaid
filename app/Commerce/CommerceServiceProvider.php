@@ -80,6 +80,16 @@ final class CommerceServiceProvider
         // ---------- Context ----------
         $c->singleton(StoreContext::class, fn() => new StoreContext());
 
+        // The Platform layer depends on the interface, not on
+        // StoreContext. Bind the interface to the same
+        // singleton instance so a Platform consumer that
+        // resolves the interface gets the object the
+        // middleware populated.
+        $c->singleton(
+            \CorporateAid\Platform\Context\StoreContextInterface::class,
+            fn() => $c->get(StoreContext::class)
+        );
+
         // HMAC-SHA256 signing for the newsletter confirm and
         // unsubscribe tokens. Captures config('app.key') once
         // at registration time. The constructor throws when
