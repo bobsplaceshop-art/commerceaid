@@ -247,7 +247,7 @@
 
 /* ---------- Desktop line layout ---------------------------------- */
 
-@media (min-width: 768px) {
+@media (min-width: 1200px) {
     .sf-cart-line {
         grid-template-columns: 96px 1fr auto auto auto;
         grid-template-areas:
