@@ -98,6 +98,12 @@ if (!in_array($serverTheme, ['dark', 'light', 'system'], true)) {
        DevTools. Zero cost when debug is off. */
     (function () {
         'use strict';
+
+        // Skip the whole overlay below the small-mobile boundary.
+        // The CSS also hides #ra-debug-overlay at that width, but
+        // returning early here avoids the DOM work and the fetch.
+        if (window.innerWidth < 640) return;
+
         var MAX_ITEMS = 5;
         var TTL_MS = 8000;
         var container = null;

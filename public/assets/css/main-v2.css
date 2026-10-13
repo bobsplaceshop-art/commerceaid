@@ -1747,29 +1747,48 @@ html[data-theme="light"] .ra-table-wrap {
 /* ------------------------------------------------------------
    List tables - Treatment B (stacked cards)
    ------------------------------------------------------------
-   For tables with more than 8 columns, or with long content
-   that would be unreadable in a horizontal scroll. Below the
-   small-mobile boundary each row becomes a card.
+   Below the mobile boundary (899px) each row becomes a card.
+   The card is a two-column grid. Cells declare their span
+   via a data-col attribute:
 
-   Each <td> shows its label from the corresponding <th>'s
-   data-label attribute. The label appears above the value
-   in a small uppercase style.
+     data-col="full"   spans both columns
+     data-col="half"   spans one column
 
-   The view declares this treatment by adding
-   data-responsive="cards" to the <table> element, and
-   data-label="..." to each <th>.
+   Example for a product row:
+
+     <td data-label="Product" data-col="full">   ...   </td>
+     <td data-label="SKU"     data-col="half">   ...   </td>
+     <td data-label="Price"   data-col="half">   ...   </td>
+     <td data-label="Status"  data-col="half">   ...   </td>
+     <td data-label="Stock"   data-col="half">   ...   </td>
+     <td data-label="Actions" data-col="full" class="..."> ... </td>
+
+   The card renders as three rows: the full-width cell, the
+   paired half-cells, the full-width actions. No horizontal
+   scroll. No wrapping of a long product name into one word
+   per line.
+
+   The wrapper element carries data-responsive="cards". The
+   table sits inside the wrapper.
    ------------------------------------------------------------ */
 
-@media (max-width: 639px) {
+@media (max-width: 899px) {
 
     [data-responsive="cards"] {
         display: block;
         width: 100%;
+        overflow-x: visible;
+        background-image: none;
+    }
+
+    [data-responsive="cards"] > table {
+        display: block;
+        width: 100%;
+        min-width: 0;
     }
 
     [data-responsive="cards"] thead {
-        /* The header row is hidden. The label is transferred
-           to each cell via the td::before pseudo-element. */
+        /* Visually hidden but kept for assistive tech. */
         position: absolute;
         width: 1px;
         height: 1px;
@@ -1785,28 +1804,36 @@ html[data-theme="light"] .ra-table-wrap {
         width: 100%;
     }
 
-    [data-responsive="cards"] tr {
-        display: block;
+    [data-responsive="cards"] tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .35rem .75rem;
         width: 100%;
-        padding: .85rem 1rem;
+        padding: .9rem 1rem;
         margin-bottom: .75rem;
         background: var(--ra-surface, #ffffff);
         border: 1px solid var(--ra-border, #e5e9f2);
         border-radius: 10px;
     }
 
-    [data-responsive="cards"] td {
+    [data-responsive="cards"] tbody td {
         display: block;
-        width: 100%;
-        padding: .35rem 0;
+        width: auto;
+        padding: 0;
         text-align: left;
         border: none;
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
 
-    [data-responsive="cards"] td::before {
+    [data-responsive="cards"] tbody td[data-col="full"] {
+        grid-column: 1 / -1;
+    }
+
+    [data-responsive="cards"] tbody td[data-label]::before {
         content: attr(data-label);
         display: block;
-        font-size: .7rem;
+        font-size: .68rem;
         font-weight: 500;
         text-transform: uppercase;
         letter-spacing: .05em;
@@ -1814,17 +1841,16 @@ html[data-theme="light"] .ra-table-wrap {
         margin-bottom: .15rem;
     }
 
-    [data-responsive="cards"] td:last-child {
-        /* The actions cell sits below the values as a row of
-           buttons. The cell's own data-label is usually empty
-           or "Actions"; suppress the pseudo-label here. */
+    [data-responsive="cards"] tbody td[data-col="full"]:last-child {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem;
         padding-top: .75rem;
         margin-top: .5rem;
         border-top: 1px solid var(--ra-border, #e5e9f2);
-        text-align: left;
     }
 
-    [data-responsive="cards"] td:last-child::before {
+    [data-responsive="cards"] tbody td[data-col="full"]:last-child::before {
         content: none;
     }
 }
@@ -2032,5 +2058,20 @@ html[data-theme="light"] .ra-table-wrap {
     }
     .ra-btn {
         min-height: 44px;
+    }
+}
+
+/* ------------------------------------------------------------
+   Dev-mode debug overlay: hidden on small mobile
+   ------------------------------------------------------------
+   The overlay is developer tooling. On a 375px viewport it
+   covers the topbar and the page band. A developer inspecting
+   the mobile layout uses browser devtools, not a phone. Hide
+   the overlay below the small-mobile boundary.
+   ------------------------------------------------------------ */
+
+@media (max-width: 639px) {
+    #ra-debug-overlay {
+        display: none !important;
     }
 }
