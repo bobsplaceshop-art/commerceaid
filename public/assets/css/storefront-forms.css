@@ -1,0 +1,281 @@
+/* =====================================================================
+ * Storefront forms — public form rendering.
+ * =====================================================================
+ *
+ * Stage 009 Session 3. Loaded on every storefront page with the
+ * other stylesheets; no-ops visually on pages without a form.
+ *
+ * Two responsibilities:
+ *
+ *   1. Page structure — the .sf-form-* classes the view emits
+ *      for the heading, the step wrappers, the navigation, the
+ *      success panel, and the honeypot.
+ *
+ *   2. Scoped overrides — the CustomFields InputType classes
+ *      emit admin-side markup (.ra-field, .ra-label, .ra-input,
+ *      .ra-form-control, .ra-form-select, .ra-form-textarea,
+ *      .ra-form-check-input). Inside .sf-forms those classes
+ *      take the storefront palette and typography, so a form
+ *      field looks native to the storefront, not like an admin
+ *      widget transplanted onto a customer page.
+ *
+ * The storefront palette and typography are defined in
+ * storefront.css under :root (the sf-* custom properties).
+ * This file references them; it does not redefine them.
+ * ===================================================================== */
+
+
+/* =====================================================================
+ * Page structure
+ * ===================================================================== */
+
+.sf-form-single {
+    padding: 3rem 0 4rem;
+}
+
+.sf-form-heading {
+    max-width: 720px;
+    margin: 0 auto 2rem;
+    text-align: center;
+}
+
+.sf-form-title {
+    font-family: var(--sf-font-display, Georgia, serif);
+    font-size: 2rem;
+    line-height: 1.2;
+    margin: 0 0 .5rem;
+    color: var(--sf-fg, #1a1a1a);
+}
+
+.sf-form-description {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--sf-fg-muted, #666);
+    margin: 0;
+}
+
+.sf-form {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    background: var(--sf-surface, #ffffff);
+    border: 1px solid var(--sf-border, #e5e5e5);
+    border-radius: 12px;
+}
+
+/* ---------------------------------------------------------------------
+ * Honeypot
+ * ---------------------------------------------------------------------
+ * The honeypot field is rendered off-screen. It is a real input
+ * so bots fill it, but its position and size make it invisible
+ * and unreachable by keyboard and screen readers. The tabindex
+ * and aria-hidden attributes on the wrapper do the same job for
+ * assistive technology.
+ * ------------------------------------------------------------------- */
+
+.sf-form-honeypot {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+
+/* =====================================================================
+ * Steps
+ * ===================================================================== */
+
+.sf-form-step-indicator {
+    font-size: .875rem;
+    color: var(--sf-fg-muted, #666);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.sf-form-step {
+    padding: 0;
+}
+
+.sf-form-step[hidden] {
+    display: none;
+}
+
+.sf-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: .75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--sf-border, #e5e5e5);
+}
+
+
+/* =====================================================================
+ * Field wrappers
+ * ===================================================================== */
+
+.sf-form-field {
+    margin-bottom: 1.25rem;
+}
+
+.sf-form-field[hidden] {
+    display: none;
+}
+
+
+/* =====================================================================
+ * Scoped overrides for the CustomFields InputType output
+ * =====================================================================
+ *
+ * The InputType classes render:
+ *
+ *   .ra-field                       field wrapper
+ *   .ra-label                       field label
+ *   .ra-input                       text/email/phone/number/date/url input
+ *   .ra-form-control, .ra-form-select
+ *                                   select and textarea variants
+ *   .ra-form-check-input            checkbox and radio
+ *   .is-invalid                     error state
+ *
+ * These classes carry admin styling from app.css. Inside
+ * .sf-forms the storefront wins: different typography, different
+ * border colour, different focus ring, different error colour.
+ * The specificity of the descendant selector is enough to
+ * override the admin rules without !important.
+ * ------------------------------------------------------------------- */
+
+.sf-forms .ra-field {
+    display: block;
+    margin-bottom: 0;
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+.sf-forms .ra-label {
+    display: block;
+    font-size: .9rem;
+    font-weight: 500;
+    color: var(--sf-fg, #1a1a1a);
+    margin-bottom: .4rem;
+}
+
+.sf-forms .ra-input,
+.sf-forms .ra-form-control,
+.sf-forms .ra-form-select {
+    display: block;
+    width: 100%;
+    padding: .65rem .85rem;
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: var(--sf-fg, #1a1a1a);
+    background: var(--sf-surface, #ffffff);
+    border: 1px solid var(--sf-border, #d4d4d4);
+    border-radius: 8px;
+    box-shadow: none;
+    transition: border-color .15s, box-shadow .15s;
+    box-sizing: border-box;
+}
+
+.sf-forms .ra-input:focus,
+.sf-forms .ra-form-control:focus,
+.sf-forms .ra-form-select:focus {
+    outline: none;
+    border-color: var(--sf-accent, #c4a35a);
+    box-shadow: 0 0 0 3px rgba(196, 163, 90, .15);
+}
+
+.sf-forms textarea.ra-input,
+.sf-forms textarea.ra-form-control {
+    min-height: 8rem;
+    resize: vertical;
+}
+
+.sf-forms .ra-input.is-invalid,
+.sf-forms .ra-form-control.is-invalid,
+.sf-forms .ra-form-select.is-invalid {
+    border-color: var(--sf-error, #d9534f);
+}
+
+.sf-forms .ra-input.is-invalid:focus,
+.sf-forms .ra-form-control.is-invalid:focus,
+.sf-forms .ra-form-select.is-invalid:focus {
+    box-shadow: 0 0 0 3px rgba(217, 83, 79, .15);
+}
+
+.sf-forms .ra-form-check-input {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: .15rem;
+    margin-right: .5rem;
+    accent-color: var(--sf-accent, #c4a35a);
+    cursor: pointer;
+}
+
+.sf-forms .ra-field .muted,
+.sf-forms .ra-field .small {
+    font-size: .8rem;
+    color: var(--sf-fg-muted, #666);
+    margin-top: .25rem;
+}
+
+
+/* =====================================================================
+ * Success panel
+ * ===================================================================== */
+
+.sf-form-success {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    background: var(--sf-surface, #ffffff);
+    border: 1px solid var(--sf-border, #e5e5e5);
+    border-radius: 12px;
+}
+
+.sf-form-success-icon {
+    font-size: 3rem;
+    line-height: 1;
+    color: var(--sf-accent, #c4a35a);
+    margin-bottom: 1rem;
+}
+
+.sf-form-success-message {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--sf-fg, #1a1a1a);
+    margin: 0;
+}
+
+
+/* =====================================================================
+ * Buttons
+ * =====================================================================
+ *
+ * The storefront already has .sf-btn variants (primary, outline)
+ * defined in storefront.css. The form uses those; this file only
+ * adds the flex layout the .sf-form-actions wrapper needs and a
+ * minimum tap target on small screens.
+ * ------------------------------------------------------------------- */
+
+.sf-form-actions .sf-btn {
+    min-height: 44px;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+}
+
+@media (max-width: 480px) {
+    .sf-form-actions {
+        flex-direction: column-reverse;
+        gap: .5rem;
+    }
+
+    .sf-form-actions .sf-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

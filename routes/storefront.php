@@ -20,6 +20,7 @@ use CorporateAid\Commerce\Controllers\Storefront\MessageController;
 use CorporateAid\Commerce\Controllers\Storefront\ReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
 use CorporateAid\Commerce\Controllers\Storefront\NewsletterController;
+use CorporateAid\Commerce\Controllers\Storefront\FormController;
 
 /** @var Router $router */
 
@@ -284,3 +285,26 @@ $router->get('/newsletter/unsubscribe/{token}',
 $router->post('/newsletter/unsubscribe/{token}',
     [NewsletterController::class, 'performUnsubscribe'],
     ['store', 'csrf']);
+
+// =====================================================================
+// Public forms (Stage 009 Session 3)
+// =====================================================================
+//
+// A published form renders at /forms/{slug}. The GET loads the
+// form; the POST processes a submission.
+//
+// Rate limit on the POST is per IP, 10 attempts per 60 minutes.
+// A second layer, the honeypot field, catches bots that ignore
+// the rate limit. Submissions that trip the honeypot are silently
+// accepted and not stored; see FormSubmissionService::submit().
+//
+// The GET has no rate limit. A customer who reloads a form
+// several times should not be throttled.
+
+$router->get('/forms/{slug}',
+    [FormController::class, 'show'],
+    ['store']);
+
+$router->post('/forms/{slug}',
+    [FormController::class, 'submit'],
+    ['store', 'csrf', 'ratelimit:form_submit,10,60']);

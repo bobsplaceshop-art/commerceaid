@@ -36,6 +36,98 @@
         // Type → config section and options visibility
         // -----------------------------------------------------------------
 
+        // -----------------------------------------------------------------
+        // Conditional value control
+        // -----------------------------------------------------------------
+        //
+        // The Value input under "Conditional visibility" must be a
+        // select when the target field has options (select,
+        // multiselect, checkbox-group). Free-text typed against a
+        // select is a guaranteed typo bug: the rule compares
+        // `actual === expected` and a misspelling silently
+        // produces a never-firing condition.
+        //
+        // The wrapper holds both a text input and a select. Only
+        // one is named `conditional[value]` at a time. The sync
+        // below picks which.
+
+        function cssEscape(value) {
+            return String(value).replace(/(["\\\]\[])/g, '\\$1');
+        }
+
+        function showTextValueControl(textInput, selectInput) {
+            textInput.removeAttribute('hidden');
+            selectInput.setAttribute('hidden', '');
+            textInput.setAttribute('name', 'conditional[value]');
+            selectInput.removeAttribute('name');
+        }
+
+        function showSelectValueControl(textInput, selectInput) {
+            textInput.setAttribute('hidden', '');
+            selectInput.removeAttribute('hidden');
+            selectInput.setAttribute('name', 'conditional[value]');
+            textInput.removeAttribute('name');
+        }
+
+        function syncConditionalValueControl() {
+            var targetKey = condField ? condField.value : '';
+            var textInput = form.querySelector('[data-ra-cond-value-text]');
+            var selectInput = form.querySelector('[data-ra-cond-value-select]');
+            if (!textInput || !selectInput) return;
+
+            if (targetKey === '') {
+                textInput.value = '';
+                showTextValueControl(textInput, selectInput);
+                return;
+            }
+
+            var targetBtn = document.querySelector(
+                '[data-ra-field-edit][data-field-key="' + cssEscape(targetKey) + '"]'
+            );
+            if (!targetBtn) {
+                showTextValueControl(textInput, selectInput);
+                return;
+            }
+
+            var optionsRaw = targetBtn.getAttribute('data-field-options') || '';
+            var options = [];
+            if (optionsRaw) {
+                try {
+                    var parsed = JSON.parse(optionsRaw);
+                    if (Array.isArray(parsed)) options = parsed;
+                } catch (e) { /* malformed */ }
+            }
+
+            if (options.length === 0) {
+                showTextValueControl(textInput, selectInput);
+                return;
+            }
+
+            // Preserve the current value across the swap.
+            var current = (textInput.value || selectInput.value || '');
+
+            // Rebuild the select's option list.
+            selectInput.innerHTML = '';
+            var blank = document.createElement('option');
+            blank.value = '';
+            blank.textContent = '\u2014 pick a value \u2014';
+            selectInput.appendChild(blank);
+
+            options.forEach(function (opt) {
+                var o = document.createElement('option');
+                o.value = String(opt.value || '');
+                o.textContent = String(opt.label || opt.value || '');
+                selectInput.appendChild(o);
+            });
+
+            // Restore the value if it is still valid for the new
+            // option list. Otherwise clear it.
+            var validValues = options.map(function (o) { return String(o.value || ''); });
+            selectInput.value = validValues.indexOf(current) !== -1 ? current : '';
+
+            showSelectValueControl(textInput, selectInput);
+        }
+
         function updateTypeSections() {
             var current = typeSel.value;
 
@@ -55,6 +147,9 @@
         }
 
         typeSel.addEventListener('change', updateTypeSections);
+        if (condField) {
+            condField.addEventListener('change', syncConditionalValueControl);
+        }
 
         // -----------------------------------------------------------------
         // Conditional field select — hide current field on edit
@@ -196,6 +291,7 @@
             hideConditionalOption(fieldId);
 
             updateTypeSections();
+            syncConditionalValueControl();
             show();
         }
 

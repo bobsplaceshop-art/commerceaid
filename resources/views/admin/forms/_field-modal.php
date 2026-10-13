@@ -166,9 +166,16 @@ foreach ($allTypes as $key => $type) {
                         </div>
                         <div class="col-md-4">
                             <label class="muted small" for="ra-field-cond-value">Value</label>
-                            <input type="text" id="ra-field-cond-value"
-                                   name="conditional[value]"
-                                   class="form-control" maxlength="190">
+                            <div data-ra-cond-value-wrapper>
+                                <input type="text" id="ra-field-cond-value"
+                                       name="conditional[value]"
+                                       class="form-control" maxlength="190"
+                                       data-ra-cond-value-text>
+                                <select id="ra-field-cond-value-select"
+                                        class="form-control"
+                                        data-ra-cond-value-select
+                                        hidden></select>
+                            </div>
                         </div>
                     </div>
                 </div>
