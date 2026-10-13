@@ -169,7 +169,7 @@ $validityLabel = function (array $c) use ($fmtDate): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -193,7 +193,7 @@ $validityLabel = function (array $c) use ($fmtDate): string {
                         $uses   = (int) ($c['redemption_count'] ?? 0);
                         ?>
                         <tr>
-                            <td>
+                            <td data-label="Code" data-col="full">
                                 <a href="/commerce/ca-admin/coupons/<?= $cid ?>/edit"
                                    class="text-decoration-none" style="font-weight:600;">
                                     <?= e($code) ?>
@@ -202,12 +202,12 @@ $validityLabel = function (array $c) use ($fmtDate): string {
                                     <div class="muted small"><?= e($desc) ?></div>
                                 <?php endif; ?>
                             </td>
-                            <td class="ra-hide-sm"><?= e($typeLabel($type)) ?></td>
-                            <td><?= e($valueLabel($c)) ?></td>
-                            <td class="ra-hide-sm muted small"><?= e($validityLabel($c)) ?></td>
-                            <td><?= $uses ?></td>
-                            <td><?= $statusBadge($status) ?></td>
-                            <td class="text-end">
+                            <td data-label="Type" data-col="half" class="ra-hide-sm"><?= e($typeLabel($type)) ?></td>
+                            <td data-label="Value" data-col="half"><?= e($valueLabel($c)) ?></td>
+                            <td data-label="Validity" data-col="half" class="ra-hide-sm muted small"><?= e($validityLabel($c)) ?></td>
+                            <td data-label="Uses" data-col="half"><?= $uses ?></td>
+                            <td data-label="Status" data-col="half"><?= $statusBadge($status) ?></td>
+                            <td data-label="Actions" data-col="full" class="text-end">
                                 <a href="/commerce/ca-admin/coupons/<?= $cid ?>/edit"
                                    class="ra-icon-btn" title="Edit">
                                     <i class="bi bi-pencil"></i>

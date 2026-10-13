@@ -138,7 +138,7 @@ $fmtDateTime = function (?string $dt): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -159,17 +159,17 @@ $fmtDateTime = function (?string $dt): string {
                             : '—';
                         ?>
                         <tr>
-                            <td>
+                            <td data-label="User" data-col="full">
                                 <a href="/commerce/ca-admin/users/<?= (int) $u->id ?>/edit"
                                    class="text-decoration-none" style="font-weight:600;">
                                     <?= e($u->name) ?>
                                 </a>
                             </td>
-                            <td class="ra-hide-sm muted small"><?= e($u->email) ?></td>
-                            <td class="ra-hide-sm"><?= e($primaryRoleName) ?></td>
-                            <td><?= $statusBadge($u->status) ?></td>
-                            <td class="ra-hide-sm muted small"><?= e($fmtDateTime($u->lastLoginAt)) ?></td>
-                            <td class="text-end">
+                            <td data-label="Email" data-col="half" class="ra-hide-sm muted small"><?= e($u->email) ?></td>
+                            <td data-label="Role" data-col="half" class="ra-hide-sm"><?= e($primaryRoleName) ?></td>
+                            <td data-label="Status" data-col="half"><?= $statusBadge($u->status) ?></td>
+                            <td data-label="Last login" data-col="half" class="ra-hide-sm muted small"><?= e($fmtDateTime($u->lastLoginAt)) ?></td>
+                            <td data-label="Actions" data-col="full" class="text-end">
                                 <a href="/commerce/ca-admin/users/<?= (int) $u->id ?>/edit"
                                    class="ra-icon-btn" title="Edit">
                                     <i class="bi bi-pencil"></i>

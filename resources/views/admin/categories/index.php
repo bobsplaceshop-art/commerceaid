@@ -20,7 +20,7 @@ $renderTree = function (array $nodes, int $depth) use (&$renderTree): void {
         $isArchived  = $category->status === 'archived';
         ?>
         <tr>
-            <td>
+            <td data-label="Name" data-col="full">
                 <div style="padding-left:<?= $depth * 1.5 ?>rem;" class="d-flex align-items-center gap-2">
                     <?php if ($depth > 0): ?>
                         <i class="bi bi-arrow-return-right text-muted" style="font-size:.75rem;opacity:.5;"></i>
@@ -31,15 +31,15 @@ $renderTree = function (array $nodes, int $depth) use (&$renderTree): void {
                     </span>
                 </div>
             </td>
-            <td><code class="muted small"><?= e($category->slug) ?></code></td>
-            <td>
+            <td data-label="Slug" data-col="half"><code class="muted small"><?= e($category->slug) ?></code></td>
+            <td data-label="Status" data-col="half">
                 <?php if ($isArchived): ?>
                     <span class="ra-badge ra-badge-muted">Archived</span>
                 <?php else: ?>
                     <span class="ra-badge ra-badge-success">Active</span>
                 <?php endif; ?>
             </td>
-            <td class="text-end">
+            <td data-label="Actions" data-col="full" class="text-end">
                 <?php if ($isArchived): ?>
                     <form method="POST" action="/commerce/ca-admin/categories/<?= (int) $category->id ?>/restore" class="d-inline">
                         <?= csrf_field() ?>
@@ -111,7 +111,7 @@ $renderTree = function (array $nodes, int $depth) use (&$renderTree): void {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
                 <table class="ra-table">
             <thead>
                 <tr>

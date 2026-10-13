@@ -124,7 +124,7 @@ $clearUrl = '/commerce/ca-admin/roles';
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -150,7 +150,7 @@ $clearUrl = '/commerce/ca-admin/roles';
                         $canDelete = !$isSystem && $users === 0;
                         ?>
                         <tr>
-                            <td>
+                            <td data-label="Role" data-col="full">
                                 <a href="/commerce/ca-admin/roles/<?= $rid ?>/edit"
                                    class="text-decoration-none" style="font-weight:600;">
                                     <?= e($rname) ?>
@@ -162,23 +162,23 @@ $clearUrl = '/commerce/ca-admin/roles';
                                     <?php endif; ?>
                                 </div>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Scope" data-col="half" class="ra-hide-sm">
                                 <?php if ($storeId === null): ?>
                                     <span class="ra-badge ra-badge-muted">Global</span>
                                 <?php else: ?>
                                     <span class="ra-badge ra-badge-muted">This store</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Type" data-col="half" class="ra-hide-sm">
                                 <?php if ($isSystem): ?>
                                     <span class="ra-badge ra-badge-warning">System</span>
                                 <?php else: ?>
                                     <span class="ra-badge ra-badge-muted">Custom</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?= $users ?></td>
-                            <td class="ra-hide-sm"><?= $perms ?></td>
-                            <td class="text-end">
+                            <td data-label="Users" data-col="half"><?= $users ?></td>
+                            <td data-label="Permissions" data-col="half" class="ra-hide-sm"><?= $perms ?></td>
+                            <td data-label="Actions" data-col="full" class="text-end">
                                 <a href="/commerce/ca-admin/roles/<?= $rid ?>/edit"
                                    class="ra-icon-btn" title="Edit">
                                     <i class="bi bi-pencil"></i>

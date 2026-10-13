@@ -47,7 +47,7 @@ $totalActive     = $totalActive     ?? 0;
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
                 <table class="ra-table">
             <thead>
                 <tr>
@@ -62,7 +62,7 @@ $totalActive     = $totalActive     ?? 0;
                 <?php foreach ($brands as $brand): ?>
                     <?php $isArchived = $brand->status === 'archived'; ?>
                     <tr>
-                        <td>
+                        <td data-label="Name" data-col="full">
                             <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-bookmark-star" style="color:var(--ra-muted,#94a3b8);"></i>
                                 <span class="<?= $isArchived ? 'text-muted text-decoration-line-through' : '' ?>">
@@ -70,8 +70,8 @@ $totalActive     = $totalActive     ?? 0;
                                 </span>
                             </div>
                         </td>
-                        <td><code class="muted small"><?= e($brand->slug) ?></code></td>
-                        <td>
+                        <td data-label="Slug" data-col="half"><code class="muted small"><?= e($brand->slug) ?></code></td>
+                        <td data-label="Website" data-col="half">
                             <?php if ($brand->websiteUrl !== null): ?>
                                 <a href="<?= e($brand->websiteUrl) ?>" target="_blank" rel="noopener noreferrer"
                                    class="small text-decoration-none">
@@ -82,14 +82,14 @@ $totalActive     = $totalActive     ?? 0;
                                 <span class="muted small">—</span>
                             <?php endif; ?>
                         </td>
-                        <td>
+                        <td data-label="Status" data-col="half">
                             <?php if ($isArchived): ?>
                                 <span class="ra-badge ra-badge-muted">Archived</span>
                             <?php else: ?>
                                 <span class="ra-badge ra-badge-success">Active</span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-end">
+                        <td data-label="Actions" data-col="full" class="text-end">
                             <?php if ($isArchived): ?>
                                 <form method="POST" action="/commerce/ca-admin/brands/<?= (int) $brand->id ?>/restore" class="d-inline">
                                     <?= csrf_field() ?>
