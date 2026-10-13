@@ -365,104 +365,62 @@ the Setup hub.
 
 ---
 
-## Current Focus - Stage 009 in progress
+## Current Focus - Stage 014 Session 3 closed
 
-**Sessions 1, 2a, 2b, and 3 of 009 shipped.** Session 4
-opens next.
+**Stage 014 Sessions 1, 2, and 3 are complete.** The
+admin panel is responsive at every width the platform
+targets: 1200+, 900-1199, 640-899, below 640. Stage
+009 closed earlier the same day (db49f0c).
 
-**Shipped in 009 Sessions 1, 2a, and 2b (admin surface):**
+**Session 1 shipped** (3d200e4): the four breakpoints,
+the component treatment matrix, the card grid rules
+in main-v2.css. No view changes.
 
-  Schema (migrations 0334-0336):
-    commerce_forms, commerce_form_fields,
-    commerce_form_submissions.
+**Session 2 shipped** (937a78d, de967eb, 9ff8575,
+f927cce): every admin list table carries a declared
+treatment. `data-responsive="scroll"` or
+`data-responsive="cards"` on the wrapper. Products
+and five long-content tables on the card treatment.
+The general `ra-hide-sm` rule at 899px.
 
-  Models and repositories:
-    Form, FormField, FormSubmission.
-    FormRepository, FormFieldRepository,
-    FormSubmissionRepository.
-    All resolve via ADR-018 container auto-construction.
+**Session 3 shipped** (5265536, 94bee03):
 
-  Services:
-    FormService - form CRUD, publish/unpublish/archive,
-    duplicate, soft delete, plus addField, updateField,
-    deleteField, and moveField.
+  - Filter bars on 17 admin list views. New JS module
+    public/assets/js/admin-filters.js. One script tag
+    in the admin layout. Toggle styling in the theme
+    contract.
+  - Modals verified at 390, 768, 1440, both themes.
+    Bottom sheet at mobile, centered at desktop. No
+    code changes needed.
+  - Sticky action bars verified at 390. Buttons stack
+    vertical, full width. No changes needed.
+  - Variants table moved from scroll to cards. The
+    leftmost column (the combination) was cut off at
+    mobile; the card treatment puts it full-width at
+    the top of each row.
 
-  Admin surface:
-    Forms list at /commerce/ca-admin/forms with status
-    tabs (All / Draft / Published / Archived), numeric
-    counts on each tab, search by name or slug, and
-    pagination.
-    Create form page.
-    Edit page: status card, metadata editor, field
-    list, danger zone.
-    Field editor modal: add/edit/reorder/delete fields
-    across the twelve input types, type-conditional
-    config, options editor, conditional visibility.
+**What Session 3 did not do:** card grids were named
+in the plan's Session 3 scope and were not fixed.
+Four admin views carry `grid-template-columns` with
+`auto-fit`/`auto-fill` and a `minmax()` value without
+a media-query fallback: dashboard.php, inventory/index.php,
+products/_tab_basic.php, setup/payments.php. Deferred
+to Session 5 alongside the enforcement script that
+will flag the same pattern.
 
-  Permissions (seeder 0017):
-    forms.view, forms.manage,
-    forms.submissions.view, forms.submissions.manage.
+**Session 4 opens next.** The storefront audit. Home,
+catalog, category, product detail, cart, checkout,
+account, plus the standalone error pages and the PWA
+offline page. Test at 375, 768, 1024, 1440 in dark
+and light. Zero storefront files have been touched
+for the audit yet; every storefront CSS file predates
+today.
 
-  Sidebar: Forms item under Marketing.
-
-**Shipped in 009 Session 3 (public surface):**
-
-  Public FormController at /forms/{slug}:
-    GET loads the form. POST processes a submission.
-    Requires status = 'published'. Honours the
-    requires_auth flag. On success renders the
-    success_message in place of the form; on failure
-    re-renders with the posted values and per-field
-    errors preserved.
-
-  FormSubmissionService:
-    Honeypot check (silent success on a non-empty
-    website field, no row stored).
-    Server-side conditional logic (a field whose
-    condition does not match is skipped - not
-    validated, not stored).
-    Per-field validation via the CustomFields
-    InputType classes, with option-bearing fields
-    receiving their options under
-    constraints['_options'] (the shape the
-    CustomFields engine uses).
-    Insert into commerce_form_submissions.
-
-  View: resources/views/storefront/forms/show.php
-    Composes the InputType::render() output for each
-    field. CSRF, honeypot, submit button. Multi-step
-    rendering grouped by step.
-
-  JS: public/assets/js/storefront-forms.js
-    Conditional field visibility and multi-step
-    navigation. Reads data-sf-conditional rules and
-    toggles field wrappers live.
-
-  CSS: public/assets/css/storefront-forms.css
-    Storefront styling plus scoped overrides for the
-    admin .ra-field, .ra-label, .ra-input classes the
-    InputTypes emit.
-
-  Routes:
-    GET  /forms/{slug}   show
-    POST /forms/{slug}   submit
-    The POST carries ratelimit:form_submit,10,60.
-
-  Admin fix: the conditional value input in the field
-  editor is now a dropdown when the target field has
-  options. Free text against a select was a silent
-  typo bug.
-
-**What 009 Session 4 must ship:**
-
-  - Submissions admin list with filters, bulk
-    actions, CSV export.
-  - Submission detail page.
-  - NotificationRuleService integration on new
-    submissions.
-  - Webhook integration on new submissions.
-  - Stage close: session file, STATUS, ROADMAP,
-    ADMIN-GUIDE.
+**Then Session 5.** `bin/check-responsive.php`, the
+`check-html.php` data-responsive warning flip to a
+hard error, and the four card-grid views found in
+Session 3. Enforcement and the fixes it proves ship
+together.
 
 **008K.5 status:** Complete. Code on disk, admin
 surfaces live (Coupons, Tax, Shipping), storefront
@@ -480,16 +438,12 @@ open with a 19 June 2026 deadline.
 
 **Next 3 stages:**
 
-  - **009** (in progress): Forms & Submissions.
-    Session 4 remains. The submissions admin surface
-    with filters and CSV export, plus the event,
-    notification, and webhook integrations.
-  - **014**: Responsive Layout System. The four
-    breakpoints, the component treatment matrix, the
-    admin list table audit, the storefront audit, and
-    the check-responsive.php enforcement script.
-    Prerequisite for every future stage that ships a
-    view.
+  - **014 Session 4** (next): Storefront audit. The
+    storefront has zero responsive work done. Every
+    storefront CSS file predates today.
+  - **014 Session 5**: Enforcement. `check-responsive.php`,
+    the `check-html.php` warning flip, and the four
+    card-grid views found in Session 3.
   - **010**: Payments (Deep). Wires refunds from the
     returns workflow to the payment provider. Consumes
     ReturnRequestService::processRefund() from 008H
