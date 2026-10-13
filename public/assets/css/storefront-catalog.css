@@ -625,20 +625,24 @@ select.sf-filter-input {
 
 .sf-category-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-}
+    /* The card is an image (4:5 aspect) plus a footer with a
+       category name and a 24px arrow button. Below 165px the
+       footer name column is too narrow for an 18-character
+       name ("Bags & Accessories") to wrap cleanly. 165px is
+       the minimum width at which the card reads without
+       looking cramped.
 
-@media (min-width: 640px) {
-    .sf-category-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (min-width: 900px) {
-    .sf-category-grid { grid-template-columns: repeat(4, 1fr); }
-}
-
-@media (min-width: 1024px) {
-    .sf-category-grid { grid-template-columns: repeat(7, 1fr); gap: 1.25rem; }
+       With auto-fill, the column count follows the container:
+         320    1 col  ~280px
+         400    2 cols ~170px
+         640    3 cols ~178px
+         900    4 cols ~194px
+         1024   5 cols ~176px
+         1280   6 cols ~182px
+         1360+  7 cols ~168px
+       The card never falls below 165px. */
+    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+    gap: 1.25rem;
 }
 
 .sf-category-card {
