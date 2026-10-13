@@ -790,7 +790,7 @@
 /* =====================================================================
    Account shell (Stage 008F.1)
    Two-column layout: sidebar + content. Sidebar collapses to a
-   horizontally-scrollable tab strip at <768px.
+   horizontally-scrollable tab strip at <=900px.
    ===================================================================== */
 
 .sf-account-shell {
@@ -961,7 +961,7 @@
     margin-top: 0;
 }
 
-/* ---- Mobile ---- */
+/* ---- Mobile and tablet ---- */
 @media (max-width: 900px) {
     .sf-account-shell-container {
         grid-template-columns: 1fr;
@@ -972,7 +972,7 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .sf-account-shell {
         padding: 1.25rem 0 2rem;
     }
@@ -1079,7 +1079,8 @@
     max-width: 100%;
 }
 
-@media (max-width: 768px) {
+/* ---- Chip strip at tablet and below ---- */
+@media (max-width: 900px) {
     /* Hide the native scrollbar on the chip strip. It is
        intentionally scrollable but should not display chrome. */
     .sf-account-nav {
@@ -1098,8 +1099,19 @@
         min-width: 0;
     }
 
-    /* Shell keeps a matching min-height at mobile widths. */
+    /* Tighter panel padding at tablet widths. */
+    .sf-account-panel {
+        padding: 1.25rem 1rem;
+    }
 
+    /* Keep the container from ever exceeding the viewport. */
+    .sf-account-shell-container {
+        max-width: 100vw;
+    }
+}
+
+/* ---- Order list and order detail at mobile and below ---- */
+@media (max-width: 768px) {
     /* The order rows in the orders list should not push the
        View button off screen. Stack them vertically. */
     .sf-order-row {
@@ -1111,11 +1123,6 @@
         margin-top: .75rem;
     }
 
-    /* Tighter panel padding on mobile. */
-    .sf-account-panel {
-        padding: 1.25rem 1rem;
-    }
-
     /* The order detail status grid should stack. */
     .sf-order-status-grid {
         grid-template-columns: 1fr;
@@ -1125,11 +1132,6 @@
     }
     .sf-order-item-qty {
         display: none;
-    }
-
-    /* Keep the container from ever exceeding the viewport. */
-    .sf-account-shell-container {
-        max-width: 100vw;
     }
 }
 
@@ -1174,7 +1176,7 @@
        only constrains width via min-width: 0. */
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .sf-account-nav {
         max-width: 100vw;
         overflow-x: auto;
