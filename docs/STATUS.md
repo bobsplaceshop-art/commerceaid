@@ -365,12 +365,35 @@ the Setup hub.
 
 ---
 
-## Current Focus - Stage 014 Session 3 closed
+## Current Focus - Stage 014 Session 4 shipped
 
-**Stage 014 Sessions 1, 2, and 3 are complete.** The
-admin panel is responsive at every width the platform
-targets: 1200+, 900-1199, 640-899, below 640. Stage
-009 closed earlier the same day (db49f0c).
+**Stage 014 Sessions 1, 2, 3, and 4 are complete.**
+The admin panel and the storefront are responsive at
+every width the platform targets: 1200+, 900-1199,
+640-899, below 640. Stage 009 closed earlier the same
+day (db49f0c).
+
+**Session 4 shipped** (dc4320c, 21ee520, d0c26ab,
+3aab0eb, aed259e): the storefront audit. Five
+findings, five fixes.
+
+  - Cart line media renders the product image.
+    The partial had carried a Bootstrap icon
+    placeholder since the cart shipped. The
+    media library landed in 008G.4a; the
+    placeholder was never replaced.
+  - Cart line 5-column layout activates at
+    1200 instead of 768. At 900-1199 the info
+    column was too narrow for product names.
+  - Account shell and chip strip both fire at
+    900. The shell collapsed at 900 and the
+    chip strip fired at 768; 769-899 was a
+    gap where neither applied.
+  - Product grid is 1 column below 481. The
+    base was 2 columns at any width.
+  - Category grid auto-fills at a 165px floor.
+    The 7-column rule at 1024 produced 120px
+    cards.
 
 **Session 1 shipped** (3d200e4): the four breakpoints,
 the component treatment matrix, the card grid rules
