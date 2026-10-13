@@ -187,6 +187,12 @@ $tabs['advanced'] = 'Advanced';
     padding: 1rem 1.25rem 0;
     border-bottom: 1px solid var(--ra-border, #1f2a44);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.ra-settings-tabs::-webkit-scrollbar {
+    display: none;
 }
 .ra-settings-tab {
     display: inline-block;

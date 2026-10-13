@@ -34,6 +34,11 @@
     border: 1px solid var(--ra-border, rgba(148, 163, 184, 0.15));
     border-radius: 12px;
     padding: 1rem;
+    /* Allow the grid column to shrink below the intrinsic
+       width of the nav list. Without this, the overflow-x:
+       auto on the list never fires and the strip overflows
+       the viewport instead of scrolling inside it. */
+    min-width: 0;
 }
 
 @media (max-width: 900px) {
@@ -192,8 +197,14 @@
         display: flex;
         gap: 0.4rem;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
         padding-bottom: 0.25rem;
-        scrollbar-width: thin;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .ra-setup-nav-list::-webkit-scrollbar {
+        display: none;
     }
 
     .ra-setup-nav-list li {

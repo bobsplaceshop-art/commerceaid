@@ -142,11 +142,4 @@ $currentStatus = (string) $val('status', 'draft');
 
 </div>
 
-<style>
-.ra-checkbox-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: .35rem .75rem;
-    padding: .5rem 0;
-}
-</style>
+

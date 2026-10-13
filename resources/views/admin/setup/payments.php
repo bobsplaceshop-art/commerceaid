@@ -72,32 +72,4 @@ $enabled   = $old['providers'] ?? [];
     </div>
 </form>
 
-<style>
-.ra-payment-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 0.75rem;
-}
-.ra-payment-card {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    padding: 0.85rem 1rem;
-    border: 1px solid var(--ra-border, rgba(148,163,184,.15));
-    border-radius: 10px;
-    background: var(--ra-card-bg, transparent);
-}
-.ra-payment-icon {
-    flex: 0 0 auto;
-    width: 40px; height: 40px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 8px;
-    background: var(--ra-hover, rgba(148,163,184,.1));
-    color: var(--ra-fg, inherit);
-    font-size: 1.15rem;
-}
-.ra-payment-body { flex: 1; min-width: 0; }
-.ra-payment-name { font-weight: 500; font-size: .92rem; }
-.ra-payment-desc { font-size: .78rem; color: var(--ra-muted, #94a3b8); margin-top: 1px; }
-.ra-payment-toggle { flex: 0 0 auto; }
-</style>
+
