@@ -2595,3 +2595,185 @@ is a documented property of the lexer, not a bug.
 4. When `php -l` reports a parse error at a block that looks
    closed, do not trust the reported line. Grep for `?>` in
    the file first.
+
+---
+
+### Pattern 40 - The cascade check has four directions
+
+**Problem:** the phrase "cascade check" was being used to
+describe one specific motion: grep for the symbol being
+changed, list the callers, update them in the same patch.
+That is one direction out of four. The other three are
+where the misses happen.
+
+**The four directions:**
+
+  1. Downstream - who calls this? Grep for the class
+     name, the method name, the route path. Every caller
+     is a dependency.
+
+  2. Upstream - what does this depend on? What is
+     already true in the environment this code expects?
+     Does the column already exist? Is the route already
+     registered? Is the config key already declared? Is
+     the class already bound in the container?
+
+  3. Siblings - what else is like this? If the change
+     adds a parameter to one logger, what other loggers
+     exist? If it renames one route, what other routes
+     share the shape?
+
+  4. Perpendicular - what is the current state of the
+     object being changed? For a migration: describe the
+     table. For a view: whether the variable is passed.
+     For a service: whether the dependencies resolve.
+
+**Why directions 2 and 4 are missed:** they do not show
+up in a grep for the symbol being changed. They require
+reading the schema, reading the config, or asking the
+database for its current shape. The grep for
+`core_audit_logs` in the codebase does not tell you
+whether the column `store_id` already exists in the
+table. Only `DESCRIBE core_audit_logs` does.
+
+**The tell:** a change that duplicates something which
+already exists. The most common shape is a migration
+that adds a column that a previous migration already
+added. The failure surfaces at apply time:
+`Column already exists: 1060 Duplicate column name`.
+The change was written against a mental model of the
+schema, not against the schema.
+
+**The rule:**
+
+  - Before any schema change, run `DESCRIBE table` on
+    the target. Not the migrations that create the
+    table. The database itself.
+  - Before any route registration, check that the path
+    is not already claimed. Grep `routes/` for the path
+    and for any prefix that would match.
+  - Before any container binding, check whether the
+    class is already bound or auto-constructable. Grep
+    the providers.
+  - Before any config key, grep the config files.
+  - Before any seeder, check the current data.
+
+**The deeper rule:** a change to the database is a
+change to an existing part of the project. Every table,
+every column, every index, every row is a project
+artifact like any code file. It gets read before it
+gets changed.
+
+**Where we hit it:** migration 0337_add_store_id_to_logs.sql
+tried to add a `store_id` column to `core_activities`
+and `core_audit_logs`. Both columns had been added
+months earlier by migration 0101_add_store_id_to_core.sql.
+The downstream check (grep for the table name across
+migrations) found only the two migrations that created
+the tables. The upstream read would have been
+`DESCRIBE core_activities` and `DESCRIBE core_audit_logs`.
+Ten seconds. 0337 was deleted; 0338 ships the backfill
+only.
+
+**A second occurrence on the same day:** the "before
+writing" checks were run against `resources/views/admin/`
+without checking that `resources/views/admin/logs/`
+existed. The heredoc wrote to a file path whose parent
+directory did not exist. `cat >` does not create parent
+directories. The write appeared to succeed; `php -l`
+reported "no such file". The fix was `mkdir -p` before
+the write. Same class: the environment assumed a state
+that was not verified.
+
+**Related patterns:**
+
+  - Pattern 4 (php -l does not catch everything) - the
+    syntax is correct, the file is missing. Different
+    failure, same class of "the tool reported success
+    but the state is wrong."
+  - Pattern 20 (one file per message during critical
+    work) - the discipline that would have caught the
+    missing directory by forcing one file write per
+    command.
+
+---
+
+### Pattern 41 - git mv requires the file to be tracked
+
+**Problem:** the `git mv` command moves a file and
+records the rename in the index. It only works on
+files that git already tracks. A file created earlier
+in the same session and not yet committed is untracked
+(`??` in `git status --short`). `git mv` on such a
+file fails with `not under version control` and the
+file stays put.
+
+The failure is not silent in the shell — the error
+message is printed. But the error message is easy to
+miss in a long paste of commands, and the next command
+runs against a file that does not exist at the expected
+path.
+
+**The tell:** `git status --short` still shows the
+source file at its old path (or shows it as `??` at
+the destination if it was manually moved). The rename
+is not recorded in the index.
+
+**The rule:**
+
+  - Before `git mv`, check `git status --short` for
+    the source path.
+  - `??` means untracked. Use plain `mv`, then
+    `git add` the destination.
+  - `M` or nothing means tracked. `git mv` is correct.
+  - After the move, run `ls` on the destination. The
+    command reported success; verify the file arrived.
+
+**Where we hit it:** the two views being moved from
+`resources/views/admin/settings/` to
+`resources/views/admin/logs/` (`logs.php` and
+`activity.php`) were created in this session and had
+never been committed. The first `git mv` attempt on
+them failed. The failure was compounded because the
+shell output was truncated in a long paste. By the
+time the next Python patch ran against the destination
+paths, neither file existed there.
+
+**A second shape of the same problem:** the two files
+were eventually moved with plain `mv` and the move
+"worked" — but the second file (`activity.php`) was
+not added to the commit that claimed to move it. The
+commit message named it. The diff did not contain it.
+Git saw a new file at the destination and a deleted
+file at the source that were unrelated.
+
+**The lesson:** a move operation has three steps, and
+all three must complete before the commit:
+
+  1. The file arrives at the destination (`ls`
+     confirms).
+  2. The index records the change (`git status` shows
+     `R` for rename or `A`/`D` for a manual move).
+  3. The commit that claims to move it actually
+     contains the destination file.
+
+Missing any of the three produces a commit whose
+message does not match the diff. That is worse than a
+failed command, because the failure is invisible
+unless the diff is read.
+
+**Related patterns:**
+
+  - Pattern 1 (silent Python patch failures) - the
+    patch reports success; the state is wrong.
+  - Pattern 4 (php -l does not catch everything) -
+    the tool reports one thing; the reality is another.
+  - Pattern 40 (the cascade check has four
+    directions) - the "perpendicular" direction
+    includes verifying the effect of the change on
+    the working tree. A commit's diff is a project
+    artifact like any other; it gets read before it
+    gets trusted.
+
+---
+
