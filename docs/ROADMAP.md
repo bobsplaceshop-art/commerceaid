@@ -127,6 +127,7 @@ Applying the principle to the current roadmap:
 | 008K.3   | Admin Users                          | 2026-10-10 |
 | 008K.4   | Admin Roles                          | 2026-10-10 |
 | 008K.5   | Order Pricing Engine                 | 2026-10-11 |
+| 009      | Forms & Submissions                  | 2026-10-13 |
 
 Also completed outside the staged sequence:
 
@@ -144,37 +145,28 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-Stage 009 - Forms & Submissions.
+No stage in progress.
 
-  009 Session 1    schema, models, repositories    complete 2026-10-12
-  009 Session 2a   FormService, admin controller,
-                   list + editor                   complete 2026-10-12
-  009 Session 2b   field editor                    complete 2026-10-12
-  009 Session 3    public surface, submission
-                   processing                      complete 2026-10-13
-  009 Session 4    submissions admin, webhooks,
-                   stage close                     open
+Stage 009 (Forms & Submissions) closed 2026-10-13.
+All four code sessions shipped. The forms public
+surface is live at /forms/{slug}. The submissions
+admin is live at /forms/{id}/submissions with
+filters, bulk actions, CSV export, status change
+with notes, and NotificationService dispatch on
+every new submission.
 
-Both the admin surface and the public surface of 009
-are shipped. The merchant can create forms, add any
-of the twelve field types, set up conditional logic,
-edit and reorder fields, publish them, and receive
-submissions. A published form renders at /forms/{slug}
-with storefront styling; the honeypot, conditional
-logic, and multi-step navigation all work.
+Two subsystems deferred to a future sub-stage 009.7:
+a general-purpose event dispatcher, and the webhook
+callout. The codebase has no event bus. The working
+dispatch path is NotificationService with its rule-
+based recipient resolver.
 
-Session 4 closes the stage: the submissions admin
-surface with filters and CSV export, domain event
-firing on new submissions, notification service
-integration, and the webhook callout.
-
-Stage 008K (Admin Surface Completion) is fully
-complete. All five sub-stages shipped. The pricing
-engine (008K.5) shipped with the storefront
-integration and passed the end-to-end browser test:
-cart with coupon, checkout with shipping method,
-German inclusive VAT computed correctly. Tagged
-stage-008k.5-complete on 2026-10-11.
+The next stage to open is 014 (Responsive Layout
+System), whose five sessions begin with the
+breakpoint and component treatment matrix rules.
+Once 014 Session 1 lands, the prevenger flips the
+36 data-responsive warnings to hard errors and every
+table carries a declared treatment type.
 
 ## Planned Stages
 

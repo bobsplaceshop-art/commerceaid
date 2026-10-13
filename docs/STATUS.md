@@ -1,8 +1,8 @@
 # Project Status
 
 **As of:** 2026-10-12
-**Version:** 0.30.0-alpha
-**Stage:** 009 (Forms & Submissions) in progress. Sessions 1, 2a, 2b, and 3 shipped. Both the admin surface (form CRUD, status transitions, field editor with twelve input types, conditional visibility, options editor, type-conditional config) and the public surface (form rendering at /forms/{slug}, submission processing with honeypot and conditional logic, multi-step navigation) are live. Session 4 remains: the submissions admin surface with filters and CSV export, domain event firing, notification integration, and the webhook callout.
+**Version:** 0.31.0-alpha
+**Stage:** 009 (Forms & Submissions) complete. All four code sessions shipped: schema and models, admin surface (form CRUD and field editor), public surface (rendering at /forms/{slug}, submission processing with honeypot and conditional logic, multi-step navigation), and submissions admin (list with filters, bulk actions, CSV export, status change with notes, notification dispatch on new submissions). The webhook and event dispatcher are deferred to a future sub-stage 009.7; the codebase has no event bus and the notification service is the working dispatch path.
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.

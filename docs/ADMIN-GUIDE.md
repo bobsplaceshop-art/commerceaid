@@ -924,6 +924,88 @@ There is no undelete button in the admin. If you
 delete a form by mistake, ask your developer to
 restore it from the database.
 
+#### Submissions
+
+Every submission a form receives appears at
+`Marketing > Forms > {form} > Submissions`. The
+submissions list shows one row per submission, with
+its status, submitter, and received date.
+
+**The five tabs** across the top filter by status:
+
+  - **New** — submissions you have not reviewed yet.
+    This is the default view; new submissions land
+    here.
+  - **Read** — submissions you have reviewed but
+    chosen to keep.
+  - **Spam** — submissions you have flagged as spam.
+  - **Archived** — submissions you have decided to
+    hide from the active list without deleting.
+  - **All** — every submission for this form.
+
+Each tab shows a count. The four rightmost tabs also
+count submissions in the state they represent, so you
+can see at a glance how many are waiting for review.
+
+**To search**, type into the search box. The list
+matches against the submitter's name and email. This
+is the fastest way to find a submission when a
+customer calls and asks about their enquiry.
+
+**To filter by date**, set a From or To date. The
+range is inclusive of both endpoints.
+
+**To export the current view to CSV**, click Export
+CSV top-right. The file downloads with one row per
+submission and one column per form field, plus the
+submission id, received date, status, submitter name,
+submitter email, submitter IP, and any internal
+notes. The export respects the active filters — if
+you are viewing the Spam tab, the export contains
+only spam submissions.
+
+**To change a submission's status**, click into the
+submission to open its detail page. The status
+dropdown is in the Status card. Pick a new status
+and click Update status.
+
+**To add an internal note**, scroll to the Internal
+notes card on the detail page. Type your note. Notes
+are saved when you update the status. Notes are
+visible only to admin users.
+
+**To bulk-update**, on the list page check the box
+on each row you want to act on. A bulk action bar
+appears above the table with four options:
+
+  - **Mark read** — moves the checked submissions
+    from New to Read.
+  - **Mark spam** — moves them to Spam.
+  - **Archive** — moves them to Archived.
+  - **Delete** — permanently removes them.
+
+Delete asks for confirmation. The other three take
+effect immediately. Bulk actions ignore submissions
+that are already in the target status — checking a
+submission that is already Read and clicking Mark
+read is a no-op, not an error.
+
+**To delete one submission**, open it and click
+Delete submission in the Danger zone at the bottom
+of the detail page. A confirmation modal appears.
+
+There is no undelete. A deleted submission is gone.
+Export it to CSV first if you want a record.
+
+**Notifications.** Every new submission triggers a
+notification through the store's rule engine. The
+default is no notification — you have to configure a
+rule first. See the Notification rules section in
+your store's Settings for the exact mechanism. A
+submission arrives in the list whether or not a rule
+is configured; the notification is a convenience,
+not a delivery mechanism.
+
 #### The public URL
 
 A published form renders at `/forms/{slug}` in the
