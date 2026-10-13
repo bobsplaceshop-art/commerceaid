@@ -28,6 +28,7 @@ use CorporateAid\Commerce\Controllers\Admin\AdminSubscriberListController;
 use CorporateAid\Commerce\Controllers\Admin\AdminCampaignController;
 use CorporateAid\Commerce\Controllers\Admin\AdminFormController;
 use CorporateAid\Commerce\Controllers\Admin\DebugController;
+use CorporateAid\Commerce\Controllers\Admin\LogController;
 
 /** @var Router $router */
 
@@ -1027,4 +1028,24 @@ $router->get('/commerce/ca-admin/forms/{id}/submissions/{sid}',
 // exception log.
 $router->get('/commerce/ca-admin/_debug/recent-errors',
     [DebugController::class, 'recentErrors'],
+    ['store', 'auth', 'permission:core.audit.view']);
+
+// =====================================================================
+// Logs hub (Stage 014)
+// =====================================================================
+//
+// One screen, four tabs. The merchant reads the Activity Log
+// tab (core_activities). The developer reads System Logs
+// (storage/logs/app.log) and Audit Trail (core_audit_logs).
+//
+// Two routes: /logs (defaults to Overview) and
+// /logs/{tab}. Both go to the same action. Route order
+// matters - the specific /logs path is registered first so
+// the router does not try to match an empty {tab}.
+$router->get('/commerce/ca-admin/logs',
+    [LogController::class, 'index'],
+    ['store', 'auth', 'permission:core.audit.view']);
+
+$router->get('/commerce/ca-admin/logs/{tab}',
+    [LogController::class, 'index'],
     ['store', 'auth', 'permission:core.audit.view']);
