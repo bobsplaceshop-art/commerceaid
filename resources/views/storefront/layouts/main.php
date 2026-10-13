@@ -133,6 +133,7 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <link href="<?= versioned_asset('css/storefront-cart.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-checkout.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-search.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/storefront-forms.css') ?>" rel="stylesheet">
 </head>
 <body class="sf-body">
 
@@ -378,6 +379,12 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
             }, TTL_MS);
         }
 
+        // Expose the display function so the server-side error
+        // fetch below can reuse it. The IIFE closes over show();
+        // assigning to window is the only way to reach it from
+        // the fetch callback.
+        window.raDebugShow = show;
+
         window.addEventListener('error', function (e) {
             show('error', e.message || 'unknown',
                 (e.filename || '') + ':' + (e.lineno || ''));
@@ -395,12 +402,52 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
             } catch (ignore) {}
             return origError.apply(console, arguments);
         };
+
+        // Server-side exception fetch. The endpoint returns 404
+        // when app.debug is off, and on guest storefront
+        // requests it returns 404 as well (permission gate).
+        // Both cases are swallowed by the catch below.
+        var DEBUG_ENDPOINT = '/commerce/ca-admin/_debug/recent-errors';
+        var debugSince = Math.floor(Date.now() / 1000) - 60;
+
+        function pollDebugEndpoint() {
+            fetch(DEBUG_ENDPOINT + '?since=' + debugSince, {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data || !data.lines || !data.lines.length) return;
+                debugSince = Math.floor(Date.now() / 1000);
+
+                data.lines.forEach(function (raw) {
+                    var idx = raw.indexOf('{');
+                    var detail = idx >= 0 ? raw.slice(idx) : raw;
+                    try {
+                        var parsed = JSON.parse(detail);
+                        var msg = (parsed.file || '?') + ':' + (parsed.line || '?') +
+                                  ' - ' + (parsed.trace || '').split('\n')[0];
+                        show('server', 'exception', msg);
+                    } catch (e) {
+                        show('server', 'exception', detail);
+                    }
+                });
+            })
+            .catch(function () { /* network error or guest session, ignore */ });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', pollDebugEndpoint);
+        } else {
+            pollDebugEndpoint();
+        }
     })();
     </script>
     <?php endif; ?>
 <script src="<?= versioned_asset('js/storefront-hero.js') ?>" defer></script>
 <script src="<?= versioned_asset('js/wishlist.js') ?>" defer></script>
 <script src="<?= versioned_asset('js/pwa-install.js') ?>" defer></script>
+<script src="<?= versioned_asset('js/storefront-forms.js') ?>" defer></script>
 
 <?php if (!empty($cookieBannerEnabled)): ?>
     <?= view_partial('storefront.partials._cookie-banner', ['store' => $store]) ?>

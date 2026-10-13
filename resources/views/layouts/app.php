@@ -135,6 +135,12 @@ if (!in_array($serverTheme, ['dark', 'light', 'system'], true)) {
             }, TTL_MS);
         }
 
+        // Expose the display function so the server-side error
+        // fetch below can reuse it. The IIFE closes over show();
+        // assigning to window is the only way to reach it from
+        // the fetch callback.
+        window.raDebugShow = show;
+
         window.addEventListener('error', function (e) {
             show('error', e.message || 'unknown',
                 (e.filename || '') + ':' + (e.lineno || ''));
@@ -152,6 +158,52 @@ if (!in_array($serverTheme, ['dark', 'light', 'system'], true)) {
             } catch (ignore) {}
             return origError.apply(console, arguments);
         };
+
+        // Server-side exception fetch. The endpoint returns 404
+        // when app.debug is off, so this is a no-op in production.
+        // In dev, the last 60 seconds of logged exceptions are
+        // displayed in the same overlay JS errors use.
+        //
+        // The endpoint returns raw log lines. Only the JSON
+        // portion is extracted for display - the timestamp
+        // prefix is redundant with the browser's own console
+        // timestamps.
+        var DEBUG_ENDPOINT = '/commerce/ca-admin/_debug/recent-errors';
+        var debugSince = Math.floor(Date.now() / 1000) - 60;
+
+        function pollDebugEndpoint() {
+            fetch(DEBUG_ENDPOINT + '?since=' + debugSince, {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data || !data.lines || !data.lines.length) return;
+                debugSince = Math.floor(Date.now() / 1000);
+
+                data.lines.forEach(function (raw) {
+                    // Extract the JSON tail after the
+                    // [timestamp] LEVEL: prefix.
+                    var idx = raw.indexOf('{');
+                    var detail = idx >= 0 ? raw.slice(idx) : raw;
+                    try {
+                        var parsed = JSON.parse(detail);
+                        var msg = (parsed.file || '?') + ':' + (parsed.line || '?') +
+                                  ' - ' + (parsed.trace || '').split('\n')[0];
+                        show('server', 'exception', msg);
+                    } catch (e) {
+                        show('server', 'exception', detail);
+                    }
+                });
+            })
+            .catch(function () { /* network failure, ignore */ });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', pollDebugEndpoint);
+        } else {
+            pollDebugEndpoint();
+        }
     })();
     </script>
     <?php endif; ?>

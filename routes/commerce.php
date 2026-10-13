@@ -27,6 +27,7 @@ use CorporateAid\Commerce\Controllers\Admin\AdminSubscriberController;
 use CorporateAid\Commerce\Controllers\Admin\AdminSubscriberListController;
 use CorporateAid\Commerce\Controllers\Admin\AdminCampaignController;
 use CorporateAid\Commerce\Controllers\Admin\AdminFormController;
+use CorporateAid\Commerce\Controllers\Admin\DebugController;
 
 /** @var Router $router */
 
@@ -972,3 +973,19 @@ $router->post('/commerce/ca-admin/forms/{id}/fields/{fieldId}/move',
 $router->post('/commerce/ca-admin/forms/{id}/fields/{fieldId}',
     [AdminFormController::class, 'fieldUpdate'],
     ['store', 'auth', 'csrf', 'permission:forms.manage']);
+
+// =====================================================================
+// Developer debug endpoints (pipeline commit 5/5)
+// =====================================================================
+//
+// The controller itself 404s when app.debug is false, so the
+// route is safe to register in every environment. The overlay
+// in the admin layout fetches it after page load and displays
+// any recent server-side exceptions.
+//
+// The permission gate reuses core.audit.view: the audience
+// that reads the audit log is the audience that reads the
+// exception log.
+$router->get('/commerce/ca-admin/_debug/recent-errors',
+    [DebugController::class, 'recentErrors'],
+    ['store', 'auth', 'permission:core.audit.view']);
