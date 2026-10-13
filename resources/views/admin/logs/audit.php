@@ -169,7 +169,10 @@ $hasFilters = $userId > 0 || $method !== '' || $path !== '' || $entityType !== '
 
 <div class="ra-card mb-4">
     <div class="ra-card-body py-2">
-        <form method="GET" action="/commerce/ca-admin/logs/audit" class="d-flex gap-2 flex-wrap align-items-end" role="search">
+        <button type="button" class="ra-filter-toggle" data-ra-filter-toggle>
+            <i class="bi bi-funnel"></i> Filters
+        </button>
+        <form method="GET" action="/commerce/ca-admin/logs/audit" class="d-flex gap-2 flex-wrap align-items-end ra-filter-bar" role="search">
             <div>
                 <label for="ra-act-user" class="form-label small mb-1">User</label>
                 <select id="ra-act-user" name="user_id" class="form-select form-select-sm" style="min-width:180px;">

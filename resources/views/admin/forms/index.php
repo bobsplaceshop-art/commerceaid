@@ -64,6 +64,10 @@ $tabs = [
 <form method="GET" action="<?= e($baseUrl) ?>" class="ra-card mb-4">
     <input type="hidden" name="status" value="<?= e($status) ?>">
     <div class="ra-card-body">
+        <button type="button" class="ra-filter-toggle" data-ra-filter-toggle>
+            <i class="bi bi-funnel"></i> Filters
+        </button>
+        <div class="ra-filter-bar">
         <div class="row g-2 align-items-end">
             <div class="col-md-8">
                 <label class="muted small" for="ff-search">Search</label>
@@ -84,6 +88,7 @@ $tabs = [
                     </a>
                 <?php endif; ?>
             </div>
+        </div>
         </div>
     </div>
 </form>

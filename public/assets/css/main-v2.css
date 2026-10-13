@@ -1919,6 +1919,25 @@ html[data-theme="light"] .ra-table-wrap {
     display: none;
     align-items: center;
     gap: .35rem;
+    padding: .4rem .8rem;
+    background: var(--ra-surface-2);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius);
+    color: var(--ra-text);
+    font-size: .85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.ra-filter-toggle:hover {
+    background: var(--ra-hover-nav);
+    border-color: var(--ra-muted-2);
+}
+
+.ra-filter-toggle:focus-visible {
+    outline: 2px solid var(--ra-primary);
+    outline-offset: 2px;
 }
 
 @media (max-width: 899px) {

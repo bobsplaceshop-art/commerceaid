@@ -126,7 +126,10 @@ $fmtDate = function (?string $dt): string {
 
 <div class="ra-card mb-4">
     <div class="ra-card-body py-2">
-        <form method="GET" action="/commerce/ca-admin/orders" class="d-flex gap-2" role="search">
+        <button type="button" class="ra-filter-toggle" data-ra-filter-toggle>
+            <i class="bi bi-funnel"></i> Filters
+        </button>
+        <form method="GET" action="/commerce/ca-admin/orders" class="d-flex gap-2 ra-filter-bar" role="search">
             <input type="hidden" name="status" value="<?= e($filter) ?>">
             <input type="search"
                    name="q"

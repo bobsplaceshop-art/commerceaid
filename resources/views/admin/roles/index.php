@@ -75,7 +75,10 @@ $clearUrl = '/commerce/ca-admin/roles';
 
 <div class="ra-card mb-4">
     <div class="ra-card-body">
-        <form method="GET" action="/commerce/ca-admin/roles" class="row g-2 align-items-end">
+        <button type="button" class="ra-filter-toggle" data-ra-filter-toggle>
+            <i class="bi bi-funnel"></i> Filters
+        </button>
+        <form method="GET" action="/commerce/ca-admin/roles" class="row g-2 align-items-end ra-filter-bar">
             <input type="hidden" name="type" value="<?= e($tab) ?>">
             <div class="col-md-9">
                 <label class="muted small" for="role-q">Search</label>

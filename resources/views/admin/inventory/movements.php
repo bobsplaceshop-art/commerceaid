@@ -73,6 +73,10 @@ $typeBadge = function (string $type): string {
 <!-- Filters -->
 <form method="GET" action="/commerce/ca-admin/inventory/movements" class="ra-card mb-4" id="ra-movement-filters">
     <div class="ra-card-body">
+        <button type="button" class="ra-filter-toggle" data-ra-filter-toggle>
+            <i class="bi bi-funnel"></i> Filters
+        </button>
+        <div class="ra-filter-bar">
         <div class="row g-3">
             <div class="col-md-4">
                 <label class="form-label small muted mb-1">Search</label>
@@ -109,6 +113,7 @@ $typeBadge = function (string $type): string {
                     </a>
                 <?php endif; ?>
             </div>
+        </div>
         </div>
     </div>
 </form>

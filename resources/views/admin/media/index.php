@@ -69,6 +69,10 @@ $sortLabels = [
 
 <form method="GET" action="/commerce/ca-admin/media" class="ra-card mb-4" id="ra-media-filters">
     <div class="ra-card-body">
+        <button type="button" class="ra-filter-toggle" data-ra-filter-toggle>
+            <i class="bi bi-funnel"></i> Filters
+        </button>
+        <div class="ra-filter-bar">
         <div class="row g-3">
             <div class="col-md-4">
                 <label class="form-label small mb-1">Search</label>
@@ -114,6 +118,7 @@ $sortLabels = [
                     <?php endforeach; ?>
                 </select>
             </div>
+        </div>
         </div>
     </div>
 </form>

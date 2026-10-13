@@ -85,7 +85,10 @@ $badgeClass = function (string $variant): string {
 
 <div class="ra-card mb-4">
     <div class="ra-card-body">
-        <form method="GET" action="/commerce/ca-admin/campaigns" class="row g-2 align-items-end">
+        <button type="button" class="ra-filter-toggle" data-ra-filter-toggle>
+            <i class="bi bi-funnel"></i> Filters
+        </button>
+        <form method="GET" action="/commerce/ca-admin/campaigns" class="row g-2 align-items-end ra-filter-bar">
             <input type="hidden" name="status" value="<?= e($tab) ?>">
             <div class="col-md-9">
                 <label class="muted small" for="camp-q">Search</label>
