@@ -1057,6 +1057,12 @@ select.sf-filter-input {
     .sf-recent-clear-btn {
         padding: .4rem .55rem;
     }
+    /* One product per row at small-mobile widths. Below 481px
+       the two-column base grid leaves each card at roughly
+       172px, too narrow for the product name to read. */
+    .sf-product-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* =====================================================================
