@@ -2,7 +2,7 @@
 
 **As of:** 2026-10-12
 **Version:** 0.30.0-alpha
-**Stage:** 009 (Forms & Submissions) in progress. Sessions 1, 2a, and 2b shipped. The full admin surface is live: form CRUD, status transitions, and the field editor (add/edit/reorder/delete fields, twelve input types, conditional visibility, options editor, type-conditional config). Sessions 3 and 4 (public surface + submissions) remain.
+**Stage:** 009 (Forms & Submissions) in progress. Sessions 1, 2a, 2b, and 3 shipped. Both the admin surface (form CRUD, status transitions, field editor with twelve input types, conditional visibility, options editor, type-conditional config) and the public surface (form rendering at /forms/{slug}, submission processing with honeypot and conditional logic, multi-step navigation) are live. Session 4 remains: the submissions admin surface with filters and CSV export, domain event firing, notification integration, and the webhook callout.
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -161,7 +161,7 @@ subscribe" link in the confirmation email template.
 Both shipped 2026-10-12 (commit d99021b). Stage 008I
 has no outstanding follow-ups.
 
-#### Admin - Forms (009 Sessions 1, 2a, and 2b)
+#### Forms (009 Sessions 1, 2a, 2b, and 3)
 
 **Sessions 1 and 2a shipped.** Schema, models,
 repositories, plus the first user-visible surface:
@@ -336,11 +336,10 @@ Session 4.
 
 ## Current Focus - Stage 009 in progress
 
-**Sessions 1, 2a, and 2b of 009 shipped 2026-10-12.**
-Session 3 (the public surface and submission
-processing) opens next.
+**Sessions 1, 2a, 2b, and 3 of 009 shipped.** Session 4
+opens next.
 
-**Shipped in 009 Sessions 1, 2a, and 2b:**
+**Shipped in 009 Sessions 1, 2a, and 2b (admin surface):**
 
   Schema (migrations 0334-0336):
     commerce_forms, commerce_form_fields,
@@ -375,38 +374,69 @@ processing) opens next.
 
   Sidebar: Forms item under Marketing.
 
-**What 009 Session 3 must ship:**
+**Shipped in 009 Session 3 (public surface):**
 
-  - FormSubmissionService - honeypot check,
-    server-side conditional logic, required-field
-    check, per-field validation via
-    InputType::validate(), insert into
-    commerce_form_submissions, fire the
-    form.submitted domain event, send the notify
-    email.
-  - FormRenderer - composes the input types into a
-    full form. CSRF, honeypot, submit button,
-    per-field errors, data-conditional attributes.
-    Multi-step rendering grouped by step.
-  - Public FormController - GET /forms/{slug} and
-    POST /forms/{slug}. Two routes in
-    routes/storefront.php.
-  - Conditional logic JS module.
+  Public FormController at /forms/{slug}:
+    GET loads the form. POST processes a submission.
+    Requires status = 'published'. Honours the
+    requires_auth flag. On success renders the
+    success_message in place of the form; on failure
+    re-renders with the posted values and per-field
+    errors preserved.
+
+  FormSubmissionService:
+    Honeypot check (silent success on a non-empty
+    website field, no row stored).
+    Server-side conditional logic (a field whose
+    condition does not match is skipped - not
+    validated, not stored).
+    Per-field validation via the CustomFields
+    InputType classes, with option-bearing fields
+    receiving their options under
+    constraints['_options'] (the shape the
+    CustomFields engine uses).
+    Insert into commerce_form_submissions.
+
+  View: resources/views/storefront/forms/show.php
+    Composes the InputType::render() output for each
+    field. CSRF, honeypot, submit button. Multi-step
+    rendering grouped by step.
+
+  JS: public/assets/js/storefront-forms.js
+    Conditional field visibility and multi-step
+    navigation. Reads data-sf-conditional rules and
+    toggles field wrappers live.
+
+  CSS: public/assets/css/storefront-forms.css
+    Storefront styling plus scoped overrides for the
+    admin .ra-field, .ra-label, .ra-input classes the
+    InputTypes emit.
+
+  Routes:
+    GET  /forms/{slug}   show
+    POST /forms/{slug}   submit
+    The POST carries ratelimit:form_submit,10,60.
+
+  Admin fix: the conditional value input in the field
+  editor is now a dropdown when the target field has
+  options. Free text against a select was a silent
+  typo bug.
 
 **What 009 Session 4 must ship:**
 
   - Submissions admin list with filters, bulk
     actions, CSV export.
   - Submission detail page.
-  - NotificationRuleService integration.
-  - Webhook integration.
+  - NotificationRuleService integration on new
+    submissions.
+  - Webhook integration on new submissions.
   - Stage close: session file, STATUS, ROADMAP,
     ADMIN-GUIDE.
 
 **008K.5 status:** Complete. Code on disk, admin
 surfaces live (Coupons, Tax, Shipping), storefront
 integration live, browser test passed end to end.
-Tag lands at the close commit.
+Tagged stage-008k.5-complete on 2026-10-11.
 
 **008I status:** Complete. Sessions 1-4 plus 008I.1
 hygiene shipped. No outstanding follow-ups.
@@ -420,8 +450,9 @@ open with a 19 June 2026 deadline.
 **Next 3 stages:**
 
   - **009** (in progress): Forms & Submissions.
-    Sessions 3 and 4 remain. The public form surface
-    and the submissions admin.
+    Session 4 remains. The submissions admin surface
+    with filters and CSV export, plus the event,
+    notification, and webhook integrations.
   - **014**: Responsive Layout System. The four
     breakpoints, the component treatment matrix, the
     admin list table audit, the storefront audit, and
@@ -445,10 +476,27 @@ by 008I; the forms.* family by 009 sessions 1-2b.
 
 **Tooling:** composer check now runs four layers -
 syntax linter, PHPStan level 8, and the prevenger
-(theme contract, CSS structure, HTML structure). The
-prevenger is documented in docs/STATUS.md's Tooling
-section and its three checks correspond to REMEMBER
-patterns 3, 13, 26, 27, and 39.
+(theme contract, CSS structure, HTML structure).
+
+**Error pipeline:** five commits shipped the
+structured error logging pipeline:
+  - Logger::log() falls through three tiers (file,
+    error_log, STDERR) with a candidate-directory
+    walk. No path returns without writing.
+  - Every HTTP request gets a 12-hex request ID
+    exposed as the X-Request-ID response header.
+  - Logger::exception() carries file, line, trace,
+    request_method, request_uri, user_agent,
+    session_id, and user_id alongside the reference.
+  - The admin dev overlay fetches the last 60
+    seconds of exceptions from
+    /commerce/ca-admin/_debug/recent-errors and
+    displays them in the browser.
+
+The pipeline is the foundation every future
+debugging session builds on. A 500 that used to take
+two hours to trace now lands in the browser overlay
+with the file and line within one second.
 
 ---
 

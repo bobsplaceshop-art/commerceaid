@@ -151,15 +151,22 @@ Stage 009 - Forms & Submissions.
                    list + editor                   complete 2026-10-12
   009 Session 2b   field editor                    complete 2026-10-12
   009 Session 3    public surface, submission
-                   processing                      open
+                   processing                      complete 2026-10-13
   009 Session 4    submissions admin, webhooks,
                    stage close                     open
 
-The admin surface of 009 is shipped. The merchant can
-create forms, add any of the twelve field types, set
-up conditional logic, edit and reorder fields, and
-publish. The public side - the actual form rendering
-and the submission pipeline - is Sessions 3 and 4.
+Both the admin surface and the public surface of 009
+are shipped. The merchant can create forms, add any
+of the twelve field types, set up conditional logic,
+edit and reorder fields, publish them, and receive
+submissions. A published form renders at /forms/{slug}
+with storefront styling; the honeypot, conditional
+logic, and multi-step navigation all work.
+
+Session 4 closes the stage: the submissions admin
+surface with filters and CSV export, domain event
+firing on new submissions, notification service
+integration, and the webhook callout.
 
 Stage 008K (Admin Surface Completion) is fully
 complete. All five sub-stages shipped. The pricing
