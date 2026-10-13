@@ -2062,6 +2062,27 @@ html[data-theme="light"] .ra-table-wrap {
 }
 
 /* ------------------------------------------------------------
+   Secondary columns
+   ------------------------------------------------------------
+   .ra-hide-sm marks a cell that is not essential at narrow
+   widths. The original RESPONSIVENESS.md directive expected
+   a general hide rule at the tablet boundary. The rule
+   landed for the inventory table only (setup.css, scoped to
+   .ra-inv-table). This is the general rule for every other
+   table.
+
+   The inventory table keeps its narrower 768px rule in
+   setup.css; that rule is more specific and unaffected by
+   this one.
+   ------------------------------------------------------------ */
+
+@media (max-width: 899px) {
+    .ra-hide-sm {
+        display: none;
+    }
+}
+
+/* ------------------------------------------------------------
    Dev-mode debug overlay: hidden on small mobile
    ------------------------------------------------------------
    The overlay is developer tooling. On a 375px viewport it
