@@ -192,10 +192,11 @@ $statusBadge = function (string $status): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <table class="ra-table">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
+                <table class="ra-table">
             <thead>
                 <tr>
-                    <th>Product</th>
+                    <th style="min-width:220px;">Product</th>
                     <th style="width:120px;">SKU</th>
                     <th style="width:130px;text-align:right;">Price</th>
                     <th style="width:120px;">Status</th>
@@ -206,7 +207,7 @@ $statusBadge = function (string $status): string {
             <tbody>
                 <?php foreach ($items as $product): ?>
                     <tr>
-                        <td>
+                        <td data-label="Product" data-col="full">
                             <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-box-seam" style="color:var(--ra-muted,#94a3b8);"></i>
                                 <div>
@@ -219,8 +220,8 @@ $statusBadge = function (string $status): string {
                                 </div>
                             </div>
                         </td>
-                        <td><code class="muted small"><?= e($product->sku ?? '-') ?></code></td>
-                        <td class="text-end">
+                        <td data-label="SKU" data-col="half"><code class="muted small"><?= e($product->sku ?? '-') ?></code></td>
+                        <td class="text-end" data-label="Price" data-col="half">
                             <div><?= $fmtPrice($product->price) ?></div>
                             <?php if ($product->isOnSale()): ?>
                                 <div class="muted" style="font-size:.75rem;text-decoration:line-through;">
@@ -228,15 +229,15 @@ $statusBadge = function (string $status): string {
                                 </div>
                             <?php endif; ?>
                         </td>
-                        <td><?= $statusBadge($product->status) ?></td>
-                        <td>
+                        <td data-label="Status" data-col="half"><?= $statusBadge($product->status) ?></td>
+                        <td data-label="Stock" data-col="half">
                             <?php if (!$product->manageStock): ?>
                                 <span class="muted small">Not tracked</span>
                             <?php else: ?>
                                 <span class="muted small">Managed</span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-end">
+                        <td class="text-end" data-label="Actions" data-col="full">
                             <a href="/commerce/ca-admin/products/<?= (int) $product->id ?>/edit"
                                class="ra-icon-btn" title="Edit">
                                 <i class="bi bi-pencil"></i>
@@ -268,6 +269,7 @@ $statusBadge = function (string $status): string {
                 <?php endforeach; ?>
             </tbody>
         </table>
+                </div>
     </div>
 
     <?php if ($pages > 1): ?>
