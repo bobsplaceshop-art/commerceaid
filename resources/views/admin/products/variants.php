@@ -298,7 +298,7 @@ $clearUrl = function (string $key) use ($filters, $baseUrl): string {
                     </span>
                 </div>
                 <div class="ra-card-body p-0">
-                    <div class="ra-table-responsive-wrap" data-responsive="scroll">
+                    <div class="ra-table-responsive-wrap" data-responsive="cards">
                         <table class="ra-table">
                             <thead>
                                 <tr>
@@ -322,23 +322,23 @@ $clearUrl = function (string $key) use ($filters, $baseUrl): string {
                                     $isActive = $v->status === 'active';
                                     ?>
                                     <tr>
-                                        <td>
-                                            <input type="checkbox"
-                                                   class="form-check-input ra-row-checkbox"
-                                                   data-variant-id="<?= (int) $v->id ?>"
-                                                   onchange="RA_BulkAction.updateToolbar()">
+                                        <td data-label="Variant" data-col="full">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <input type="checkbox"
+                                                       class="form-check-input ra-row-checkbox"
+                                                       data-variant-id="<?= (int) $v->id ?>"
+                                                       onchange="RA_BulkAction.updateToolbar()">
+                                                <strong><?= e($v->attributeSummary) ?></strong>
+                                            </div>
                                         </td>
-                                        <td>
-                                            <strong><?= e($v->attributeSummary) ?></strong>
-                                        </td>
-                                        <td>
+                                        <td data-label="SKU" data-col="half">
                                             <input type="text"
                                                    name="variants[<?= (int) $v->id ?>][sku]"
                                                    class="form-control form-control-sm"
                                                    value="<?= e((string) $v->sku) ?>"
                                                    placeholder="SKU">
                                         </td>
-                                        <td>
+                                        <td data-label="Price" data-col="half">
                                             <input type="number"
                                                    name="variants[<?= (int) $v->id ?>][price]"
                                                    class="form-control form-control-sm ra-variant-price"
@@ -346,21 +346,21 @@ $clearUrl = function (string $key) use ($filters, $baseUrl): string {
                                                    step="0.01" min="0"
                                                    value="<?= e(number_format($v->price, 2, '.', '')) ?>">
                                         </td>
-                                        <td>
+                                        <td data-label="Compare-at" data-col="half">
                                             <input type="number"
                                                    name="variants[<?= (int) $v->id ?>][compare_at_price]"
                                                    class="form-control form-control-sm"
                                                    step="0.01" min="0"
                                                    value="<?= $v->compareAtPrice !== null ? e(number_format($v->compareAtPrice, 2, '.', '')) : '' ?>">
                                         </td>
-                                        <td>
+                                        <td data-label="Stock" data-col="half">
                                             <input type="number"
                                                    name="variants[<?= (int) $v->id ?>][stock_quantity]"
                                                    class="form-control form-control-sm"
                                                    step="1" min="0"
                                                    value="<?= (int) $stockQty ?>">
                                         </td>
-                                        <td style="text-align:center;">
+                                        <td data-label="Active" data-col="half">
                                             <input type="hidden"
                                                    name="variants[<?= (int) $v->id ?>][active]"
                                                    value="0"
