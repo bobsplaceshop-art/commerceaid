@@ -140,6 +140,15 @@ Also completed outside the staged sequence:
     zero errors remaining, no baseline (2026-09-27)
   - docs/BASELINE.md + 16 section files documenting verified
     codebase conventions
+  - Prevenger: three structural checkers (theme contract,
+    CSS structure, HTML structure) + the aggregator wired
+    into composer check (2026-10-12)
+  - Error pipeline: three-tier logger, request IDs,
+    structured exception context, debug endpoint, dev
+    overlay opt-in (2026-10-13)
+  - Logs hub: Activity Log, System Logs, Audit Trail, and
+    Overview in one screen with store-aware rows
+    (2026-10-13)
 
 ---
 

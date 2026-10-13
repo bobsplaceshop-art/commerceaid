@@ -241,6 +241,37 @@ Session 3. The
 submissions admin and webhook integration ship in
 Session 4.
 
+### Admin - Logs hub (Stage 014)
+
+One sidebar entry, four tabs, three audiences.
+
+  Overview       Counts from every stream. The merchant's
+                 landing page. No data table.
+
+  Activity Log   core_activities. One human sentence per
+                 row: "Esther published Product #42." The
+                 merchant timeline. Empty until services
+                 start calling ActivityLogger::log().
+
+  System Logs    storage/logs/app.log. The developer log.
+                 Exception, error, warning, and info
+                 levels. Filter by level, date, search.
+
+  Audit Trail    core_audit_logs. Raw HTTP audit rows.
+                 Method, path, IP, user agent, payload
+                 hash, response status. Every state-
+                 changing request since Stage 005.
+
+Every log row carries its store. `Platform\Context\StoreContextInterface`
+is the boundary that lets Platform read the current store
+without importing Commerce. Both writers (ActivityLogger and
+AuditLoggerMiddleware) populate store_id. Migration 0338
+backfilled the 868 existing audit rows.
+
+The sidebar entry under Settings is a single "Logs" item;
+the four tabs live inside via a sub-nav rail that mirrors
+the Setup hub.
+
 ### Catalog
 
 - Categories: tree with attribute mapping
