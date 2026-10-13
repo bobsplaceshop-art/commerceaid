@@ -232,7 +232,7 @@ $badgeClass = function (string $variant): string {
         </div>
 
         <div class="ra-card">
-            <div class="ra-table-responsive-wrap" data-responsive="scroll">
+            <div class="ra-table-responsive-wrap" data-responsive="cards">
                 <table class="ra-table">
                     <thead>
                         <tr>
@@ -250,33 +250,33 @@ $badgeClass = function (string $variant): string {
                     <tbody>
                         <?php foreach ($items as $s): ?>
                             <tr>
-                                <td>
+                                <td data-label="" data-col="half">
                                     <input type="checkbox"
                                            name="ids[]"
                                            value="<?= (int) $s->id ?>"
                                            class="ra-row-checkbox"
                                            aria-label="Select submission <?= (int) $s->id ?>">
                                 </td>
-                                <td>
+                                <td data-label="#" data-col="half">
                                     <a href="<?= e($base) ?>/<?= (int) $s->id ?>" class="text-decoration-none">
                                         #<?= (int) $s->id ?>
                                     </a>
                                 </td>
-                                <td class="ra-hide-sm">
+                                <td class="ra-hide-sm" data-label="Submitted" data-col="half">
                                     <span class="muted small"><?= e($fmtDateTime($s->createdAt)) ?></span>
                                 </td>
-                                <td>
+                                <td data-label="From" data-col="half">
                                     <?= e((string) ($s->submitterName ?? '—')) ?>
                                 </td>
-                                <td class="ra-hide-sm">
+                                <td class="ra-hide-sm" data-label="Email" data-col="half">
                                     <span class="muted small"><?= e((string) ($s->submitterEmail ?? '—')) ?></span>
                                 </td>
-                                <td>
+                                <td data-label="Status" data-col="half">
                                     <span class="<?= e($badgeClass($s->statusBadgeVariant())) ?>">
                                         <?= e($s->statusLabel()) ?>
                                     </span>
                                 </td>
-                                <td class="text-end ra-actions-cell">
+                                <td class="text-end ra-actions-cell" data-label="Actions" data-col="full">
                                     <a href="<?= e($base) ?>/<?= (int) $s->id ?>"
                                        class="ra-icon-btn"
                                        title="View">

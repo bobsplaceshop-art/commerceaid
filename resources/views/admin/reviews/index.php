@@ -70,7 +70,7 @@ $statuses = [
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -100,7 +100,7 @@ $statuses = [
                         }
                         ?>
                         <tr>
-                            <td>
+                            <td data-label="Product" data-col="full">
                                 <?php if ($product !== null): ?>
                                     <a href="/products/<?= e(rawurlencode($product->slug)) ?>"
                                        target="_blank"
@@ -113,7 +113,7 @@ $statuses = [
                                     <span class="muted">Product #<?= (int) $r->productId ?> (deleted)</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td data-label="Customer" data-col="half">
                                 <?= e($authorName) ?>
                                 <?php if ($r->verifiedPurchase): ?>
                                     <div class="muted small">
@@ -122,14 +122,14 @@ $statuses = [
                                     </div>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td data-label="Rating" data-col="half">
                                 <span style="color:var(--ra-accent,#c6a15b);letter-spacing:.05em;">
                                     <?php for ($i = 1; $i <= 5; $i++): ?>
                                         <i class="bi <?= $i <= $r->rating ? 'bi-star-fill' : 'bi-star' ?>"></i>
                                     <?php endfor; ?>
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Review" data-col="full">
                                 <?php if (!empty($r->title)): ?>
                                     <div style="font-weight:600;margin-bottom:.25rem;">
                                         <?= e($r->title) ?>
@@ -139,7 +139,7 @@ $statuses = [
                                     <?= e(mb_strimwidth($r->body, 0, 160, '…')) ?>
                                 </div>
                             </td>
-                            <td class="muted small">
+                            <td class="muted small" data-label="Date" data-col="half">
                                 <?= e(date('M j, Y', strtotime((string) $r->createdAt))) ?>
                             </td>
                             <td class="text-end">

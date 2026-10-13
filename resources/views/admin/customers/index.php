@@ -165,7 +165,7 @@ $tabUrl = function (string $key) use ($state, $q, $groupId): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -194,7 +194,7 @@ $tabUrl = function (string $key) use ($state, $q, $groupId): string {
                         }
                         ?>
                         <tr>
-                            <td>
+                            <td data-label="Customer" data-col="full">
                                 <a href="/commerce/ca-admin/customers/<?= (int) $c->id ?>"
                                    class="text-decoration-none" style="font-weight:600;">
                                     <?= e($name) ?>
@@ -203,20 +203,20 @@ $tabUrl = function (string $key) use ($state, $q, $groupId): string {
                                     <div class="muted small"><?= e($c->company) ?></div>
                                 <?php endif; ?>
                             </td>
-                            <td class="ra-hide-sm muted small"><?= e($c->email) ?></td>
-                            <td class="ra-hide-sm">
+                            <td class="ra-hide-sm muted small" data-label="Email" data-col="half"><?= e($c->email) ?></td>
+                            <td class="ra-hide-sm" data-label="Group" data-col="half">
                                 <?php if ($g !== null): ?>
                                     <?= e($g) ?>
                                 <?php else: ?>
                                     <span class="muted">—</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?= $accountBadge($c->status) ?></td>
-                            <td><?= $approvalBadge($c->approvalStatus) ?></td>
-                            <td class="ra-hide-sm muted small">
+                            <td data-label="Account" data-col="half"><?= $accountBadge($c->status) ?></td>
+                            <td data-label="Approval" data-col="half"><?= $approvalBadge($c->approvalStatus) ?></td>
+                            <td class="ra-hide-sm muted small" data-label="Registered" data-col="half">
                                 <?= $c->createdAt !== null ? e(date('M j, Y', strtotime((string) $c->createdAt))) : '—' ?>
                             </td>
-                            <td class="text-end">
+                            <td class="text-end" data-label="Actions" data-col="full">
                                 <a href="/commerce/ca-admin/customers/<?= (int) $c->id ?>"
                                    class="ra-icon-btn" title="View">
                                     <i class="bi bi-eye"></i>

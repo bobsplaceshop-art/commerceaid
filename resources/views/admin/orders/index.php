@@ -173,7 +173,7 @@ $fmtDate = function (?string $dt): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -204,28 +204,28 @@ $fmtDate = function (?string $dt): string {
                         }
                         ?>
                         <tr>
-                            <td>
+                            <td data-label="Order" data-col="full">
                                 <a href="/commerce/ca-admin/orders/<?= (int) $o->id ?>"
                                    class="text-decoration-none"
                                    style="font-weight:600;">
                                     <?= e($o->orderNumber) ?>
                                 </a>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td class="ra-hide-sm" data-label="Customer" data-col="half">
                                 <div class="text-truncate" style="max-width:200px;">
                                     <?= e($customerName) ?>
                                 </div>
                             </td>
-                            <td style="text-align:right;">
+                            <td style="text-align:right;" data-label="Total" data-col="half">
                                 <?= e(number_format($o->grandTotal, 2)) ?>
                                 <span class="muted small"><?= e($o->currencyCode) ?></span>
                             </td>
-                            <td class="ra-hide-sm"><?= $paymentBadge($o->paymentStatus) ?></td>
-                            <td><?= $statusBadge($o->status) ?></td>
-                            <td class="ra-hide-sm muted small">
+                            <td class="ra-hide-sm" data-label="Payment" data-col="half"><?= $paymentBadge($o->paymentStatus) ?></td>
+                            <td data-label="Status" data-col="half"><?= $statusBadge($o->status) ?></td>
+                            <td class="ra-hide-sm muted small" data-label="Placed" data-col="half">
                                 <?= e($fmtDate($o->placedAt)) ?>
                             </td>
-                            <td class="text-end">
+                            <td class="text-end" data-label="Actions" data-col="full">
                                 <a href="/commerce/ca-admin/orders/<?= (int) $o->id ?>"
                                    class="ra-btn ra-btn-outline ra-btn-sm">
                                     View

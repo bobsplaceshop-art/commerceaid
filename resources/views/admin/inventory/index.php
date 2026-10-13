@@ -155,7 +155,7 @@ $exportUrl = '/commerce/ca-admin/inventory/export.csv' . ($hasFilters ? '?' . ht
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
         <table class="ra-table ra-inv-table">
             <thead>
                 <tr>
@@ -189,22 +189,22 @@ $exportUrl = '/commerce/ca-admin/inventory/export.csv' . ($hasFilters ? '?' . ht
                     $units     = (int) $row['total_quantity'];
                     ?>
                     <tr>
-                        <td>
+                        <td data-label="Product" data-col="full">
                             <a href="<?= e($detailUrl) ?>" class="text-decoration-none">
                                 <?= e($row['product_name']) ?>
                             </a>
                         </td>
-                        <td class="ra-hide-sm">
+                        <td class="ra-hide-sm" data-label="Type" data-col="half">
                             <span class="muted small"><?= e($typeLabel) ?></span>
                         </td>
-                        <td class="ra-hide-sm">
+                        <td class="ra-hide-sm" data-label="SKU" data-col="half">
                             <code class="muted small"><?= e($row['product_sku'] ?: '—') ?></code>
                         </td>
-                        <td class="text-end">
+                        <td class="text-end" data-label="Units" data-col="half">
                             <strong><?= $units ?></strong>
                         </td>
-                        <td><?= $statusBadge ?></td>
-                        <td class="text-end ra-actions-cell">
+                        <td data-label="Status" data-col="half"><?= $statusBadge ?></td>
+                        <td class="text-end ra-actions-cell" data-label="Actions" data-col="full">
                             <?php if (!$isVariable): ?>
                                 <button type="button" class="ra-icon-btn ra-adjust-btn"
                                         data-product-id="<?= (int) $row['product_id'] ?>"
