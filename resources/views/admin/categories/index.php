@@ -111,7 +111,8 @@ $renderTree = function (array $nodes, int $depth) use (&$renderTree): void {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <table class="ra-table">
+        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+                <table class="ra-table">
             <thead>
                 <tr>
                     <th>Name</th>
@@ -124,6 +125,7 @@ $renderTree = function (array $nodes, int $depth) use (&$renderTree): void {
                 <?php $renderTree($tree, 0); ?>
             </tbody>
         </table>
+                </div>
     </div>
 <?php endif; ?>
 

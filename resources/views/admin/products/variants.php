@@ -298,7 +298,7 @@ $clearUrl = function (string $key) use ($filters, $baseUrl): string {
                     </span>
                 </div>
                 <div class="ra-card-body p-0">
-                    <div class="table-responsive">
+                    <div class="ra-table-responsive-wrap" data-responsive="scroll">
                         <table class="ra-table">
                             <thead>
                                 <tr>

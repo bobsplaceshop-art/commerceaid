@@ -127,7 +127,8 @@ $typeBadge = function (string $type): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <table class="ra-table">
+        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+                <table class="ra-table">
             <thead>
                 <tr>
                     <th style="width:150px;">When</th>
@@ -193,6 +194,7 @@ $typeBadge = function (string $type): string {
                 <?php endforeach; ?>
             </tbody>
         </table>
+                </div>
     </div>
 
     <?php if ($pages > 1): ?>

@@ -47,7 +47,8 @@ $totalActive     = $totalActive     ?? 0;
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <table class="ra-table">
+        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+                <table class="ra-table">
             <thead>
                 <tr>
                     <th>Name</th>
@@ -118,6 +119,7 @@ $totalActive     = $totalActive     ?? 0;
                 <?php endforeach; ?>
             </tbody>
         </table>
+                </div>
     </div>
 <?php endif; ?>
 

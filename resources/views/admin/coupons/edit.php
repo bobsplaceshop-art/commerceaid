@@ -306,7 +306,7 @@ $fmtDateTime = function (?string $dt): string {
             <h3 class="h6 mb-0">Redemption history</h3>
         </div>
         <div class="ra-card-body">
-            <div class="ra-table-responsive-wrap">
+            <div class="ra-table-responsive-wrap" data-responsive="scroll">
                 <table class="ra-table">
                     <thead>
                         <tr>

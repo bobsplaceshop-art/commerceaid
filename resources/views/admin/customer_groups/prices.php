@@ -137,7 +137,7 @@ $fmtPrice = function (?float $v): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap">
+        <div class="ra-table-responsive-wrap" data-responsive="scroll">
             <table class="ra-table">
                 <thead>
                     <tr>

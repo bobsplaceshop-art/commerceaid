@@ -441,23 +441,53 @@ foreach ($iterator as $file) {
     }
 
     // -----------------------------------------------------------------
-    // Rule W1 - <table> missing data-responsive
+    // Rule W1 - <table> missing a data-responsive wrapper
     // -----------------------------------------------------------------
     //
-    // Warning today. Flips to hard error when Stage 014 Session 1
-    // ships the responsive breakpoint system that reads the
-    // attribute.
+    // Every <table> must sit inside an element that carries
+    // a data-responsive attribute. The wrapper is the element
+    // that scrolls; the table is the child that keeps its
+    // min-width. See the component treatment matrix in
+    // docs/stages/014_responsive-layout-plan.md.
+    //
+    // The attribute is on the wrapper, not on the table. This
+    // is the shape Session 1's CSS targets and Session 2's
+    // markup pass produces.
+    //
+    // Warning today. Flips to a hard error when Stage 014
+    // Session 5 ships the enforcement rule. Until then the
+    // checker reports but does not fail.
     if (preg_match_all('/<table\b[^>]*>/i', $src, $tm, PREG_OFFSET_CAPTURE)) {
         foreach ($tm[0] as $match) {
-            $tag    = $match[0];
             $offset = $match[1];
-            if (str_contains($tag, 'data-responsive')) continue;
-            $line = substr_count(substr($src, 0, $offset), "\n") + 1;
+            $line   = substr_count(substr($src, 0, $offset), "\n") + 1;
+
+            // Look back from the <table> for the nearest
+            // opening <div> within the last 400 characters
+            // and check whether it carries data-responsive.
+            // A 400-character lookback covers any reasonable
+            // wrapper markup without being so broad that an
+            // unrelated earlier element matches.
+            $lookbackStart = max(0, $offset - 400);
+            $lookback = substr($src, $lookbackStart, $offset - $lookbackStart);
+
+            // Find the last <div ...> in the lookback window
+            if (preg_match_all('/<div\b[^>]*>/i', $lookback, $divMatches)) {
+                $lastDiv = end($divMatches[0]);
+                if (str_contains($lastDiv, 'data-responsive')) {
+                    // The nearest wrapping div carries the
+                    // attribute. The table is inside a declared
+                    // treatment. OK.
+                    continue;
+                }
+            }
+
             $warnings[] = [
                 'file'    => $rel,
                 'line'    => $line,
-                'message' => "<table> missing data-responsive attribute "
-                           . "(Stage 014 rule; no consumer reads it yet)",
+                'message' => "<table> is not inside a data-responsive "
+                           . "wrapper (Stage 014 rule; no consumer "
+                           . "reads it yet)",
             ];
         }
     }

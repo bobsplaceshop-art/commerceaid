@@ -306,7 +306,7 @@ $fmtDate = function (?string $dt): string {
         <?php if (empty($orders)): ?>
             <p class="muted mb-0">This customer has not placed any orders.</p>
         <?php else: ?>
-            <div class="ra-table-responsive-wrap">
+            <div class="ra-table-responsive-wrap" data-responsive="scroll">
                 <table class="ra-table">
                     <thead>
                         <tr>

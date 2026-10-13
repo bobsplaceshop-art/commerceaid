@@ -46,7 +46,7 @@ $orderItems = $orderItems ?? [];
                 <?php if (empty($items)): ?>
                     <p class="muted mb-0">This return has no line items.</p>
                 <?php else: ?>
-                    <div class="ra-table-responsive-wrap">
+                    <div class="ra-table-responsive-wrap" data-responsive="scroll">
                         <table class="ra-table">
                             <thead>
                                 <tr>

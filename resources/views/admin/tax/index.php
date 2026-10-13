@@ -118,7 +118,7 @@ foreach ($ratesByClass as $list) {
                         No rates defined yet. Add a rate to charge tax for this class.
                     </p>
                 <?php else: ?>
-                    <div class="ra-table-responsive-wrap">
+                    <div class="ra-table-responsive-wrap" data-responsive="scroll">
                         <table class="ra-table">
                             <thead>
                                 <tr>

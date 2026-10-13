@@ -122,7 +122,7 @@ $fmtRate = function ($v): string {
                         No zones defined yet. Add a zone to make this method available in a country.
                     </p>
                 <?php else: ?>
-                    <div class="ra-table-responsive-wrap">
+                    <div class="ra-table-responsive-wrap" data-responsive="scroll">
                         <table class="ra-table">
                             <thead>
                                 <tr>

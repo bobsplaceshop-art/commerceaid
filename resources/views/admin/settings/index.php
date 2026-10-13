@@ -62,7 +62,7 @@ $tabs['advanced'] = 'Advanced';
                     </p>
                 </div>
             <?php else: ?>
-                <div class="ra-table-responsive-wrap mb-4">
+                <div class="ra-table-responsive-wrap mb-4" data-responsive="scroll">
                     <table class="ra-table">
                         <thead>
                             <tr>

@@ -40,7 +40,8 @@ $total = count($attributes);
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <table class="ra-table">
+        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+                <table class="ra-table">
             <thead>
                 <tr>
                     <th style="width:220px;">Name</th>
@@ -101,6 +102,7 @@ $total = count($attributes);
                 <?php endforeach; ?>
             </tbody>
         </table>
+                </div>
     </div>
 <?php endif; ?>
 

@@ -274,7 +274,7 @@ $fmtDateTime = function (?string $dt): string {
 <div class="ra-card mb-4">
     <div class="ra-card-body">
         <h2 class="h6 mb-3">Items</h2>
-        <div class="ra-table-responsive-wrap">
+        <div class="ra-table-responsive-wrap" data-responsive="scroll">
             <table class="ra-table">
                 <thead>
                     <tr>
