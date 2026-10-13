@@ -74,7 +74,7 @@ final class Router
         $path = $request->path();
 
         if (!isset($this->routes[$method])) {
-            throw HttpException::notFound();
+            throw HttpException::unmatchedRoute();
         }
 
         foreach ($this->routes[$method] as $route) {
@@ -113,7 +113,7 @@ final class Router
             return $kernel->run($middleware, $request, $handler);
         }
 
-        throw HttpException::notFound();
+        throw HttpException::unmatchedRoute();
     }
 
     /** @param array<string,mixed> $params */

@@ -41,6 +41,19 @@ if (!in_array($serverTheme, ['dark', 'light', 'system'], true)) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
     <title><?= e($brandName) ?><?php if (!empty($title)): ?> - <?= e($title) ?><?php endif; ?></title>
+    <?php
+    // Same favicon resolution as the storefront. Prevents
+    // the browser from requesting /favicon.ico (which has no
+    // matching route and would be 404'd by the router).
+    $__adminFavicon = function_exists('store_favicon_url')
+        ? store_favicon_url()
+        : null;
+    if ($__adminFavicon === null || $__adminFavicon === '') {
+        $__adminFavicon = '/assets/img/pwa/icon-192.png';
+    }
+    ?>
+    <link rel="icon" type="image/png" href="<?= e($__adminFavicon) ?>">
+    <link rel="apple-touch-icon" href="<?= e($__adminFavicon) ?>">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?= versioned_asset('bootstrap-icons/bootstrap-icons.min.css') ?>" rel="stylesheet">

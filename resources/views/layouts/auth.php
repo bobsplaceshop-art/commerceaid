@@ -26,6 +26,21 @@ $formError = is_array($errors) ? ($errors['_form'] ?? null) : null;
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($title ?? 'Sign in') ?> - <?= e($brandName) ?></title>
+    <?php
+    // Same favicon resolution as the admin layout and the
+    // storefront. The auth pages are usually hit before any
+    // store context is resolved, so store_favicon_url() may
+    // return the platform default. That is fine - the goal
+    // is to stop the browser from requesting /favicon.ico.
+    $__adminFavicon = function_exists('store_favicon_url')
+        ? store_favicon_url()
+        : null;
+    if ($__adminFavicon === null || $__adminFavicon === '') {
+        $__adminFavicon = '/assets/img/pwa/icon-192.png';
+    }
+    ?>
+    <link rel="icon" type="image/png" href="<?= e($__adminFavicon) ?>">
+    <link rel="apple-touch-icon" href="<?= e($__adminFavicon) ?>">
 
     <?php /* Pre-paint theme resolution - runs before stylesheets apply */ ?>
     <script>

@@ -403,8 +403,20 @@ final class App
         // audit trail.
         try {
             if ($status >= 500) {
+                // 5xx: server fault. Full structured exception
+                // with reference and trace.
                 Logger::exception($e, $errorRef);
+            } elseif ($e instanceof HttpException && $e->isUnmatchedRoute()) {
+                // No route matched. This is a browser default
+                // request (favicon), a browser-extension
+                // injected asset, or a scanner probe. The
+                // router did exactly what it should. Do not
+                // log - this is not an application event.
             } else {
+                // A route matched but the controller refused
+                // it (404 on a deleted product, 403 on a
+                // permission check, 429 on a rate limit).
+                // Worth a log line at INFO for the audit trail.
                 Logger::info('http ' . $status, [
                     'uri'    => (string) ($_SERVER['REQUEST_URI'] ?? ''),
                     'method' => (string) ($_SERVER['REQUEST_METHOD'] ?? ''),

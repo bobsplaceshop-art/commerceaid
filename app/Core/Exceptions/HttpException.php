@@ -16,6 +16,21 @@ class HttpException extends RuntimeException
     /** @var array<string,string> */
     private array $headers;
 
+    /**
+     * True when this exception was thrown by the Router
+     * because no route matched the incoming path. Distinct
+     * from a controller-thrown 404 for a matched route whose
+     * resource does not exist.
+     *
+     * The distinction matters for logging: an unmatched route
+     * is a browser default request (favicon), an extension's
+     * injected asset, or a scanner probe. None of those are
+     * our problems and none of them should fill the log.
+     * A controller-thrown 404 is a broken link or a deleted
+     * resource, and it is worth a log line.
+     */
+    private bool $unmatchedRoute = false;
+
     /** @param array<string,string> $headers */
     public function __construct(int $statusCode, string $message = '', array $headers = [], ?\Throwable $previous = null)
     {
@@ -47,10 +62,32 @@ class HttpException extends RuntimeException
         return $this->headers;
     }
 
+    /**
+     * True when the Router threw this because no route
+     * matched. False for a controller-thrown notFound() on a
+     * matched route.
+     */
+    public function isUnmatchedRoute(): bool
+    {
+        return $this->unmatchedRoute;
+    }
+
     // Convenience factories
     public static function notFound(string $message = 'Page not found'): self
     {
         return new self(404, $message);
+    }
+
+    /**
+     * No route matched the path. The Router uses this. It
+     * carries the same 404 status as notFound() but is
+     * logged differently - see App::renderException().
+     */
+    public static function unmatchedRoute(string $message = 'Page not found'): self
+    {
+        $e = new self(404, $message);
+        $e->unmatchedRoute = true;
+        return $e;
     }
 
     public static function forbidden(string $message = 'You do not have permission to view this page'): self
