@@ -146,6 +146,21 @@ final class DebugController extends AdminController
                 continue;
             }
 
+            // Only return exceptions and errors. The overlay
+            // exists to surface problems, not to display every
+            // log line that happens to carry a request_id.
+            // INFO lines like form.submitted are written for
+            // the audit file and are not shown in the browser.
+            //
+            // The check is textual: the level appears between
+            // the timestamp bracket and the message, in the
+            // shape '] EXCEPTION:' or '] ERROR:'.
+            if (!str_contains($line, '] EXCEPTION:')
+                && !str_contains($line, '] ERROR:')
+            ) {
+                continue;
+            }
+
             $matched[] = $line;
         }
 

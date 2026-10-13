@@ -527,20 +527,46 @@ Four sessions. Each ends with a commit.
   - Browser test: submit a form, verify honeypot,
     verify conditional logic, verify multi-step.
 
-### Session 4 - submissions admin, webhooks, close
+### Session 4 - submissions admin, notification, close
 
-  - AdminFormController::submissions and
-    submissions/{sid} methods.
+  - AdminFormController::submissions,
+    submissionDetail, submissionStatus,
+    submissionsBulk, submissionDelete, and
+    submissionsExport methods.
   - Submissions list view with filters, bulk actions,
     CSV export.
-  - Submission detail view.
-  - Domain event firing.
-  - NotificationRuleService integration.
-  - Webhook integration test.
-  - Browser test: receive a submission, filter,
-    export, mark spam, view detail.
+  - Submission detail view with status change,
+    internal notes, and delete.
+  - NotificationService::dispatch('form.submitted')
+    on every new submission. Rule-driven: an operator
+    adds a rule in the admin and the dispatch picks
+    the recipients.
+  - Structured log line on every submission
+    (Logger::info('form.submitted', [...])) so a
+    future event dispatcher can consume or replay the
+    stream.
+  - Browser test: list loads, filter works, status
+    and notes save, bulk actions apply, CSV export
+    downloads, log line appears.
   - Stage close: session file, STATUS, ROADMAP,
     ADMIN-GUIDE update.
+
+Deferred to 009.7:
+
+  - Domain event dispatcher. The codebase has no
+    general-purpose event bus. Building one is a
+    subsystem of its own.
+  - Webhook dispatch. The core_webhooks and
+    core_webhook_deliveries tables exist but nothing
+    writes to them. Building the dispatch path - HTTP
+    client, retry logic, signature verification - is
+    its own stage.
+
+Both deferrals are logged here so the plan reflects
+what actually shipped. The Session 4 notification
+call is the concrete integration the plan's bullets
+described; the "event" and "webhook" bullets assumed
+infrastructure the codebase does not have.
 
 ---
 

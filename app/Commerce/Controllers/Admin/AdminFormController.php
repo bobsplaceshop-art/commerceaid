@@ -6,6 +6,8 @@ namespace CorporateAid\Commerce\Controllers\Admin;
 use CorporateAid\Commerce\Exceptions\NewsletterException;
 use CorporateAid\Commerce\Repositories\FormFieldRepository;
 use CorporateAid\Commerce\Repositories\FormRepository;
+use CorporateAid\Commerce\Models\Form;
+use CorporateAid\Commerce\Models\FormSubmission;
 use CorporateAid\Commerce\Repositories\FormSubmissionRepository;
 use CorporateAid\Commerce\Services\FormService;
 use CorporateAid\Core\Auth;
@@ -436,6 +438,307 @@ final class AdminFormController extends AdminController
         }
 
         return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/edit#fields');
+    }
+
+    // =================================================================
+    // Submissions (Stage 009 Session 4)
+    // =================================================================
+
+    /**
+     * Submissions list for a form. Filters: status tab,
+     * search by email/name, date range. Pagination.
+     *
+     * @param array<string,string> $params
+     */
+    public function submissions(Request $request, array $params = []): Response
+    {
+        $formId = (int) ($params['id'] ?? 0);
+        if ($formId <= 0) {
+            return $this->fail('Invalid form reference.');
+        }
+
+        $forms = $this->container->get(FormRepository::class);
+        $form  = $forms->findById($formId);
+        if ($form === null) {
+            return $this->fail('Form not found.');
+        }
+
+        $repo = $this->container->get(FormSubmissionRepository::class);
+
+        $filter   = (string) $request->query('status', 'new');
+        if (!in_array($filter, array_merge(['all'], FormSubmissionRepository::STATUSES), true)) {
+            $filter = 'new';
+        }
+        $search   = trim((string) $request->query('q', ''));
+        $dateFrom = (string) $request->query('date_from', '');
+        $dateTo   = (string) $request->query('date_to', '');
+        $page     = max(1, (int) $request->query('page', 1));
+
+        $filters = [
+            'status'    => $filter === 'all' ? '' : $filter,
+            'search'    => $search,
+            'date_from' => $dateFrom,
+            'date_to'   => $dateTo,
+        ];
+
+        $result = $repo->paginate($formId, $filters, $page, 25);
+        $counts = $repo->countsForForm($formId);
+
+        return $this->render('admin.forms.submissions', [
+            'title'     => $form->name . ' — Submissions',
+            'form'      => $form,
+            'result'    => $result,
+            'filter'    => $filter,
+            'q'         => $search,
+            'dateFrom'  => $dateFrom,
+            'dateTo'    => $dateTo,
+            'counts'    => $counts,
+        ]);
+    }
+
+    /**
+     * Single submission detail.
+     *
+     * @param array<string,string> $params
+     */
+    public function submissionDetail(Request $request, array $params = []): Response
+    {
+        $formId = (int) ($params['id'] ?? 0);
+        $sid    = (int) ($params['sid'] ?? 0);
+        if ($formId <= 0 || $sid <= 0) {
+            return $this->fail('Invalid reference.');
+        }
+
+        $forms = $this->container->get(FormRepository::class);
+        $form  = $forms->findById($formId);
+        if ($form === null) {
+            return $this->fail('Form not found.');
+        }
+
+        $repo       = $this->container->get(FormSubmissionRepository::class);
+        $submission = $repo->findById($sid);
+        if ($submission === null || $submission->formId !== $formId) {
+            return $this->fail('Submission not found.');
+        }
+
+        $fields = $this->container->get(FormFieldRepository::class);
+
+        return $this->render('admin.forms.submission', [
+            'title'      => 'Submission #' . $submission->id,
+            'form'       => $form,
+            'submission' => $submission,
+            'fields'     => $fields->listForForm($formId),
+        ]);
+    }
+
+    /**
+     * Change one submission's status.
+     *
+     * @param array<string,string> $params
+     */
+    public function submissionStatus(Request $request, array $params = []): Response
+    {
+        $formId = (int) ($params['id'] ?? 0);
+        $sid    = (int) ($params['sid'] ?? 0);
+        if ($formId <= 0 || $sid <= 0) {
+            return $this->fail('Invalid reference.');
+        }
+
+        $status = (string) $request->input('status', '');
+        if (!in_array($status, FormSubmissionRepository::STATUSES, true)) {
+            $session = $this->container->get(Session::class);
+            $session->flash('error', 'Invalid status.');
+            return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/submissions/' . $sid);
+        }
+
+        $repo       = $this->container->get(FormSubmissionRepository::class);
+        $submission = $repo->findById($sid);
+        if ($submission === null || $submission->formId !== $formId) {
+            return $this->fail('Submission not found.');
+        }
+
+        $repo->updateStatus($sid, $status);
+
+        // The status form also carries a notes field. Saving
+        // both in one POST matches the merchant's flow: review
+        // the submission, set the status, leave a note, save.
+        $notes = (string) $request->input('notes', '');
+        if (trim($notes) !== (string) $submission->notes) {
+            $repo->updateNotes($sid, trim($notes));
+        }
+
+        $session = $this->container->get(Session::class);
+        $session->flash('success', 'Submission updated.');
+
+        return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/submissions/' . $sid);
+    }
+
+    /**
+     * Bulk action on multiple submissions. Accepts the
+     * action name and a list of ids from the list view's
+     * bulk bar.
+     *
+     * @param array<string,string> $params
+     */
+    public function submissionsBulk(Request $request, array $params = []): Response
+    {
+        $formId = (int) ($params['id'] ?? 0);
+        if ($formId <= 0) {
+            return $this->fail('Invalid form reference.');
+        }
+
+        $action = (string) $request->input('action', '');
+        $rawIds = $request->input('ids', []);
+        $ids    = is_array($rawIds) ? $rawIds : [];
+
+        $repo    = $this->container->get(FormSubmissionRepository::class);
+        $session = $this->container->get(Session::class);
+
+        if ($ids === []) {
+            $session->flash('error', 'No submissions selected.');
+            return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/submissions');
+        }
+
+        $affected = 0;
+        $verb     = 'updated';
+
+        switch ($action) {
+            case 'mark_new':
+                $affected = $repo->bulkUpdateStatus($ids, 'new');
+                break;
+            case 'mark_read':
+                $affected = $repo->bulkUpdateStatus($ids, 'read');
+                break;
+            case 'mark_spam':
+                $affected = $repo->bulkUpdateStatus($ids, 'spam');
+                break;
+            case 'archive':
+                $affected = $repo->bulkUpdateStatus($ids, 'archived');
+                break;
+            case 'delete':
+                $affected = $repo->bulkDelete($ids);
+                $verb     = 'deleted';
+                break;
+            default:
+                $session->flash('error', 'Unknown bulk action.');
+                return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/submissions');
+        }
+
+        $session->flash(
+            'success',
+            $affected . ' submission' . ($affected === 1 ? '' : 's') . ' ' . $verb . '.'
+        );
+
+        return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/submissions');
+    }
+
+    /**
+     * Delete one submission.
+     *
+     * @param array<string,string> $params
+     */
+    public function submissionDelete(Request $request, array $params = []): Response
+    {
+        $formId = (int) ($params['id'] ?? 0);
+        $sid    = (int) ($params['sid'] ?? 0);
+        if ($formId <= 0 || $sid <= 0) {
+            return $this->fail('Invalid reference.');
+        }
+
+        $repo       = $this->container->get(FormSubmissionRepository::class);
+        $submission = $repo->findById($sid);
+        if ($submission === null || $submission->formId !== $formId) {
+            return $this->fail('Submission not found.');
+        }
+
+        $repo->delete($sid);
+
+        $session = $this->container->get(Session::class);
+        $session->flash('success', 'Submission deleted.');
+
+        return Response::redirect('/commerce/ca-admin/forms/' . $formId . '/submissions');
+    }
+
+    /**
+     * CSV export of the current filtered set.
+     *
+     * @param array<string,string> $params
+     */
+    public function submissionsExport(Request $request, array $params = []): Response
+    {
+        $formId = (int) ($params['id'] ?? 0);
+        if ($formId <= 0) {
+            return $this->fail('Invalid form reference.');
+        }
+
+        $forms = $this->container->get(FormRepository::class);
+        $form  = $forms->findById($formId);
+        if ($form === null) {
+            return $this->fail('Form not found.');
+        }
+
+        $filter   = (string) $request->query('status', 'new');
+        if (!in_array($filter, array_merge(['all'], FormSubmissionRepository::STATUSES), true)) {
+            $filter = 'new';
+        }
+        $search   = trim((string) $request->query('q', ''));
+        $dateFrom = (string) $request->query('date_from', '');
+        $dateTo   = (string) $request->query('date_to', '');
+
+        $filters = [
+            'status'    => $filter === 'all' ? '' : $filter,
+            'search'    => $search,
+            'date_from' => $dateFrom,
+            'date_to'   => $dateTo,
+        ];
+
+        $repo        = $this->container->get(FormSubmissionRepository::class);
+        $fieldsRepo  = $this->container->get(FormFieldRepository::class);
+
+        $submissions = $repo->listForExport($formId, $filters, 10000);
+        $fields      = $fieldsRepo->listForForm($formId);
+
+        // Build the CSV. Header row: id, date, status,
+        // submitter email, submitter name, submitter IP, then
+        // one column per field (in sort order), then notes.
+        $header = ['id', 'submitted_at', 'status', 'submitter_email', 'submitter_name', 'submitter_ip'];
+        foreach ($fields as $f) {
+            $header[] = $f->label . ' (' . $f->fieldKey . ')';
+        }
+        $header[] = 'notes';
+
+        $escapeCsv = static function (?string $v): string {
+            $v = (string) $v;
+            if (strpbrk($v, ',"' . chr(10) . chr(13)) === false) {
+                return $v;
+            }
+            return '"' . str_replace('"', '""', $v) . '"';
+        };
+
+        $csv = implode(',', array_map($escapeCsv, $header)) . PHP_EOL;
+
+        foreach ($submissions as $s) {
+            $row = [
+                (string) $s->id,
+                (string) $s->createdAt,
+                $s->status,
+                (string) $s->submitterEmail,
+                (string) $s->submitterName,
+                (string) $s->submitterIp,
+            ];
+            foreach ($fields as $f) {
+                $row[] = $s->value($f->fieldKey);
+            }
+            $row[] = (string) $s->notes;
+            $csv .= implode(',', array_map($escapeCsv, $row)) . PHP_EOL;
+        }
+
+        $filename = 'form-' . $form->slug . '-submissions-' . date('Y-m-d') . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        return Response::text($csv);
     }
 
     // -----------------------------------------------------------------

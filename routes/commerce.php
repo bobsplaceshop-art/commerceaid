@@ -974,6 +974,45 @@ $router->post('/commerce/ca-admin/forms/{id}/fields/{fieldId}',
     [AdminFormController::class, 'fieldUpdate'],
     ['store', 'auth', 'csrf', 'permission:forms.manage']);
 
+// ---------------------------------------------------------------------
+// Admin forms: submissions (Stage 009 Session 4)
+// ---------------------------------------------------------------------
+//
+// Route ordering matters here. The export.csv path ends in a
+// literal segment that a {sid} wildcard would otherwise
+// capture. Registering export before the detail route means
+// /submissions/export.csv reaches the export handler and does
+// not get routed to submissionDetail with sid=0.
+//
+// Same reasoning applies to the bulk path, though the bulk
+// path is POST-only so it does not collide with the GET
+// detail route. The order below groups them by method for
+// readability.
+
+$router->get('/commerce/ca-admin/forms/{id}/submissions/export.csv',
+    [AdminFormController::class, 'submissionsExport'],
+    ['store', 'auth', 'permission:forms.submissions.view']);
+
+$router->get('/commerce/ca-admin/forms/{id}/submissions',
+    [AdminFormController::class, 'submissions'],
+    ['store', 'auth', 'permission:forms.submissions.view']);
+
+$router->post('/commerce/ca-admin/forms/{id}/submissions/bulk',
+    [AdminFormController::class, 'submissionsBulk'],
+    ['store', 'auth', 'csrf', 'permission:forms.submissions.manage']);
+
+$router->post('/commerce/ca-admin/forms/{id}/submissions/{sid}/status',
+    [AdminFormController::class, 'submissionStatus'],
+    ['store', 'auth', 'csrf', 'permission:forms.submissions.manage']);
+
+$router->post('/commerce/ca-admin/forms/{id}/submissions/{sid}/delete',
+    [AdminFormController::class, 'submissionDelete'],
+    ['store', 'auth', 'csrf', 'permission:forms.submissions.manage']);
+
+$router->get('/commerce/ca-admin/forms/{id}/submissions/{sid}',
+    [AdminFormController::class, 'submissionDetail'],
+    ['store', 'auth', 'permission:forms.submissions.view']);
+
 // =====================================================================
 // Developer debug endpoints (pipeline commit 5/5)
 // =====================================================================

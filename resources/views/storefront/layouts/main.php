@@ -403,44 +403,11 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
             return origError.apply(console, arguments);
         };
 
-        // Server-side exception fetch. The endpoint returns 404
-        // when app.debug is off, and on guest storefront
-        // requests it returns 404 as well (permission gate).
-        // Both cases are swallowed by the catch below.
-        var DEBUG_ENDPOINT = '/commerce/ca-admin/_debug/recent-errors';
-        var debugSince = Math.floor(Date.now() / 1000) - 60;
-
-        function pollDebugEndpoint() {
-            fetch(DEBUG_ENDPOINT + '?since=' + debugSince, {
-                headers: { 'Accept': 'application/json' },
-                credentials: 'same-origin'
-            })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!data || !data.lines || !data.lines.length) return;
-                debugSince = Math.floor(Date.now() / 1000);
-
-                data.lines.forEach(function (raw) {
-                    var idx = raw.indexOf('{');
-                    var detail = idx >= 0 ? raw.slice(idx) : raw;
-                    try {
-                        var parsed = JSON.parse(detail);
-                        var msg = (parsed.file || '?') + ':' + (parsed.line || '?') +
-                                  ' - ' + (parsed.trace || '').split('\n')[0];
-                        show('server', 'exception', msg);
-                    } catch (e) {
-                        show('server', 'exception', detail);
-                    }
-                });
-            })
-            .catch(function () { /* network error or guest session, ignore */ });
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', pollDebugEndpoint);
-        } else {
-            pollDebugEndpoint();
-        }
+        // The storefront overlay handles JavaScript errors only.
+        // Server-side exception polling is admin-only - the
+        // storefront is a customer surface and does not show
+        // developer tooling. The polling logic lives in the
+        // admin layout.
     })();
     </script>
     <?php endif; ?>

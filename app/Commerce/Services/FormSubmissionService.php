@@ -9,6 +9,8 @@ use CorporateAid\Commerce\Models\FormSubmission;
 use CorporateAid\Commerce\Repositories\FormFieldRepository;
 use CorporateAid\Commerce\Repositories\FormSubmissionRepository;
 use CorporateAid\Platform\CustomFields\InputTypeRegistry;
+use CorporateAid\Platform\Services\NotificationService;
+use CorporateAid\Platform\Support\Logger;
 
 /**
  * Form submission service. Stage 009 Session 3.
@@ -49,6 +51,7 @@ final class FormSubmissionService
     public function __construct(
         private readonly FormFieldRepository $fields,
         private readonly FormSubmissionRepository $submissions,
+        private readonly NotificationService $notifications,
     ) {
     }
 
@@ -345,17 +348,24 @@ final class FormSubmissionService
     }
 
     /**
-     * Fire the form.submitted domain event. Session 4 wires
-     * this to the platform's event dispatcher. Today it is
-     * deliberately a no-op.
+     * Record the form.submitted event in the application log.
+     * A full event dispatcher does not exist in the codebase
+     * yet - the webhook dispatch path is deferred to a future
+     * sub-stage (009.7). For now, the log line gives every
+     * submission a structured audit trail that a future
+     * dispatcher can consume or replay.
      *
      * @param array<string,string> $payload
      */
     private function fireSubmittedEvent(Form $form, int $submissionId, array $payload): void
     {
-        // TODO (009 Session 4): dispatch form.submitted with
-        // ['form_id' => $form->id, 'submission_id' => $submissionId,
-        //  'form_slug' => $form->slug, 'fields' => $payload].
+        Logger::info('form.submitted', [
+            'form_id'       => $form->id,
+            'form_slug'     => $form->slug,
+            'form_name'     => $form->name,
+            'submission_id' => $submissionId,
+            'field_count'   => count($payload),
+        ]);
     }
 
     /**
@@ -367,7 +377,42 @@ final class FormSubmissionService
      */
     private function notifyMerchant(Form $form, int $submissionId, array $payload): void
     {
-        // TODO (009 Session 4): if $form->notifyEmail is set,
-        // send a plain email with the submitted values.
+        // Dispatch a notification to whoever the store's
+        // configured rules say should receive form.submitted
+        // events. NotificationService is rule-driven: an
+        // operator adds a rule in the admin and the dispatch
+        // picks the right recipients. With no rules configured,
+        // dispatch is a no-op and the merchant sees nothing.
+        //
+        // The context carries enough for a rule to filter on:
+        // the form's id, slug, and name, plus the submission id
+        // for a follow-up link. The payload is not passed
+        // wholesale because the notification engine would then
+        // need to know each field's label. The merchant reads
+        // the payload from the submission detail page.
+        try {
+            $this->notifications->dispatch(
+                'form.submitted',
+                [
+                    'form_id'       => $form->id,
+                    'form_slug'     => $form->slug,
+                    'form_name'     => $form->name,
+                    'submission_id' => $submissionId,
+                    'submitter'     => $payload['email']
+                        ?? ($payload['name'] ?? 'anonymous'),
+                ],
+                'New form submission',
+                $form->name . ' received a new submission.',
+                '/commerce/ca-admin/forms/' . $form->id . '/submissions/' . $submissionId
+            );
+        } catch (\Throwable $e) {
+            // Never block a submission on a notification
+            // failure. Log the error and move on.
+            Logger::warning('form.submitted notification failed', [
+                'form_id'       => $form->id,
+                'submission_id' => $submissionId,
+                'error'         => $e->getMessage(),
+            ]);
+        }
     }
 }
