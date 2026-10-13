@@ -89,7 +89,30 @@ if (!in_array($serverTheme, ['dark', 'light', 'system'], true)) {
         <script src="<?= asset($script) ?>"></script>
     <?php endforeach; ?>
 
-    <?php if (function_exists('config') && config('app.debug')): ?>
+    <?php
+    // Two conditions for the dev overlay:
+    //
+    //   1. app.debug is on (production never renders it).
+    //   2. The session flag ra_debug_overlay is set. A
+    //      developer turns it on by visiting any admin URL
+    //      with ?ra-debug=1; ?ra-debug=0 turns it off. The
+    //      default is off, which means a merchant never sees
+    //      the overlay even if app.debug is accidentally on.
+    //
+    // The overlay is developer tooling. It must not appear
+    // for a customer. The logs screen at
+    // /commerce/ca-admin/settings/logs is the merchant-
+    // facing surface for the same data.
+    $__overlayOn = function_exists('config') && config('app.debug');
+    if ($__overlayOn) {
+        try {
+            $__overlayOn = (bool) ($_SESSION['ra_debug_overlay'] ?? false);
+        } catch (\Throwable) {
+            $__overlayOn = false;
+        }
+    }
+    ?>
+    <?php if ($__overlayOn): ?>
     <script>
     /* Dev-mode error overlay. Only renders when app.debug is on.
        Catches uncaught errors, unhandled promise rejections, and

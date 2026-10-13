@@ -334,6 +334,37 @@ final class App
     public function run(): void
     {
         $request = Request::capture();
+
+        // Dev overlay opt-in. A developer toggles the debug
+        // overlay by visiting any admin URL with ?ra-debug=1.
+        // It stays on for the browser session until
+        // ?ra-debug=0 turns it off.
+        //
+        // The opt-in is not a permission. It is a session
+        // flag. The overlay's data source
+        // (/commerce/ca-admin/_debug/recent-errors) still
+        // requires core.audit.view. A merchant who has never
+        // visited the query parameter never sees the overlay.
+        //
+        // Read through the Session class, not raw $_SESSION,
+        // so the write path goes through the same wrapper the
+        // rest of the framework uses.
+        $debugToggle = $request->query('ra-debug', null);
+        if ($debugToggle !== null) {
+            try {
+                $session = $this->container->get(\CorporateAid\Core\Session::class);
+                if ((string) $debugToggle === '1') {
+                    $session->set('ra_debug_overlay', true);
+                } elseif ((string) $debugToggle === '0') {
+                    $session->forget('ra_debug_overlay');
+                }
+            } catch (\Throwable) {
+                // Session not available in some boot contexts
+                // (very early errors). The overlay just does
+                // not turn on. Never block the request.
+            }
+        }
+
         $response = $this->router->dispatch($request);
         $response->send();
     }
@@ -360,8 +391,26 @@ final class App
             @header('X-Request-ID: ' . CA_REQUEST_ID);
         }
 
+        // Log level split. A 5xx is a server fault. It gets the
+        // full structured exception line with reference and
+        // trace. A 4xx is the router or a controller correctly
+        // refusing a request - a missing page, a bad token, a
+        // rate-limit rejection. Those are information-level
+        // events, not exceptions. Logging them at exception
+        // level pollutes the debug overlay and the exceptions
+        // feed with entries that a developer does not need to
+        // see. They stay in the app log at INFO level for the
+        // audit trail.
         try {
-            Logger::exception($e, $errorRef);
+            if ($status >= 500) {
+                Logger::exception($e, $errorRef);
+            } else {
+                Logger::info('http ' . $status, [
+                    'uri'    => (string) ($_SERVER['REQUEST_URI'] ?? ''),
+                    'method' => (string) ($_SERVER['REQUEST_METHOD'] ?? ''),
+                    'class'  => get_class($e),
+                ]);
+            }
         } catch (\Throwable) {
             // logging must never block error rendering
         }
