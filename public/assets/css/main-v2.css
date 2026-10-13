@@ -11,7 +11,34 @@
      8. Page components (band, tiles, cards, tables, badges, alerts)
      9. Forms and buttons
     10. Interactive components (toggle, pills, dropdowns)
-    11. Responsive rules (single mobile block at bottom)
+    11. Responsive layout system (Stage 014)
+
+   ------------------------------------------------------------
+   11. RESPONSIVE LAYOUT SYSTEM (Stage 014)
+   ------------------------------------------------------------
+   Four breakpoints govern every responsive rule in this
+   file and in every storefront stylesheet. Named once here,
+   referenced by pixel value in each @media block.
+
+     Desktop        >= 1200px    Full layout. Sidebar visible.
+     Tablet         900-1199px   Sidebar persistent. Tables show
+                                 all columns. Filter bars inline.
+     Mobile         640-899px    Sidebar becomes a drawer. Tables
+                                 use their declared treatment.
+                                 Filter bars collapse.
+     Small mobile   < 640px      Single column. Stacked cards.
+                                 Larger touch targets (44px min).
+
+   Two boundaries already existed in the codebase (900px for
+   the admin mobile boundary, 640px for small mobile) and map
+   directly to the Tablet/Mobile and Mobile/Small boundaries.
+   The 1200px boundary is new; it marks where the layout starts
+   compressing on smaller laptops.
+
+   Components do not invent their own media queries. They use
+   the shared rules in section 11. A view declares its
+   treatment via a data attribute (see the list-table rules)
+   and inherits the responsive behaviour for free.
    ============================================================ */
 
 
@@ -1659,5 +1686,351 @@ html[data-theme="light"] .ra-table-wrap {
     .ra-sticky-actions {
         left: 0;
         padding: 1rem;
+    }
+}
+
+
+
+/* ============================================================
+   11. RESPONSIVE LAYOUT SYSTEM (Stage 014 Session 1)
+   ============================================================
+   Every rule below is additive. None of them activate until
+   the views declare their treatment via the appropriate
+   class or data attribute. Session 1 writes the rules;
+   Session 2 assigns the attributes to the actual tables.
+
+   The breakpoints named in the file header govern every
+   @media block in this section.
+   ============================================================ */
+
+
+/* ------------------------------------------------------------
+   List tables - Treatment A (horizontal scroll)
+   ------------------------------------------------------------
+   For tables with 8 columns or fewer, or with narrow
+   columns and short content. At mobile and small widths the
+   table sits inside an overflow-x wrapper with a min-width
+   so it does not compress. The user scrolls sideways.
+
+   The view declares this treatment by adding
+   data-responsive="scroll" to the <table> element.
+   ------------------------------------------------------------ */
+
+[data-responsive="scroll"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Fade the right edge to signal more content is off-screen.
+       The background stays on the wrapper; the table scrolls
+       over it. */
+    background-image: linear-gradient(
+        to left,
+        rgba(15, 23, 42, 0.06),
+        rgba(15, 23, 42, 0)
+    );
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: 24px 100%;
+    background-attachment: local;
+}
+
+[data-responsive="scroll"] > table {
+    min-width: 720px;
+}
+
+@media (max-width: 899px) {
+    [data-responsive="scroll"] > table {
+        min-width: 640px;
+    }
+}
+
+
+/* ------------------------------------------------------------
+   List tables - Treatment B (stacked cards)
+   ------------------------------------------------------------
+   For tables with more than 8 columns, or with long content
+   that would be unreadable in a horizontal scroll. Below the
+   small-mobile boundary each row becomes a card.
+
+   Each <td> shows its label from the corresponding <th>'s
+   data-label attribute. The label appears above the value
+   in a small uppercase style.
+
+   The view declares this treatment by adding
+   data-responsive="cards" to the <table> element, and
+   data-label="..." to each <th>.
+   ------------------------------------------------------------ */
+
+@media (max-width: 639px) {
+
+    [data-responsive="cards"] {
+        display: block;
+        width: 100%;
+    }
+
+    [data-responsive="cards"] thead {
+        /* The header row is hidden. The label is transferred
+           to each cell via the td::before pseudo-element. */
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+    }
+
+    [data-responsive="cards"] tbody {
+        display: block;
+        width: 100%;
+    }
+
+    [data-responsive="cards"] tr {
+        display: block;
+        width: 100%;
+        padding: .85rem 1rem;
+        margin-bottom: .75rem;
+        background: var(--ra-surface, #ffffff);
+        border: 1px solid var(--ra-border, #e5e9f2);
+        border-radius: 10px;
+    }
+
+    [data-responsive="cards"] td {
+        display: block;
+        width: 100%;
+        padding: .35rem 0;
+        text-align: left;
+        border: none;
+    }
+
+    [data-responsive="cards"] td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: .7rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--ra-muted, #94a3b8);
+        margin-bottom: .15rem;
+    }
+
+    [data-responsive="cards"] td:last-child {
+        /* The actions cell sits below the values as a row of
+           buttons. The cell's own data-label is usually empty
+           or "Actions"; suppress the pseudo-label here. */
+        padding-top: .75rem;
+        margin-top: .5rem;
+        border-top: 1px solid var(--ra-border, #e5e9f2);
+        text-align: left;
+    }
+
+    [data-responsive="cards"] td:last-child::before {
+        content: none;
+    }
+}
+
+
+/* ------------------------------------------------------------
+   Card grids
+   ------------------------------------------------------------
+   Explicit per-breakpoint column counts. Replaces the
+   auto-fit/minmax idiom that breaks below its minimum.
+   ------------------------------------------------------------ */
+
+.ra-grid-2 {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.ra-grid-3 {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.ra-grid-4 {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1199px) {
+    .ra-grid-4 { grid-template-columns: repeat(3, 1fr); }
+    .ra-grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 899px) {
+    .ra-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .ra-grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .ra-grid-2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 639px) {
+    .ra-grid-4,
+    .ra-grid-3,
+    .ra-grid-2 { grid-template-columns: 1fr; }
+}
+
+
+/* ------------------------------------------------------------
+   Filter bars
+   ------------------------------------------------------------
+   Inline row of controls on desktop and tablet. Collapsible
+   on mobile and small. The toggle button is hidden by
+   default; below the mobile boundary it becomes visible and
+   the filter row hides until the toggle is pressed.
+   ------------------------------------------------------------ */
+
+.ra-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: flex-end;
+}
+
+.ra-filter-toggle {
+    display: none;
+    align-items: center;
+    gap: .35rem;
+}
+
+@media (max-width: 899px) {
+    .ra-filter-bar {
+        display: none;
+    }
+    .ra-filter-bar.is-open {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: .75rem;
+    }
+    .ra-filter-bar.is-open > * {
+        width: 100%;
+    }
+    .ra-filter-toggle {
+        display: inline-flex;
+    }
+}
+
+
+/* ------------------------------------------------------------
+   Sticky action bars
+   ------------------------------------------------------------
+   The base rules live further up this file. Below the small-
+   mobile boundary the inner panel stacks the buttons full-
+   width so the tap target is the whole row.
+   ------------------------------------------------------------ */
+
+@media (max-width: 639px) {
+    .ra-sticky-actions-inner {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+    .ra-sticky-actions-inner .ra-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+
+/* ------------------------------------------------------------
+   Modals
+   ------------------------------------------------------------
+   Centered on desktop and tablet. Bottom sheet on mobile.
+   Full-screen on small mobile. The panel is a child of
+   .ra-modal, which is a flex container with align-items and
+   justify-content set to center. Overriding align-self on
+   the panel anchors it to the bottom edge.
+   ------------------------------------------------------------ */
+
+@media (max-width: 899px) {
+    .ra-modal {
+        padding: 0 !important;
+        align-items: flex-end !important;
+    }
+    .ra-modal-panel {
+        align-self: flex-end;
+        max-width: 100%;
+        width: 100%;
+        max-height: 92vh;
+        border-radius: 14px 14px 0 0;
+    }
+}
+
+@media (max-width: 639px) {
+    .ra-modal {
+        align-items: stretch !important;
+    }
+    .ra-modal-panel {
+        max-height: 100vh;
+        height: 100vh;
+        border-radius: 0;
+    }
+}
+
+
+/* ------------------------------------------------------------
+   Sidebar
+   ------------------------------------------------------------
+   Already handled at the 900px boundary above: fixed on
+   desktop and tablet, off-canvas drawer on mobile and small.
+   No additional rules needed.
+   ------------------------------------------------------------ */
+
+
+/* ------------------------------------------------------------
+   Page bands
+   ------------------------------------------------------------
+   The band uses a negative-margin trick to bleed to the shell
+   edges on desktop. On mobile and small that trick works
+   against the full-width layout; remove it.
+   ------------------------------------------------------------ */
+
+@media (max-width: 899px) {
+    .ra-page-band {
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+
+/* ------------------------------------------------------------
+   Forms
+   ------------------------------------------------------------
+   Two-column layout on desktop and tablet for paired fields.
+   Single column on mobile and small. Inputs meet the 44px
+   minimum tap target below the small-mobile boundary.
+   ------------------------------------------------------------ */
+
+.ra-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.ra-form-grid > .ra-form-grid-full {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 639px) {
+    .ra-form-grid {
+        grid-template-columns: 1fr;
+    }
+    .ra-form-grid > * {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 639px) {
+    .form-control,
+    .form-select,
+    .ra-input {
+        min-height: 44px;
+    }
+    .ra-btn {
+        min-height: 44px;
     }
 }
