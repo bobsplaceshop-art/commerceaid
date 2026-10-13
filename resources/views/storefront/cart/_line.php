@@ -6,8 +6,9 @@
  *   $line  CartLineItem  snapshot + live state, with warnings
  *
  * The line renders:
- *   - Product image placeholder (real images land with the media
- *     library; today a decorative icon)
+ *   - Product image, via product_picture_url(). Falls back to a
+ *     local placeholder SVG when the product is missing or has
+ *     no uploaded image.
  *   - Product name + variant label
  *   - Warning badge if priceChanged, outOfStock, or productRemoved
  *   - Quantity input (form POST to /cart/update)
@@ -52,8 +53,11 @@ if ($line->productRemoved) {
      data-product-id="<?= (int) $item->productId ?>"
      data-variant-id="<?= (int) $item->variantId ?>">
 
-    <div class="sf-cart-line-media" aria-hidden="true">
-        <i class="bi bi-image"></i>
+    <div class="sf-cart-line-media">
+        <img src="<?= e(product_picture_url($line->liveProduct, 'card')) ?>"
+             alt=""
+             loading="lazy"
+             decoding="async">
     </div>
 
     <div class="sf-cart-line-info">

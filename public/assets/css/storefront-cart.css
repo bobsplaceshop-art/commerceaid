@@ -89,6 +89,13 @@
     flex-shrink: 0;
 }
 
+.sf-cart-line-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
 .sf-cart-line-info {
     grid-area: info;
     min-width: 0;
