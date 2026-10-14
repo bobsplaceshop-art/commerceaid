@@ -56,12 +56,17 @@ $checkers = [
     'css' => [
         'label' => 'CSS structural integrity',
         'script' => 'bin/check-css.php',
-        'description' => 'brace balance, declaration shape, no inline @media in views',
+        'description' => 'brace balance, declaration shape',
     ],
     'html' => [
         'label' => 'HTML structural integrity',
         'script' => 'bin/check-html.php',
         'description' => 'nested forms, modal-in-form includes, data-* escaping',
+    ],
+    'responsive' => [
+        'label' => 'Responsive layout contract',
+        'script' => 'bin/check-responsive.php',
+        'description' => 'inline @media in views, hardcoded widths, unmarked tables',
     ],
 ];
 

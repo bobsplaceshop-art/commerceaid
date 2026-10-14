@@ -16,9 +16,7 @@ declare(strict_types=1);
  *      (unless it is the last declaration before }) ends
  *      with a semicolon.
  *   3. Every @media/@supports/etc block has balanced
- *      braces and does not appear inside a view's inline
- *      style block (Stage 014 rule: media queries belong
- *      in the shared stylesheets).
+ *      braces.
  *
  * Level 2 is not a full CSS parser. It does not verify
  * property names or values. The browser silently ignores
@@ -202,14 +200,6 @@ function validate_css(string $css, int $baseLine): array
         }
 
         $depth += $opens - $closes;
-    }
-
-    // --- Pass 3: media query presence in inline styles ---
-    if (preg_match('/@media\b/', $css)) {
-        $errors[] = [
-            'line'    => $baseLine,
-            'message' => "@media block in inline <style> (Stage 014 rule: media queries belong in shared stylesheets)",
-        ];
     }
 
     return $errors;
