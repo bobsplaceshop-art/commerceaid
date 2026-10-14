@@ -365,16 +365,30 @@ the Setup hub.
 
 ---
 
-## Current Focus - Stage 014 Sessions 1-5 complete
+## Current Focus - Stage 010 Session 1 complete
 
-**Stage 014 Sessions 1 through 5 are complete.** The
-admin panel and the storefront are responsive at every
-width the platform targets: 1200+, 900-1199, 640-899,
-below 640. The responsive contract is enforced by a
-fourth prevenger checker. The storefront audit tail
-(product detail at 900, checkout at 900, error pages,
-PWA offline page, dark theme) remains open. Stage 009
-closed on 2026-10-13 (db49f0c).
+**Stage 010 (Payments Deep) has opened.** Session 1
+shipped the payment infrastructure on 2026-10-14
+(commit 0f9d57f): the PaymentProvider interface, an
+HTTP client, the registry, the PaymentMethodRepository,
+three tables (commerce_store_payment_methods,
+commerce_payment_refunds, commerce_webhook_events),
+and eight provider credential settings.
+
+**Stage 014 closed on 2026-10-14** (tag
+`stage-014-complete`). The tail walk and the offline
+page theme fix shipped in commit 6515e85. The
+session file `2026-10-14-2.md` records the closure.
+
+**Stage 010 Session 2 opens next:** the refund
+wrapper. `PaymentRefundService` consumes
+`ReturnRequestService::processRefund()` and dispatches
+the provider call post-commit. The
+`commerce_payment_refunds` table records every
+attempt. The retry cron lands with it.
+
+The Stage 014 Session 5 and Session 3 tail paragraphs
+below are historical and remain for the record.
 
 **Session 5 shipped** (2bec764): the enforcement
 script.
@@ -547,15 +561,15 @@ open with a 19 June 2026 deadline.
 
 **Next 3 stages:**
 
-  - **014 tail** (next): The storefront audit
-    residual. Product detail at 900, checkout at
-    900, error pages at four widths, PWA offline
-    page, dark theme across the storefront. Then
-    Stage 014 can be tagged `stage-014-complete`.
-  - **010**: Payments (Deep). Wires refunds from
-    the returns workflow to the payment provider.
-    Consumes ReturnRequestService::processRefund()
-    from 008H Session 3.
+  - **010 Session 2** (next): the refund wrapper.
+    PaymentRefundService consumes
+    ReturnRequestService::processRefund() and
+    dispatches the provider refund post-commit.
+    PaymentRefundRepository, RefundResult,
+    bin/retry-refunds.php, and the refund-modal
+    note all land in this session.
+  - **010 Sessions 3-5**: Stripe, PayPal, and the
+    admin configuration tab. Each is one session.
   - **Responsive render harness** (backlog):
     Chrome headless via CDP. Iterates every route
     at four viewports and checks for horizontal

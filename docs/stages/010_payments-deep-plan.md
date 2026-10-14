@@ -805,4 +805,31 @@ Session 1 open.
 
 ## Post-session updates
 
-(none yet)
+### Session 1 close (2026-10-14)
+
+The PaymentProviderRegistry shipped with a
+runtime-built provider map rather than an empty
+class const. A statically empty const is reported
+by PHPStan at level 8 as dead code at every read
+site: the null-coalesce on a known-empty array,
+the guard after it, the foreach over it. The
+runtime method `providerMap()` keeps the plan's
+intent (nothing resolves in Session 1) while
+satisfying level 8 without a suppression and
+without a provider class stub.
+
+The interface, the HTTP client, the repository,
+the three migrations, and the settings entries
+shipped exactly as the plan named them.
+
+Session 3 and Session 4 each add one entry to
+`providerMap()` when the Stripe and PayPal
+provider classes land. The map's keys, the class
+namespace, and the resolve path are fixed; the
+entries are the only thing that changes.
+
+The five-round PHPStan iteration that produced
+this shape is recorded in the Session 1 file
+(`docs/sessions/2026-10-14-3.md`) so the next
+provider sub-stage starts from the final shape,
+not from a fresh attempt at the const.

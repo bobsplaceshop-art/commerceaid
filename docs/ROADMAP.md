@@ -155,28 +155,33 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-No stage in progress.
+Stage 010 (Payments Deep) is open. Session 1
+shipped on 2026-10-14 (commit 0f9d57f) with the
+payment infrastructure: the PaymentProvider
+interface, an HTTP client, the registry, the
+PaymentMethodRepository, three tables
+(commerce_store_payment_methods,
+commerce_payment_refunds, commerce_webhook_events),
+and eight provider credential settings.
+
+Session 2 opens next: the refund wrapper. Sessions
+3 and 4 ship Stripe and PayPal end to end. Session
+5 ships the admin configuration tab. Session 6
+writes the compliance entries. Session 7 closes
+the stage.
+
+Stage 014 (Responsive Layout System) closed
+2026-10-14 (tag stage-014-complete). The tail walk
+and the offline page theme fix shipped at commit
+6515e85. Session files 2026-10-14.md and
+2026-10-14-2.md record the closure.
 
 Stage 009 (Forms & Submissions) closed 2026-10-13.
-All four code sessions shipped. The forms public
-surface is live at /forms/{slug}. The submissions
-admin is live at /forms/{id}/submissions with
-filters, bulk actions, CSV export, status change
-with notes, and NotificationService dispatch on
-every new submission.
-
-Two subsystems deferred to a future sub-stage 009.7:
-a general-purpose event dispatcher, and the webhook
-callout. The codebase has no event bus. The working
-dispatch path is NotificationService with its rule-
-based recipient resolver.
-
-The next stage to open is 014 (Responsive Layout
-System), whose five sessions begin with the
-breakpoint and component treatment matrix rules.
-Once 014 Session 1 lands, the prevenger flips the
-36 data-responsive warnings to hard errors and every
-table carries a declared treatment type.
+Two subsystems were deferred to a future sub-stage
+009.7: a general-purpose event dispatcher, and the
+webhook callout. The codebase has no event bus.
+The working dispatch path is NotificationService
+with its rule-based recipient resolver.
 
 ## Planned Stages
 
