@@ -523,11 +523,11 @@ products/_tab_basic.php, setup/payments.php. Deferred
 to Session 5 alongside the enforcement script that
 will flag the same pattern.
 
-**Session 4 opens next.** The storefront audit. Home,
+**Session 4 shipped.** The storefront audit. Home,
 catalog, category, product detail, cart, checkout,
 account, plus the standalone error pages and the PWA
 offline page. Test at 375, 768, 1024, 1440 in dark
-and light. Session 4 shipped five storefront fixes.
+and light. Five storefront fixes.
 
 **Session 5 shipped.** `bin/check-responsive.php`
 is a fourth prevenger checker. Three rules:
