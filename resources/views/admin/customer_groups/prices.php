@@ -137,7 +137,7 @@ $fmtPrice = function (?float $v): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -168,7 +168,7 @@ $fmtPrice = function (?float $v): string {
                         }
                         ?>
                         <tr>
-                            <td>
+                            <td data-label="Product" data-col="full">
                                 <a href="/commerce/ca-admin/products/<?= (int) $o['product_id'] ?>/edit"
                                    class="text-decoration-none">
                                     <?= e($o['product_name']) ?>
@@ -177,15 +177,15 @@ $fmtPrice = function (?float $v): string {
                                     <code class="muted small ms-2"><?= e($o['product_sku']) ?></code>
                                 <?php endif; ?>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Variant" data-col="half" class="ra-hide-sm">
                                 <?php if (!empty($o['variant_summary'])): ?>
                                     <span class="muted small"><?= e($o['variant_summary']) ?></span>
                                 <?php else: ?>
                                     <span class="muted small">&mdash;</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end muted"><?= $fmtPrice($basePrice) ?></td>
-                            <td class="text-end">
+                            <td data-label="Base price" data-col="half" class="text-end muted"><?= $fmtPrice($basePrice) ?></td>
+                            <td data-label="Group price" data-col="half" class="text-end">
                                 <strong style="color:<?= $discountPct > 0 ? '#22c55e' : 'inherit' ?>">
                                     <?= $fmtPrice($groupPrice) ?>
                                 </strong>
@@ -193,17 +193,17 @@ $fmtPrice = function (?float $v): string {
                                     <div class="muted" style="font-size:.72rem;">-<?= $discountPct ?>%</div>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end muted ra-hide-sm">
+                            <td data-label="Compare-at" data-col="half" class="text-end muted ra-hide-sm">
                                 <?= $fmtPrice($o['compare_at_price'] !== null ? (float) $o['compare_at_price'] : null) ?>
                             </td>
-                            <td>
+                            <td data-label="Tier" data-col="half">
                                 <?php if ($tierLabel !== '—'): ?>
                                     <span class="ra-badge ra-badge-muted"><?= e($tierLabel) ?></span>
                                 <?php else: ?>
                                     <span class="muted small">All qty</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Actions" data-col="full" class="text-end">
                                 <form method="POST"
                                       action="/commerce/ca-admin/customer-groups/<?= $groupId ?>/prices/<?= (int) $o['id'] ?>/delete"
                                       class="d-inline"

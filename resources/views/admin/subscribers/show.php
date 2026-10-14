@@ -117,7 +117,7 @@ $badgeClass = function (string $variant): string {
         <?php if (empty($events)): ?>
             <p class="muted mb-0">No events recorded.</p>
         <?php else: ?>
-            <div class="ra-table-responsive-wrap" data-responsive="scroll">
+            <div class="ra-table-responsive-wrap" data-responsive="cards">
                 <table class="ra-table">
                     <thead>
                         <tr>
@@ -129,13 +129,13 @@ $badgeClass = function (string $variant): string {
                     <tbody>
                         <?php foreach ($events as $e): ?>
                             <tr>
-                                <td class="muted small"><?= e($fmtDateTime($e->createdAt)) ?></td>
-                                <td>
+                                <td data-label="When" data-col="half" class="muted small"><?= e($fmtDateTime($e->createdAt)) ?></td>
+                                <td data-label="Event" data-col="half">
                                     <span class="<?= e($badgeClass($e->eventBadgeVariant())) ?>">
                                         <?= e($e->eventLabel()) ?>
                                     </span>
                                 </td>
-                                <td class="muted small">
+                                <td data-label="Detail" data-col="full" class="muted small">
                                     <?php if ($e->eventData !== null && $e->eventData !== []): ?>
                                         <?= e(json_encode($e->eventData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '') ?>
                                     <?php else: ?>

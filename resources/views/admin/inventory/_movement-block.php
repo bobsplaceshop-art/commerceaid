@@ -57,7 +57,7 @@ $movementsUrl = '/commerce/ca-admin/inventory/movements?q='
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -80,7 +80,7 @@ $movementsUrl = '/commerce/ca-admin/inventory/movements?q='
                         $ts         = $createdAt !== '' ? strtotime($createdAt) : time();
                         ?>
                         <tr>
-                            <td>
+                            <td data-label="When" data-col="half">
                                 <span class="muted small">
                                     <?= e(date('M j, Y', $ts)) ?>
                                 </span>
@@ -88,19 +88,19 @@ $movementsUrl = '/commerce/ca-admin/inventory/movements?q='
                                     <?= e(date('H:i', $ts)) ?>
                                 </div>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Variant" data-col="half" class="ra-hide-sm">
                                 <?php if (!empty($m['variant_summary'])): ?>
                                     <span class="muted small"><?= e($m['variant_summary']) ?></span>
                                 <?php else: ?>
                                     <span class="muted small">&mdash;</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?= $typeBadge((string) $m['movement_type']) ?></td>
-                            <td class="text-end">
+                            <td data-label="Type" data-col="half"><?= $typeBadge((string) $m['movement_type']) ?></td>
+                            <td data-label="Change" data-col="half" class="text-end">
                                 <strong style="color:<?= $deltaColor ?>"><?= e($deltaText) ?></strong>
                             </td>
-                            <td class="text-end muted ra-hide-sm"><?= (int) $m['quantity_after'] ?></td>
-                            <td>
+                            <td data-label="After" data-col="half" class="text-end muted ra-hide-sm"><?= (int) $m['quantity_after'] ?></td>
+                            <td data-label="Reason" data-col="full">
                                 <span class="small"><?= e($m['reason'] ?? '—') ?></span>
                                 <?php if (!empty($m['reference_type']) && !empty($m['reference_id'])): ?>
                                     <div class="muted" style="font-size:.72rem;">
@@ -108,7 +108,7 @@ $movementsUrl = '/commerce/ca-admin/inventory/movements?q='
                                     </div>
                                 <?php endif; ?>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Actor" data-col="half" class="ra-hide-sm">
                                 <span class="small"><?= e($m['actor_name'] ?? 'System') ?></span>
                             </td>
                         </tr>

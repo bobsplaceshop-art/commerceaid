@@ -95,7 +95,7 @@ $typeLabel    = $isVariable
         <?= csrf_field() ?>
 
         <div class="ra-card">
-            <div class="ra-table-responsive-wrap" data-responsive="scroll">
+            <div class="ra-table-responsive-wrap" data-responsive="cards">
                 <table class="ra-table">
                     <thead>
                         <tr>

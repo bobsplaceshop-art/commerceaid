@@ -274,7 +274,7 @@ $fmtDateTime = function (?string $dt): string {
 <div class="ra-card mb-4">
     <div class="ra-card-body">
         <h2 class="h6 mb-3">Items</h2>
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -287,7 +287,7 @@ $fmtDateTime = function (?string $dt): string {
                 <tbody>
                     <?php foreach ($items as $item): ?>
                         <tr>
-                            <td>
+                            <td data-label="Product" data-col="full">
                                 <div><?= e($item->productName) ?></div>
                                 <?php if ($item->variantLabel !== null && $item->variantLabel !== ''): ?>
                                     <div class="muted small"><?= e($item->variantLabel) ?></div>
@@ -296,7 +296,7 @@ $fmtDateTime = function (?string $dt): string {
                                     <div class="muted small">SKU <code><?= e($item->sku) ?></code></div>
                                 <?php endif; ?>
                             </td>
-                            <td style="text-align:right;">
+                            <td data-label="Qty" data-col="half" style="text-align:right;">
                                 <?= (int) $item->quantity ?>
                                 <?php if ($item->returnedQuantity > 0): ?>
                                     <div class="muted small">
@@ -304,10 +304,10 @@ $fmtDateTime = function (?string $dt): string {
                                     </div>
                                 <?php endif; ?>
                             </td>
-                            <td style="text-align:right;">
+                            <td data-label="Unit price" data-col="half" style="text-align:right;">
                                 <?= e(number_format($item->unitPrice, 2)) ?> <?= e($order->currencyCode) ?>
                             </td>
-                            <td style="text-align:right;">
+                            <td data-label="Line total" data-col="half" style="text-align:right;">
                                 <?= e(number_format($item->lineTotal, 2)) ?> <?= e($order->currencyCode) ?>
                             </td>
                         </tr>

@@ -242,7 +242,7 @@ $currency   = $order !== null ? $order->currencyCode : 'EUR';
         <?php if (empty($items)): ?>
             <p class="muted mb-0">No line items on this request.</p>
         <?php else: ?>
-            <div class="ra-table-responsive-wrap" data-responsive="scroll">
+            <div class="ra-table-responsive-wrap" data-responsive="cards">
                 <table class="ra-table">
                     <thead>
                         <tr>
@@ -256,7 +256,7 @@ $currency   = $order !== null ? $order->currencyCode : 'EUR';
                         <?php foreach ($items as $line): ?>
                             <?php $oi = $orderItems[$line->orderItemId] ?? null; ?>
                             <tr>
-                                <td>
+                                <td data-label="Product" data-col="full">
                                     <?php if ($oi !== null): ?>
                                         <div><?= e($oi->productName) ?></div>
                                         <?php if ($oi->variantLabel !== null && $oi->variantLabel !== ''): ?>
@@ -269,11 +269,11 @@ $currency   = $order !== null ? $order->currencyCode : 'EUR';
                                         <span class="muted">Order line #<?= (int) $line->orderItemId ?> (unavailable)</span>
                                     <?php endif; ?>
                                 </td>
-                                <td style="text-align:right;"><?= (int) $line->quantity ?></td>
-                                <td style="text-align:right;">
+                                <td data-label="Requested" data-col="half" style="text-align:right;"><?= (int) $line->quantity ?></td>
+                                <td data-label="Unit refund" data-col="half" style="text-align:right;">
                                     <?= e(number_format($line->unitRefund, 2)) ?> <?= e($currency) ?>
                                 </td>
-                                <td style="text-align:right;">
+                                <td data-label="Line refund" data-col="half" style="text-align:right;">
                                     <?= e(number_format($line->lineRefund, 2)) ?> <?= e($currency) ?>
                                 </td>
                             </tr>

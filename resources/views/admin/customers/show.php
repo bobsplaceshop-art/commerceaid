@@ -306,7 +306,7 @@ $fmtDate = function (?string $dt): string {
         <?php if (empty($orders)): ?>
             <p class="muted mb-0">This customer has not placed any orders.</p>
         <?php else: ?>
-            <div class="ra-table-responsive-wrap" data-responsive="scroll">
+            <div class="ra-table-responsive-wrap" data-responsive="cards">
                 <table class="ra-table">
                     <thead>
                         <tr>
@@ -320,23 +320,23 @@ $fmtDate = function (?string $dt): string {
                     <tbody>
                         <?php foreach ($orders as $o): ?>
                             <tr>
-                                <td>
+                                <td data-label="Order" data-col="full">
                                     <a href="/commerce/ca-admin/orders/<?= (int) $o->id ?>"
                                        class="text-decoration-none" style="font-weight:600;">
                                         <?= e($o->orderNumber) ?>
                                     </a>
                                 </td>
-                                <td class="ra-hide-sm muted small"><?= e($fmtDate($o->placedAt)) ?></td>
-                                <td style="text-align:right;">
+                                <td data-label="Date" data-col="half" class="ra-hide-sm muted small"><?= e($fmtDate($o->placedAt)) ?></td>
+                                <td data-label="Total" data-col="half" style="text-align:right;">
                                     <?= e(number_format($o->grandTotal, 2)) ?>
                                     <span class="muted small"><?= e($o->currencyCode) ?></span>
                                 </td>
-                                <td>
+                                <td data-label="Status" data-col="half">
                                     <span class="ra-badge ra-badge-muted">
                                         <?= e($statusLabels[$o->status] ?? ucfirst(str_replace('_', ' ', $o->status))) ?>
                                     </span>
                                 </td>
-                                <td class="text-end">
+                                <td data-label="Actions" data-col="full" class="text-end">
                                     <a href="/commerce/ca-admin/orders/<?= (int) $o->id ?>"
                                        class="ra-btn ra-btn-outline ra-btn-sm">View</a>
                                 </td>

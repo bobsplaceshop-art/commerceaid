@@ -306,7 +306,7 @@ $fmtDateTime = function (?string $dt): string {
             <h3 class="h6 mb-0">Redemption history</h3>
         </div>
         <div class="ra-card-body">
-            <div class="ra-table-responsive-wrap" data-responsive="scroll">
+            <div class="ra-table-responsive-wrap" data-responsive="cards">
                 <table class="ra-table">
                     <thead>
                         <tr>
@@ -332,8 +332,8 @@ $fmtDateTime = function (?string $dt): string {
                             if ($displayName === '') $displayName = 'Guest';
                             ?>
                             <tr>
-                                <td class="muted small"><?= e($fmtDateTime($r['redeemed_at'] ?? null)) ?></td>
-                                <td class="ra-hide-sm">
+                                <td data-label="Date" data-col="half" class="muted small"><?= e($fmtDateTime($r['redeemed_at'] ?? null)) ?></td>
+                                <td data-label="Order" data-col="half" class="ra-hide-sm">
                                     <?php if ($order !== ''): ?>
                                         <a href="/commerce/ca-admin/orders/<?= (int) ($r['order_id'] ?? 0) ?>"
                                            class="text-decoration-none">
@@ -343,8 +343,8 @@ $fmtDateTime = function (?string $dt): string {
                                         —
                                     <?php endif; ?>
                                 </td>
-                                <td class="ra-hide-sm"><?= e($displayName) ?></td>
-                                <td class="text-end">
+                                <td data-label="Customer" data-col="half" class="ra-hide-sm"><?= e($displayName) ?></td>
+                                <td data-label="Discount" data-col="half" class="text-end">
                                     <?= e(number_format((float) ($r['amount'] ?? 0), 2)) ?>
                                 </td>
                             </tr>

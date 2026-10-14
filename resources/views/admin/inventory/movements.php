@@ -132,7 +132,7 @@ $typeBadge = function (string $type): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
                 <table class="ra-table">
             <thead>
                 <tr>
@@ -154,7 +154,7 @@ $typeBadge = function (string $type): string {
                     $deltaText = ($delta > 0 ? '+' : '') . $delta;
                     ?>
                     <tr>
-                        <td>
+                        <td data-label="When" data-col="half">
                             <span class="muted small">
                                 <?= e(date('M j, Y', strtotime($m['created_at']))) ?>
                             </span>
@@ -162,25 +162,25 @@ $typeBadge = function (string $type): string {
                                 <?= e(date('H:i', strtotime($m['created_at']))) ?>
                             </div>
                         </td>
-                        <td>
+                        <td data-label="Product" data-col="half">
                             <a href="/commerce/ca-admin/products/<?= (int) $m['product_id'] ?>/edit"
                                class="text-decoration-none">
                                 <?= e($m['product_name']) ?>
                             </a>
                         </td>
-                        <td>
+                        <td data-label="Variant" data-col="half">
                             <?php if (!empty($m['variant_summary'])): ?>
                                 <span class="muted small"><?= e($m['variant_summary']) ?></span>
                             <?php else: ?>
                                 <span class="muted small">&mdash;</span>
                             <?php endif; ?>
                         </td>
-                        <td><?= $typeBadge($m['movement_type']) ?></td>
-                        <td class="text-end">
+                        <td data-label="Type" data-col="half"><?= $typeBadge($m['movement_type']) ?></td>
+                        <td data-label="Change" data-col="half" class="text-end">
                             <strong style="color:<?= $deltaColor ?>"><?= e($deltaText) ?></strong>
                         </td>
-                        <td class="text-end muted"><?= (int) $m['quantity_after'] ?></td>
-                        <td>
+                        <td data-label="After" data-col="half" class="text-end muted"><?= (int) $m['quantity_after'] ?></td>
+                        <td data-label="Reason" data-col="full">
                             <span class="small">
                                 <?= e($m['reason'] ?? '—') ?>
                             </span>
@@ -190,7 +190,7 @@ $typeBadge = function (string $type): string {
                                 </div>
                             <?php endif; ?>
                         </td>
-                        <td>
+                        <td data-label="Actor" data-col="half">
                             <span class="small">
                                 <?= e($m['actor_name'] ?? 'System') ?>
                             </span>

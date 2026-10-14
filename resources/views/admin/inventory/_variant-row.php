@@ -19,7 +19,7 @@ $isSimple    = ((int) ($u['variant_id'] ?? 0)) === 0;
 ?>
 
 <tr data-inventory-id="<?= $inventoryId ?>">
-    <td>
+    <td data-label="Variant" data-col="full">
         <?php if ($isSimple): ?>
             <span class="muted small">Simple product</span>
         <?php elseif ($label !== ''): ?>
@@ -28,12 +28,12 @@ $isSimple    = ((int) ($u['variant_id'] ?? 0)) === 0;
             <span class="muted small">Variant #<?= (int) ($u['variant_id'] ?? 0) ?></span>
         <?php endif; ?>
     </td>
-    <td class="ra-hide-sm">
+    <td data-label="SKU" data-col="half" class="ra-hide-sm">
         <code class="muted small"><?= e($sku !== '' ? $sku : '—') ?></code>
     </td>
-    <td class="text-end" style="width:140px;">
+    <td data-label="On hand" data-col="half" class="text-end" style="width:140px;">
         <input type="number"
-               class="ra-form-control text-end"
+               class="form-control text-end"
                name="adjustments[<?= $inventoryId ?>]"
                value="<?= $quantity ?>"
                min="0"
@@ -41,11 +41,11 @@ $isSimple    = ((int) ($u['variant_id'] ?? 0)) === 0;
                inputmode="numeric"
                aria-label="Quantity on hand">
     </td>
-    <td class="text-end ra-hide-sm"><?= $reserved ?></td>
-    <td class="text-end ra-hide-sm">
+    <td data-label="Reserved" data-col="half" class="text-end ra-hide-sm"><?= $reserved ?></td>
+    <td data-label="Available" data-col="half" class="text-end ra-hide-sm">
         <strong><?= $available ?></strong>
     </td>
-    <td>
+    <td data-label="Status" data-col="half">
         <span class="ra-badge <?= e($statusClass) ?>"><?= e($statusLabel) ?></span>
     </td>
 </tr>

@@ -283,7 +283,7 @@ $slugLocked = !$form->isDraft();
                 </p>
             </div>
         <?php else: ?>
-            <div class="ra-table-responsive-wrap" data-responsive="scroll">
+            <div class="ra-table-responsive-wrap" data-responsive="cards">
                 <table class="ra-table">
                     <thead>
                         <tr>
@@ -299,8 +299,8 @@ $slugLocked = !$form->isDraft();
                     <tbody>
                         <?php foreach ($fields as $i => $field): ?>
                             <tr>
-                                <td class="muted small"><?= (int) ($i + 1) ?></td>
-                                <td>
+                                <td data-label="#" data-col="half" class="muted small"><?= (int) ($i + 1) ?></td>
+                                <td data-label="Label" data-col="full">
                                     <span style="font-weight:600;"><?= e($field->label) ?></span>
                                     <?php if ($field->helpText !== null && $field->helpText !== ''): ?>
                                         <div class="muted small"><?= e($field->helpText) ?></div>
@@ -316,17 +316,17 @@ $slugLocked = !$form->isDraft();
                                         </div>
                                     <?php endif; ?>
                                 </td>
-                                <td class="ra-hide-sm"><code><?= e($field->fieldKey) ?></code></td>
-                                <td class="ra-hide-sm muted small">
+                                <td data-label="Key" data-col="half" class="ra-hide-sm"><code><?= e($field->fieldKey) ?></code></td>
+                                <td data-label="Type" data-col="half" class="ra-hide-sm muted small">
                                     <?= e(isset($allTypes[$field->inputType]) ? $allTypes[$field->inputType]->label() : $field->inputType) ?>
                                 </td>
-                                <td><?= (int) $field->step ?></td>
-                                <td>
+                                <td data-label="Step" data-col="half"><?= (int) $field->step ?></td>
+                                <td data-label="Required" data-col="half">
                                     <?php if ($field->isRequired): ?>
                                         <span class="ra-badge ra-badge-warning">Yes</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-end" style="white-space:nowrap;">
+                                <td data-label="Actions" data-col="full" class="text-end" style="white-space:nowrap;">
                                     <form method="POST"
                                           action="/commerce/ca-admin/forms/<?= (int) $form->id ?>/fields/<?= (int) $field->id ?>/move"
                                           style="display:inline;">
