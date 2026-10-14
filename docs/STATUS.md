@@ -365,47 +365,48 @@ the Setup hub.
 
 ---
 
-## Current Focus - Stage 010 Sessions 1-2 complete
+## Current Focus - Stage 010 Sessions 1-3 complete
 
-**Stage 010 Sessions 1 and 2 are complete.**
+**Stage 010 Sessions 1, 2, and 3 are complete.**
 
-Session 1 (`0f9d57f`) shipped the payment
-infrastructure: the `PaymentProvider` interface, an
-HTTP client, the registry, the `PaymentMethodRepository`,
-three tables (`commerce_store_payment_methods`,
-`commerce_payment_refunds`, `commerce_webhook_events`),
-and eight provider credential settings.
+Sessions 1 and 2 built the payment infrastructure
+and the refund wrapper. Session 3 built Stripe end
+to end.
 
-Session 2 (`a5ea07b`, `63d6837`) shipped the refund
-wrapper and the codebase's first logic check harness:
+Session 3 (`4571f82`, `052ca4e`, `e8ea8f8`) shipped
+the first real payment provider:
 
-  - `PaymentRefundService` consumes
-    `ReturnRequestService::processRefund()` and
-    dispatches the provider refund post-commit.
-    `ReturnRequestService` is untouched.
-  - `PaymentRefundException`, `RefundResult`,
-    `PaymentRefundRepository`.
-  - `AdminReturnController::refund()` delegates to
-    the wrapper and flashes three distinct messages
-    (succeeded, pending, failed).
-  - The refund modal note is provider-aware.
-  - `bin/smoke.php` is the logic check harness. It
-    boots the app against `anaya_commerce_test`,
-    migrates and seeds it, and runs cases from
-    `bin/smoke-cases/`.
-  - `bin/smoke-cases/refund.php` exercises the
-    offline and registry-miss paths.
-  - `bin/retry-refunds.php` is the retry cron for
-    failed refund rows.
-  - `composer smoke` runs the harness.
+  - `StripeProvider` implements `PaymentProvider`.
+    Charge uses Stripe Checkout (hosted redirect).
+    Refund uses `POST /v1/refunds`. Webhook
+    verification uses HMAC-SHA256 over
+    "{timestamp}.{raw_body}".
+  - `ChargeResult` value object (redirected,
+    charged, offline, failed).
+  - `PaymentChargeService` - the charge wrapper.
+  - `WebhookController` - the codebase's first
+    webhook receiver.
+  - `WebhookEventRepository` - `commerce_webhook_events`
+    reads and writes. Idempotency via unique key
+    on (provider_key, event_id).
+  - `StripeReturnController` - the customer return
+    handler.
+  - Two webhook routes and one return route.
+  - `CheckoutService` payment-key validation is
+    registry-driven.
+  - `CheckoutController::place()` dispatches the
+    charge.
+  - `App::loadRoutes()` skips `Session->start()`
+    on CLI.
+  - Two smoke cases pass: `refund` and
+    `stripe-webhook`.
 
 **Stage 014 closed on 2026-10-14** (tag
-`stage-014-complete`). The tail walk and the offline
-page theme fix shipped in commit `6515e85`.
+`stage-014-complete`).
 
-**Stage 010 Session 3 opens next:** Stripe. The
-provider class, the charge flow, the refund flow,
-the webhook handler, and the checkout integration.
+**Stage 010 Session 4 opens next:** PayPal. The
+provider, the capture flow, the webhook handler,
+the return handler, and the checkout integration.
 
 The Stage 014 Session 5 and Session 3 tail paragraphs
 below are historical and remain for the record.
@@ -581,12 +582,12 @@ open with a 19 June 2026 deadline.
 
 **Next 3 stages:**
 
-  - **010 Session 3** (next): Stripe. The provider
-    class, the charge flow, the refund flow, the
-    webhook handler, and the checkout integration.
-  - **010 Sessions 4-7**: PayPal, the admin
-    configuration tab, the compliance entries, and
-    the stage close.
+  - **010 Session 4** (next): PayPal. The provider,
+    the capture flow, the webhook handler, the
+    return handler, and the checkout integration.
+  - **010 Sessions 5-7**: the admin configuration
+    tab, the compliance entries, and the stage
+    close.
   - **Responsive render harness** (backlog):
     Chrome headless via CDP. Iterates every route
     at four viewports and checks for horizontal

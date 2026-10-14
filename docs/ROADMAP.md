@@ -155,8 +155,8 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-Stage 010 (Payments Deep) is open. Sessions 1
-and 2 shipped on 2026-10-14.
+Stage 010 (Payments Deep) is open. Sessions 1,
+2, and 3 shipped on 2026-10-14.
 
 Session 1 (0f9d57f) built the payment
 infrastructure: the PaymentProvider interface,
@@ -166,15 +166,19 @@ provider credential settings.
 
 Session 2 (a5ea07b, 63d6837) built the refund
 wrapper and the codebase's first logic check
-harness. PaymentRefundService consumes
-ReturnRequestService::processRefund() and
-dispatches the provider refund post-commit.
-bin/smoke.php boots the app against a separate
-test database and runs cases. bin/retry-refunds.php
-is the retry cron.
+harness.
 
-Session 3 opens next: Stripe. Sessions 4 through
-7 ship PayPal, the admin configuration tab, the
+Session 3 (4571f82, 052ca4e, e8ea8f8) built
+Stripe end to end. The charge flow uses Stripe
+Checkout. The webhook handler consumes
+payment_intent.succeeded and records each event
+with database-level idempotency. The customer
+return handler verifies the Checkout Session and
+confirms. Two smoke cases pass: refund and
+stripe-webhook.
+
+Session 4 opens next: PayPal. Sessions 5 through
+7 ship the admin configuration tab, the
 compliance entries, and the stage close.
 
 Stage 014 (Responsive Layout System) closed

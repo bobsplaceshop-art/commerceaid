@@ -871,3 +871,56 @@ first day were all in its own fixtures
 not in the payment code. The session file
 `docs/sessions/2026-10-14-4.md` records the
 sequence.
+
+### Session 3 close (2026-10-14)
+
+Two plan statements needed correction.
+
+**Checkout vs PaymentIntent.** The plan's Stripe
+section named both Stripe Checkout (the hosted
+payment page) and a PaymentIntent in the same
+flow. They are two different Stripe APIs.
+Checkout is the redirect flow; PaymentIntents are
+the on-page (Elements) flow. The charge uses
+Checkout - it matches the `redirect_url` return
+shape the interface's `charge()` docblock
+specifies, and it requires no client-side JS.
+
+The refund flow still uses the PaymentIntent id
+stored on the order's `payment_reference`. Stripe
+creates a PaymentIntent internally when the
+Checkout Session is paid; the webhook writes its
+id to the order. `POST /v1/refunds` accepts a
+PaymentIntent id.
+
+**payment_failed does not transition the order.**
+The plan's state transition table says
+`payment_intent.payment_failed` → mark failed. The
+handler records the event and returns
+`handled: true` without writing the order state.
+The order stays `unpaid` so the customer can
+retry with a different card. A `failed` order
+cannot be retried against the same order number.
+Marking the order failed would close the retry
+path.
+
+**Metadata propagation.** The charge flow sets
+`metadata[order_id]` on the Checkout Session AND
+`payment_intent_data[metadata][order_id]`. Stripe
+does not propagate session metadata to the
+PaymentIntent. Without the second path, the
+webhook handler would find empty metadata on
+every `payment_intent.succeeded` and the order
+would never be marked paid.
+
+**CLI session guard.** `App::loadRoutes()`
+skips `Session->start()` when `PHP_SAPI === 'cli'`.
+`session_name()` throws after any byte reaches
+STDOUT on this PHP build, even inside an
+`ob_start()` buffer. Every CLI tool that echoes
+progress before `App::boot()` would crash
+without the guard.
+
+The three commits (`4571f82`, `052ca4e`,
+`e8ea8f8`) are recorded in
+`docs/sessions/2026-10-14-5.md`.
