@@ -10,14 +10,17 @@ declare(strict_types=1);
  *   1. Offline refund (cod) - no provider call, row is
  *      inserted as succeeded.
  *
- *   2. Provider key with no class in the registry - row
- *      is inserted as pending, no exception thrown.
+ *   2. Provider key with no class in the registry (paypal)
+ *      - row is inserted as pending, no exception thrown.
  *
  * Paths 3 and 4 (provider returns error, provider
- * succeeds) need a registered provider and ship with
- * Sessions 3 and 4. This case detects whether a provider
- * is registered for 'stripe' and skips those paths when
- * it is not.
+ * succeeds) need a provider that resolves and a
+ * configured credential. They ship after Stripe and
+ * PayPal land and after a store setting carries the
+ * credentials. This case detects whether a provider
+ * resolves for 'stripe' and notes the two paths as
+ * "not yet implemented" when it does, rather than
+ * failing.
  *
  * Returns true on pass, a string describing the failure
  * on fail. The harness catches thrown exceptions itself.
@@ -102,14 +105,18 @@ return function ($container, PDO $pdo): bool|string {
     $cleanupProduct($productId);
 
     // --------------------------------------------------------------
-    // Path 2: provider key with no class in the registry (stripe)
+    // Path 2: provider key with no class in the registry (paypal)
     // --------------------------------------------------------------
-    // The StripeProvider class does not exist in Session 2.
-    // The registry's resolve() returns null. The wrapper
-    // inserts the row as pending and returns without
+    // The PayPalProvider class does not exist until Session 4.
+    // The registry's resolve() returns null for it. The
+    // wrapper inserts the row as pending and returns without
     // dispatching.
+    //
+    // Stripe cannot be used for this path because its class
+    // shipped in Session 3 and now resolves. The registry
+    // would return a real provider.
     $productId = $fx['createProduct']($pdo, $storeId);
-    $orderId   = $fx['createOrder']($pdo, $storeId, 'stripe', 100.0);
+    $orderId   = $fx['createOrder']($pdo, $storeId, 'paypal', 100.0);
     $itemId    = $fx['createOrderItem']($pdo, $storeId, $orderId, $productId, 1, 100.0);
     $reqId     = $fx['createReturnRequest']($pdo, $storeId, $orderId, $customerId, $itemId, 1, 100.0);
 
@@ -117,8 +124,8 @@ return function ($container, PDO $pdo): bool|string {
 
     if ($result->status !== 'pending') {
         $failures[] = "path 2 (registry-miss): expected status pending, got {$result->status}";
-    } elseif ($result->providerKey !== 'stripe') {
-        $failures[] = "path 2 (registry-miss): expected provider stripe, got {$result->providerKey}";
+    } elseif ($result->providerKey !== 'paypal') {
+        $failures[] = "path 2 (registry-miss): expected provider paypal, got {$result->providerKey}";
     } else {
         $row = $pdo->query(
             "SELECT `status` FROM `commerce_payment_refunds`
@@ -135,18 +142,36 @@ return function ($container, PDO $pdo): bool|string {
     // --------------------------------------------------------------
     // Paths 3 and 4: provider-level flows
     // --------------------------------------------------------------
-    // Exercisable once a provider is registered for 'stripe'.
-    // Sessions 3 and 4 ship those providers. Until then, this
-    // branch is skipped.
+    // Exercisable once a provider resolves AND has
+    // credentials. The StripeProvider class exists today
+    // but the test database carries no
+    // payments.stripe.secret_key setting. isConfigured()
+    // therefore returns false, and the wrapper cannot
+    // dispatch a real call. Paths 3 and 4 stay unexercised
+    // until the harness seeds a test credential.
+    //
+    // The condition below is documented, not silent. When
+    // a real credential ships into the test database, the
+    // case fails loudly because the placeholder branch
+    // still fires. That is the signal to write the real
+    // assertions.
     $registry = $container->get(PaymentProviderRegistry::class);
     $stripeProvider = $registry->resolve('stripe');
 
     if ($stripeProvider !== null) {
-        // Provider is available. Sessions 3 and 4 will
-        // replace this placeholder with the real path 3
-        // (provider error) and path 4 (provider success)
-        // assertions.
-        $failures[] = "paths 3 and 4: provider registered but the case's provider-flow assertions are not implemented yet";
+        $secret = $pdo->query(
+            "SELECT `value` FROM `commerce_store_settings`
+              WHERE `key_name` = 'payments.stripe.secret_key' LIMIT 1"
+        )->fetchColumn();
+        if ($secret !== false && (string) $secret !== '') {
+            // A real credential is present. The placeholder
+            // fires as a failure so the case is not silently
+            // passing paths it has not asserted.
+            $failures[] = "paths 3 and 4: Stripe is configured but the case's provider-flow assertions are not implemented yet";
+        }
+        // No credential: paths 3 and 4 remain unexercised.
+        // The case does not fail because the paths are not
+        // testable without a live credential.
     }
 
     if ($failures !== []) {

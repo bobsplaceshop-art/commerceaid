@@ -77,7 +77,8 @@ return (function (): array {
         int $storeId,
         string $providerKey,
         float $grandTotal = 100.0,
-        float $refundedTotal = 0.0
+        float $refundedTotal = 0.0,
+        string $paymentStatus = 'paid'
     ): int {
         $stmt = $pdo->prepare(
             "INSERT INTO `commerce_orders`
@@ -86,20 +87,30 @@ return (function (): array {
                  `subtotal`, `discount_total`, `tax_total`, `shipping_total`,
                  `grand_total`, `paid_total`, `refunded_total`,
                  `payment_provider_key`, `payment_reference`)
-             VALUES (?, ?, NULL, ?, 'EUR', 'delivered', 'paid', 'fulfilled',
+             VALUES (?, ?, NULL, ?, 'EUR', 'delivered', ?, 'fulfilled',
                      ?, 0, 0, 0, ?, ?, ?, ?, ?)"
         );
         $orderNumber = 'SMOKE-' . bin2hex(random_bytes(4));
+
+        // A payment reference only exists when a provider
+        // charged and the order is paid. An unpaid order has
+        // no reference, matching what the real checkout
+        // produces before the webhook arrives.
+        $reference = ($providerKey !== '' && $paymentStatus === 'paid')
+            ? 'pi_smoke_' . bin2hex(random_bytes(4))
+            : null;
+
         $stmt->execute([
             $storeId,
             $orderNumber,
             'smoke-' . bin2hex(random_bytes(4)) . '@example.test',
+            $paymentStatus,
             $grandTotal,
             $grandTotal,
             $grandTotal,
             $refundedTotal,
             $providerKey,
-            $providerKey !== '' ? 'pi_smoke_' . bin2hex(random_bytes(4)) : null,
+            $reference,
         ]);
         return (int) $pdo->lastInsertId();
     };
