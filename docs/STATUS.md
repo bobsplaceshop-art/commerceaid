@@ -499,11 +499,37 @@ inline `@media` in views, hardcoded widths above
 wrapper. The two rules it absorbed were removed
 from `check-css.php` and `check-html.php`.
 
-**Stage 014 is not tagged yet.** The storefront
-audit tail remains: product detail at 900,
-checkout at 900, error pages at four widths, PWA
-offline page, dark theme across every storefront
-surface.
+**Stage 014 is complete.** The responsive layout
+system shipped across six sessions: foundations,
+admin list tables, admin forms and modals, the
+storefront audit, the enforcement script, and the
+tail walk.
+
+**The tail was walked in the same day's second
+session** (`6515e85`, session file
+`2026-10-14-2.md`):
+
+  - Checkout at 900 verified passing. The
+    speculative `min-width: 0` guard from the
+    previous session reverted.
+  - Error pages 403/404/500 verified theme-aware.
+    All three use the same pattern the offline
+    page now does.
+  - PWA offline page rewritten to match the
+    sibling error pages. `main-v2.css` precached
+    by the service worker. `CACHE_VERSION` bumped
+    from `v3` to `v4`.
+  - Storefront dark theme: not applicable. The
+    storefront is light-only by design (see the
+    layout docblock in
+    `resources/views/storefront/layouts/main.php`,
+    line 34).
+
+The prevenger's CSS structural checker caught a
+multi-line declaration in the first draft of the
+offline page rewrite. Fixed in the same session
+before commit. `composer check` passes (lint,
+PHPStan level 8, four prevenger checkers).
 
 **008K.5 status:** Complete. Code on disk, admin
 surfaces live (Coupons, Tax, Shipping), storefront

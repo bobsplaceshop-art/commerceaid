@@ -128,6 +128,7 @@ Applying the principle to the current roadmap:
 | 008K.4   | Admin Roles                          | 2026-10-10 |
 | 008K.5   | Order Pricing Engine                 | 2026-10-11 |
 | 009      | Forms & Submissions                  | 2026-10-13 |
+| 014      | Responsive Layout System             | 2026-10-14 |
 
 Also completed outside the staged sequence:
 
