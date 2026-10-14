@@ -19,8 +19,11 @@ $flashSuccess = function_exists('flash') ? flash('success') : null;
 $flashError   = function_exists('flash') ? flash('error')   : null;
 $hasFlash     = ($flashSuccess !== null || $flashError !== null);
 
-$branding  = function_exists('config') ? (array) config('branding', []) : [];
-$brandName = $branding['product_name'] ?? 'Anaya Global';
+// Store-scoped brand name. Reads the resolved store's
+// name first, falls back to config('branding.product_name')
+// when no store is bound. The helper is the single source
+// of truth for every branded surface in the admin shell.
+$brandName = brand_name($store ?? null);
 
 // Theme: server-side is the source of truth. localStorage may
 // override if the user toggled the theme on this device since
@@ -77,6 +80,7 @@ if (!in_array($serverTheme, ['dark', 'light', 'system'], true)) {
         <?= view_partial('partials/sidebar', [
             'user'          => $user,
             'setupComplete' => $setupComplete,
+            'brandName'     => $brandName,
         ]) ?>
 
         <?= view_partial('partials/topbar', [

@@ -11,7 +11,10 @@
  * Default fallback is 'system'.
  */
 $branding = function_exists('config') ? (array) config('branding', []) : [];
-$brandName = $branding['product_name'] ?? 'Anaya Global';
+// Store-scoped brand name, with config as the fallback.
+// The login page has no store bound (no store middleware
+// on /login), so the helper reads config('branding').
+$brandName = brand_name(null);
 $tagline   = $branding['tagline']      ?? 'Global Commerce Platform';
 $primary   = $branding['primary_color']   ?? '#2563eb';
 $accent    = $branding['accent_color']    ?? '#60a5fa';

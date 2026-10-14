@@ -158,7 +158,7 @@ if ($campaign === null) return;
 
     <div class="preview-wrap">
         <div class="preview-header">
-            <div class="preview-header-name">Anaya Global</div>
+            <div class="preview-header-name"><?= e($brandName) ?></div>
             <div class="preview-header-meta">
                 <strong>Subject:</strong> <?= e($campaign->subject) ?>
             </div>
@@ -175,7 +175,7 @@ if ($campaign === null) return;
 
         <div class="preview-footer">
             <p style="margin:0 0 .5rem;">
-                Anaya Global<br>
+                <?= e($brandName) ?><br>
                 Global Commerce Platform, Nairobi, Kenya
             </p>
             <p style="margin:0;">

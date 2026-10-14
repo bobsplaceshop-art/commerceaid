@@ -2,12 +2,12 @@
 declare(strict_types=1);
 
 /**
- * Anaya Global - application configuration.
+ * Awalo Global - application configuration.
  * Per-deployment overrides live in config/local.php.
  */
 
 return [
-    'name'    => 'Anaya Global',
+    'name'    => 'Awalo Global',
     'version' => '1.0.0',
 
     'env'   => 'production',

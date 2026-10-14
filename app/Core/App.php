@@ -465,6 +465,18 @@ final class App
         }
         $app = $this;
         $errorMessage = $message;
+
+        // Brand name for the error page title. Guarded so a
+        // bootstrap failure that has not yet loaded the helper
+        // functions cannot make the error page itself fail.
+        // This is the exact failure mode on 2026-10-14: the
+        // helper append to functions.php did not land, every
+        // page 500-ed, and the error pages could not render
+        // because they called the missing function.
+        $brandName = function_exists('brand_name')
+            ? brand_name(null)
+            : 'Store';
+
         require $view;
     }
 }

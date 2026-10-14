@@ -8,7 +8,7 @@
  *   $app_name   (string, optional)
  *   $expires_in (string, optional)  e.g. '1 hour'
  */
-$appName = $app_name ?? 'Recruit Aid';
+$appName = $app_name ?? brand_name(null);
 $expires = $expires_in ?? '1 hour';
 ?>
 <!doctype html>

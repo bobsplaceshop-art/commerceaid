@@ -8,6 +8,7 @@ use CorporateAid\Core\Container;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\View;
 use CorporateAid\Commerce\Context\StoreContext;
+use CorporateAid\Commerce\Repositories\StoreRepository;
 use CorporateAid\Commerce\Services\StoreService;
 
 /**
@@ -44,6 +45,12 @@ abstract class AdminController
         $data['title'] = $data['title'] ?? 'Admin';
         $data['setupComplete'] = $this->isSetupComplete();
 
+        // The resolved store, or null when none is bound.
+        // Passed so the admin shell (and any admin view that
+        // wants it) can render store-scoped branding without
+        // each controller resolving the store itself.
+        $data['store'] = $this->resolveStore();
+
         return Response::html(
             $viewSvc->render($view, $data, 'layouts.app')
         );
@@ -62,5 +69,33 @@ abstract class AdminController
         }
         $storeService = $this->container->get(StoreService::class);
         return $storeService->isSetupComplete($context->id());
+    }
+
+    /**
+     * The current store, or null if the store context has not
+     * been populated for this request.
+     *
+     * Mirrors StorefrontController::resolveStore(). The
+     * storefront version is private to its own class; the
+     * admin base needs its own copy so admin views can render
+     * store-scoped branding without every controller
+     * resolving it separately.
+     *
+     * Defensive: any failure returns null. A broken store
+     * read should never break an admin page.
+     */
+    protected function resolveStore(): ?\CorporateAid\Commerce\Models\Store
+    {
+        $context = $this->container->get(StoreContext::class);
+        if (!$context->has()) {
+            return null;
+        }
+
+        try {
+            $repo = $this->container->get(StoreRepository::class);
+            return $repo->findById($context->id());
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

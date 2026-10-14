@@ -44,12 +44,11 @@ $flashSuccess = function_exists('flash') ? flash('success') : null;
 $flashError   = function_exists('flash') ? flash('error')   : null;
 $hasFlash     = ($flashSuccess !== null || $flashError !== null);
 
-$branding   = function_exists('config') ? (array) config('branding', []) : [];
-$configName = $branding['product_name'] ?? 'Anaya Global';
-
-$brandName = ($store !== null && !empty($store->name))
-    ? (string) $store->name
-    : $configName;
+// Store-scoped brand name. The helper reads $store->name
+// first, falls back to config('branding.product_name') when
+// no store is bound. One source of truth for the storefront
+// shell and every partial it renders.
+$brandName = brand_name($store);
 
 $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
 ?>

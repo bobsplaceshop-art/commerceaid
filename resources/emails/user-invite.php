@@ -8,7 +8,7 @@
  *   $app_name   (string, optional)
  *   $role_name  (string, optional)  e.g. 'Store Administrator'
  */
-$appName = $app_name ?? 'Anaya Global';
+$appName = $app_name ?? brand_name(null);
 $role    = $role_name ?? '';
 ?>
 <!doctype html>

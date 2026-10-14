@@ -204,7 +204,7 @@ $renderNavItem = function (array $item, callable $isActive, bool $setupComplete)
 <aside class="ra-sidebar" id="ra-sidebar">
     <a href="/commerce/ca-admin" class="ra-brand">
         <span class="ra-brand-mark"></span>
-        <span>Anaya Global</span>
+        <span><?= e($brandName ?? brand_name(null)) ?></span>
     </a>
 
     <nav class="ra-nav">

@@ -325,8 +325,9 @@ final class AdminCampaignController extends AdminController
         }
 
         return $this->render('admin.campaigns.preview', [
-            'title'    => 'Preview: ' . $campaign->subject,
-            'campaign' => $campaign,
+            'title'     => 'Preview: ' . $campaign->subject,
+            'campaign'  => $campaign,
+            'brandName' => brand_name($this->resolveStore()),
         ]);
     }
 

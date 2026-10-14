@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Anaya Global - mail configuration.
+ * Awalo Global - mail configuration.
  * Real SMTP credentials go in config/local.php.
  * During local development, Laragon's Mailpit catches everything.
  */
@@ -17,7 +17,7 @@ return [
     'auth'       => false,
     'timeout'    => 20,
     'from_email' => 'no-reply@anayaglobal.test',
-    'from_name'  => 'Anaya Global',
+    'from_name'  => 'Awalo Global',
     'reply_to'   => '',
     'debug'      => 0,
 ];

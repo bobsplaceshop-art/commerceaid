@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Deployment branding - Layer 2 defaults.
  *
- * These values apply to this install's brand (Anaya Global).
+ * These values apply to this install's brand (Awalo Global).
  * Individual tenants (stores) may override any of these from the
  * admin UI - those overrides are stored in `commerce_stores`.
  *
@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 return [
     // ----- Identity -----
-    'product_name'      => 'Anaya Global',
-    'product_short'     => 'Anaya',
+    'product_name'      => 'Awalo Global',
+    'product_short'     => 'Awalo',
     'tagline'           => 'Global Commerce Platform',
-    'company_name'      => 'Anaya Global',
-    'company_legal'     => 'Anaya Global Ltd',
+    'company_name'      => 'Awalo Global',
+    'company_legal'     => 'Awalo Global Ltd',
 
     // ----- Contact -----
     'support_email'     => 'support@anayaglobal.test',
@@ -25,11 +25,11 @@ return [
     'support_url'       => null,
 
     // ----- Email defaults -----
-    'email_from_name'   => 'Anaya Global',
+    'email_from_name'   => 'Awalo Global',
     'email_from_email'  => 'no-reply@anayaglobal.test',
 
     // ----- Visual identity -----
-    // Placeholders until Anaya provides real assets.
+    // Placeholders until Awalo provides real assets.
     'logo_path'         => null,   // e.g. '/uploads/branding/logo.svg'
     'favicon_path'      => null,   // e.g. '/uploads/branding/favicon.ico'
     'primary_color'     => '#0f172a',
@@ -37,12 +37,12 @@ return [
     'accent_color'      => '#3b82f6',
 
     // ----- PWA (deployment default, tenants can override) -----
-    'pwa_name'          => 'Anaya Global',
-    'pwa_short_name'    => 'Anaya',
+    'pwa_name'          => 'Awalo Global',
+    'pwa_short_name'    => 'Awalo',
     'pwa_theme_color'   => '#0f172a',
     'pwa_bg_color'      => '#ffffff',
 
     // ----- Footer -----
-    'footer_text'       => '© ' . date('Y') . ' Anaya Global. All rights reserved.',
+    'footer_text'       => '© ' . date('Y') . ' Awalo Global. All rights reserved.',
     'show_powered_by'   => false, // true would reveal "Powered by <vendor>"
 ];

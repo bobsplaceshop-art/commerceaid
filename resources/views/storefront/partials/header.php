@@ -23,7 +23,7 @@
  */
 
 $store     = $store     ?? null;
-$brandName = $brandName ?? 'Anaya Global';
+$brandName = $brandName ?? brand_name(null);
 
 // Cart count. Resolved by the layout from CartService::count()
 // once per request and passed to this partial. Falls back to 0
@@ -169,7 +169,7 @@ $isNavActive = function (string $href) use ($currentPath): bool {
             <button type="button"
                     class="sf-icon-btn"
                     data-sf-pwa-install
-                    aria-label="Install Anaya Global as an app"
+                    aria-label="Install <?= e($brandName) ?> as an app"
                     hidden
                     aria-hidden="true">
                 <i class="bi bi-download" aria-hidden="true"></i>

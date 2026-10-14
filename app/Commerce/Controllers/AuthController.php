@@ -182,12 +182,12 @@ final class AuthController
 
             $mailer->sendTemplate(
                 $email,
-                'Reset your Anaya Global password',
+                'Reset your ' . brand_name(null) . ' password',
                 'password-reset',
                 [
                     'user_name'  => $user->name,
                     'reset_url'  => $resetUrl,
-                    'app_name'   => 'Anaya Global',
+                    'app_name'   => brand_name(null),
                     'expires_in' => '1 hour',
                 ]
             );

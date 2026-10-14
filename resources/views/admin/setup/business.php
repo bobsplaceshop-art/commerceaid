@@ -47,7 +47,7 @@ $err = fn(string $k) => isset($errors[$k])
                 <label for="legal_name" class="form-label">Legal name</label>
                 <input type="text" id="legal_name" name="legal_name" class="form-control"
                        value="<?= $val('legal_name') ?>"
-                       placeholder="Anaya Global Ltd">
+                       placeholder="Your business legal name">
                 <div class="form-text">Appears on invoices and receipts. Leave blank to use the business name.</div>
             </div>
 

@@ -39,11 +39,11 @@ $newArrivals   = $newArrivals   ?? [];
 $bestSellers   = $bestSellers   ?? [];
 $topCategories = $topCategories ?? [];
 
-$brandName = (string) (
-    function_exists('config')
-        ? config('branding.product_name', 'Anaya Global')
-        : 'Anaya Global'
-);
+// Store-scoped brand name. The resolved store is passed
+// into every storefront view by StorefrontController::render().
+// The helper reads $store->name first, falls back to
+// config('branding.product_name') when no store is bound.
+$brandName = brand_name($store ?? null);
 
 /**
  * Deterministic placeholder image per seed.
@@ -136,7 +136,7 @@ $trustRow = [
             </svg>
         </span>
 
-        <span class="sf-home-hero-brand">Anaya Global</span>
+        <span class="sf-home-hero-brand"><?= e($brandName) ?></span>
         <span class="sf-home-hero-sub">ONLINE SHOP</span>
 
         <h1 class="sf-home-hero-slogan">Shop the World, Love Your Style.</h1>

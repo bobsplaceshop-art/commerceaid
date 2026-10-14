@@ -196,12 +196,12 @@ final class AdminUserController extends AdminController
 
         $mailer->sendTemplate(
             $data['email'],
-            'Your Anaya Global account invitation',
+            'Your ' . brand_name($this->resolveStore()) . ' account invitation',
             'user-invite',
             [
                 'user_name'   => $data['name'],
                 'accept_url'  => $acceptUrl,
-                'app_name'    => 'Anaya Global',
+                'app_name'    => brand_name($this->resolveStore()),
                 'role_name'   => $this->roleDisplayName($roles, $roleSlug),
             ]
         );
@@ -413,12 +413,12 @@ final class AdminUserController extends AdminController
 
         $mailer->sendTemplate(
             $user->email,
-            'Reset your Anaya Global password',
+            'Reset your ' . brand_name($this->resolveStore()) . ' password',
             'password-reset',
             [
                 'user_name'  => $user->name,
                 'reset_url'  => $resetUrl,
-                'app_name'   => 'Anaya Global',
+                'app_name'   => brand_name($this->resolveStore()),
                 'expires_in' => '1 hour',
             ]
         );

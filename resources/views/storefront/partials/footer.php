@@ -25,7 +25,7 @@
  */
 
 $store     = $store     ?? null;
-$brandName = $brandName ?? 'Anaya Global';
+$brandName = $brandName ?? brand_name(null);
 
 $year = (int) date('Y');
 

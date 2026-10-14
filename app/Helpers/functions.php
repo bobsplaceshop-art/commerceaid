@@ -1398,3 +1398,58 @@ if (!function_exists('tax_note')) {
         return implode(' ', $parts);
     }
 }
+
+if (!function_exists('brand_name')) {
+    /**
+     * The brand name for the current request.
+     *
+     * Preference order:
+     *   1. The resolved store's name (commerce_stores.name).
+     *   2. config('branding.product_name').
+     *   3. 'Store'.
+     */
+    function brand_name(?\CorporateAid\Commerce\Models\Store $store = null): string
+    {
+        if ($store !== null && $store->name !== '') {
+            return (string) $store->name;
+        }
+
+        if (function_exists('config')) {
+            $name = (string) config('branding.product_name', '');
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        return 'Store';
+    }
+}
+
+if (!function_exists('brand_short')) {
+    /**
+     * The brand short name for the current request.
+     *
+     * Preference order:
+     *   1. The store's PWA short name (commerce_stores.pwa_short_name).
+     *   2. config('branding.product_short').
+     *   3. brand_name() as a last resort.
+     */
+    function brand_short(?\CorporateAid\Commerce\Models\Store $store = null): string
+    {
+        if ($store !== null
+            && $store->pwaShortName !== null
+            && $store->pwaShortName !== ''
+        ) {
+            return (string) $store->pwaShortName;
+        }
+
+        if (function_exists('config')) {
+            $short = (string) config('branding.product_short', '');
+            if ($short !== '') {
+                return $short;
+            }
+        }
+
+        return brand_name($store);
+    }
+}
