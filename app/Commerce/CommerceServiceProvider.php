@@ -61,6 +61,8 @@ use CorporateAid\Commerce\Services\RecentViewService;
 use CorporateAid\Commerce\Services\CustomerNotificationService;
 use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\StoreService;
+use CorporateAid\Commerce\Repositories\PaymentMethodRepository;
+use CorporateAid\Commerce\Services\Payment\PaymentProviderRegistry;
 
 /**
  * Commerce Aid product provider.
@@ -89,6 +91,22 @@ final class CommerceServiceProvider
             \CorporateAid\Platform\Context\StoreContextInterface::class,
             fn() => $c->get(StoreContext::class)
         );
+
+        // ---------- Payment ----------
+        // The registry resolves a provider key to a concrete
+        // instance. It needs the container itself (to lazily
+        // construct provider classes through ADR-018) and the
+        // repository that reads the store's enabled methods.
+        //
+        // The Stripe and PayPal provider classes ship in
+        // Sessions 3 and 4 of Stage 010. Until they exist,
+        // the registry's resolve() returns null for those keys
+        // and the checkout method list omits them.
+        $c->singleton(PaymentProviderRegistry::class,
+            fn() => new PaymentProviderRegistry(
+                $c,
+                $c->get(PaymentMethodRepository::class)
+            ));
 
         // HMAC-SHA256 signing for the newsletter confirm and
         // unsubscribe tokens. Captures config('app.key') once

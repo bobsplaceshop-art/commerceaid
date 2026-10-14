@@ -40,6 +40,7 @@ final class StoreSettingDefinitions
     public const GROUP_FONTS      = 'fonts';
     public const GROUP_COMPLIANCE = 'compliance';
     public const GROUP_NEWSLETTER = 'newsletter';
+    public const GROUP_PAYMENTS   = 'payments';
 
     /**
      * Every known setting, keyed by dotted key name.
@@ -339,6 +340,73 @@ final class StoreSettingDefinitions
                        . 'proper address is recommended.',
         ],
 
+        // -------------------------------------------------------------
+        // Payments (Stage 010)
+        // -------------------------------------------------------------
+        // The credentials for each payment provider. Enable/
+        // disable state lives in commerce_store_payment_methods;
+        // these are the API keys and mode toggles the providers
+        // read at charge/refund time.
+
+        'payments.stripe.mode' => [
+            'label'   => 'Stripe mode',
+            'type'    => 'select',
+            'default' => 'sandbox',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Sandbox uses Stripe test keys. Live charges real cards.',
+            'options' => ['sandbox' => 'Sandbox (test)', 'live' => 'Live (production)'],
+        ],
+        'payments.stripe.publishable_key' => [
+            'label'   => 'Stripe publishable key',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Begins with pk_test_ (sandbox) or pk_live_ (live).',
+        ],
+        'payments.stripe.secret_key' => [
+            'label'   => 'Stripe secret key',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Begins with sk_test_ (sandbox) or sk_live_ (live). Stored in commerce_store_settings.',
+        ],
+        'payments.stripe.webhook_secret' => [
+            'label'   => 'Stripe webhook signing secret',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Begins with whsec_. Set in the Stripe dashboard when you add the webhook endpoint.',
+        ],
+        'payments.paypal.mode' => [
+            'label'   => 'PayPal mode',
+            'type'    => 'select',
+            'default' => 'sandbox',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Sandbox uses PayPal sandbox credentials. Live accepts real payments.',
+            'options' => ['sandbox' => 'Sandbox (test)', 'live' => 'Live (production)'],
+        ],
+        'payments.paypal.client_id' => [
+            'label'   => 'PayPal client ID',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'From the PayPal developer dashboard, Apps & Credentials.',
+        ],
+        'payments.paypal.client_secret' => [
+            'label'   => 'PayPal client secret',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Paired with the client ID. Stored in commerce_store_settings.',
+        ],
+        'payments.paypal.webhook_id' => [
+            'label'   => 'PayPal webhook ID',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Returned by PayPal when you register the webhook endpoint.',
+        ],
+
     ];
 
     /**
@@ -431,6 +499,7 @@ final class StoreSettingDefinitions
             self::GROUP_FONTS      => 'Fonts',
             self::GROUP_COMPLIANCE => 'Compliance',
             self::GROUP_NEWSLETTER => 'Newsletter',
+            self::GROUP_PAYMENTS   => 'Payments',
             default                => ucfirst($group),
         };
     }
