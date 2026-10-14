@@ -410,6 +410,17 @@ webhook handler, the return handler, and the
 checkout integration. Both Stripe and PayPal are
 production-ready.
 
+**Branding consolidation shipped** (cba256a): the
+store's name is now the single source of truth for
+every branded surface. Two helpers (`brand_name`,
+`brand_short`) read `commerce_stores.name` with
+config as the fallback. Renaming a store in Setup >
+Business propagates to every header, page title,
+error page, sidebar card, campaign preview, and
+email subject. The error-page render path is
+guarded so a bootstrap failure that unloads the
+helpers cannot make the error page itself fail.
+
 The Stage 014 Session 5 and Session 3 tail paragraphs
 below are historical and remain for the record.
 
@@ -584,12 +595,18 @@ open with a 19 June 2026 deadline.
 
 **Next 3 stages:**
 
-  - **010 Session 5** (next): the admin
-    configuration tab (Settings > Payments with a
-    row per provider), the compliance entries for
-    Stripe and PayPal as DSGVO Art. 28 processors,
-    and any sandbox verification still owed from
-    Sessions 3 and 4.
+  - **Stripe sandbox verification** (next): the live
+    round trip for Session 3's Stripe provider. Add
+    to cart, checkout, pay with the test card, land
+    on `/checkout/stripe/return`, verify the order
+    paid and the webhook row exists. The tunnel and
+    the Stripe test credentials are in hand.
+  - **010 Session 5**: the admin configuration tab
+    (Settings > Payments with a row per provider),
+    the compliance entries for Stripe and PayPal as
+    DSGVO Art. 28 processors, and the branding tail
+    (three hardcoded strings, four config docblock
+    comments).
   - **010 Sessions 6-7**: the stage close.
   - **Responsive render harness** (backlog):
     Chrome headless via CDP. Iterates every route
