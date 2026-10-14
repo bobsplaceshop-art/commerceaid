@@ -63,6 +63,7 @@ use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\StoreService;
 use CorporateAid\Commerce\Repositories\PaymentMethodRepository;
 use CorporateAid\Commerce\Services\Payment\PaymentProviderRegistry;
+use CorporateAid\Commerce\Controllers\WebhookController;
 
 /**
  * Commerce Aid product provider.
@@ -107,6 +108,15 @@ final class CommerceServiceProvider
                 $c,
                 $c->get(PaymentMethodRepository::class)
             ));
+
+        // The webhook controller takes the container itself
+        // (to resolve providers and repositories on demand).
+        // ADR-018 auto-construction of a class whose
+        // constructor parameter is Container would build a
+        // fresh empty container, not the real one. The
+        // explicit binding passes the real container.
+        $c->singleton(WebhookController::class,
+            fn() => new WebhookController($c));
 
         // HMAC-SHA256 signing for the newsletter confirm and
         // unsubscribe tokens. Captures config('app.key') once
@@ -265,7 +275,8 @@ final class CommerceServiceProvider
                 $c->get(CustomerNotificationService::class),
                 $c->get(OrderPricingService::class),
                 $c->get(CouponService::class),
-                $c->get(TaxService::class)
+                $c->get(TaxService::class),
+                $c->get(PaymentProviderRegistry::class)
             ));
 
         // ---------- Services: pricing engine ----------

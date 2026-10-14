@@ -17,6 +17,7 @@ use CorporateAid\Commerce\Services\CheckoutService;
 use CorporateAid\Commerce\Services\CustomerAuthService;
 use CorporateAid\Commerce\Services\ShippingService;
 use CorporateAid\Commerce\Services\OrderPricingService;
+use CorporateAid\Commerce\Services\Payment\PaymentChargeService;
 use CorporateAid\Commerce\Support\StorefrontController;
 
 /**
@@ -411,6 +412,32 @@ final class CheckoutController extends StorefrontController
         // Clear the checkout state - the order is placed.
         $session = $this->customerSession();
         $session->forget(self::SESSION_KEY);
+
+        // Dispatch the charge. The order is created with
+        // payment_status = 'unpaid' and the provider key.
+        // The charge service resolves the provider and
+        // returns one of four results:
+        //
+        //   redirected - send the customer to the
+        //                provider's hosted page.
+        //   charged    - direct-charge provider confirmed
+        //                inline. Proceed to confirmation.
+        //   offline    - cod, bank_transfer, PO. No
+        //                provider call.
+        //   failed     - provider error. Send the customer
+        //                back to confirm to retry.
+        $chargeService = $this->container->get(PaymentChargeService::class);
+        $charge = $chargeService->charge($order);
+
+        if ($charge->status === 'redirected' && $charge->redirectUrl !== null) {
+            return Response::redirect($charge->redirectUrl);
+        }
+
+        if ($charge->status === 'failed') {
+            $this->flashErrors('confirm', ['_general' =>
+                $charge->errorMessage ?? 'The payment provider could not start a charge.']);
+            return Response::redirect('/checkout/confirm');
+        }
 
         return Response::redirect('/checkout/confirmation/' . $order->orderNumber);
     }

@@ -24,6 +24,7 @@ use CorporateAid\Commerce\Repositories\CustomerRepository;
 use CorporateAid\Commerce\Repositories\StoreSettingsRepository;
 use CorporateAid\Commerce\Services\CustomerNotificationService;
 use CorporateAid\Commerce\Services\CouponService;
+use CorporateAid\Commerce\Services\Payment\PaymentProviderRegistry;
 use CorporateAid\Commerce\Services\OrderPricingService;
 use CorporateAid\Commerce\Services\TaxService;
 use CorporateAid\Platform\Support\CodeGenerator;
@@ -79,6 +80,7 @@ final class CheckoutService
         private OrderPricingService $pricing,
         private CouponService $coupons,
         private TaxService $taxes,
+        private PaymentProviderRegistry $providers,
     ) {
     }
 
@@ -162,11 +164,18 @@ final class CheckoutService
         // Validate the payment method
         // -----------------------------------------------------------------
         $paymentKey = (string) ($input['payment_provider_key'] ?? '');
-        $allowed = ['cod', 'bank_transfer', 'purchase_order'];
-        if (!in_array($paymentKey, $allowed, true)) {
-            throw new CheckoutException(
-                'Please select a valid payment method.'
-            );
+        $offline = ['cod', 'bank_transfer', 'purchase_order'];
+        if (!in_array($paymentKey, $offline, true)) {
+            // Not an offline method. The key must resolve to
+            // a real provider through the registry. A store
+            // that has not enabled Stripe does not have a
+            // StripeProvider that resolves, so a forged POST
+            // of payment_method=stripe fails here.
+            if ($this->providers->resolve($paymentKey) === null) {
+                throw new CheckoutException(
+                    'Please select a valid payment method.'
+                );
+            }
         }
 
         $customer = $input['customer'] ?? null;

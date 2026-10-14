@@ -19,6 +19,7 @@ use CorporateAid\Commerce\Controllers\Storefront\RecentViewController;
 use CorporateAid\Commerce\Controllers\Storefront\MessageController;
 use CorporateAid\Commerce\Controllers\Storefront\ReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
+use CorporateAid\Commerce\Controllers\Storefront\StripeReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\NewsletterController;
 use CorporateAid\Commerce\Controllers\Storefront\FormController;
 
@@ -241,6 +242,14 @@ $router->post('/checkout/payment',             [CheckoutController::class, 'save
 $router->get('/checkout/confirm',              [CheckoutController::class, 'confirm'],      ['store']);
 $router->post('/checkout/place',               [CheckoutController::class, 'place'],        ['store', 'csrf']);
 $router->get('/checkout/confirmation/{orderNumber}', [CheckoutController::class, 'confirmation'], ['store']);
+
+// Stripe Checkout return. The customer lands here after
+// paying (or cancelling) on Stripe's hosted page. The
+// controller verifies the intent against Stripe's API and
+// redirects to the confirmation page. The webhook is what
+// writes payment_status; this route is the customer-facing
+// confirmation step.
+$router->get('/checkout/stripe/return', [StripeReturnController::class, 'handle'], ['store']);
 
 // Legal pages (public, one route for all four slugs)
 $router->get('/legal/{slug}', [CheckoutController::class, 'legalPage'], ['store']);

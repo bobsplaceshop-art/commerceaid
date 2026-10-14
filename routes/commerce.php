@@ -29,6 +29,7 @@ use CorporateAid\Commerce\Controllers\Admin\AdminCampaignController;
 use CorporateAid\Commerce\Controllers\Admin\AdminFormController;
 use CorporateAid\Commerce\Controllers\Admin\DebugController;
 use CorporateAid\Commerce\Controllers\Admin\LogController;
+use CorporateAid\Commerce\Controllers\WebhookController;
 
 /** @var Router $router */
 
@@ -1049,3 +1050,32 @@ $router->get('/commerce/ca-admin/logs',
 $router->get('/commerce/ca-admin/logs/{tab}',
     [LogController::class, 'index'],
     ['store', 'auth', 'permission:core.audit.view']);
+
+// =====================================================================
+// Webhooks - payment providers
+// =====================================================================
+//
+//   POST /webhooks/stripe
+//   POST /webhooks/paypal
+//
+// No auth middleware. No CSRF. The signature header is the
+// only security boundary; WebhookController::handle() calls
+// the provider's verifyWebhook() and rejects the request
+// with 400 on any mismatch.
+//
+// The 'store' middleware resolves the store from the request
+// hostname (commerce_store_domains) or a ?store= query
+// parameter. Every repository the handler touches scopes by
+// store_id, so the store must be resolved before the
+// controller runs.
+//
+// The Kernel attaches the audit middleware to every POST
+// automatically. Every webhook delivery lands in
+// core_audit_logs without the route declaring it.
+$router->post('/webhooks/stripe',
+    [WebhookController::class, 'stripe'],
+    ['store']);
+
+$router->post('/webhooks/paypal',
+    [WebhookController::class, 'paypal'],
+    ['store']);

@@ -304,7 +304,17 @@ final class App
 
     private function loadRoutes(): void
     {
-        $this->container->get(Session::class)->start();
+        // Sessions are an HTTP concern. On CLI (the smoke
+        // harness, the seed workers, the retry cron) there
+        // are no cookies and no headers. Calling
+        // Session->start() runs session_name(), which PHP
+        // refuses once any byte has reached STDOUT. A CLI
+        // process that echoes progress before boot would
+        // crash on a warning it has no way to avoid. Skip
+        // the session start on CLI.
+        if (PHP_SAPI !== 'cli') {
+            $this->container->get(Session::class)->start();
+        }
 
         $this->router = $this->container->get(Router::class);
         $router = $this->router;
