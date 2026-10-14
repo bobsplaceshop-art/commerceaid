@@ -3,12 +3,14 @@ declare(strict_types=1);
 
 namespace CorporateAid\Commerce\Controllers\Admin;
 
+use CorporateAid\Commerce\Exceptions\PaymentRefundException;
 use CorporateAid\Commerce\Exceptions\ReturnRequestException;
 use CorporateAid\Commerce\Repositories\CustomerRepository;
 use CorporateAid\Commerce\Repositories\OrderItemRepository;
 use CorporateAid\Commerce\Repositories\OrderRepository;
 use CorporateAid\Commerce\Repositories\ReturnRequestItemRepository;
 use CorporateAid\Commerce\Repositories\ReturnRequestRepository;
+use CorporateAid\Commerce\Services\Payment\PaymentRefundService;
 use CorporateAid\Commerce\Services\ReturnRequestService;
 use CorporateAid\Core\Auth;
 use CorporateAid\Core\Request;
@@ -36,11 +38,20 @@ use CorporateAid\Core\Session;
  * The GET routes are gated by returns.view. The POST routes
  * by returns.moderate.
  *
- * Every action delegates to ReturnRequestService, which is the
- * sole writer to the two returns tables and to the affected
- * order columns (refunded_total, payment_status, fulfilment_status,
- * and each order line's returned_quantity). This controller never
- * writes those tables directly.
+ * Approve, reject, and markReceived delegate to
+ * ReturnRequestService, which is the sole writer to the two
+ * returns tables and to the affected order columns
+ * (refunded_total, payment_status, fulfilment_status, and each
+ * order line's returned_quantity).
+ *
+ * Refund delegates to PaymentRefundService, which consumes
+ * ReturnRequestService::processRefund() and then dispatches
+ * the refund to the payment provider. The provider call runs
+ * post-commit; a provider failure leaves the recorded intent
+ * intact and the refund row in a failed state for the retry
+ * cron.
+ *
+ * This controller never writes those tables directly.
  *
  * The state machine enforced by the service:
  *   requested  -> approved | rejected | cancelled (customer)
@@ -412,18 +423,36 @@ final class AdminReturnController extends AdminController
         }
 
         try {
-            $amount = $this->container->get(ReturnRequestService::class)
-                ->processRefund($id, $userId);
+            $result = $this->container->get(PaymentRefundService::class)
+                ->refund($id, $userId);
         } catch (ReturnRequestException $e) {
+            $session->flash('error', $e->getMessage());
+            return Response::redirect('/commerce/ca-admin/returns/' . $id);
+        } catch (PaymentRefundException $e) {
             $session->flash('error', $e->getMessage());
             return Response::redirect('/commerce/ca-admin/returns/' . $id);
         }
 
-        $session->flash(
-            'success',
-            'Refund of ' . number_format($amount, 2) . ' processed for '
-            . $req->requestNumber . '.'
-        );
+        $amount = number_format($result->amount, 2);
+
+        if ($result->status === 'succeeded') {
+            $session->flash(
+                'success',
+                'Refund of ' . $amount . ' processed for ' . $req->requestNumber . '.'
+            );
+        } elseif ($result->status === 'pending') {
+            $session->flash(
+                'success',
+                'Refund of ' . $amount . ' recorded for ' . $req->requestNumber
+                . '. The provider will process it shortly.'
+            );
+        } else {
+            $session->flash(
+                'error',
+                'The refund for ' . $req->requestNumber . ' failed: '
+                . ($result->errorMessage ?? 'unknown provider error')
+            );
+        }
 
         return Response::redirect('/commerce/ca-admin/returns/' . $id);
     }

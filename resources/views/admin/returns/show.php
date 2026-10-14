@@ -118,7 +118,8 @@ $currency   = $order !== null ? $order->currencyCode : 'EUR';
                             data-request-id="<?= (int) $request->id ?>"
                             data-request-number="<?= e($request->requestNumber) ?>"
                             data-amount="<?= e(number_format($refundableNow, 2)) ?>"
-                            data-currency="<?= e($currency) ?>">
+                            data-currency="<?= e($currency) ?>"
+                            data-provider="<?= e($order !== null ? (string) ($order->paymentProviderKey ?? '') : '') ?>">
                         <i class="bi bi-cash-coin me-1"></i> Process refund
                     </button>
                 <?php endif; ?>

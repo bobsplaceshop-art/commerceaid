@@ -42,7 +42,7 @@
                     </div>
                 </div>
 
-                <p class="muted small mb-0">
+                <p class="muted small mb-0" id="ra-refund-provider-note">
                     This records the refund against the order and updates
                     the customer's order history. The actual money movement
                     is handled by the payment provider in a later stage.
@@ -76,10 +76,25 @@
 
     var ACTION_TEMPLATE = '/commerce/ca-admin/returns/__ID__/refund';
 
-    function open(id, number, amount, currency) {
+    var PROVIDER_NOTES = {
+        'stripe': 'This refund will be sent to Stripe for processing. ' +
+                  'The customer receives the money within 5-10 business days.',
+        'paypal': 'This refund will be sent to PayPal for processing. ' +
+                  'The customer receives the money within 3-5 business days.'
+    };
+    var OFFLINE_NOTE = 'This records the refund against the order and ' +
+                       "updates the customer's order history.";
+
+    var noteEl = document.getElementById('ra-refund-provider-note');
+
+    function open(id, number, amount, currency, provider) {
         numberEl.textContent = number || 'this return';
         amountEl.textContent = amount || '0.00';
         currEl.textContent   = currency || 'EUR';
+
+        if (noteEl) {
+            noteEl.textContent = PROVIDER_NOTES[provider] || OFFLINE_NOTE;
+        }
 
         var params = new URLSearchParams(window.location.search);
         filterEl.value = params.get('return') || 'open';
@@ -113,7 +128,8 @@
                 btn.getAttribute('data-request-id'),
                 btn.getAttribute('data-request-number'),
                 btn.getAttribute('data-amount'),
-                btn.getAttribute('data-currency')
+                btn.getAttribute('data-currency'),
+                btn.getAttribute('data-provider') || ''
             );
         });
     });
