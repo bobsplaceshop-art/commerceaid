@@ -40,7 +40,7 @@ $total = count($attributes);
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
                 <table class="ra-table">
             <thead>
                 <tr>
@@ -54,7 +54,7 @@ $total = count($attributes);
             <tbody>
                 <?php foreach ($attributes as $attr): ?>
                     <tr>
-                        <td>
+                        <td data-label="Name" data-col="full">
                             <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-input-cursor-text" style="color:var(--ra-muted,#94a3b8);"></i>
                                 <span><?= e($attr['name']) ?></span>
@@ -63,13 +63,13 @@ $total = count($attributes);
                                 <?php endif; ?>
                             </div>
                         </td>
-                        <td><code class="muted small"><?= e($attr['slug']) ?></code></td>
-                        <td>
+                        <td data-label="Slug" data-col="half"><code class="muted small"><?= e($attr['slug']) ?></code></td>
+                        <td data-label="Input" data-col="half">
                             <span class="muted small">
                                 <?= e(ucfirst((string) $attr['input_type'])) ?>
                             </span>
                         </td>
-                        <td>
+                        <td data-label="Values" data-col="half">
                             <?php if (empty($attr['values'])): ?>
                                 <span class="muted small">-</span>
                             <?php else: ?>
@@ -87,7 +87,7 @@ $total = count($attributes);
                                 </div>
                             <?php endif; ?>
                         </td>
-                        <td class="text-end">
+                        <td data-label="Actions" data-col="full" class="text-end">
                             <a href="/commerce/ca-admin/attributes/<?= (int) $attr['id'] ?>/edit"
                                class="ra-icon-btn" title="Edit">
                                 <i class="bi bi-pencil"></i>

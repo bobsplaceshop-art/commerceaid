@@ -49,7 +49,7 @@ $totalActive     = $totalActive     ?? 0;
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -69,7 +69,7 @@ $totalActive     = $totalActive     ?? 0;
                         $isArchived = $g->isArchived();
                         ?>
                         <tr>
-                            <td>
+                            <td data-label="Group" data-col="full">
                                 <div class="d-flex align-items-center gap-2 flex-wrap">
                                     <i class="bi bi-people" style="color:var(--ra-muted,#94a3b8);"></i>
                                     <a href="/commerce/ca-admin/customer-groups/<?= (int) $g->id ?>/edit"
@@ -87,29 +87,29 @@ $totalActive     = $totalActive     ?? 0;
                                     <?php endif; ?>
                                 </div>
                             </td>
-                            <td class="ra-hide-sm"><code class="muted small"><?= e($g->slug) ?></code></td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Slug" data-col="half" class="ra-hide-sm"><code class="muted small"><?= e($g->slug) ?></code></td>
+                            <td data-label="Type" data-col="half" class="ra-hide-sm">
                                 <span class="muted small">
                                     <?= $g->isB2b ? 'B2B' : 'Retail' ?>
                                 </span>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Customers" data-col="half" class="text-end">
                                 <span class="muted small"><?= (int) $row['customer_count'] ?></span>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Overrides" data-col="half" class="text-end">
                                 <a href="/commerce/ca-admin/customer-groups/<?= (int) $g->id ?>/prices"
                                    class="text-decoration-none">
                                     <?= (int) $row['override_count'] ?>
                                 </a>
                             </td>
-                            <td>
+                            <td data-label="Status" data-col="half">
                                 <?php if ($isArchived): ?>
                                     <span class="ra-badge ra-badge-muted">Archived</span>
                                 <?php else: ?>
                                     <span class="ra-badge ra-badge-success">Active</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end ra-actions-cell">
+                            <td data-label="Actions" data-col="full" class="text-end ra-actions-cell">
                                 <?php if ($isArchived): ?>
                                     <form method="POST" action="/commerce/ca-admin/customer-groups/<?= (int) $g->id ?>/restore" class="d-inline">
                                         <?= csrf_field() ?>

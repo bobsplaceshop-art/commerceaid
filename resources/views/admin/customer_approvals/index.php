@@ -139,7 +139,7 @@ $fmtDate = function (?string $dt): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -153,7 +153,7 @@ $fmtDate = function (?string $dt): string {
                 <tbody>
                     <?php foreach ($items as $c): ?>
                         <tr>
-                            <td>
+                            <td data-label="Customer" data-col="full">
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="ra-avatar" style="width:32px;height:32px;font-size:.8rem;">
                                         <?= e($c->initials()) ?>
@@ -168,16 +168,16 @@ $fmtDate = function (?string $dt): string {
                                     </div>
                                 </div>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Contact" data-col="half" class="ra-hide-sm">
                                 <div class="muted small text-truncate" style="max-width:220px;">
                                     <?= e($c->email) ?>
                                 </div>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Registered" data-col="half" class="ra-hide-sm">
                                 <span class="muted small"><?= e($fmtDate($c->createdAt)) ?></span>
                             </td>
-                            <td><?= $statusBadge($c->approvalStatus) ?></td>
-                            <td class="text-end ra-actions-cell">
+                            <td data-label="Status" data-col="half"><?= $statusBadge($c->approvalStatus) ?></td>
+                            <td data-label="Actions" data-col="full" class="text-end ra-actions-cell">
                                 <?php if ($c->approvalStatus === 'pending'): ?>
                                     <form method="POST"
                                           action="/commerce/ca-admin/customer-approvals/<?= (int) $c->id ?>/approve"
@@ -230,7 +230,7 @@ $fmtDate = function (?string $dt): string {
                         </tr>
                         <?php if ($c->approvalStatus === 'rejected' && $c->approvalReason !== null && $c->approvalReason !== ''): ?>
                             <tr>
-                                <td colspan="5" style="background:rgba(220,38,38,0.04);">
+                                <td colspan="5" data-col="full" style="background:rgba(220,38,38,0.04);">
                                     <div class="muted small">
                                         <i class="bi bi-info-circle me-1"></i>
                                         Rejection reason (admin only):

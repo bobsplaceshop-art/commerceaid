@@ -169,7 +169,7 @@ $badgeClass = function (string $variant): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -199,19 +199,19 @@ $badgeClass = function (string $variant): string {
                         $orderLabel = $order !== null ? $order->orderNumber : 'Order #' . (int) $r->orderId;
                         ?>
                         <tr>
-                            <td>
+                            <td data-label="Request" data-col="full">
                                 <a href="/commerce/ca-admin/returns/<?= (int) $r->id ?>"
                                    class="text-decoration-none"
                                    style="font-weight:600;">
                                     <?= e($r->requestNumber) ?>
                                 </a>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Customer" data-col="half" class="ra-hide-sm">
                                 <div class="text-truncate" style="max-width:180px;">
                                     <?= e($customerName) ?>
                                 </div>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Order" data-col="half" class="ra-hide-sm">
                                 <?php if ($order !== null): ?>
                                     <a href="/commerce/ca-admin/orders/<?= (int) $order->id ?>"
                                        class="text-decoration-none">
@@ -221,18 +221,18 @@ $badgeClass = function (string $variant): string {
                                     <span class="muted"><?= e($orderLabel) ?> (deleted)</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="muted small">
+                            <td data-label="Reason" data-col="half" class="muted small">
                                 <?= e($r->reasonLabel()) ?>
                             </td>
-                            <td>
+                            <td data-label="Status" data-col="half">
                                 <span class="<?= e($badgeClass($r->statusBadgeVariant())) ?>">
                                     <?= e($r->statusLabel()) ?>
                                 </span>
                             </td>
-                            <td class="ra-hide-sm muted small">
+                            <td data-label="Requested" data-col="half" class="ra-hide-sm muted small">
                                 <?= e($fmtDate($r->requestedAt)) ?>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Actions" data-col="full" class="text-end">
                                 <a href="/commerce/ca-admin/returns/<?= (int) $r->id ?>"
                                    class="ra-btn ra-btn-outline ra-btn-sm">
                                     View

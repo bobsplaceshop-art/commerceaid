@@ -108,7 +108,7 @@ $tabs = [
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -122,7 +122,7 @@ $tabs = [
                 <tbody>
                     <?php foreach ($forms as $form): ?>
                         <tr>
-                            <td>
+                            <td data-label="Name" data-col="full">
                                 <a href="/commerce/ca-admin/forms/<?= (int) $form->id ?>/edit"
                                    class="text-decoration-none" style="font-weight:600;">
                                     <?= e($form->name) ?>
@@ -131,16 +131,16 @@ $tabs = [
                                     <div class="muted small"><?= e($form->description) ?></div>
                                 <?php endif; ?>
                             </td>
-                            <td class="ra-hide-sm"><code><?= e($form->slug) ?></code></td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Slug" data-col="half" class="ra-hide-sm"><code><?= e($form->slug) ?></code></td>
+                            <td data-label="Status" data-col="half" class="ra-hide-sm">
                                 <span class="ra-badge ra-badge-<?= e($form->statusBadgeVariant()) ?>">
                                     <?= e($form->statusLabel()) ?>
                                 </span>
                             </td>
-                            <td class="ra-hide-sm muted small">
+                            <td data-label="Updated" data-col="half" class="ra-hide-sm muted small">
                                 <?= e((string) ($form->updatedAt ?? '')) ?>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Actions" data-col="full" class="text-end">
                                 <a href="/commerce/ca-admin/forms/<?= (int) $form->id ?>/edit"
                                    class="ra-icon-btn" title="Edit">
                                     <i class="bi bi-pencil"></i>
