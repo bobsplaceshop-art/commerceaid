@@ -37,41 +37,6 @@
     </div>
 </div>
 
-<style>
-.ra-modal {
-    position: fixed; inset: 0; z-index: 9999;
-    display: flex; align-items: center; justify-content: center;
-}
-.ra-modal-backdrop {
-    position: absolute; inset: 0;
-    background: rgba(15, 23, 42, 0.55);
-    backdrop-filter: blur(2px);
-}
-.ra-modal-panel {
-    position: relative;
-    background: var(--ra-card-bg, #ffffff);
-    border: 1px solid var(--ra-border, #e5e9f2);
-    border-radius: 14px;
-    width: 100%; max-width: 440px;
-    box-shadow: 0 20px 60px -20px rgba(15, 23, 42, 0.35);
-    overflow: hidden;
-}
-.ra-modal-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--ra-border, #e5e9f2);
-}
-.ra-modal-body {
-    padding: 1.25rem;
-}
-.ra-modal-footer {
-    display: flex; align-items: center; justify-content: flex-end;
-    gap: .5rem;
-    padding: 1rem 1.25rem;
-    border-top: 1px solid var(--ra-border, #e5e9f2);
-}
-.ra-modal-footer form { margin: 0; }
-</style>
 
 <script>
 window.RA_DeleteCategory = (function () {

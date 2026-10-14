@@ -251,14 +251,14 @@ $statusBadge = function (string $status): string {
                                 <form method="POST" action="/commerce/ca-admin/products/<?= (int) $product->id ?>/unpublish" class="d-inline">
                                     <?= csrf_field() ?>
                                     <button type="submit" class="ra-icon-btn" title="Unpublish (revert to draft)">
-                                        <i class="bi bi-eye-slash"></i>
+                                        <i class="bi bi-cloud-arrow-down"></i>
                                     </button>
                                 </form>
                             <?php else: ?>
                                 <form method="POST" action="/commerce/ca-admin/products/<?= (int) $product->id ?>/publish" class="d-inline">
                                     <?= csrf_field() ?>
                                     <button type="submit" class="ra-icon-btn" title="Publish">
-                                        <i class="bi bi-eye"></i>
+                                        <i class="bi bi-cloud-arrow-up"></i>
                                     </button>
                                 </form>
                             <?php endif; ?>

@@ -32,7 +32,7 @@
                     <strong id="ra-refund-return-number">this return</strong>.
                 </p>
 
-                <div class="ra-card mb-3" style="background:var(--ra-surface-2,#0f172a);">
+                <div class="ra-card mb-3" style="background:var(--ra-surface-2);">
                     <div class="ra-card-body py-3">
                         <div class="muted small" style="text-transform:uppercase;letter-spacing:.04em;font-size:.72rem;">Refund amount</div>
                         <div style="font-weight:600;font-size:1.4rem;">
