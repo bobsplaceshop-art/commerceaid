@@ -374,8 +374,9 @@ every width the platform targets: 1200+, 900-1199,
 day (db49f0c).
 
 **Session 3 tail shipped** (e2ed540, 923aef3, 0454eec,
-f82aeaf): the admin tab strips, the view-local CSS
-moves, and sixteen list tables on the card treatment.
+f82aeaf, 235be2f): the admin tab strips, the view-local
+CSS moves, sixteen list tables, and eleven detail-page
+tables on the card treatment.
 
   - Tab strips scroll instead of wrap. Four class
     families: .ra-admin-tabs, .ra-content .nav-tabs,
@@ -392,6 +393,17 @@ moves, and sixteen list tables on the card treatment.
                customer_approvals, returns, forms
       Batch 3  legal_pages, shipping, tax,
                subscribers, subscriber_lists, campaigns
+  - Eleven detail-page tables convert:
+      customers/show, orders/show, returns/show,
+      inventory/item (via _variant-row partial),
+      inventory/movements, inventory/_movement-block,
+      coupons/edit, forms/edit, customer_groups/prices,
+      subscribers/show
+      The key-value settings table on settings/index
+      stays on scroll by design.
+      The variant quantity input moved from the
+      inert ra-form-control class to Bootstrap's
+      form-control.
 
 **Session 4 shipped** (dc4320c, 21ee520, d0c26ab,
 3aab0eb, aed259e): the storefront audit. Five
