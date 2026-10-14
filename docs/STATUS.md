@@ -365,13 +365,33 @@ the Setup hub.
 
 ---
 
-## Current Focus - Stage 014 Session 4 shipped
+## Current Focus - Stage 014 Session 3 tail + Session 4 shipped
 
 **Stage 014 Sessions 1, 2, 3, and 4 are complete.**
 The admin panel and the storefront are responsive at
 every width the platform targets: 1200+, 900-1199,
 640-899, below 640. Stage 009 closed earlier the same
 day (db49f0c).
+
+**Session 3 tail shipped** (e2ed540, 923aef3, 0454eec,
+f82aeaf): the admin tab strips, the view-local CSS
+moves, and sixteen list tables on the card treatment.
+
+  - Tab strips scroll instead of wrap. Four class
+    families: .ra-admin-tabs, .ra-content .nav-tabs,
+    .ra-setup-nav-list, .ra-settings-tabs. All scroll
+    horizontally with a hidden scrollbar below 899.
+  - Four view-local <style> blocks move to
+    main-v2.css. Dashboard, inventory, products Basic
+    tab, setup payments. One shared mobile fallback
+    for the four tile grids.
+  - Sixteen list tables convert from
+    data-responsive="scroll" to "cards":
+      Batch 1  categories, brands, users, roles, coupons
+      Batch 2  attributes, customer_groups,
+               customer_approvals, returns, forms
+      Batch 3  legal_pages, shipping, tax,
+               subscribers, subscriber_lists, campaigns
 
 **Session 4 shipped** (dc4320c, 21ee520, d0c26ab,
 3aab0eb, aed259e): the storefront audit. Five
