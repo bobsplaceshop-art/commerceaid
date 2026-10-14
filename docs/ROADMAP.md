@@ -155,20 +155,27 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-Stage 010 (Payments Deep) is open. Session 1
-shipped on 2026-10-14 (commit 0f9d57f) with the
-payment infrastructure: the PaymentProvider
-interface, an HTTP client, the registry, the
-PaymentMethodRepository, three tables
-(commerce_store_payment_methods,
-commerce_payment_refunds, commerce_webhook_events),
-and eight provider credential settings.
+Stage 010 (Payments Deep) is open. Sessions 1
+and 2 shipped on 2026-10-14.
 
-Session 2 opens next: the refund wrapper. Sessions
-3 and 4 ship Stripe and PayPal end to end. Session
-5 ships the admin configuration tab. Session 6
-writes the compliance entries. Session 7 closes
-the stage.
+Session 1 (0f9d57f) built the payment
+infrastructure: the PaymentProvider interface,
+an HTTP client, the registry, the
+PaymentMethodRepository, three tables, and eight
+provider credential settings.
+
+Session 2 (a5ea07b, 63d6837) built the refund
+wrapper and the codebase's first logic check
+harness. PaymentRefundService consumes
+ReturnRequestService::processRefund() and
+dispatches the provider refund post-commit.
+bin/smoke.php boots the app against a separate
+test database and runs cases. bin/retry-refunds.php
+is the retry cron.
+
+Session 3 opens next: Stripe. Sessions 4 through
+7 ship PayPal, the admin configuration tab, the
+compliance entries, and the stage close.
 
 Stage 014 (Responsive Layout System) closed
 2026-10-14 (tag stage-014-complete). The tail walk

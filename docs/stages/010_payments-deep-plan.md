@@ -833,3 +833,41 @@ this shape is recorded in the Session 1 file
 (`docs/sessions/2026-10-14-3.md`) so the next
 provider sub-stage starts from the final shape,
 not from a fresh attempt at the const.
+
+### Session 2 close (2026-10-14)
+
+Two additions shipped that the plan's Session 2
+bullet list did not name:
+
+  - `bin/smoke.php` and the first smoke case
+    (`bin/smoke-cases/refund.php`). The harness
+    boots the app against a separate test
+    database, migrates and seeds it, and runs
+    cases. The first case exercises the offline
+    and registry-miss paths of the refund
+    wrapper.
+  - `composer smoke`. Runs the harness. Joins
+    lint, analyse, and prevenger as a distinct
+    check command.
+
+The plan named PaymentRefundService,
+RefundResult, PaymentRefundException,
+PaymentRefundRepository, the controller switch,
+the retry cron, and the modal note. All seven
+shipped.
+
+The smoke harness is the codebase's first logic
+check. The three existing check categories
+(syntax via bin/lint.php, types via PHPStan,
+structure via the prevenger) cannot verify the
+refund wrapper's offline path, its registry-miss
+path, or its order re-derive step. The smoke
+case does.
+
+The wrapper passed its first real smoke run. The
+four bugs that surfaced during the harness's
+first day were all in its own fixtures
+(product_id, variant_id, customer_id, store_id),
+not in the payment code. The session file
+`docs/sessions/2026-10-14-4.md` records the
+sequence.

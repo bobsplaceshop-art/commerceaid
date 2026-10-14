@@ -365,27 +365,47 @@ the Setup hub.
 
 ---
 
-## Current Focus - Stage 010 Session 1 complete
+## Current Focus - Stage 010 Sessions 1-2 complete
 
-**Stage 010 (Payments Deep) has opened.** Session 1
-shipped the payment infrastructure on 2026-10-14
-(commit 0f9d57f): the PaymentProvider interface, an
-HTTP client, the registry, the PaymentMethodRepository,
-three tables (commerce_store_payment_methods,
-commerce_payment_refunds, commerce_webhook_events),
+**Stage 010 Sessions 1 and 2 are complete.**
+
+Session 1 (`0f9d57f`) shipped the payment
+infrastructure: the `PaymentProvider` interface, an
+HTTP client, the registry, the `PaymentMethodRepository`,
+three tables (`commerce_store_payment_methods`,
+`commerce_payment_refunds`, `commerce_webhook_events`),
 and eight provider credential settings.
+
+Session 2 (`a5ea07b`, `63d6837`) shipped the refund
+wrapper and the codebase's first logic check harness:
+
+  - `PaymentRefundService` consumes
+    `ReturnRequestService::processRefund()` and
+    dispatches the provider refund post-commit.
+    `ReturnRequestService` is untouched.
+  - `PaymentRefundException`, `RefundResult`,
+    `PaymentRefundRepository`.
+  - `AdminReturnController::refund()` delegates to
+    the wrapper and flashes three distinct messages
+    (succeeded, pending, failed).
+  - The refund modal note is provider-aware.
+  - `bin/smoke.php` is the logic check harness. It
+    boots the app against `anaya_commerce_test`,
+    migrates and seeds it, and runs cases from
+    `bin/smoke-cases/`.
+  - `bin/smoke-cases/refund.php` exercises the
+    offline and registry-miss paths.
+  - `bin/retry-refunds.php` is the retry cron for
+    failed refund rows.
+  - `composer smoke` runs the harness.
 
 **Stage 014 closed on 2026-10-14** (tag
 `stage-014-complete`). The tail walk and the offline
-page theme fix shipped in commit 6515e85. The
-session file `2026-10-14-2.md` records the closure.
+page theme fix shipped in commit `6515e85`.
 
-**Stage 010 Session 2 opens next:** the refund
-wrapper. `PaymentRefundService` consumes
-`ReturnRequestService::processRefund()` and dispatches
-the provider call post-commit. The
-`commerce_payment_refunds` table records every
-attempt. The retry cron lands with it.
+**Stage 010 Session 3 opens next:** Stripe. The
+provider class, the charge flow, the refund flow,
+the webhook handler, and the checkout integration.
 
 The Stage 014 Session 5 and Session 3 tail paragraphs
 below are historical and remain for the record.
@@ -561,15 +581,12 @@ open with a 19 June 2026 deadline.
 
 **Next 3 stages:**
 
-  - **010 Session 2** (next): the refund wrapper.
-    PaymentRefundService consumes
-    ReturnRequestService::processRefund() and
-    dispatches the provider refund post-commit.
-    PaymentRefundRepository, RefundResult,
-    bin/retry-refunds.php, and the refund-modal
-    note all land in this session.
-  - **010 Sessions 3-5**: Stripe, PayPal, and the
-    admin configuration tab. Each is one session.
+  - **010 Session 3** (next): Stripe. The provider
+    class, the charge flow, the refund flow, the
+    webhook handler, and the checkout integration.
+  - **010 Sessions 4-7**: PayPal, the admin
+    configuration tab, the compliance entries, and
+    the stage close.
   - **Responsive render harness** (backlog):
     Chrome headless via CDP. Iterates every route
     at four viewports and checks for horizontal
