@@ -168,7 +168,7 @@ $badgeClass = function (string $variant): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -183,29 +183,29 @@ $badgeClass = function (string $variant): string {
                 <tbody>
                     <?php foreach ($items as $s): ?>
                         <tr>
-                            <td>
+                            <td data-label="Email" data-col="full">
                                 <a href="/commerce/ca-admin/subscribers/<?= (int) $s->id ?>"
                                    class="text-decoration-none" style="font-weight:600;">
                                     <?= e($s->email) ?>
                                 </a>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Name" data-col="half" class="ra-hide-sm">
                                 <?= e($s->name ?? '') ?>
                             </td>
-                            <td>
+                            <td data-label="Status" data-col="half">
                                 <span class="<?= e($badgeClass($s->statusBadgeVariant())) ?>">
                                     <?= e($s->statusLabel()) ?>
                                 </span>
                             </td>
-                            <td class="ra-hide-sm muted small">
+                            <td data-label="Source" data-col="half" class="ra-hide-sm muted small">
                                 <?= e($s->consentSource !== null && $s->consentSource !== ''
                                     ? ($sources[$s->consentSource] ?? $s->consentSource)
                                     : '—') ?>
                             </td>
-                            <td class="ra-hide-sm muted small">
+                            <td data-label="Subscribed" data-col="half" class="ra-hide-sm muted small">
                                 <?= e($fmtDateTime($s->consentAt ?? $s->createdAt)) ?>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Actions" data-col="full" class="text-end">
                                 <a href="/commerce/ca-admin/subscribers/<?= (int) $s->id ?>"
                                    class="ra-icon-btn" title="View">
                                     <i class="bi bi-eye"></i>

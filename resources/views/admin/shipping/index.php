@@ -122,7 +122,7 @@ $fmtRate = function ($v): string {
                         No zones defined yet. Add a zone to make this method available in a country.
                     </p>
                 <?php else: ?>
-                    <div class="ra-table-responsive-wrap" data-responsive="scroll">
+                    <div class="ra-table-responsive-wrap" data-responsive="cards">
                         <table class="ra-table">
                             <thead>
                                 <tr>
@@ -145,26 +145,26 @@ $fmtRate = function ($v): string {
                                     $zActive   = ((int) ($zone['is_active'] ?? 0)) === 1;
                                     ?>
                                     <tr>
-                                        <td><span class="muted small"><?= $sortOrder ?></span></td>
-                                        <td><code><?= e($country) ?></code></td>
-                                        <td class="ra-hide-sm">
+                                        <td data-label="Order" data-col="half"><span class="muted small"><?= $sortOrder ?></span></td>
+                                        <td data-label="Country" data-col="half"><code><?= e($country) ?></code></td>
+                                        <td data-label="Region" data-col="half" class="ra-hide-sm">
                                             <?= $region !== '' ? '<code>' . e($region) . '</code>' : '<span class="muted">Country-wide</span>' ?>
                                         </td>
-                                        <td>
+                                        <td data-label="Rate override" data-col="half">
                                             <?php if ($override !== null && $override !== ''): ?>
                                                 <?= e($fmtRate($override)) ?>
                                             <?php else: ?>
                                                 <span class="muted">Computed</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="ra-hide-sm">
+                                        <td data-label="Active" data-col="half" class="ra-hide-sm">
                                             <?php if ($zActive): ?>
                                                 <span class="ra-badge ra-badge-success">Active</span>
                                             <?php else: ?>
                                                 <span class="ra-badge ra-badge-muted">Inactive</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-end">
+                                        <td data-label="Actions" data-col="full" class="text-end">
                                             <a href="/commerce/ca-admin/shipping/zones/<?= $zid ?>/edit"
                                                class="ra-icon-btn" title="Edit zone">
                                                 <i class="bi bi-pencil"></i>

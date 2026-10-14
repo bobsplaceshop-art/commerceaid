@@ -134,7 +134,7 @@ $badgeClass = function (string $variant): string {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -148,7 +148,7 @@ $badgeClass = function (string $variant): string {
                 <tbody>
                     <?php foreach ($items as $c): ?>
                         <tr>
-                            <td>
+                            <td data-label="Subject" data-col="full">
                                 <a href="/commerce/ca-admin/campaigns/<?= (int) $c->id ?>"
                                    class="text-decoration-none" style="font-weight:600;">
                                     <?= e($c->subject) ?>
@@ -157,16 +157,16 @@ $badgeClass = function (string $variant): string {
                                     <div class="muted small"><?= e($c->preheader) ?></div>
                                 <?php endif; ?>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Status" data-col="half" class="ra-hide-sm">
                                 <span class="<?= e($badgeClass($c->statusBadgeVariant())) ?>">
                                     <?= e($c->statusLabel()) ?>
                                 </span>
                             </td>
-                            <td style="text-align:right;"><?= (int) $c->sentCount ?></td>
-                            <td class="ra-hide-sm muted small">
+                            <td data-label="Sent" data-col="half" style="text-align:right;"><?= (int) $c->sentCount ?></td>
+                            <td data-label="Created" data-col="half" class="ra-hide-sm muted small">
                                 <?= e($fmtDateTime($c->createdAt)) ?>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Actions" data-col="full" class="text-end">
                                 <?php if ($c->canEdit()): ?>
                                     <a href="/commerce/ca-admin/campaigns/<?= (int) $c->id ?>/edit"
                                        class="ra-icon-btn" title="Edit">

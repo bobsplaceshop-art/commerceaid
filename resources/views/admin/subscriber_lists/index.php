@@ -37,7 +37,7 @@ $counts = $counts ?? [];
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -52,21 +52,21 @@ $counts = $counts ?? [];
                 <tbody>
                     <?php foreach ($lists as $l): ?>
                         <tr>
-                            <td>
+                            <td data-label="Name" data-col="full">
                                 <a href="/commerce/ca-admin/subscriber-lists/<?= (int) $l->id ?>/edit"
                                    class="text-decoration-none" style="font-weight:600;">
                                     <?= e($l->name) ?>
                                 </a>
                             </td>
-                            <td class="ra-hide-sm"><code><?= e($l->slug) ?></code></td>
-                            <td class="ra-hide-sm muted small"><?= e($l->description ?? '') ?></td>
-                            <td><?= (int) ($counts[$l->id] ?? 0) ?></td>
-                            <td>
+                            <td data-label="Slug" data-col="half" class="ra-hide-sm"><code><?= e($l->slug) ?></code></td>
+                            <td data-label="Description" data-col="half" class="ra-hide-sm muted small"><?= e($l->description ?? '') ?></td>
+                            <td data-label="Members" data-col="half"><?= (int) ($counts[$l->id] ?? 0) ?></td>
+                            <td data-label="Default" data-col="half">
                                 <?php if ($l->isDefault): ?>
                                     <span class="ra-badge ra-badge-muted">Yes</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Actions" data-col="full" class="text-end">
                                 <a href="/commerce/ca-admin/subscriber-lists/<?= (int) $l->id ?>/edit"
                                    class="ra-icon-btn" title="Edit">
                                     <i class="bi bi-pencil"></i>

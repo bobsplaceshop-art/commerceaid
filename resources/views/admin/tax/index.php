@@ -118,7 +118,7 @@ foreach ($ratesByClass as $list) {
                         No rates defined yet. Add a rate to charge tax for this class.
                     </p>
                 <?php else: ?>
-                    <div class="ra-table-responsive-wrap" data-responsive="scroll">
+                    <div class="ra-table-responsive-wrap" data-responsive="cards">
                         <table class="ra-table">
                             <thead>
                                 <tr>
@@ -141,26 +141,26 @@ foreach ($ratesByClass as $list) {
                                     $shipTax  = ((int) ($rate['is_shipping_taxable'] ?? 0)) === 1;
                                     ?>
                                     <tr>
-                                        <td><code><?= e($country) ?></code></td>
-                                        <td class="ra-hide-sm">
+                                        <td data-label="Country" data-col="half"><code><?= e($country) ?></code></td>
+                                        <td data-label="State / Region" data-col="half" class="ra-hide-sm">
                                             <?= $state !== '' ? '<code>' . e($state) . '</code>' : '<span class="muted">—</span>' ?>
                                         </td>
-                                        <td><?= e($percent) ?>%</td>
-                                        <td class="ra-hide-sm">
+                                        <td data-label="Rate" data-col="half"><?= e($percent) ?>%</td>
+                                        <td data-label="Inclusive" data-col="half" class="ra-hide-sm">
                                             <?php if ($incl): ?>
                                                 <span class="ra-badge ra-badge-success">Yes</span>
                                             <?php else: ?>
                                                 <span class="ra-badge ra-badge-muted">No</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="ra-hide-sm">
+                                        <td data-label="Shipping taxable" data-col="half" class="ra-hide-sm">
                                             <?php if ($shipTax): ?>
                                                 <span class="ra-badge ra-badge-success">Yes</span>
                                             <?php else: ?>
                                                 <span class="ra-badge ra-badge-muted">No</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-end">
+                                        <td data-label="Actions" data-col="full" class="text-end">
                                             <a href="/commerce/ca-admin/tax/rates/<?= $rateId ?>/edit"
                                                class="ra-icon-btn" title="Edit rate">
                                                 <i class="bi bi-pencil"></i>

@@ -36,7 +36,7 @@ foreach ($pages as $p) {
     </div>
 <?php else: ?>
     <div class="ra-card">
-        <div class="ra-table-responsive-wrap" data-responsive="scroll">
+        <div class="ra-table-responsive-wrap" data-responsive="cards">
             <table class="ra-table">
                 <thead>
                     <tr>
@@ -53,33 +53,33 @@ foreach ($pages as $p) {
                         $isRequired = in_array($page->slug, $required, true);
                         ?>
                         <tr>
-                            <td>
+                            <td data-label="Slug" data-col="full">
                                 <code class="small"><?= e($page->slug) ?></code>
                                 <?php if ($isRequired): ?>
                                     <span class="muted small">&middot; required</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td data-label="Title" data-col="half">
                                 <a href="/commerce/ca-admin/legal-pages/<?= e($page->slug) ?>/edit"
                                    class="text-decoration-none">
                                     <?= e($page->title) ?>
                                 </a>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Status" data-col="half" class="ra-hide-sm">
                                 <?php if ($page->isPublished()): ?>
                                     <span class="ra-badge ra-badge-success">Published</span>
                                 <?php else: ?>
                                     <span class="ra-badge ra-badge-muted">Draft</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="ra-hide-sm">
+                            <td data-label="Last updated" data-col="half" class="ra-hide-sm">
                                 <span class="muted small">
                                     <?= $page->updatedAt !== null
                                         ? e(date('M j, Y', strtotime($page->updatedAt)))
                                         : '—' ?>
                                 </span>
                             </td>
-                            <td class="text-end ra-actions-cell">
+                            <td data-label="Actions" data-col="full" class="text-end ra-actions-cell">
                                 <a href="/commerce/ca-admin/legal-pages/<?= e($page->slug) ?>/edit"
                                    class="ra-icon-btn" title="Edit">
                                     <i class="bi bi-pencil"></i>
