@@ -404,9 +404,11 @@ the first real payment provider:
 **Stage 014 closed on 2026-10-14** (tag
 `stage-014-complete`).
 
-**Stage 010 Session 4 opens next:** PayPal. The
-provider, the capture flow, the webhook handler,
-the return handler, and the checkout integration.
+**Stage 010 Session 4 shipped** (11e00fb): PayPal
+end to end. The provider, the capture flow, the
+webhook handler, the return handler, and the
+checkout integration. Both Stripe and PayPal are
+production-ready.
 
 The Stage 014 Session 5 and Session 3 tail paragraphs
 below are historical and remain for the record.
@@ -582,12 +584,13 @@ open with a 19 June 2026 deadline.
 
 **Next 3 stages:**
 
-  - **010 Session 4** (next): PayPal. The provider,
-    the capture flow, the webhook handler, the
-    return handler, and the checkout integration.
-  - **010 Sessions 5-7**: the admin configuration
-    tab, the compliance entries, and the stage
-    close.
+  - **010 Session 5** (next): the admin
+    configuration tab (Settings > Payments with a
+    row per provider), the compliance entries for
+    Stripe and PayPal as DSGVO Art. 28 processors,
+    and any sandbox verification still owed from
+    Sessions 3 and 4.
+  - **010 Sessions 6-7**: the stage close.
   - **Responsive render harness** (backlog):
     Chrome headless via CDP. Iterates every route
     at four viewports and checks for horizontal
