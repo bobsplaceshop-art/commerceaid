@@ -365,13 +365,36 @@ the Setup hub.
 
 ---
 
-## Current Focus - Stage 014 Session 3 tail + Session 4 shipped
+## Current Focus - Stage 014 Sessions 1-5 complete
 
-**Stage 014 Sessions 1, 2, 3, and 4 are complete.**
-The admin panel and the storefront are responsive at
-every width the platform targets: 1200+, 900-1199,
-640-899, below 640. Stage 009 closed earlier the same
-day (db49f0c).
+**Stage 014 Sessions 1 through 5 are complete.** The
+admin panel and the storefront are responsive at every
+width the platform targets: 1200+, 900-1199, 640-899,
+below 640. The responsive contract is enforced by a
+fourth prevenger checker. The storefront audit tail
+(product detail at 900, checkout at 900, error pages,
+PWA offline page, dark theme) remains open. Stage 009
+closed on 2026-10-13 (db49f0c).
+
+**Session 5 shipped** (2bec764): the enforcement
+script.
+
+  - `bin/check-responsive.php` is a new prevenger
+    checker. Three rules:
+      1. Inline `<style>` blocks in views must not
+         contain `@media` queries. Moved from
+         `check-css.php` Pass 3.
+      2. Views must not hardcode pixel widths above
+         375px on inline style attributes. New.
+      3. `<table>` elements in admin views must sit
+         inside a wrapper with a `data-responsive`
+         attribute. Moved from `check-html.php` W1,
+         flipped from warning to hard error.
+  - `check-css.php` and `check-html.php` lose the
+    rules that moved. `check.php` gains a fourth
+    entry in `$checkers`.
+  - `composer check` now runs lint, PHPStan level 8,
+    and four prevenger checkers. All pass.
 
 **Session 3 tail shipped** (e2ed540, 923aef3, 0454eec,
 f82aeaf, 235be2f): the admin tab strips, the view-local
@@ -467,15 +490,20 @@ will flag the same pattern.
 catalog, category, product detail, cart, checkout,
 account, plus the standalone error pages and the PWA
 offline page. Test at 375, 768, 1024, 1440 in dark
-and light. Zero storefront files have been touched
-for the audit yet; every storefront CSS file predates
-today.
+and light. Session 4 shipped five storefront fixes.
 
-**Then Session 5.** `bin/check-responsive.php`, the
-`check-html.php` data-responsive warning flip to a
-hard error, and the four card-grid views found in
-Session 3. Enforcement and the fixes it proves ship
-together.
+**Session 5 shipped.** `bin/check-responsive.php`
+is a fourth prevenger checker. Three rules:
+inline `@media` in views, hardcoded widths above
+375px, and admin tables without a `data-responsive`
+wrapper. The two rules it absorbed were removed
+from `check-css.php` and `check-html.php`.
+
+**Stage 014 is not tagged yet.** The storefront
+audit tail remains: product detail at 900,
+checkout at 900, error pages at four widths, PWA
+offline page, dark theme across every storefront
+surface.
 
 **008K.5 status:** Complete. Code on disk, admin
 surfaces live (Coupons, Tax, Shipping), storefront
@@ -493,16 +521,21 @@ open with a 19 June 2026 deadline.
 
 **Next 3 stages:**
 
-  - **014 Session 4** (next): Storefront audit. The
-    storefront has zero responsive work done. Every
-    storefront CSS file predates today.
-  - **014 Session 5**: Enforcement. `check-responsive.php`,
-    the `check-html.php` warning flip, and the four
-    card-grid views found in Session 3.
-  - **010**: Payments (Deep). Wires refunds from the
-    returns workflow to the payment provider. Consumes
-    ReturnRequestService::processRefund() from 008H
-    Session 3.
+  - **014 tail** (next): The storefront audit
+    residual. Product detail at 900, checkout at
+    900, error pages at four widths, PWA offline
+    page, dark theme across the storefront. Then
+    Stage 014 can be tagged `stage-014-complete`.
+  - **010**: Payments (Deep). Wires refunds from
+    the returns workflow to the payment provider.
+    Consumes ReturnRequestService::processRefund()
+    from 008H Session 3.
+  - **Responsive render harness** (backlog):
+    Chrome headless via CDP. Iterates every route
+    at four viewports and checks for horizontal
+    overflow. The static checker cannot catch
+    rendered layout problems. This can. Its own
+    stage, not part of Stage 014.
 
 **Permission vocabulary:** 67 across 17 modules. The
 seeders build it in layers: 0012 (the original 49),
