@@ -10,7 +10,7 @@ declare(strict_types=1);
  *   1. Offline refund (cod) - no provider call, row is
  *      inserted as succeeded.
  *
- *   2. Provider key with no class in the registry (paypal)
+ *   2. Provider key with no class in the registry (mpesa)
  *      - row is inserted as pending, no exception thrown.
  *
  * Paths 3 and 4 (provider returns error, provider
@@ -105,18 +105,19 @@ return function ($container, PDO $pdo): bool|string {
     $cleanupProduct($productId);
 
     // --------------------------------------------------------------
-    // Path 2: provider key with no class in the registry (paypal)
+    // Path 2: provider key with no class in the registry (mpesa)
     // --------------------------------------------------------------
-    // The PayPalProvider class does not exist until Session 4.
-    // The registry's resolve() returns null for it. The
-    // wrapper inserts the row as pending and returns without
+    // The M-Pesa provider class does not exist yet. The
+    // registry's resolve() returns null for it. The wrapper
+    // inserts the row as pending and returns without
     // dispatching.
     //
-    // Stripe cannot be used for this path because its class
-    // shipped in Session 3 and now resolves. The registry
-    // would return a real provider.
+    // Stripe and PayPal cannot be used for this path: both
+    // classes ship in Session 3 and Session 4 respectively
+    // and now resolve. The registry would return a real
+    // provider.
     $productId = $fx['createProduct']($pdo, $storeId);
-    $orderId   = $fx['createOrder']($pdo, $storeId, 'paypal', 100.0);
+    $orderId   = $fx['createOrder']($pdo, $storeId, 'mpesa', 100.0);
     $itemId    = $fx['createOrderItem']($pdo, $storeId, $orderId, $productId, 1, 100.0);
     $reqId     = $fx['createReturnRequest']($pdo, $storeId, $orderId, $customerId, $itemId, 1, 100.0);
 
@@ -124,8 +125,8 @@ return function ($container, PDO $pdo): bool|string {
 
     if ($result->status !== 'pending') {
         $failures[] = "path 2 (registry-miss): expected status pending, got {$result->status}";
-    } elseif ($result->providerKey !== 'paypal') {
-        $failures[] = "path 2 (registry-miss): expected provider paypal, got {$result->providerKey}";
+    } elseif ($result->providerKey !== 'mpesa') {
+        $failures[] = "path 2 (registry-miss): expected provider mpesa, got {$result->providerKey}";
     } else {
         $row = $pdo->query(
             "SELECT `status` FROM `commerce_payment_refunds`

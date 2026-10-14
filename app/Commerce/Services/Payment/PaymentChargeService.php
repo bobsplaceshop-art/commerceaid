@@ -99,20 +99,31 @@ final class PaymentChargeService
             );
         }
 
-        // Build the return and cancel URLs the provider will
-        // use. Both target the storefront, both carry the
-        // order number so the return controller can resolve
-        // the order when the customer comes back.
+        // Build the return and cancel URLs the provider
+        // will use. The return URL differs per provider.
         //
-        // The success URL also carries the Stripe Checkout
-        // session-id placeholder. Stripe substitutes the
-        // actual session id when the customer lands. The
-        // return controller reads it to verify the intent
-        // against Stripe's API.
-        $appUrl    = rtrim((string) config('app.url', ''), '/');
-        $returnUrl = $appUrl . '/checkout/stripe/return?order='
-                   . rawurlencode((string) $order->orderNumber)
-                   . '&session_id={CHECKOUT_SESSION_ID}';
+        //   Stripe: /checkout/stripe/return. Stripe
+        //           substitutes {CHECKOUT_SESSION_ID} on
+        //           the way back.
+        //   PayPal: /checkout/paypal/return. PayPal
+        //           appends its own token and PayerID
+        //           query parameters.
+        //   Other:  the confirmation page. A provider
+        //           that captures inline has nothing
+        //           to return to.
+        //
+        // The cancel URL is the storefront's confirm
+        // step for every provider.
+        $appUrl   = rtrim((string) config('app.url', ''), '/');
+        $orderRef = rawurlencode((string) $order->orderNumber);
+
+        $returnUrl = match ($providerKey) {
+            'stripe' => $appUrl . '/checkout/stripe/return?order='
+                      . $orderRef . '&session_id={CHECKOUT_SESSION_ID}',
+            'paypal' => $appUrl . '/checkout/paypal/return?order=' . $orderRef,
+            default  => $appUrl . '/checkout/confirmation/' . $orderRef,
+        };
+
         $cancelUrl = $appUrl . '/checkout/confirm';
 
         $response = $provider->charge($order, [

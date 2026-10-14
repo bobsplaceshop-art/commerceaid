@@ -20,6 +20,7 @@ use CorporateAid\Commerce\Controllers\Storefront\MessageController;
 use CorporateAid\Commerce\Controllers\Storefront\ReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
 use CorporateAid\Commerce\Controllers\Storefront\StripeReturnController;
+use CorporateAid\Commerce\Controllers\Storefront\PayPalReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\NewsletterController;
 use CorporateAid\Commerce\Controllers\Storefront\FormController;
 
@@ -250,6 +251,15 @@ $router->get('/checkout/confirmation/{orderNumber}', [CheckoutController::class,
 // writes payment_status; this route is the customer-facing
 // confirmation step.
 $router->get('/checkout/stripe/return', [StripeReturnController::class, 'handle'], ['store']);
+
+// PayPal Orders v2 return. The customer lands here after
+// approving (or cancelling) on PayPal's hosted page. The
+// controller captures the PayPal order, writes the paid
+// state on the storefront order, and redirects to the
+// confirmation page. The webhook is the authoritative
+// writer; this route is the customer-facing step and is
+// idempotent against the webhook.
+$router->get('/checkout/paypal/return', [PayPalReturnController::class, 'handle'], ['store']);
 
 // Legal pages (public, one route for all four slugs)
 $router->get('/legal/{slug}', [CheckoutController::class, 'legalPage'], ['store']);
