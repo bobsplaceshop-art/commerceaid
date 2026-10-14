@@ -17,7 +17,7 @@
  * whose name does not match the current version.
  */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME    = `anaya-${CACHE_VERSION}`;
 
 /*
@@ -61,6 +61,7 @@ const PRECACHE_URLS = [
   '/assets/fontawesome/webfonts/fa-brands-400.woff2',
 
   // Storefront CSS
+  '/assets/css/main-v2.css',
   '/assets/css/storefront.css',
   '/assets/css/storefront-home.css',
   '/assets/css/storefront-catalog.css',
