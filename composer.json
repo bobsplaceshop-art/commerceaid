@@ -45,7 +45,8 @@
         "hook:uninstall": [
             "git config --unset core.hooksPath || true"
         ],
-        "prevenger": "php bin/check.php"
+        "prevenger": "php bin/check.php",
+        "smoke": "php bin/smoke.php"
     },
     "config": {
         "optimize-autoloader": true,
