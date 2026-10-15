@@ -22,6 +22,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="/assets/img/pwa/icon-192.png">
+    <link rel="apple-touch-icon" href="/assets/img/pwa/icon-192.png">
     <title>Offline - <?= htmlspecialchars($brandName ?? 'Store', ENT_QUOTES, 'UTF-8') ?></title>
     <meta name="theme-color" content="#1a1a1a">
     <link href="/assets/css/main-v2.css" rel="stylesheet">
