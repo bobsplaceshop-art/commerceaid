@@ -410,6 +410,22 @@ webhook handler, the return handler, and the
 checkout integration. Both Stripe and PayPal are
 production-ready.
 
+**Stage 010 Session 5 shipped** (42ffd2e): the
+admin configuration tab and a real connection
+test. Settings > Payments renders one row per
+provider with an enabled toggle, the provider key,
+and a Test connection button. The button makes a
+real outbound API call - Stripe checks the secret
+key against `/v1/balance`, PayPal runs the OAuth
+token handshake. Both are read-only. The button
+was previously wired to a local `isConfigured()`
+check that only confirmed the settings rows were
+populated; the label promised more than the
+implementation delivered. It now tells the truth.
+
+The `PaymentProvider` interface gained
+`testConnection()`. Both providers implement it.
+
 **Branding consolidation shipped** (cba256a): the
 store's name is now the single source of truth for
 every branded surface. Two helpers (`brand_name`,
@@ -595,19 +611,23 @@ open with a 19 June 2026 deadline.
 
 **Next 3 stages:**
 
-  - **Stripe sandbox verification** (next): the live
-    round trip for Session 3's Stripe provider. Add
-    to cart, checkout, pay with the test card, land
-    on `/checkout/stripe/return`, verify the order
-    paid and the webhook row exists. The tunnel and
-    the Stripe test credentials are in hand.
-  - **010 Session 5**: the admin configuration tab
-    (Settings > Payments with a row per provider),
-    the compliance entries for Stripe and PayPal as
-    DSGVO Art. 28 processors, and the branding tail
-    (three hardcoded strings, four config docblock
-    comments).
-  - **010 Sessions 6-7**: the stage close.
+  - **Sandbox verification** (next): two live round
+    trips. Stripe: add to cart, checkout, pay with
+    the test card, land on `/checkout/stripe/return`,
+    verify the order paid and the webhook event row
+    exists. PayPal: save the credentials via the new
+    admin tab, click Test connection, run the OAuth
+    handshake. The tunnel must be up for the Stripe
+    webhook path.
+  - **010 Sessions 6-7**: the stage close. Session
+    file, ROADMAP, COMPLIANCE-DE entries for Stripe
+    and PayPal as DSGVO Art. 28 processors.
+  - **Responsive render harness** (backlog):
+    Chrome headless via CDP. Iterates every route
+    at four viewports and checks for horizontal
+    overflow. The static checker cannot catch
+    rendered layout problems. This can. Its own
+    stage, not part of Stage 014.
   - **Responsive render harness** (backlog):
     Chrome headless via CDP. Iterates every route
     at four viewports and checks for horizontal
