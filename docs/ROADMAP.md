@@ -1434,6 +1434,112 @@ polish pass.
 
 ---
 
+### Services Extension (Flights, Hotels, Cargo)
+
+The client has asked for three new services alongside the
+existing Online Store: Travel and Flight Booking, Hotel
+Booking, and Cargo Services.
+
+The four sections share one brand, one website, one
+customer account, one payment system, and one admin
+panel. Every existing capability of the platform is
+inherited for free: accounts, orders, payments, email,
+returns, tax, compliance. Only the service-specific
+logic is new work.
+
+A questionnaire is live at
+`/forms/services-questionnaire`. The client fills it in
+once. The answers determine which tier fits each
+service. Pricing follows from the tier. The form is
+deleted after the answers are read.
+
+Four tiers per service, from a landing page and enquiry
+form to a live supplier integration.
+
+  Flights
+    Tier 1 - Landing and enquiry form.       $150
+    Tier 2 - Form and manual booking.        $250
+    Tier 3 - Live booking via supplier API.  $5,000
+    Tier 4 - Agency platform.                $11,000 to $18,000
+
+  Hotels
+    Tier 1 - Landing and enquiry form.       $150
+    Tier 2 - Static catalogue.               $250
+    Tier 3 - Date-range catalogue.           $550
+    Tier 4 - Live supplier API.              $3,000 and up
+
+  Cargo
+    Tier 1 - Landing and form.               $150
+    Tier 2 - Detailed quote request.         $250
+    Tier 3 - Quote, payment, tracking.       $550
+    Tier 4 - Live carrier integration.       $1,800 and up per carrier
+
+Tier 3 and Tier 4 for Flights, Tier 4 for Hotels, and
+Tier 4 for Cargo require a supplier contract and a
+documented API. The development fee depends on the
+completeness of that documentation. The client chooses
+the supplier. The effort follows from that choice.
+
+Nothing is built. The questionnaire is the first step.
+The tier decisions come after. Each service is its own
+sub-stage once the tier is chosen.
+
+**Status:** awaiting the client's answers.
+
+**See also:** `docs/stages/services-extension-questionnaire.md`
+(to be written) for the full questionnaire text.
+
+---
+
+### Country Format Extensions
+
+The country dropdown on the checkout shipping step
+shipped with 249 ISO 3166-1 entries, self-hosted SVG
+flags from Twemoji, and a searchable filter. The phone
+field validates against the selected country for twenty
+markets.
+
+Shipped today:
+
+  - The full ISO 3166-1 country list.
+  - Self-hosted SVG flags, one file per country.
+  - A searchable dropdown with keyboard navigation.
+  - Phone validation with length bands and dial-code
+    matching for twenty markets.
+
+Deferred:
+
+  - Dial codes for every country. The current list
+    covers the twenty markets the platform serves most
+    (Germany, Kenya, United States, United Kingdom,
+    France, Italy, Spain, Netherlands, Austria,
+    Switzerland, Belgium, Ireland, Portugal, Sweden,
+    Norway, Denmark, Finland, Poland, Australia, and
+    Canada). Every other country falls through to a
+    loose phone check of six to fifteen digits.
+  - Per-country phone prefix validation. The current
+    validator checks length and dial-code match. A full
+    check requires every country's numbering plan.
+  - Full `libphonenumber` integration. The correct
+    library for numbering-plan-level accuracy. A
+    composer dependency of about five megabytes. The
+    right call when the platform serves merchants with
+    a customer base spanning many countries.
+
+The current approach catches the two most common
+mistakes: an empty phone number and a number whose
+country prefix does not match the selected country.
+Full format parsing is a future pass.
+
+Priority: low. The platform accepts any reasonable
+number. Format polish can wait until a merchant asks
+for it.
+
+**Likely stage:** a sub-stage of Stage 011 or a
+standalone localisation stage.
+
+---
+
 ## Feature Toggle System
 
 All new features ship behind a toggle in `core_feature_flags`.

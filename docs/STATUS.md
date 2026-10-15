@@ -426,6 +426,45 @@ implementation delivered. It now tells the truth.
 The `PaymentProvider` interface gained
 `testConnection()`. Both providers implement it.
 
+**Checkout quality and services questionnaire shipped**
+(3d04b5b, 587baef): a broad pass on the checkout flow,
+plus the client services questionnaire.
+
+  - Stripe proven end to end. A real card payment
+    processed through Stripe Checkout, returned to the
+    return controller, and confirmed by webhook. Order
+    ORD-000014 paid with reference
+    `pi_3UQk23PjFXFgVsHR0XvYfKoc`. The first live
+    payment this platform has processed.
+
+  - The CSP `form-action` directive now allows the
+    payment provider origins. Without this the browser
+    silently refused the 302 from `/checkout/place` to
+    `checkout.stripe.com`. This was the root cause of
+    the "payment never reached Stripe" symptom.
+
+  - Per-field validation on the shipping step. Each
+    missing field shows its own error. First and last
+    name are now required. Old input persists across
+    a validation failure.
+
+  - A searchable country dropdown on the shipping
+    step. 249 ISO 3166-1 countries with self-hosted
+    SVG flags from Twemoji. Zero external requests.
+    Works identically on every operating system.
+
+  - Phone validation. Twenty markets have a length
+    band and a dial code. A mismatched international
+    prefix is refused.
+
+  - The AWALO GLOBAL Additional Services
+    Questionnaire is live at
+    `/forms/services-questionnaire`. Twenty-two fields
+    across four steps. Flights, Hotels, Cargo, then
+    cross-service questions. The client fills it in,
+    the merchant reads the answers in the admin, and
+    the form is deleted.
+
 **Branding consolidation shipped** (cba256a): the
 store's name is now the single source of truth for
 every branded surface. Two helpers (`brand_name`,
@@ -611,23 +650,22 @@ open with a 19 June 2026 deadline.
 
 **Next 3 stages:**
 
-  - **Sandbox verification** (next): two live round
-    trips. Stripe: add to cart, checkout, pay with
-    the test card, land on `/checkout/stripe/return`,
-    verify the order paid and the webhook event row
-    exists. PayPal: save the credentials via the new
-    admin tab, click Test connection, run the OAuth
-    handshake. The tunnel must be up for the Stripe
-    webhook path.
+  - **PayPal round trip** (next): save the four
+    PayPal sandbox credentials in Settings >
+    Payments. Register the webhook endpoint at
+    `https://test.awaloglobal.com/webhooks/paypal`.
+    Enable the toggle. Run the checkout round trip.
+    The `.htaccess` allowlist already covers
+    `paypal.com` and `sandbox.paypal.com`, so the
+    CSP fix from today applies to PayPal too.
+  - **Services questionnaire** (pending): the client
+    fills in `/forms/services-questionnaire`. The
+    answers determine the tier per service. Pricing
+    follows from the tier. See the ROADMAP entry
+    below.
   - **010 Sessions 6-7**: the stage close. Session
     file, ROADMAP, COMPLIANCE-DE entries for Stripe
     and PayPal as DSGVO Art. 28 processors.
-  - **Responsive render harness** (backlog):
-    Chrome headless via CDP. Iterates every route
-    at four viewports and checks for horizontal
-    overflow. The static checker cannot catch
-    rendered layout problems. This can. Its own
-    stage, not part of Stage 014.
   - **Responsive render harness** (backlog):
     Chrome headless via CDP. Iterates every route
     at four viewports and checks for horizontal
