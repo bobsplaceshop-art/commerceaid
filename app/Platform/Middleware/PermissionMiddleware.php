@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CorporateAid\Platform\Middleware;
 
 use CorporateAid\Core\Auth;
+use CorporateAid\Core\Exceptions\HttpException;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 
@@ -36,12 +37,10 @@ final class PermissionMiddleware
             return $next($request);
         }
 
-        // Logged in but lacks permission → 403
-        http_response_code(403);
-        return new Response(
-            '<h1>Forbidden</h1><p>You do not have permission to view this page.</p>',
-            403,
-            ['Content-Type' => 'text/html; charset=utf-8']
-        );
+        // Logged in but lacks permission. Throw so App::renderException
+        // renders resources/views/errors/403.php through the same path
+        // the router's 404 uses. The themed view replaces the inline
+        // plain-HTML body that used to ship here.
+        throw HttpException::forbidden();
     }
 }

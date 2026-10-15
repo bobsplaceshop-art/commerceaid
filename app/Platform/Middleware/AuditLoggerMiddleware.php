@@ -6,6 +6,7 @@ namespace CorporateAid\Platform\Middleware;
 use CorporateAid\Core\Auth;
 use CorporateAid\Core\Container;
 use CorporateAid\Core\Request;
+use CorporateAid\Core\Exceptions\HttpException;
 use CorporateAid\Core\Response;
 use CorporateAid\Platform\Context\StoreContextInterface;
 use CorporateAid\Platform\Support\AuditContext;
@@ -41,11 +42,26 @@ final class AuditLoggerMiddleware
         // (cron, queue) do not carry state between requests.
         AuditContext::clear();
 
-        // Run the rest of the stack first - we want the response.
-        /** @var Response $response */
-        $response = $next($request);
-
         $method = strtoupper($request->method());
+
+        // Run the rest of the stack. A downstream middleware
+        // (PermissionMiddleware today) may throw instead of
+        // returning a Response. When that happens, the audit
+        // row must still be written - a rejected write is
+        // still a write attempt, and the ledger is the point.
+        // Log the failed attempt with the exception's status,
+        // then rethrow so App::renderException() renders the
+        // themed error page.
+        try {
+            /** @var Response $response */
+            $response = $next($request);
+        } catch (HttpException $e) {
+            $this->logAttempt($request, $method, $e->getStatusCode());
+            throw $e;
+        } catch (\Throwable $e) {
+            $this->logAttempt($request, $method, 500);
+            throw $e;
+        }
 
         if (!in_array($method, self::LOGGED_METHODS, true)) {
             return $response;
@@ -95,6 +111,62 @@ final class AuditLoggerMiddleware
         }
 
         return $response;
+    }
+
+    /**
+     * Write one audit row for a state-changing request whose
+     * downstream middleware threw instead of returning a
+     * Response. Called from the catch block inside handle().
+     * The status comes from the exception, not from a
+     * Response object, because there is no Response to read.
+     *
+     * Best-effort: a failure to log is swallowed. The
+     * exception is rethrown by the caller regardless.
+     */
+    private function logAttempt(Request $request, string $method, int $statusCode): void
+    {
+        if (!in_array($method, self::LOGGED_METHODS, true)) {
+            return;
+        }
+
+        $path = $request->path();
+        foreach (self::SKIP_PATHS as $skip) {
+            if (str_starts_with($path, $skip)) {
+                return;
+            }
+        }
+
+        try {
+            /** @var AuditLogger $logger */
+            $logger = $this->container->get(AuditLogger::class);
+            /** @var Auth $auth */
+            $auth = $this->container->get(Auth::class);
+
+            $userId = $auth->user()?->id;
+
+            $storeId = null;
+            if ($this->container->has(StoreContextInterface::class)) {
+                $ctx = $this->container->get(StoreContextInterface::class);
+                if ($ctx->has()) {
+                    $storeId = $ctx->idOrNull();
+                }
+            }
+
+            $logger->log(
+                $method,
+                $path,
+                $userId,
+                $storeId,
+                $this->safeIp($request),
+                $this->safeUserAgent($request),
+                $this->requestHash($request),
+                $statusCode,
+                AuditContext::entityType(),
+                AuditContext::entityId()
+            );
+        } catch (\Throwable $e) {
+            // Best-effort - never break the exception path
+        }
     }
 
     /**
