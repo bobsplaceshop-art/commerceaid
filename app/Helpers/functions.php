@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Anaya Global - global helper functions.
+ * Awalo Global - global helper functions.
  * Loaded automatically by Composer's autoloader.
  */
 

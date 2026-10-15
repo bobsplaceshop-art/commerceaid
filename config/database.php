@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Anaya Global - database configuration.
+ * Awalo Global - database configuration.
  * Per-deployment values live in config/local.php.
  */
 

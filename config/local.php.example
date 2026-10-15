@@ -43,6 +43,6 @@ return [
         'password'   => null,
         'encryption' => null,
         'from_email' => 'no-reply@anayaglobal.test',
-        'from_name'  => 'Anaya Global',
+        'from_name'  => 'Your Store Name',
     ],
 ];
