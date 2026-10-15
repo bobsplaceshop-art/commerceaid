@@ -365,7 +365,7 @@ the Setup hub.
 
 ---
 
-## Current Focus - Stage 010 complete, Stage 014 tail open
+## Current Focus - Stage 010 complete, Stage 014 tail nearly closed
 
 **Stage 010 Sessions 1, 2, and 3 are complete.**
 
@@ -425,6 +425,53 @@ implementation delivered. It now tells the truth.
 
 The `PaymentProvider` interface gained
 `testConnection()`. Both providers implement it.
+
+**The Stage 014 storefront audit tail is nearly
+closed** (session 2026-10-15-5). Four of the five
+named areas are verified:
+
+  - Product detail at 900 - verified in the browser.
+    Two-column layout activates at exactly 900,
+    stacks correctly below.
+  - Checkout at 900 - verified in the browser at
+    899 and 900. Both sides of the boundary render
+    correctly.
+  - Footer collapse - three-step collapse verified
+    (1 -> 2 -> 4 + wider newsletter).
+  - Error pages 403 and 404 - themed 404 verified
+    by screenshot. Themed 403 was broken; see below.
+
+**The 403 was not rendering through the themed
+path.** `PermissionMiddleware` short-circuited with
+a hand-rolled `new Response('<h1>Forbidden</h1>...',
+403)`. That bypassed `App::renderException()`, so
+`resources/views/errors/403.php` was never used. The
+browser rendered plain serif HTML. Two 4xx paths,
+one themed, one not.
+
+Fixed in commit 27db37b, one throw:
+`HttpException::forbidden()`. `App::run()` catches
+it the same way it catches the router's 404. Themed
+403 renders through the same door.
+
+`AuditLoggerMiddleware` gained a try/catch around
+`$next()`. Its post-response logging block only ran
+on the return path; a downstream throw meant no
+audit row. The baseline says "a rejected write is
+still a write attempt, and it must leave a trace."
+The catch calls a new `logAttempt()` that mirrors
+the normal path with the status read from the
+exception, then rethrows so the themed view still
+renders. The live POST-403 audit-path test is
+deferred to the customer's deployment.
+
+**The 500 error page is verified by pattern-match**
+against the 404. Same `renderException()` path,
+same view template shape.
+
+**The PWA offline page is the last open tail item.**
+It requires the service worker active and DevTools
+offline mode. That is the next single task.
 
 **Stage 010 is complete** (863c950). The PayPal round
 trip was verified end to end against the sandbox. The

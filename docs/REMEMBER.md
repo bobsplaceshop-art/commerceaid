@@ -2777,3 +2777,133 @@ unless the diff is read.
 
 ---
 
+### Pattern 42 - A middleware that returns a Response instead of throwing bypasses App::renderException()
+
+**Problem:** A middleware that wants to short-circuit
+a request - block a permission, reject a CSRF token,
+throttle a rate limit - has two ways to express the
+failure. It can return a `Response` with the failure
+status, or it can throw an `HttpException` with the
+failure status. The two look equivalent to a reviewer
+and are not equivalent at runtime.
+
+A returned `Response` reaches the client directly. It
+bypasses `App::renderException()`. `App.php:391` runs
+the router, and `App.php:395` is the `renderException()`
+method that reads the status from a thrown
+`HttpException` and renders
+`resources/views/errors/{status}.php`. A middleware
+that returns does not go through that method. The
+themed error view never renders. The browser receives
+whatever hand-rolled HTML the middleware wrote.
+
+A thrown `HttpException` reaches `App::run()`'s catch.
+That catch calls `renderException()`. The themed view
+renders. Status, headers, and body all come from the
+framework's single error-rendering path.
+
+**The tell:** two error statuses render differently.
+A 404 renders the themed card with the compass icon
+and the two buttons. A 403 renders plain serif
+`<h1>Forbidden</h1>` with default browser styling.
+Both are 4xx. Both are reachable from the same admin
+panel. One is themed; the other is not. The middleware
+in front of the un-themed one is returning instead of
+throwing.
+
+Grep the codebase for direct `new Response(` calls
+that carry 4xx statuses. Each is a candidate. The
+frameworks's error rendering is the path every 4xx
+and 5xx should take.
+
+**The fix:** a short-circuiting middleware throws the
+appropriate `HttpException` factory. For a permission
+denial, `HttpException::forbidden()`. For a missing
+resource, `HttpException::notFound()`. For an invalid
+CSRF token, `HttpException::badRequest()` or the
+appropriate status. The factory carries the status
+code the framework's error renderer expects.
+
+The middleware does not need to know how to render
+the error page. It throws. The framework renders.
+
+**Where we hit it:** Stage 014 tail walk, session
+2026-10-15-5. `PermissionMiddleware::handle()`
+returned a hand-rolled `new Response('<h1>Forbidden
+</h1>...', 403)` on every permission denial. The 403
+themed view existed on disk and was never used. The
+404 used the themed view because the router throws
+`HttpException::unmatchedRoute()`. Two paths, one
+themed, one not. Fixed by one throw: line 44 of
+`PermissionMiddleware.php` now calls
+`HttpException::forbidden()`.
+
+**The companion: AuditLoggerMiddleware must wrap
+$next in try/catch.**
+
+`AuditLoggerMiddleware` writes one row per
+state-changing request. The baseline's rule is
+explicit: "a rejected write is still a write
+attempt, and it must leave a trace." Before the fix,
+the middleware's `handle()` ran `$response =
+$next($request);` with no try/catch. If a downstream
+middleware threw instead of returning, the audit
+logging block below that line never ran. No row.
+The rejected attempt was invisible to the ledger.
+
+The pattern fix from above exposed the gap. Once
+`PermissionMiddleware` started throwing, a POST
+that failed on permission produced no audit row.
+The audit ledger's contract was broken by the fix
+that made the 403 themed.
+
+The companion fix wraps `$next($request)` in a
+try/catch. The catch calls a private `logAttempt()`
+method that mirrors the normal-path logging -
+same `LOGGED_METHODS` filter, same `SKIP_PATHS`
+filter, same `AuditLogger::log()` call. The only
+difference is the status source: `$e->getStatusCode()`
+instead of `$response->statusCode()`. The exception
+is rethrown so `App::renderException()` still sees
+it and renders the themed view.
+
+**The general rule:** any middleware that auto-injects
+a post-response concern - audit logging today,
+timing headers or response transforms tomorrow -
+must wrap `$next` so a downstream throw still
+triggers the concern. A returned response and a
+thrown exception are two exit paths. A middleware
+that only handles one is incomplete.
+
+**Where we hit it:** same session. The audit
+middleware's gap was latent until the permission
+middleware started throwing. No other middleware
+threw before. The fix is verified by pattern-match
+against the normal path; the live POST-403 test
+is deferred to the customer's deployment.
+
+**Related patterns:**
+
+  - Pattern 23 (cascade check before every patch).
+    Every state-changing route has the audit
+    middleware outermost. Changing what the
+    permission middleware does to the pipeline
+    changes what the audit middleware sees. The
+    cascade check ran and found the gap.
+  - Pattern 26 (shared partial guards must reflect
+    the partial's own requirement). Pattern 26 is
+    about partials. Pattern 42 is about middleware
+    short-circuits. Both are about a piece of code
+    that promises more than it delivers.
+  - Pattern 31 (require'd view files share scope).
+    Both patterns are about layers that touch each
+    other in ways the code does not make obvious.
+  - Pattern 40 (the cascade check has four
+    directions). The "perpendicular" direction is
+    what surfaced the audit gap - not by grepping
+    for the symbol, but by asking what the current
+    state of the object being changed is, and what
+    else touches it.
+
+---
+
