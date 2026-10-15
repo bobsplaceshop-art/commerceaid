@@ -207,18 +207,38 @@ $isNavActive = function (string $href) use ($currentPath): bool {
                         <?php else: ?>
                             <ul class="sf-bell-menu-list" role="none">
                                 <?php foreach ($__previewMessages as $msg): ?>
+                                    <?php
+                                    // The item posts to the mark-read
+                                    // endpoint with a redirect_to that
+                                    // sends the customer to the
+                                    // notification's own target on success.
+                                    // A GET <a> would leave the notification
+                                    // unread; the endpoint is POST only.
+                                    $__msgLink = (string) ($msg['link'] ?? '/account/messages');
+                                    ?>
                                     <li role="none">
-                                        <a href="<?= e($msg['link'] ?? '/account/messages') ?>"
-                                           class="sf-bell-menu-item"
-                                           role="menuitem">
-                                            <span class="sf-bell-menu-icon" aria-hidden="true">
-                                                <i class="bi <?= e($msg['icon']) ?>"></i>
-                                            </span>
-                                            <span class="sf-bell-menu-body">
-                                                <span class="sf-bell-menu-title"><?= e($msg['title']) ?></span>
-                                                <span class="sf-bell-menu-time"><?= e($msg['time']) ?></span>
-                                            </span>
-                                        </a>
+                                        <form method="POST"
+                                              action="/account/messages/mark-read"
+                                              class="sf-bell-menu-item-form">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden"
+                                                   name="notification_id"
+                                                   value="<?= (int) $msg['id'] ?>">
+                                            <input type="hidden"
+                                                   name="redirect_to"
+                                                   value="<?= e($__msgLink) ?>">
+                                            <button type="submit"
+                                                    class="sf-bell-menu-item"
+                                                    role="menuitem">
+                                                <span class="sf-bell-menu-icon" aria-hidden="true">
+                                                    <i class="bi <?= e($msg['icon']) ?>"></i>
+                                                </span>
+                                                <span class="sf-bell-menu-body">
+                                                    <span class="sf-bell-menu-title"><?= e($msg['title']) ?></span>
+                                                    <span class="sf-bell-menu-time"><?= e($msg['time']) ?></span>
+                                                </span>
+                                            </button>
+                                        </form>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>

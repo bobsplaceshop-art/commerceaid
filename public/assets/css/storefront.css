@@ -1543,3 +1543,37 @@ h1, h2, h3, h4 {
         height: 7px;
     }
 }
+
+
+/* -----------------------------------------------------------------
+   Bell dropdown: notification item as a POST form.
+
+   The item is a <button> inside a <form> so a click hits the
+   mark-read POST endpoint. The button inherits the anchor's
+   visual treatment. Reset the browser defaults.
+   ----------------------------------------------------------------- */
+.sf-bell-menu-item-form {
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+.sf-bell-menu-item-form .sf-bell-menu-item {
+    width: 100%;
+    background: transparent;
+    border: 0;
+    padding: 0.65rem 1rem;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    color: inherit;
+    font: inherit;
+    line-height: 1.4;
+    text-decoration: none;
+}
+.sf-bell-menu-item-form .sf-bell-menu-item:hover,
+.sf-bell-menu-item-form .sf-bell-menu-item:focus {
+    background: var(--sf-surface-2, #f3f4f6);
+    outline: none;
+}

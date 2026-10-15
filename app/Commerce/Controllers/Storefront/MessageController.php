@@ -102,6 +102,20 @@ final class MessageController extends StorefrontController
                 ->markRead($notificationId, $customer->id);
         }
 
+        // Caller-supplied destination. The bell dropdown posts
+        // the notification's own link so a click lands the
+        // customer on the target page. The messages page's
+        // own mark-read form does not send one, so it falls
+        // back to the messages index on the current tab.
+        $redirectTo = trim((string) $request->input('redirect_to', ''));
+        if ($redirectTo !== '' && str_starts_with($redirectTo, '/')) {
+            // Only same-origin paths. Reject absolute URLs and
+            // protocol-relative URLs to prevent open redirect.
+            if (!str_starts_with($redirectTo, '//')) {
+                return Response::redirect($redirectTo);
+            }
+        }
+
         return Response::redirect('/account/messages?tab=' . $tab);
     }
 
