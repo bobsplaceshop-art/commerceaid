@@ -365,7 +365,7 @@ the Setup hub.
 
 ---
 
-## Current Focus - Stage 010 complete, Stage 014 tail nearly closed
+## Current Focus - Stage 010 complete, Stage 014 tail closed
 
 **Stage 010 Sessions 1, 2, and 3 are complete.**
 
@@ -469,9 +469,48 @@ deferred to the customer's deployment.
 against the 404. Same `renderException()` path,
 same view template shape.
 
-**The PWA offline page is the last open tail item.**
-It requires the service worker active and DevTools
-offline mode. That is the next single task.
+**The PWA offline page is verified.** The service
+worker's navigation fallback renders the themed
+`/offline` view when the network is unavailable.
+Tested by stopping Apache with the service worker
+active - the fetch handler's catch fires and the
+cached view renders. Verified at four widths
+(1440, 1024, 768, 375) and in both themes.
+
+The earlier browser test with DevTools offline
+mode enabled but Apache running rendered the
+storefront home page from the runtime cache
+rather than the `/offline` fallback. That is
+correct behaviour: the service worker serves
+browsed pages from cache before falling back to
+`/offline`. The fallback is only reached when
+the network is genuinely unreachable or the
+requested URL has no cached entry.
+
+**Stage 014 tail is closed.** Every named area
+is verified:
+
+  - Product detail at 900
+  - Checkout at 900
+  - Footer collapse (1 -> 2 -> 4 + newsletter)
+  - Error pages 403, 404, 500
+  - PWA offline page at four widths
+
+The storefront is light-only by design (see the
+layout docblock in `layouts/main.php`); the dark
+theme tail item was not applicable.
+
+**Two DevTools console warnings on the online
+storefront are logged for a future pass:**
+
+  - "Content Security Policy of your site blocks
+     some resources."
+  - "Verify stylesheet URLs."
+
+Neither is a PWA issue. The offline page renders
+with zero console issues. The warnings appear on
+online storefront pages and are worth their own
+small investigation.
 
 **Stage 010 is complete** (863c950). The PayPal round
 trip was verified end to end against the sandbox. The
