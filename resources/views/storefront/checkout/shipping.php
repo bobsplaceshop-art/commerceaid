@@ -14,8 +14,23 @@ $errors         = $errors         ?? [];
 $shipping = $state['shipping_address'] ?? [];
 $billing  = $state['billing_address']  ?? [];
 
-$val = function (array $addr, string $key, string $default = ''): string {
-    return (string) ($addr[$key] ?? $default);
+// Old input from the flash. On validation failure, the state
+// has no address yet, but the customer's typed values are in
+// the flash. These keys carry the full form field names
+// (shipping_first_name, shipping_city, etc.).
+$old = $_SESSION['_old'] ?? [];
+
+$val = function (array $addr, string $key, string $default = '') use ($old): string {
+    // Prefer the address array (state on a successful submit).
+    if (isset($addr[$key]) && $addr[$key] !== '') {
+        return (string) $addr[$key];
+    }
+    // Fall back to the flash, keyed as shipping_<field>.
+    $flashKey = 'shipping_' . $key;
+    if (isset($old[$flashKey]) && $old[$flashKey] !== '') {
+        return (string) $old[$flashKey];
+    }
+    return $default;
 };
 $err = function (string $key) use ($errors): string {
     return isset($errors[$key]) ? (string) $errors[$key] : '';
@@ -218,10 +233,13 @@ $__countryFlag    = \CorporateAid\Commerce\Support\CountryCatalog::flag($__count
 
                 <div class="sf-form-row-split">
                     <div class="sf-field">
-                        <label for="shipping_phone" class="sf-field-label">Phone</label>
+                        <label for="shipping_phone" class="sf-field-label">Phone number *</label>
                         <input type="tel" id="shipping_phone" name="shipping_phone"
                                class="sf-input"
                                value="<?= e($val($shipping, 'phone')) ?>">
+                        <?php if ($fieldErr('phone') !== ''): ?>
+                            <div class="sf-field-error"><?= e($fieldErr('phone')) ?></div>
+                        <?php endif; ?>
                     </div>
                     <div class="sf-field">
                         <label for="shipping_email" class="sf-field-label">Email</label>

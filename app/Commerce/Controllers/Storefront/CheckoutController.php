@@ -229,6 +229,14 @@ final class CheckoutController extends StorefrontController
 
         if ($errors !== []) {
             $this->flashErrors('shipping', $errors);
+
+            // Preserve the customer's typed values so the form
+            // re-renders with them instead of blank fields. The
+            // flash stores the raw POST keys (shipping_first_name,
+            // shipping_city, etc.). The view reads them via $old.
+            $session = $this->customerSession();
+            $session->flashOldInput($this->addressFormValues($request, 'shipping'));
+
             return Response::redirect('/checkout/shipping');
         }
 
@@ -759,6 +767,29 @@ final class CheckoutController extends StorefrontController
      * @return array<string,mixed>|null
      */
     /**
+     * The raw shipping or billing form values as the customer
+     * typed them, keyed by the full form field name. Used to
+     * flash old input on validation failure so the form
+     * re-renders with the customer's values.
+     *
+     * @return array<string,string>
+     */
+    private function addressFormValues(Request $request, string $prefix): array
+    {
+        $fields = [
+            'first_name', 'last_name', 'company',
+            'address_line_1', 'address_line_2',
+            'city', 'state', 'postal_code',
+            'country_code', 'phone', 'email',
+        ];
+        $out = [];
+        foreach ($fields as $field) {
+            $out[$prefix . '_' . $field] = (string) $request->input($prefix . '_' . $field, '');
+        }
+        return $out;
+    }
+
+    /**
      * Build an address array from the request.
      *
      * Two paths: the customer picks a saved address from
@@ -841,6 +872,17 @@ final class CheckoutController extends StorefrontController
             if ($address[$field] === '') {
                 $errors[$field] = $message;
             }
+        }
+
+        // Phone validation. Required, and checked against the
+        // country the customer selected. The validator returns
+        // an empty string when the phone is valid.
+        $phoneError = \CorporateAid\Commerce\Support\PhoneValidator::validate(
+            $address['phone'],
+            $address['country_code']
+        );
+        if ($phoneError !== '') {
+            $errors['phone'] = $phoneError;
         }
 
         if ($errors !== []) {
