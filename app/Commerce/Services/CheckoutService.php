@@ -521,10 +521,19 @@ final class CheckoutService
         }
 
         // -----------------------------------------------------------------
-        // After commit: clear the cart, load the fresh order.
+        // After commit: load the fresh order.
+        //
+        // The cart is NOT cleared here. It survives the
+        // redirect to the payment provider and the return
+        // through the return controller. A customer who
+        // abandons on the provider's page and returns later
+        // still has their items. The cart is cleared in
+        // CheckoutController::confirmation(), once the order
+        // has been shown to the customer.
+        //
+        // This matches the industry standard: clear the cart
+        // on confirmed, not on created.
         // -----------------------------------------------------------------
-        $this->cart->clear();
-
         $order = $this->orders->findById($orderId);
         if ($order === null) {
             // This should never happen - the row was just inserted.

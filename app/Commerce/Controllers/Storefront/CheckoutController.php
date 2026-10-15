@@ -438,9 +438,18 @@ final class CheckoutController extends StorefrontController
             return Response::redirect('/checkout/confirm');
         }
 
-        // Clear the checkout state - the order is placed.
-        $session = $this->customerSession();
-        $session->forget(self::SESSION_KEY);
+        // The checkout state is NOT cleared here. It survives
+        // the redirect to the payment provider and the return
+        // through the return controller. A customer who
+        // abandons on the provider's page and returns later
+        // still has their address, shipping method, and
+        // payment method in the session. The state is cleared
+        // in confirmation(), once the customer has reached
+        // the confirmation page.
+        //
+        // This matches the industry standard: clear the cart
+        // on confirmed, not on created. Every mature platform
+        // does the same.
 
         // Dispatch the charge. The order is created with
         // payment_status = 'unpaid' and the provider key.
@@ -488,6 +497,21 @@ final class CheckoutController extends StorefrontController
 
         if ($order === null) {
             return Response::redirect('/');
+        }
+
+        // If the checkout state is present, the customer just
+        // finished a fresh flow. Clear the cart and the state.
+        // The state is the wizard progress (address, shipping
+        // method, payment method). The cart is the actual
+        // items the customer intended to buy.
+        //
+        // If the checkout state is absent, the customer is
+        // revisiting an old confirmation page. Do not clear a
+        // cart they might be actively using.
+        $session = $this->customerSession();
+        if ($session->has(self::SESSION_KEY)) {
+            $this->container->get(CartService::class)->clear();
+            $session->forget(self::SESSION_KEY);
         }
 
         return $this->render('storefront.checkout.confirmation', [
