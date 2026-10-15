@@ -254,10 +254,16 @@ final class PayPalProvider implements PaymentProvider
             return ['ok' => false, 'error' => 'Missing PayPal order id.'];
         }
 
+        // PayPal's capture endpoint requires a JSON object in
+        // the body, even when there are no capture overrides.
+        // An empty PHP array [] encodes to "[]" and PayPal
+        // rejects it with HTTP 400 MALFORMED_REQUEST_JSON.
+        // new \stdClass() encodes to "{}", which PayPal
+        // accepts.
         $response = $this->http->postJson(
             $this->apiBase() . '/v2/checkout/orders/'
                 . rawurlencode($providerReference) . '/capture',
-            [],
+            new \stdClass(),
             [
                 'Authorization: Bearer ' . $token,
             ]

@@ -47,14 +47,21 @@ final class HttpClient
      * POST a JSON-encoded payload. Returns the normalised
      * response array described at the class docblock.
      *
-     * @param array<string,mixed>  $payload
+     * The payload type accepts an array or an empty stdClass.
+     * The stdClass form is needed when a provider (PayPal's
+     * capture endpoint) requires an empty JSON object in the
+     * body rather than an empty JSON array. An empty PHP
+     * array [] encodes to "[]", not "{}". new \stdClass()
+     * encodes to "{}". PayPal rejects the array form.
+     *
+     * @param array<string,mixed>|\stdClass  $payload
      * @param array<int, string> $headers   Each entry
      *        is a full header line, e.g. "Authorization: Bearer x".
      *
      * @return array{status: int, body: array<string,mixed>,
      *               raw: string, error: ?string}
      */
-    public function postJson(string $url, array $payload, array $headers = [], int $timeout = self::DEFAULT_TIMEOUT): array
+    public function postJson(string $url, array|\stdClass $payload, array $headers = [], int $timeout = self::DEFAULT_TIMEOUT): array
     {
         $json = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         if ($json === false) {

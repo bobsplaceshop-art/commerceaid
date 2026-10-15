@@ -170,7 +170,24 @@ final class Request
 
     public function header(string $name, mixed $default = null): mixed
     {
-        return $this->headers[$name] ?? $default;
+        if (array_key_exists($name, $this->headers)) {
+            return $this->headers[$name];
+        }
+
+        // Case-insensitive fallback. The producer
+        // (extractHeaders) title-cases header names, but a
+        // caller may ask for a specific brand capitalisation
+        // such as "PayPal-Transmission-Id" versus the
+        // producer's "Paypal-Transmission-Id". Header names
+        // are case-insensitive per RFC 7230 section 3.2.
+        $wanted = strtolower($name);
+        foreach ($this->headers as $key => $value) {
+            if (strtolower($key) === $wanted) {
+                return $value;
+            }
+        }
+
+        return $default;
     }
 
     public function ip(): string

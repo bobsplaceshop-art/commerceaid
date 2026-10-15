@@ -103,7 +103,10 @@ final class WebhookController
             return Response::json(['error' => 'Malformed payload.'], 400);
         }
         $eventId   = (string) ($event['id'] ?? '');
-        $eventType = (string) ($event['type'] ?? '');
+        // Stripe uses 'type'; PayPal uses 'event_type'. Read
+        // either key so the commerce_webhook_events row carries
+        // the correct event type for both providers.
+        $eventType = (string) ($event['type'] ?? $event['event_type'] ?? '');
         if ($eventId === '') {
             return Response::json(['error' => 'Missing event id.'], 400);
         }
