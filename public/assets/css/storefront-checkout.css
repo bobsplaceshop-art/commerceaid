@@ -186,6 +186,12 @@
 }
 
 /* ---- Address list (saved) ---- */
+.sf-field-error {
+    color: var(--sf-error, #b91c1c);
+    font-size: .82rem;
+    margin-top: .25rem;
+    line-height: 1.35;
+}
 .sf-checkout-addresses {
     border: 1px solid var(--sf-border, #e5e1d8);
     padding: 1rem;
@@ -342,4 +348,125 @@
     margin-bottom: 0;
     line-height: 1.4;
     font-size: .8rem;
+}
+
+/* -----------------------------------------------------------------
+   Country select — searchable dropdown with flags.
+
+   Used on the checkout shipping step and the account address
+   book. Component root carries [data-sf-country-select].
+   The visible button shows the selected country; the panel
+   holds a search field and the scrollable list.
+
+   The list lives inside the panel with its own scroll. The
+   panel itself is absolutely positioned relative to the
+   root so it floats above following form fields.
+   ----------------------------------------------------------------- */
+.sf-country-select {
+    position: relative;
+}
+
+.sf-country-select-toggle {
+    width: 100%;
+    text-align: left;
+    padding: .55rem .75rem;
+    background: var(--sf-input-bg, #ffffff);
+    color: var(--sf-fg, #0f172a);
+    border: 1px solid var(--sf-border, #d1d5db);
+    border-radius: 6px;
+    font-size: .95rem;
+    line-height: 1.4;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.sf-country-select-toggle:hover {
+    border-color: var(--sf-border-strong, #9ca3af);
+}
+.sf-country-select-toggle:focus {
+    outline: 2px solid var(--sf-accent, #c9a961);
+    outline-offset: 1px;
+}
+
+.sf-country-select-panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--sf-input-bg, #ffffff);
+    border: 1px solid var(--sf-border, #d1d5db);
+    border-radius: 6px;
+    box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+}
+
+.sf-country-select-search {
+    width: 100%;
+    padding: .55rem .75rem;
+    border: 0;
+    border-bottom: 1px solid var(--sf-border, #d1d5db);
+    font-size: .95rem;
+    background: var(--sf-input-bg, #ffffff);
+    color: var(--sf-fg, #0f172a);
+    outline: none;
+}
+
+.sf-country-select-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.sf-country-select-item {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .5rem .75rem;
+    font-size: .92rem;
+    cursor: pointer;
+    line-height: 1.35;
+}
+.sf-country-select-item:hover,
+.sf-country-select-item.is-highlighted {
+    background: var(--sf-surface-2, #f3f4f6);
+}
+
+.sf-country-select-flag {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 15px;
+    object-fit: cover;
+    border-radius: 2px;
+    display: inline-block;
+    vertical-align: middle;
+    background: var(--sf-surface-2, #f3f4f6);
+}
+
+.sf-country-select-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sf-country-select-code {
+    flex: 0 0 auto;
+    font-size: .78rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--sf-muted, #6b7280);
+    letter-spacing: 0.05em;
+}
+
+/* The text input carries the two-letter code. It is the
+   actual form field — named, POSTed, validated by the server.
+   The button and panel are the visual UI on top of it. The
+   JS hides the input on init. If the JS does not load, the
+   input stays visible and works as a plain two-letter field. */
+.sf-country-select-input-hidden {
+    display: none;
 }

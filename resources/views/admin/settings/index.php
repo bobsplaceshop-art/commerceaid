@@ -56,66 +56,6 @@ $tabs['advanced'] = 'Advanced';
 
     <div class="ra-card-body">
 
-        <?php if ($activeTab === 'payments'): ?>
-            <!-- ============================== PAYMENTS: PROVIDERS ============================== -->
-            <?php if ($paymentProviders === []): ?>
-                <div class="text-center py-4">
-                    <p class="muted small mb-0">
-                        No payment providers are registered in this build.
-                    </p>
-                </div>
-            <?php else: ?>
-                <h3 class="h6 mb-2">Payment providers</h3>
-                <p class="muted small mb-3">
-                    Enable a provider to offer it at checkout. A provider
-                    is only offered when its credentials below are filled
-                    in and its connection test succeeds.
-                </p>
-
-                <div class="ra-paytab-providers">
-                    <?php foreach ($paymentProviders as $key => $label):
-                        $state    = $paymentMethods[$key] ?? ['is_enabled' => false, 'sort_order' => 0];
-                        $enabled  = (bool) ($state['is_enabled'] ?? false);
-                        $fieldKey = 'payments__' . $key . '__enabled';
-                    ?>
-                        <div class="ra-paytab-row">
-                            <label class="ra-settings-toggle" for="<?= e($fieldKey) ?>">
-                                <input type="checkbox"
-                                       id="<?= e($fieldKey) ?>"
-                                       name="<?= e($fieldKey) ?>"
-                                       value="1"
-                                       <?= $enabled ? 'checked' : '' ?>>
-                                <span class="ra-settings-toggle-track">
-                                    <span class="ra-settings-toggle-knob"></span>
-                                </span>
-                                <span class="ra-paytab-label"><?= e($label) ?></span>
-                            </label>
-                            <span class="muted small ra-paytab-key"><code><?= e($key) ?></code></span>
-                            <form method="POST"
-                                  action="/commerce/ca-admin/settings/payments/test"
-                                  class="ra-paytab-test">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="provider_key" value="<?= e($key) ?>">
-                                <button type="submit" class="ra-btn ra-btn-outline ra-btn-sm">
-                                    <i class="bi bi-plug me-1"></i> Test connection
-                                </button>
-                            </form>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-
-                <hr class="ra-paytab-divider">
-
-                <h3 class="h6 mb-2">Credentials</h3>
-                <p class="muted small mb-3">
-                    Enter the API keys the provider gave you. Test-mode
-                    credentials start with <code>sk_test_</code> or
-                    <code>pk_test_</code>; live credentials start with
-                    <code>sk_live_</code> or <code>pk_live_</code>.
-                </p>
-            <?php endif; ?>
-        <?php endif; ?>
-
         <?php if ($activeTab === 'advanced'): ?>
             <!-- ============================== ADVANCED ============================== -->
 
@@ -214,6 +154,65 @@ $tabs['advanced'] = 'Advanced';
                   enctype="multipart/form-data">
                 <?= csrf_field() ?>
                 <input type="hidden" name="_tab" value="<?= e($activeTab) ?>">
+
+                <?php if ($activeTab === 'payments'): ?>
+                    <!-- ============================== PAYMENTS: PROVIDERS ============================== -->
+                    <?php if ($paymentProviders === []): ?>
+                        <div class="text-center py-4">
+                            <p class="muted small mb-0">
+                                No payment providers are registered in this build.
+                            </p>
+                        </div>
+                    <?php else: ?>
+                        <h3 class="h6 mb-2">Payment providers</h3>
+                        <p class="muted small mb-3">
+                            Enable a provider to offer it at checkout. A provider
+                            is only offered when its credentials below are filled
+                            in and its connection test succeeds.
+                        </p>
+
+                        <div class="ra-paytab-providers">
+                            <?php foreach ($paymentProviders as $key => $label):
+                                $state    = $paymentMethods[$key] ?? ['is_enabled' => false, 'sort_order' => 0];
+                                $enabled  = (bool) ($state['is_enabled'] ?? false);
+                                $fieldKey = 'payments__' . $key . '__enabled';
+                            ?>
+                                <div class="ra-paytab-row">
+                                    <label class="ra-settings-toggle" for="<?= e($fieldKey) ?>">
+                                        <input type="checkbox"
+                                               id="<?= e($fieldKey) ?>"
+                                               name="<?= e($fieldKey) ?>"
+                                               value="1"
+                                               <?= $enabled ? 'checked' : '' ?>>
+                                        <span class="ra-settings-toggle-track">
+                                            <span class="ra-settings-toggle-knob"></span>
+                                        </span>
+                                        <span class="ra-paytab-label"><?= e($label) ?></span>
+                                    </label>
+                                    <span class="muted small ra-paytab-key"><code><?= e($key) ?></code></span>
+                                    <button type="submit"
+                                            formaction="/commerce/ca-admin/settings/payments/test"
+                                            formnovalidate
+                                            name="provider_key"
+                                            value="<?= e($key) ?>"
+                                            class="ra-btn ra-btn-outline ra-btn-sm ra-paytab-test">
+                                        <i class="bi bi-plug me-1"></i> Test connection
+                                    </button>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <hr class="ra-paytab-divider">
+
+                        <h3 class="h6 mb-2">Credentials</h3>
+                        <p class="muted small mb-3">
+                            Enter the API keys the provider gave you. Test-mode
+                            credentials start with <code>sk_test_</code> or
+                            <code>pk_test_</code>; live credentials start with
+                            <code>sk_live_</code> or <code>pk_live_</code>.
+                        </p>
+                    <?php endif; ?>
+                <?php endif; ?>
 
                 <?php foreach ($definitions as $key => $def): ?>
                     <?php

@@ -62,10 +62,19 @@ DirectoryIndex index.php
     #                           - fetch/XHR destinations (jsdelivr for source maps)
     #   frame-ancestors 'none'  - block framing (overlaps with X-Frame-Options)
     #   base-uri    'self'      - prevent <base href> hijacking
-    #   form-action 'self'      - forms can only submit to same origin
+    #   form-action 'self' + payment providers
+    #                           - forms submit to same origin,
+    #                             plus a redirect to the payment
+    #                             provider's hosted checkout. The
+    #                             CSP form-action directive governs
+    #                             the redirect chain that follows
+    #                             a form POST, so the provider
+    #                             domains must be listed explicitly
+    #                             or the browser silently blocks
+    #                             the 302 to Stripe Checkout.
     #   object-src  'none'      - block Flash, Java, and other plugins
     # ============================================================
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' data:; img-src 'self' data: https://picsum.photos https://fastly.picsum.photos; connect-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' data:; img-src 'self' data: https://picsum.photos https://fastly.picsum.photos; connect-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com https://www.paypal.com https://www.sandbox.paypal.com; object-src 'none';"
 
     # ----------------------------------------------------------
     # CSP and X-Frame-Options exception for the campaign raw

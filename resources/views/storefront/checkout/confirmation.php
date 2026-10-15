@@ -16,6 +16,8 @@ if ($order === null) {
 }
 
 $paymentLabels = [
+    'stripe'         => 'Card (Stripe)',
+    'paypal'         => 'PayPal',
     'cod'            => 'Cash on delivery',
     'bank_transfer'  => 'Bank transfer',
     'purchase_order' => 'Purchase order',

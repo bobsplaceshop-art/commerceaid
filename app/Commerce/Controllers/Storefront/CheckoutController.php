@@ -186,24 +186,45 @@ final class CheckoutController extends StorefrontController
         $state = $this->state();
 
         // Shipping address - either picked from saved, or entered fresh.
+        // buildAddressFromRequest returns {address, errors}. The errors
+        // are field-keyed (first_name, address_line_1, etc.) so the view
+        // can render each under its own input.
         $savedId = (int) $request->input('saved_shipping_address_id', 0);
-        $shippingAddress = $this->buildAddressFromRequest($request, 'shipping', $savedId);
+        $shippingResult = $this->buildAddressFromRequest($request, 'shipping', $savedId);
 
         // Billing address - same as shipping, or separate.
         $billingSame = (bool) $request->input('billing_same', true);
         if ($billingSame) {
-            $billingAddress = $shippingAddress;
+            $billingResult = $shippingResult;
         } else {
             $savedBillingId = (int) $request->input('saved_billing_address_id', 0);
-            $billingAddress = $this->buildAddressFromRequest($request, 'billing', $savedBillingId);
+            $billingResult = $this->buildAddressFromRequest($request, 'billing', $savedBillingId);
         }
 
+        // Merge every field error into a single flat array for
+        // the flash. The view reads them by field name -
+        // shipping_first_name, shipping_address_line_1, etc.
         $errors = [];
-        if ($shippingAddress === null) {
+        foreach ($shippingResult['errors'] as $field => $message) {
+            $errors['shipping_' . $field] = $message;
+        }
+
+        if ($shippingResult['address'] === null && $shippingResult['errors'] === []) {
+            // No field errors, but no address either. The
+            // saved id was provided but not found, and the
+            // manual form was empty. Rare. Guarded here so
+            // the customer is not silently dropped back to
+            // the same page with no explanation.
             $errors['shipping'] = 'Please provide a shipping address.';
         }
-        if ($billingAddress === null) {
-            $errors['billing'] = 'Please provide a billing address.';
+
+        if (!$billingSame && $billingResult['address'] === null) {
+            foreach ($billingResult['errors'] as $field => $message) {
+                $errors['billing_' . $field] = $message;
+            }
+            if ($billingResult['errors'] === []) {
+                $errors['billing'] = 'Please provide a billing address.';
+            }
         }
 
         if ($errors !== []) {
@@ -211,8 +232,8 @@ final class CheckoutController extends StorefrontController
             return Response::redirect('/checkout/shipping');
         }
 
-        $state['shipping_address'] = $shippingAddress;
-        $state['billing_address']  = $billingAddress;
+        $state['shipping_address'] = $shippingResult['address'];
+        $state['billing_address']  = $billingResult['address'];
         $state['completed_shipping'] = true;
         $this->saveState($state);
 
@@ -694,11 +715,28 @@ final class CheckoutController extends StorefrontController
      */
     private function availablePaymentMethods(?Customer $customer): array
     {
-        $methods = [
-            'cod'           => 'Cash on delivery',
-            'bank_transfer' => 'Bank transfer',
-        ];
+        // Online providers first. The registry returns every
+        // provider that is enabled for this store and reports
+        // isConfigured() = true. A provider that is not
+        // configured (missing keys) or not enabled in
+        // commerce_store_payment_methods is not offered.
+        $methods = [];
 
+        $registry = $this->container->get(
+            \CorporateAid\Commerce\Services\Payment\PaymentProviderRegistry::class
+        );
+        foreach ($registry->enabledForStore() as $key => $provider) {
+            $methods[$key] = $provider->label();
+        }
+
+        // Offline methods. No provider class. PaymentChargeService
+        // handles them directly - the order is placed and the
+        // confirmation page is the record.
+        $methods['cod']           = 'Cash on delivery';
+        $methods['bank_transfer'] = 'Bank transfer';
+
+        // Net-terms only for approved customers in a group
+        // that offers them.
         if ($customer instanceof Customer && $customer->canCheckout()) {
             $group = null;
             if ($customer->customerGroupId !== null) {
@@ -720,34 +758,58 @@ final class CheckoutController extends StorefrontController
      *
      * @return array<string,mixed>|null
      */
+    /**
+     * Build an address array from the request.
+     *
+     * Two paths: the customer picks a saved address from
+     * the list, or they enter one fresh on the form.
+     *
+     * Returns an array with two keys:
+     *   address - the built address, or null when the form
+     *             failed validation
+     *   errors  - field-keyed messages, e.g.
+     *             ['first_name' => 'First name is required.']
+     *
+     * The caller (saveShipping) merges the errors into the
+     * flash. The view renders each message under its field.
+     * One message per field instead of a single generic
+     * "Please provide a shipping address."
+     *
+     * @return array{address: ?array<string,string>, errors: array<string,string>}
+     */
     private function buildAddressFromRequest(
         Request $request,
         string $prefix,
         int $savedId
-    ): ?array {
+    ): array {
         // Saved address picked from the list.
         if ($savedId > 0) {
             $repo = $this->container->get(CustomerAddressRepository::class);
             $addr = $repo->findById($savedId);
             if ($addr !== null) {
                 return [
-                    'first_name'     => $addr->firstName,
-                    'last_name'      => $addr->lastName,
-                    'company'        => $addr->company,
-                    'address_line_1' => $addr->addressLine1,
-                    'address_line_2' => $addr->addressLine2,
-                    'city'           => $addr->city,
-                    'state'          => $addr->state,
-                    'postal_code'    => $addr->postalCode,
-                    'country_code'   => $addr->countryCode,
-                    'phone'          => $addr->phone,
-                    'email'          => $addr->email,
+                    'address' => [
+                        'first_name'     => $addr->firstName,
+                        'last_name'      => $addr->lastName,
+                        'company'        => $addr->company,
+                        'address_line_1' => $addr->addressLine1,
+                        'address_line_2' => $addr->addressLine2,
+                        'city'           => $addr->city,
+                        'state'          => $addr->state,
+                        'postal_code'    => $addr->postalCode,
+                        'country_code'   => $addr->countryCode,
+                        'phone'          => $addr->phone,
+                        'email'          => $addr->email,
+                    ],
+                    'errors' => [],
                 ];
             }
+            // Saved id was provided but not found. Fall
+            // through to the manual form. The customer
+            // may have an old address list cached.
         }
 
         // Fresh entry from the form.
-        $required = ['address_line_1', 'city', 'postal_code', 'country_code'];
         $address = [
             'first_name'     => trim((string) $request->input($prefix . '_first_name', '')),
             'last_name'      => trim((string) $request->input($prefix . '_last_name', '')),
@@ -762,12 +824,29 @@ final class CheckoutController extends StorefrontController
             'email'          => trim((string) $request->input($prefix . '_email', '')),
         ];
 
-        foreach ($required as $field) {
+        // Required fields with human labels. First and last
+        // name are required - a shipping label needs a
+        // recipient.
+        $required = [
+            'first_name'     => 'First name is required.',
+            'last_name'      => 'Last name is required.',
+            'address_line_1' => 'Address line 1 is required.',
+            'city'           => 'City is required.',
+            'postal_code'    => 'Postal code is required.',
+            'country_code'   => 'Country is required.',
+        ];
+
+        $errors = [];
+        foreach ($required as $field => $message) {
             if ($address[$field] === '') {
-                return null;
+                $errors[$field] = $message;
             }
         }
 
-        return $address;
+        if ($errors !== []) {
+            return ['address' => null, 'errors' => $errors];
+        }
+
+        return ['address' => $address, 'errors' => []];
     }
 }

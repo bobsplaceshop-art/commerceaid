@@ -1,0 +1,20 @@
+Flag graphics in this directory
+===============================
+
+Source: Twemoji
+Project: https://github.com/jdecked/twemoji
+Version: 15.1.0
+License: CC-BY 4.0
+License text: https://creativecommons.org/licenses/by/4.0/
+
+The SVG files in this directory are copies of the country flag
+graphics shipped with Twemoji. They are redistributed under the
+terms of the CC-BY 4.0 license, which requires attribution to
+the original authors.
+
+Attribution: Copyright 2020 Twitter, Inc and other contributors.
+Graphics licensed under CC-BY 4.0.
+
+These files are served from the storefront's own domain. No
+external request is made to render them. The platform makes no
+request to any Twemoji or Twitter service at runtime.
