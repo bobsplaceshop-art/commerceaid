@@ -60,6 +60,30 @@ interface PaymentProvider
     public function isConfigured(StoreContext $ctx): bool;
 
     /**
+     * Probe the provider's API with the stored credentials and
+     * report whether the connection is live.
+     *
+     * Unlike isConfigured() (a local "are the fields filled in"
+     * check), this makes one real outbound call to the provider.
+     * It answers the question the merchant actually asks when
+     * they click "Test connection": does the key on file work.
+     *
+     * The call must be read-only. No charges, no order creation,
+     * no side effects. For Stripe: GET /v1/balance. For PayPal:
+     * the OAuth token handshake, which is what every subsequent
+     * PayPal API call does.
+     *
+     * Returns a message the admin flash shows verbatim. The
+     * message describes what happened, in merchant-readable
+     * terms: "Stripe responded with account status: active",
+     * "PayPal rejected the credentials (invalid_client)", "The
+     * request timed out".
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function testConnection(): array;
+
+    /**
      * Charge the customer for the order's grand total.
      *
      * For redirect-based providers (Stripe Checkout,

@@ -77,6 +77,93 @@ final class PayPalProvider implements PaymentProvider
     }
 
     /**
+     * Probe PayPal's API with the stored client credentials.
+     *
+     * The test is the OAuth token handshake that every
+     * subsequent PayPal API call already requires. A 200
+     * with an access_token in the body means the client id
+     * and secret are valid for the configured mode.
+     *
+     * A 401 means the credentials are wrong. Any other
+     * non-2xx is reported as-is. Network failure produces
+     * a clear "unreachable" message.
+     *
+     * The access token itself is never echoed back. Only
+     * the outcome and a merchant-readable description.
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function testConnection(): array
+    {
+        $clientId = trim($this->settings->string('payments.paypal.client_id', ''));
+        $secret   = trim($this->settings->string('payments.paypal.client_secret', ''));
+
+        if ($clientId === '' || $secret === '') {
+            return [
+                'ok'      => false,
+                'message' => 'PayPal client id and client secret must both be set.',
+            ];
+        }
+
+        $mode      = trim($this->settings->string('payments.paypal.mode', 'sandbox'));
+        $basicAuth = base64_encode($clientId . ':' . $secret);
+
+        $response = $this->http->post(
+            $this->apiBase() . '/v1/oauth2/token',
+            'grant_type=client_credentials',
+            [
+                'Authorization: Basic ' . $basicAuth,
+                'Content-Type: application/x-www-form-urlencoded',
+            ]
+        );
+
+        if ($response['error'] !== null) {
+            return [
+                'ok'      => false,
+                'message' => 'PayPal is unreachable: ' . $response['error'],
+            ];
+        }
+
+        $status = (int) $response['status'];
+
+        if ($status === 200) {
+            $token = (string) ($response['body']['access_token'] ?? '');
+            if ($token === '') {
+                return [
+                    'ok'      => false,
+                    'message' => 'PayPal responded HTTP 200 but returned no access token.',
+                ];
+            }
+            return [
+                'ok'      => true,
+                'message' => 'PayPal authenticated (HTTP 200). Credentials are valid for '
+                           . $mode . ' mode.',
+            ];
+        }
+
+        if ($status === 401) {
+            return [
+                'ok'      => false,
+                'message' => 'PayPal rejected the credentials (HTTP 401). '
+                           . 'Check the client id and secret below.',
+            ];
+        }
+
+        if ($status === 0) {
+            return [
+                'ok'      => false,
+                'message' => 'PayPal is unreachable: no HTTP response. '
+                           . 'Check the server network connection.',
+            ];
+        }
+
+        return [
+            'ok'      => false,
+            'message' => 'PayPal returned HTTP ' . $status . '.',
+        ];
+    }
+
+    /**
      * Create a PayPal Order and return the approval URL.
      * The customer is redirected to the URL, approves, and
      * PayPal sends them back with a token query parameter.

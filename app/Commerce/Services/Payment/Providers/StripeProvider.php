@@ -64,6 +64,91 @@ final class StripeProvider implements PaymentProvider
     }
 
     /**
+     * Probe Stripe's API with the stored secret key.
+     *
+     * GET /v1/balance is the cheapest read-only endpoint
+     * that requires authentication and returns data about
+     * the account. A 200 means the key is valid, the
+     * account is active, and the API is reachable.
+     *
+     * A 401 means the key is wrong, revoked, or from the
+     * wrong account. Any other non-2xx (402 for suspended
+     * accounts, 403 for restricted keys) is reported as-is.
+     *
+     * The message is merchant-readable. The full response
+     * is not echoed, because the response could include
+     * account metadata the merchant does not need.
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function testConnection(): array
+    {
+        $secret = $this->secretKey();
+        if ($secret === '') {
+            return [
+                'ok'      => false,
+                'message' => 'Stripe secret key is not set.',
+            ];
+        }
+
+        $response = $this->http->get(
+            self::API_BASE . '/balance',
+            [
+                'Authorization: Bearer ' . $secret,
+            ]
+        );
+
+        if ($response['error'] !== null) {
+            return [
+                'ok'      => false,
+                'message' => 'Stripe is unreachable: ' . $response['error'],
+            ];
+        }
+
+        $status = (int) $response['status'];
+
+        if ($status === 200) {
+            $livemode = (bool) ($response['body']['livemode'] ?? false);
+            $mode     = $livemode ? 'live' : 'test';
+
+            return [
+                'ok'      => true,
+                'message' => 'Stripe responded (HTTP 200). Key is valid for '
+                           . $mode . ' mode.',
+            ];
+        }
+
+        if ($status === 401) {
+            return [
+                'ok'      => false,
+                'message' => 'Stripe rejected the secret key (HTTP 401). '
+                           . 'Check the key in the credentials below.',
+            ];
+        }
+
+        if ($status === 403) {
+            return [
+                'ok'      => false,
+                'message' => 'Stripe refused the request (HTTP 403). '
+                           . 'The key may be restricted to certain resources.',
+            ];
+        }
+
+        if ($status === 0) {
+            return [
+                'ok'      => false,
+                'message' => 'Stripe is unreachable: no HTTP response. '
+                           . 'Check the server network connection.',
+            ];
+        }
+
+        return [
+            'ok'      => false,
+            'message' => 'Stripe returned HTTP ' . $status . '.',
+        ];
+    }
+
+    /**
      * Create a Stripe Checkout Session for the order. Returns
      * the session's hosted URL, which the caller redirects
      * the customer to. The order's payment_status stays

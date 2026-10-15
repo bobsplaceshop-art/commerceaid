@@ -144,4 +144,32 @@ final class PaymentProviderRegistry
     {
         return array_keys(self::providerMap());
     }
+
+    /**
+     * The human labels for every provider whose class
+     * exists, keyed by provider_key.
+     *
+     * Used by the admin Settings > Payments tab to render
+     * a row per provider with its display name. Providers
+     * whose class has not shipped are omitted so the
+     * returned set matches what the registry can actually
+     * resolve.
+     *
+     * The label comes from the provider instance, not a
+     * second catalog. One source of truth for the display
+     * name.
+     *
+     * @return array<string, string>
+     */
+    public function labels(): array
+    {
+        $out = [];
+        foreach (array_keys(self::providerMap()) as $key) {
+            $provider = $this->resolve($key);
+            if ($provider !== null) {
+                $out[$key] = $provider->label();
+            }
+        }
+        return $out;
+    }
 }

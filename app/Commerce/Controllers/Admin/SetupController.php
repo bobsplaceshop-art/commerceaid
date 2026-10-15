@@ -39,7 +39,7 @@ final class SetupController extends AdminController
         'currency'   => ['label' => 'Currency & Region', 'icon' => 'bi-currency-exchange','real' => true],
         'branding'   => ['label' => 'Branding',          'icon' => 'bi-palette',        'real' => true],
         'checkout'   => ['label' => 'Checkout',          'icon' => 'bi-bag-check',      'real' => true],
-        'payments'   => ['label' => 'Payments',          'icon' => 'bi-credit-card',    'real' => false],
+        'payments'   => ['label' => 'Payments',          'icon' => 'bi-credit-card',    'real' => true],
         'shipping'   => ['label' => 'Shipping',          'icon' => 'bi-truck',          'real' => false],
         'tax'        => ['label' => 'Tax',               'icon' => 'bi-percent',        'real' => false],
         'advanced'   => ['label' => 'Advanced',          'icon' => 'bi-gear-wide-connected','real' => false],
@@ -207,10 +207,11 @@ final class SetupController extends AdminController
 
     private function showPayments(): Response
     {
-        return $this->renderTab('payments', [
-            'title'     => 'Setup - Payments',
-            'providers' => $this->availablePaymentProviders(),
-        ]);
+        // The real payments config lives in Settings >
+        // Payments. This method exists so the Setup sub-nav
+        // keeps its tab list. Clicking Payments hands the
+        // merchant off to the surface that actually writes.
+        return Response::redirect('/commerce/ca-admin/settings?tab=payments');
     }
 
     private function showShipping(): Response
@@ -405,21 +406,4 @@ final class SetupController extends AdminController
             ->select("SELECT `id`, `code`, `name`, `symbol`, `decimal_places` FROM `core_currencies` WHERE `is_active` = 1 ORDER BY `code`");
     }
 
-    /**
-     * Payment provider catalog. Right now this is a static list.
-     * When commerce_store_payment_methods is wired, this will read
-     * the store's enabled/disabled state from that table.
-     */
-    /** @return array<int, array{key:string,label:string,icon:string,desc:string}> */
-    private function availablePaymentProviders(): array
-    {
-        return [
-            ['key' => 'mpesa',   'label' => 'M-Pesa',        'icon' => 'bi-phone',       'desc' => 'Safaricom mobile money (Kenya)'],
-            ['key' => 'stripe',  'label' => 'Stripe',        'icon' => 'bi-credit-card', 'desc' => 'Cards and digital wallets (global)'],
-            ['key' => 'paypal',  'label' => 'PayPal',        'icon' => 'bi-paypal',      'desc' => 'PayPal account and cards'],
-            ['key' => 'manual',  'label' => 'Manual',        'icon' => 'bi-pencil',      'desc' => 'Record payments taken offline'],
-            ['key' => 'cod',     'label' => 'Cash on Delivery','icon' => 'bi-cash-coin', 'desc' => 'Collect payment on delivery'],
-            ['key' => 'bank',    'label' => 'Bank Transfer', 'icon' => 'bi-bank',        'desc' => 'Direct bank transfer'],
-        ];
-    }
 }

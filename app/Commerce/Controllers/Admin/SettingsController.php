@@ -71,13 +71,39 @@ final class SettingsController extends AdminController
             ? $settings->customSettings()
             : [];
 
+        // Payments tab needs a provider list on top of the
+        // credential fields. The providers come from the
+        // registry; the enabled state comes from the payment
+        // methods table. Both are read here so the view stays
+        // a pure renderer.
+        $paymentProviders = [];
+        $paymentMethods   = [];
+        if ($activeTab === StoreSettingDefinitions::GROUP_PAYMENTS) {
+            $registry = $this->container->get(
+                \CorporateAid\Commerce\Services\Payment\PaymentProviderRegistry::class
+            );
+            $paymentProviders = $registry->labels();
+
+            $methodRepo = $this->container->get(
+                \CorporateAid\Commerce\Repositories\PaymentMethodRepository::class
+            );
+            foreach ($methodRepo->listForStore() as $row) {
+                $paymentMethods[(string) $row['provider_key']] = [
+                    'is_enabled' => (bool) $row['is_enabled'],
+                    'sort_order' => (int) $row['sort_order'],
+                ];
+            }
+        }
+
         return $this->render('admin.settings.index', [
-            'title'       => 'Store Settings',
-            'groups'      => $groups,
-            'activeTab'   => $activeTab,
-            'definitions' => $definitions,
-            'values'      => $values,
-            'custom'      => $custom,
+            'title'            => 'Store Settings',
+            'groups'           => $groups,
+            'activeTab'        => $activeTab,
+            'definitions'      => $definitions,
+            'values'           => $values,
+            'custom'           => $custom,
+            'paymentProviders' => $paymentProviders,
+            'paymentMethods'   => $paymentMethods,
         ]);
     }
 
@@ -138,6 +164,40 @@ final class SettingsController extends AdminController
             $savedCount++;
         }
 
+        // Payments tab has a side effect: the provider
+        // enable toggles live in commerce_store_payment_methods,
+        // not in the key-value settings table. Read them
+        // from the POST and write each one through the
+        // repository. A provider not present in the POST is
+        // disabled - the checkbox is unchecked.
+        if ($activeTab === StoreSettingDefinitions::GROUP_PAYMENTS) {
+            $registry = $this->container->get(
+                \CorporateAid\Commerce\Services\Payment\PaymentProviderRegistry::class
+            );
+            $methodRepo = $this->container->get(
+                \CorporateAid\Commerce\Repositories\PaymentMethodRepository::class
+            );
+
+            $existing = [];
+            foreach ($methodRepo->listForStore() as $row) {
+                $existing[(string) $row['provider_key']] = (int) $row['sort_order'];
+            }
+
+            $sortOrder = 0;
+            foreach ($registry->knownKeys() as $providerKey) {
+                $fieldName = 'payments__' . $providerKey . '__enabled';
+                $isEnabled = $request->input($fieldName) !== null;
+
+                // Preserve existing sort_order when present;
+                // assign fresh position for new keys in
+                // registry order.
+                $sort = $existing[$providerKey] ?? $sortOrder;
+                $methodRepo->set($providerKey, $isEnabled, $sort);
+                $sortOrder++;
+                $savedCount++;
+            }
+        }
+
         // Fonts tab has a side effect: after the slug
         // selections are written, fetch any missing WOFF2
         // files. Downloads happen once per slug per store
@@ -162,6 +222,72 @@ final class SettingsController extends AdminController
         }
 
         return Response::redirect('/commerce/ca-admin/settings?tab=' . urlencode($activeTab));
+    }
+
+    /**
+     * Test a single payment provider's connection.
+     *
+     * Route: POST /commerce/ca-admin/settings/payments/test
+     *
+     * A "connection test" for a payment provider has no
+     * single network call that proves it works. What it
+     * proves here:
+     *
+     *   1. The provider class resolves through the registry.
+     *   2. The provider reports isConfigured() = true for
+     *      this store.
+     *
+     * Both are local checks. A full sandbox round trip is a
+     * separate concern - the merchant makes one real test
+     * payment. This button answers "are the credentials in
+     * the DB and readable by the provider", which is the
+     * question that matters when the merchant has just
+     * pasted in a new key.
+     *
+     * @param array<string,string> $params
+     */
+    public function testPaymentProvider(Request $request, array $params = []): Response
+    {
+        $session  = $this->container->get(Session::class);
+        $providerKey = trim((string) $request->input('provider_key', ''));
+
+        if ($providerKey === '') {
+            $session->flash('error', 'No provider selected.');
+            return Response::redirect('/commerce/ca-admin/settings?tab=payments');
+        }
+
+        $registry = $this->container->get(
+            \CorporateAid\Commerce\Services\Payment\PaymentProviderRegistry::class
+        );
+        $provider = $registry->resolve($providerKey);
+        if ($provider === null) {
+            $session->flash(
+                'error',
+                'The provider class for "' . $providerKey . '" is not available in this build.'
+            );
+            return Response::redirect('/commerce/ca-admin/settings?tab=payments');
+        }
+
+        $ctx = $this->container->get(\CorporateAid\Commerce\Context\StoreContext::class);
+        if (!$provider->isConfigured($ctx)) {
+            $session->flash(
+                'error',
+                $provider->label() . ' is not fully configured. '
+                . 'Fill in the credential fields below and save before testing.'
+            );
+            return Response::redirect('/commerce/ca-admin/settings?tab=payments');
+        }
+
+        // Real outbound probe. The provider issues one
+        // read-only API call with the stored credentials
+        // and returns a merchant-readable result.
+        $result = $provider->testConnection();
+        $ok     = (bool) ($result['ok'] ?? false);
+        $message = (string) ($result['message'] ?? 'No result.');
+
+        $session->flash($ok ? 'success' : 'error', $message);
+
+        return Response::redirect('/commerce/ca-admin/settings?tab=payments');
     }
 
     /** @param array<string,string> $params */

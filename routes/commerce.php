@@ -678,6 +678,13 @@ $router->post('/commerce/ca-admin/settings/advanced/delete',
     [SettingsController::class, 'deleteCustom'],
     ['store', 'auth', 'csrf']);
 
+// Payment provider connection test. Reads the provider
+// from the registry and reports whether its credentials
+// are present. No outbound network call.
+$router->post('/commerce/ca-admin/settings/payments/test',
+    [SettingsController::class, 'testPaymentProvider'],
+    ['store', 'auth', 'csrf']);
+
 // Admin - Legal Pages (Stage 008E.1)
 $router->get('/commerce/ca-admin/legal-pages',
     [LegalPageController::class, 'index'],
