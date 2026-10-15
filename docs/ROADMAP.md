@@ -1540,6 +1540,64 @@ standalone localisation stage.
 
 ---
 
+### Abandoned Checkout Recovery
+
+The cart and the checkout wizard state now survive
+an abandoned payment. A customer who leaves the
+payment provider's page without completing the
+payment returns to a full cart. This shipped
+2026-10-15 (commit e4525cb).
+
+What is not yet built:
+
+  - **Auto-expire unpaid orders.** An order placed
+    with a payment provider that never completes
+    sits `unpaid` in the database forever. A
+    scheduled task should cancel unpaid orders older
+    than N hours. The `core_scheduled_tasks` table
+    exists for this. The window is configurable per
+    store, default around sixty minutes.
+
+  - **Restore reserved stock.** When an order is
+    auto-cancelled, the inventory reservation must
+    be released. That is a compensating movement in
+    the ledger, not a silent update.
+
+  - **Recovery email (optional).** A customer who
+    abandons mid-payment receives a follow-up email
+    with a link to resume the checkout. Consent for
+    this email must be collected at the checkout
+    step for German deployments. The consent banner
+    and the notification preferences page already
+    exist. Wiring them is a small feature.
+
+The industry reference for the recovery flow:
+
+  - WooCommerce recommends clearing the cart on
+    confirmed, not created. It is the setting the
+    platform now matches.
+
+  - Stripe's `checkout.session.expired` webhook
+    fires when a Checkout Session hits its
+    `expires_at`. The default is 24 hours.
+    Enabling `after_expiration.recovery` on the
+    session returns a recovery URL in the webhook
+    payload that recreates a fresh session.
+
+  - Recovery emails are the standard follow-up.
+    One at ~1 hour after expiry, one at 24 hours,
+    one at 72 hours.
+
+**Priority:** medium. The cart-survival piece is
+done. The cleanup and recovery pieces are quality-
+of-life improvements that matter more once the
+store has real order volume.
+
+**Likely stage:** a sub-stage of Stage 010 or a
+standalone operational stage.
+
+---
+
 ## Feature Toggle System
 
 All new features ship behind a toggle in `core_feature_flags`.

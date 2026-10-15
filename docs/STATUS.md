@@ -465,6 +465,24 @@ plus the client services questionnaire.
     the merchant reads the answers in the admin, and
     the form is deleted.
 
+**Checkout and message fixes shipped** (e4525cb,
+67c756a): two bugs found during the Stripe round
+trip and fixed the same day.
+
+  - The cart and the checkout wizard state now
+    survive an abandoned payment. They were being
+    cleared before the payment provider was called.
+    A customer who abandons at Stripe or PayPal and
+    returns later can retry. This matches the
+    industry standard: clear on confirmed, not on
+    created.
+
+  - A single notification click in the bell dropdown
+    now marks the row read. The dropdown items were
+    GET anchors; the mark-read endpoint is POST. The
+    items are now POST forms with a same-origin
+    redirect to the notification's own target.
+
 **Branding consolidation shipped** (cba256a): the
 store's name is now the single source of truth for
 every branded surface. Two helpers (`brand_name`,
