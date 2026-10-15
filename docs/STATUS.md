@@ -365,7 +365,7 @@ the Setup hub.
 
 ---
 
-## Current Focus - Stage 010 Sessions 1-3 complete
+## Current Focus - Stage 010 complete, Stage 014 tail open
 
 **Stage 010 Sessions 1, 2, and 3 are complete.**
 
@@ -425,6 +425,28 @@ implementation delivered. It now tells the truth.
 
 The `PaymentProvider` interface gained
 `testConnection()`. Both providers implement it.
+
+**Stage 010 is complete** (863c950). The PayPal round
+trip was verified end to end against the sandbox. The
+charge flow, the capture, the return controller, the
+webhook delivery, the signature verification, and the
+event row all fire correctly. Four bugs were found
+and fixed:
+
+  - PayPal's capture endpoint requires a JSON object
+    in the request body, not an empty array.
+  - The tunnel SSL handshake failed intermittently.
+    Fixed outside the code.
+  - `Request::header()` did a case-sensitive lookup,
+    which produced an empty headers array for the
+    webhook. Header names are case-insensitive per
+    RFC 7230.
+  - PayPal sends `event_type`, not `type`. The
+    webhook reader now reads both keys.
+
+Both Stripe and PayPal are production-proven. The
+`stage-010-complete` tag will land with the stage
+close docs.
 
 **Checkout quality and services questionnaire shipped**
 (3d04b5b, 587baef): a broad pass on the checkout flow,

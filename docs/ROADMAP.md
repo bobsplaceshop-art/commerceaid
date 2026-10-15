@@ -129,6 +129,7 @@ Applying the principle to the current roadmap:
 | 008K.5   | Order Pricing Engine                 | 2026-10-11 |
 | 009      | Forms & Submissions                  | 2026-10-13 |
 | 014      | Responsive Layout System             | 2026-10-14 |
+| 010      | Payments (Deep)                      | 2026-10-15 |
 
 Also completed outside the staged sequence:
 
@@ -155,44 +156,19 @@ Also completed outside the staged sequence:
 
 ## In Progress
 
-Stage 010 (Payments Deep) is open. Sessions 1,
-2, and 3 shipped on 2026-10-14.
+No stage in progress.
 
-Session 1 (0f9d57f) built the payment
-infrastructure: the PaymentProvider interface,
-an HTTP client, the registry, the
-PaymentMethodRepository, three tables, and eight
-provider credential settings.
+Stage 010 (Payments Deep) closed 2026-10-15 (tag
+`stage-010-complete`). Both payment providers
+verified end to end. See the Completed Stages
+table below.
 
-Session 2 (a5ea07b, 63d6837) built the refund
-wrapper and the codebase's first logic check
-harness.
-
-Session 3 (4571f82, 052ca4e, e8ea8f8) built
-Stripe end to end. The charge flow uses Stripe
-Checkout. The webhook handler consumes
-payment_intent.succeeded and records each event
-with database-level idempotency. The customer
-return handler verifies the Checkout Session and
-confirms. Two smoke cases pass: refund and
-stripe-webhook.
-
-Session 4 opens next: PayPal. Sessions 5 through
-7 ship the admin configuration tab, the
-compliance entries, and the stage close.
-
-Stage 014 (Responsive Layout System) closed
-2026-10-14 (tag stage-014-complete). The tail walk
-and the offline page theme fix shipped at commit
-6515e85. Session files 2026-10-14.md and
-2026-10-14-2.md record the closure.
-
-Stage 009 (Forms & Submissions) closed 2026-10-13.
-Two subsystems were deferred to a future sub-stage
-009.7: a general-purpose event dispatcher, and the
-webhook callout. The codebase has no event bus.
-The working dispatch path is NotificationService
-with its rule-based recipient resolver.
+The storefront audit tail from Stage 014 remains
+open: product detail at 900, checkout at 900,
+error pages 403/404/500 at four widths, PWA
+offline page at four widths, dark theme across
+every storefront surface. When the tail is
+walked, Stage 014 is formally closed.
 
 ## Planned Stages
 

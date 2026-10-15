@@ -1072,3 +1072,115 @@ does not pass silently.
 **See also:** entry 3 (Widerrufsrecht instruction page),
 which supplies the legal text; this entry supplies
 the mechanism.
+
+---
+
+## 23. Stripe (DSGVO Art. 28 Processor)
+
+**Requirement:** Stripe processes card payments on
+behalf of the merchant. Under DSGVO Art. 28, Stripe
+is a processor and requires a Data Processing
+Agreement (DPA / Auftragsverarbeitungsvertrag) with
+the controller. The DPA must cover the subject
+matter of the processing, the categories of personal
+data, the security measures, the sub-processor list,
+the audit rights, and the data deletion or return on
+termination.
+
+**Exposure:** Processing personal data without a
+written processor agreement is a violation under
+DSGVO Art. 28(3). Fines up to EUR 10 million or 2%
+of global annual turnover, whichever is higher
+(DSGVO Art. 83(4)(a)).
+
+**How we address it:** Stripe is used exclusively
+via Stripe Checkout, the hosted redirect page. Card
+data never touches the platform's servers. The
+merchant's responsibility is to sign Stripe's
+standard DPA before accepting live payments. The
+platform supplies the integration; it does not
+supply the DPA.
+
+**Checklist for the operator:**
+
+  [ ] Create a Stripe account and complete the
+      identity verification.
+  [ ] Download and sign the Stripe Data Processing
+      Agreement (available in the Stripe dashboard
+      under Legal).
+  [ ] Confirm the merchant country and the data
+      residency. Stripe's DPA covers cross-border
+      transfers under Standard Contractual Clauses.
+  [ ] Record the DPA in the operator's processing
+      register (Verzeichnis von
+      Verarbeitungstaetigkeiten, DSGVO Art. 30).
+  [ ] Disclose Stripe in the Datenschutzerklaerung
+      as a payment processor.
+
+**Where the code lives:**
+  - `app/Commerce/Services/Payment/Providers/StripeProvider.php`
+  - `app/Commerce/Controllers/Storefront/StripeReturnController.php`
+  - `app/Commerce/Controllers/WebhookController.php`
+
+**Stage:** 010.
+
+**Status:** Not started as a documented step. The
+processor is live. The DPA is the merchant's to
+sign. This entry serves as the reminder.
+
+---
+
+## 24. PayPal (DSGVO Art. 28 Processor)
+
+**Requirement:** PayPal processes payments on behalf
+of the merchant. Under DSGVO Art. 28, PayPal is a
+processor and requires a Data Processing Agreement
+with the controller. Same scope as entry 23.
+
+**Exposure:** Same as entry 23. Fines up to EUR 10
+million or 2% of global annual turnover.
+
+**How we address it:** PayPal is used exclusively
+via the hosted approval page. Card and bank details
+never touch the platform's servers. The merchant
+signs PayPal's standard DPA before accepting live
+payments.
+
+**Checklist for the operator:**
+
+  [ ] Create a PayPal Business account.
+  [ ] Complete PayPal's identity verification.
+  [ ] Sign PayPal's Data Processing Agreement
+      (available in the PayPal account settings
+      under Legal).
+  [ ] Confirm the data residency and the
+      cross-border transfer mechanism.
+  [ ] Record the DPA in the operator's processing
+      register.
+  [ ] Disclose PayPal in the Datenschutzerklaerung
+      as a payment processor.
+
+**Where the code lives:**
+  - `app/Commerce/Services/Payment/Providers/PayPalProvider.php`
+  - `app/Commerce/Controllers/Storefront/PayPalReturnController.php`
+  - `app/Commerce/Controllers/WebhookController.php`
+
+**Stage:** 010.
+
+**Status:** Not started as a documented step. The
+processor is live. The DPA is the merchant's to
+sign.
+
+**Note on webhook signature verification:** the
+platform's `PayPalProvider::verifyWebhook()` posts
+the incoming headers and body to PayPal's
+`/v1/notifications/verify-webhook-signature`
+endpoint. That call is the platform's outbound
+request to PayPal, not a transfer of customer data.
+It sends the request headers and the event payload
+only.
+
+**See also:** entry 23 (Stripe). The two processors
+share the same framework. The DPA work is done once
+per processor, at the operator's account creation.
+
