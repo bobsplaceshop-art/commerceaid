@@ -278,7 +278,15 @@ final class CheckoutService
             ? (string) $shippingMethod['label']
             : '';
 
-        $currencyCode = 'EUR';
+        // The store's default currency. Read from the store
+        // row (default_currency_id -> core_currencies.code).
+        // The store's currency was previously hardcoded to
+        // 'EUR' here, which made the setup wizard's Currency
+        // tab cosmetic: the admin's choice was stored but
+        // never read by the checkout flow.
+        $currencyCode = $this->storeRepository->currencyCodeForStore(
+            $this->storeContext->id()
+        );
 
         // -----------------------------------------------------------------
         // Begin the transaction

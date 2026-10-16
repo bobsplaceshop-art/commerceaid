@@ -91,6 +91,46 @@ final class StoreRepository
         return Store::fromRow($rows[0]);
     }
 
+    /**
+     * The ISO currency code for a store. Joins the store's
+     * default_currency_id against core_currencies and returns
+     * the code (EUR, KES, USD, ...).
+     *
+     * The Store model carries the currency id, not the code.
+     * This method is the resolution step. Callers that need the
+     * code (CheckoutService writes it on every order row) call
+     * this rather than reading the model and looking up the
+     * code separately.
+     *
+     * Falls back to 'EUR' when the store has no currency set
+     * or the id does not resolve. The fallback matches the
+     * default on the Order model and core_currencies, so an
+     * unconfigured store degrades to the platform default
+     * rather than to an empty string.
+     */
+    public function currencyCodeForStore(int $storeId): string
+    {
+        if ($storeId <= 0) {
+            return 'EUR';
+        }
+
+        $row = $this->db->selectOne(
+            "SELECT c.`code`
+               FROM `commerce_stores` s
+               JOIN `core_currencies` c ON c.`id` = s.`default_currency_id`
+              WHERE s.`id` = ?
+              LIMIT 1",
+            [$storeId]
+        );
+
+        if ($row === null) {
+            return 'EUR';
+        }
+
+        $code = strtoupper(trim((string) ($row['code'] ?? '')));
+        return $code !== '' ? $code : 'EUR';
+    }
+
     /** @return array<int, Store> */
     public function allActive(): array
     {
