@@ -412,6 +412,18 @@ final class StripeProvider implements PaymentProvider
     }
 
     /**
+     * The Stripe event id. Top-level 'id' key on the body.
+     */
+    public function extractEventId(string $rawBody): string
+    {
+        $event = json_decode($rawBody, true);
+        if (!is_array($event)) {
+            return '';
+        }
+        return (string) ($event['id'] ?? '');
+    }
+
+    /**
      * Act on a verified Stripe webhook event.
      *
      * Reads the event type and applies the order-side

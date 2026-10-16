@@ -477,6 +477,15 @@ final class CheckoutController extends StorefrontController
             return Response::redirect('/checkout/confirm');
         }
 
+        // A direct-charge provider that requires an
+        // out-of-band action. M-Pesa is the current case:
+        // the customer's phone prompts for a PIN. The
+        // waiting page polls the order's payment_status
+        // and redirects to confirmation once it flips.
+        if ($charge->requiresPolling) {
+            return Response::redirect('/checkout/mpesa/waiting/' . $order->orderNumber);
+        }
+
         return Response::redirect('/checkout/confirmation/' . $order->orderNumber);
     }
 

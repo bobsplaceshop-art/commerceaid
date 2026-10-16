@@ -306,6 +306,7 @@ final class MpesaProvider implements PaymentProvider
         return [
             'ok'                 => true,
             'provider_reference' => $checkoutRequestId,
+            'requires_polling'   => true,
         ];
     }
 
@@ -370,6 +371,22 @@ final class MpesaProvider implements PaymentProvider
                      . 'Disable payments.mpesa.refund_enabled or refund '
                      . 'through the M-Pesa dashboard.',
         ];
+    }
+
+    /**
+     * The M-Pesa event id. M-Pesa's callback body is not
+     * the same shape as Stripe's or PayPal's: there is no
+     * top-level 'id'. The stable identifier is the
+     * CheckoutRequestID under
+     * Body.stkCallback.CheckoutRequestID.
+     *
+     * The value matches a row in commerce_mpesa_requests
+     * that charge() created. It is the idempotency key on
+     * commerce_webhook_events.
+     */
+    public function extractEventId(string $rawBody): string
+    {
+        return $this->callbackCheckoutRequestId($rawBody);
     }
 
     /**

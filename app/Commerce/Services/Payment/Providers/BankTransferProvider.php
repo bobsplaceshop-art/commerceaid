@@ -90,6 +90,16 @@ final class BankTransferProvider implements PaymentProvider
     }
 
     /**
+     * Offline methods have no webhook, so no event id to
+     * extract. The method exists to satisfy the interface
+     * contract.
+     */
+    public function extractEventId(string $rawBody): string
+    {
+        return '';
+    }
+
+    /**
      * @param array<string,string> $headers
      */
     public function verifyWebhook(string $rawBody, array $headers): bool

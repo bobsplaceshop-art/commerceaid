@@ -424,6 +424,18 @@ final class PayPalProvider implements PaymentProvider
     }
 
     /**
+     * The PayPal event id. Top-level 'id' key on the body.
+     */
+    public function extractEventId(string $rawBody): string
+    {
+        $event = json_decode($rawBody, true);
+        if (!is_array($event)) {
+            return '';
+        }
+        return (string) ($event['id'] ?? '');
+    }
+
+    /**
      * Act on a verified PayPal webhook event.
      *
      * @param array<string,string> $headers

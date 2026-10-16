@@ -18,6 +18,7 @@ use CorporateAid\Platform\Support\Logger;
  * Routes:
  *   POST /webhooks/stripe
  *   POST /webhooks/paypal
+ *   POST /webhooks/mpesa
  *
  * Not admin-authenticated, not customer-authenticated. The
  * provider posts the webhook; the signature is what proves
@@ -59,6 +60,23 @@ final class WebhookController
     }
 
     /**
+     * M-Pesa callback receiver.
+     *
+     * M-Pesa does not sign its callbacks. The provider's
+     * verifyWebhook() confirms the callback by looking up
+     * its CheckoutRequestID in commerce_mpesa_requests. The
+     * handle() method's flow is identical to the signed
+     * providers; only the verification step differs, and
+     * that difference lives inside the provider.
+     *
+     * @param array<string,string> $params
+     */
+    public function mpesa(Request $request, array $params = []): Response
+    {
+        return $this->handle($request, 'mpesa');
+    }
+
+    /**
      * The single webhook path. Every provider funnels here.
      */
     private function handle(Request $request, string $providerKey): Response
@@ -96,20 +114,26 @@ final class WebhookController
             return Response::json(['error' => 'Invalid signature.'], 400);
         }
 
-        // Parse the event id and type before calling the
-        // handler, so idempotency can be checked first.
+        // The provider knows where its own event id lives.
+        // Stripe and PayPal carry it at the top level; M-Pesa
+        // carries it as Body.stkCallback.CheckoutRequestID.
+        // The controller asks the provider rather than
+        // parsing the body itself.
+        $eventId = $provider->extractEventId($rawBody);
+        if ($eventId === '') {
+            return Response::json(['error' => 'Missing event id.'], 400);
+        }
+
+        // Parse the body for the event type. Stripe uses
+        // 'type'; PayPal uses 'event_type'. Read either key
+        // so the commerce_webhook_events row carries the
+        // correct event type for both providers. M-Pesa
+        // reports its own type from handleWebhook() below.
         $event = json_decode($rawBody, true);
         if (!is_array($event)) {
             return Response::json(['error' => 'Malformed payload.'], 400);
         }
-        $eventId   = (string) ($event['id'] ?? '');
-        // Stripe uses 'type'; PayPal uses 'event_type'. Read
-        // either key so the commerce_webhook_events row carries
-        // the correct event type for both providers.
-        $eventType = (string) ($event['type'] ?? $event['event_type'] ?? '');
-        if ($eventId === '') {
-            return Response::json(['error' => 'Missing event id.'], 400);
-        }
+        $eventType = (string) ($event['type'] ?? $event['event_type'] ?? 'mpesa.callback');
 
         $events = $this->container->get(WebhookEventRepository::class);
 

@@ -18,9 +18,14 @@ namespace CorporateAid\Commerce\Services\Payment;
  *                The order's payment_status stays 'unpaid'
  *                until the webhook confirms.
  *
- *   charged    - a direct-charge provider confirmed inline.
- *                The order's payment_status is set by the
- *                caller based on the provider response.
+ *   charged    - a direct-charge provider accepted the
+ *                charge. When requiresPolling is true (M-Pesa
+ *                STK push), the controller renders a waiting
+ *                page and the customer enters a PIN on their
+ *                phone. When false, the order's payment_status
+ *                is set by the caller based on the provider
+ *                response and the customer proceeds to
+ *                confirmation.
  *
  *   offline    - the payment method has no provider
  *                (cod, bank_transfer, purchase_order,
@@ -43,7 +48,8 @@ final class ChargeResult
         public readonly ?string $redirectUrl,
         public readonly ?string $providerReference,
         public readonly string $status,
-        public readonly ?string $errorMessage = null
+        public readonly ?string $errorMessage = null,
+        public readonly bool $requiresPolling = false
     ) {
     }
 
@@ -66,7 +72,8 @@ final class ChargeResult
     public static function charged(
         int $orderId,
         string $providerKey,
-        string $providerReference
+        string $providerReference,
+        bool $requiresPolling = false
     ): self {
         return new self(
             true,
@@ -74,7 +81,9 @@ final class ChargeResult
             $providerKey,
             null,
             $providerReference,
-            'charged'
+            'charged',
+            null,
+            $requiresPolling
         );
     }
 

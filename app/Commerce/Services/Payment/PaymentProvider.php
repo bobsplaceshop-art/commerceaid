@@ -157,6 +157,27 @@ interface PaymentProvider
     public function refund(Order $order, float $amount, string $idempotencyKey): array;
 
     /**
+     * Read the provider's stable event identifier from a
+     * webhook body.
+     *
+     * Each provider carries the id under a different path:
+     *
+     *   Stripe  - $event['id']       ("evt_...")
+     *   PayPal  - $event['id']       (the event resource id)
+     *   M-Pesa  - $event['Body']['stkCallback']['CheckoutRequestID']
+     *
+     * The value is used as the idempotency key on
+     * commerce_webhook_events, paired with the provider
+     * key. Two deliveries of the same event carry the same
+     * value; two different events never share one.
+     *
+     * Called by WebhookController after verifyWebhook()
+     * returns true. A malformed body returns '' and the
+     * controller refuses the request with 400.
+     */
+    public function extractEventId(string $rawBody): string;
+
+    /**
      * Verify an incoming webhook's signature.
      *
      * Must return false on any mismatch: wrong algorithm,

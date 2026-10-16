@@ -153,12 +153,20 @@ final class PaymentChargeService
             );
         }
 
-        // No redirect URL means the provider captured inline.
-        // The order's payment_status is set by the caller.
+        // No redirect URL means the provider accepted the
+        // charge inline. A provider that requires an
+        // out-of-band action (M-Pesa STK push: the customer
+        // enters a PIN on their phone) sets
+        // requires_polling = true. The controller then
+        // renders a waiting page instead of the
+        // confirmation page.
+        $requiresPolling = (bool) ($response['requires_polling'] ?? false);
+
         return ChargeResult::charged(
             $order->id,
             $providerKey,
-            $providerReference
+            $providerReference,
+            $requiresPolling
         );
     }
 }

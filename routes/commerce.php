@@ -1086,3 +1086,7 @@ $router->post('/webhooks/stripe',
 $router->post('/webhooks/paypal',
     [WebhookController::class, 'paypal'],
     ['store']);
+
+$router->post('/webhooks/mpesa',
+    [WebhookController::class, 'mpesa'],
+    ['store']);

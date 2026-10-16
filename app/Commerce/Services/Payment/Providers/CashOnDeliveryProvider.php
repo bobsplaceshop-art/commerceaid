@@ -89,6 +89,19 @@ final class CashOnDeliveryProvider implements PaymentProvider
     }
 
     /**
+     * Offline methods have no webhook, so no event id to
+     * extract. The method exists to satisfy the interface
+     * contract. The controller never reaches it: the
+     * provider's verifyWebhook() returns false for every
+     * request, so the controller returns 400 before
+     * calling this method.
+     */
+    public function extractEventId(string $rawBody): string
+    {
+        return '';
+    }
+
+    /**
      * @param array<string,string> $headers
      */
     public function verifyWebhook(string $rawBody, array $headers): bool
