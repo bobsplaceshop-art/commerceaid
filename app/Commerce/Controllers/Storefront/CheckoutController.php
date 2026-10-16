@@ -11,6 +11,7 @@ use CorporateAid\Commerce\Models\Customer;
 use CorporateAid\Commerce\Repositories\CustomerAddressRepository;
 use CorporateAid\Commerce\Repositories\CustomerGroupRepository;
 use CorporateAid\Commerce\Repositories\LegalPageRepository;
+use CorporateAid\Commerce\Repositories\MpesaRequestRepository;
 use CorporateAid\Commerce\Repositories\OrderRepository;
 use CorporateAid\Commerce\Services\CartService;
 use CorporateAid\Commerce\Services\CheckoutService;
@@ -527,6 +528,118 @@ final class CheckoutController extends StorefrontController
             'title' => 'Order confirmed',
             'order' => $order,
         ]);
+    }
+
+    // =================================================================
+    // M-Pesa waiting flow
+    // =================================================================
+
+    /**
+     * The waiting page. Rendered after place() redirects an
+     * M-Pesa charge here. The customer's phone is prompting
+     * for a PIN. The page polls /checkout/mpesa/status every
+     * 3 seconds. When the order's payment_status flips to
+     * paid, the JS redirects to the confirmation page.
+     *
+     * A customer who lands here after the callback already
+     * fired is sent straight to confirmation.
+     *
+     * @param array<string,string> $params
+     */
+    public function mpesaWaiting(Request $request, array $params = []): Response
+    {
+        $orderNumber = (string) ($params['orderNumber'] ?? '');
+        if ($orderNumber === '') {
+            return Response::redirect('/');
+        }
+
+        $orders = $this->container->get(OrderRepository::class);
+        $order  = $orders->findByNumber($orderNumber);
+        if ($order === null) {
+            return Response::redirect('/');
+        }
+
+        // The callback already landed. Skip the wait.
+        if ($order->paymentStatus === 'paid') {
+            return Response::redirect('/checkout/confirmation/' . $order->orderNumber);
+        }
+
+        return $this->render('storefront.checkout.mpesa-waiting', [
+            'title' => 'Confirm payment',
+            'order' => $order,
+        ]);
+    }
+
+    /**
+     * Poll endpoint. Returns the order's payment state as
+     * JSON. The waiting page calls this every 3 seconds.
+     *
+     * Reads the order number from the POST body. Returns
+     * {status: 'unpaid'|'paid'|'failed'|'refunded'|...}.
+     *
+     * The rate limit is on the route (30 calls per minute).
+     * A customer polling every 3 seconds uses 20 in that
+     * window.
+     *
+     * @param array<string,string> $params
+     */
+    public function mpesaStatus(Request $request, array $params = []): Response
+    {
+        $orderNumber = trim((string) $request->input('order_number', ''));
+        if ($orderNumber === '') {
+            return Response::json(['status' => 'error'], 400);
+        }
+
+        $orders = $this->container->get(OrderRepository::class);
+        $order  = $orders->findByNumber($orderNumber);
+        if ($order === null) {
+            return Response::json(['status' => 'error'], 404);
+        }
+
+        return Response::json([
+            'status' => $order->paymentStatus,
+        ]);
+    }
+
+    /**
+     * Cancel a waiting M-Pesa charge. The customer did not
+     * receive the prompt, or entered the wrong PIN, or
+     * changed their mind.
+     *
+     * Marks every pending commerce_mpesa_requests row for
+     * the order as failed. A late callback carrying an id
+     * from a now-failed row is refused by
+     * MpesaProvider::verifyWebhook() and cannot flip the
+     * order to paid.
+     *
+     * Sends the customer back to the payment step to pick a
+     * method or retry.
+     *
+     * @param array<string,string> $params
+     */
+    public function mpesaCancel(Request $request, array $params = []): Response
+    {
+        $orderNumber = (string) ($params['orderNumber'] ?? '');
+        if ($orderNumber === '') {
+            return Response::redirect('/');
+        }
+
+        $orders = $this->container->get(OrderRepository::class);
+        $order  = $orders->findByNumber($orderNumber);
+        if ($order === null) {
+            return Response::redirect('/');
+        }
+
+        $repo = $this->container->get(MpesaRequestRepository::class);
+        foreach ($repo->listPendingForOrder($order->id) as $row) {
+            $checkoutRequestId = (string) ($row['checkout_request_id'] ?? '');
+            if ($checkoutRequestId === '') {
+                continue;
+            }
+            $repo->markFailed($checkoutRequestId, -1, 'Cancelled by customer.');
+        }
+
+        return Response::redirect('/checkout/payment');
     }
 
     // =================================================================

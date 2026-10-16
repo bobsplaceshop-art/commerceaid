@@ -470,3 +470,79 @@
 .sf-country-select-input-hidden {
     display: none;
 }
+
+/* =====================================================================
+ * M-Pesa STK push waiting page
+ * =====================================================================
+ * The page renders after CheckoutController::place() redirects an
+ * M-Pesa charge to /checkout/mpesa/waiting/{orderNumber}. The
+ * customer's phone prompts for a PIN; the page polls the status
+ * endpoint and redirects when the order flips to paid.
+ *
+ * Only the M-Pesa-specific pieces live here. The page reuses
+ * .sf-checkout, .sf-container, .sf-checkout-confirmation-hero, and
+ * the summary block from the rest of the checkout flow.
+ * ===================================================================== */
+
+.sf-mpesa-waiting {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.sf-mpesa-waiting-spinner {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 3px solid var(--sf-border, #e5e1d8);
+    border-top-color: var(--sf-gold, #c9a24a);
+    animation: sf-mpesa-spin 1s linear infinite;
+}
+
+@keyframes sf-mpesa-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Respect the user's motion preference. The spinner becomes a
+   static ring; the page still polls and still redirects. */
+@media (prefers-reduced-motion: reduce) {
+    .sf-mpesa-waiting-spinner {
+        animation: none;
+    }
+}
+
+.sf-mpesa-waiting-message {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--sf-ink, #1a1a1a);
+    font-weight: 500;
+}
+
+.sf-mpesa-waiting-total {
+    margin: 0;
+    color: var(--sf-muted, #6b7280);
+    font-size: .95rem;
+}
+
+.sf-mpesa-waiting-total strong {
+    color: var(--sf-ink, #1a1a1a);
+    font-weight: 600;
+}
+
+.sf-mpesa-waiting-help {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.sf-mpesa-waiting-help a {
+    color: var(--sf-gold-dark, #a8842f);
+    text-decoration: underline;
+}
+
+.sf-mpesa-waiting-help a:hover {
+    text-decoration: none;
+}

@@ -244,6 +244,20 @@ $router->get('/checkout/confirm',              [CheckoutController::class, 'conf
 $router->post('/checkout/place',               [CheckoutController::class, 'place'],        ['store', 'csrf']);
 $router->get('/checkout/confirmation/{orderNumber}', [CheckoutController::class, 'confirmation'], ['store']);
 
+// M-Pesa STK push waiting flow. The customer stays on the
+// site; the phone prompts for a PIN. The waiting page polls
+// /checkout/mpesa/status every 3 seconds. A cancel link
+// marks any pending request as failed and returns the
+// customer to the payment step.
+$router->get('/checkout/mpesa/waiting/{orderNumber}',
+    [CheckoutController::class, 'mpesaWaiting'], ['store']);
+
+$router->post('/checkout/mpesa/status',
+    [CheckoutController::class, 'mpesaStatus'], ['store', 'csrf', 'ratelimit:mpesa_status,30,60']);
+
+$router->get('/checkout/mpesa/cancel/{orderNumber}',
+    [CheckoutController::class, 'mpesaCancel'], ['store']);
+
 // Stripe Checkout return. The customer lands here after
 // paying (or cancelling) on Stripe's hosted page. The
 // controller verifies the intent against Stripe's API and
