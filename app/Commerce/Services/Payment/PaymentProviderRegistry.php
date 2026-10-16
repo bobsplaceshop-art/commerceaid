@@ -50,8 +50,11 @@ final class PaymentProviderRegistry
     private static function providerMap(): array
     {
         return [
-            'stripe' => self::PROVIDER_NAMESPACE . 'StripeProvider',
-            'paypal' => self::PROVIDER_NAMESPACE . 'PayPalProvider',
+            'stripe'        => self::PROVIDER_NAMESPACE . 'StripeProvider',
+            'paypal'        => self::PROVIDER_NAMESPACE . 'PayPalProvider',
+            'cod'           => self::PROVIDER_NAMESPACE . 'CashOnDeliveryProvider',
+            'bank_transfer' => self::PROVIDER_NAMESPACE . 'BankTransferProvider',
+            'manual'        => self::PROVIDER_NAMESPACE . 'ManualProvider',
         ];
     }
 

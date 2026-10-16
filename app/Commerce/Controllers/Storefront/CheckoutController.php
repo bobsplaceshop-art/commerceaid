@@ -761,11 +761,14 @@ final class CheckoutController extends StorefrontController
             $methods[$key] = $provider->label();
         }
 
-        // Offline methods. No provider class. PaymentChargeService
-        // handles them directly - the order is placed and the
-        // confirmation page is the record.
-        $methods['cod']           = 'Cash on delivery';
-        $methods['bank_transfer'] = 'Bank transfer';
+        // Offline methods (cod, bank_transfer, manual) are
+        // real providers now. The registry's enabledForStore()
+        // returns them when the store has a row in
+        // commerce_store_payment_methods with is_enabled = 1.
+        // Migration 0342 backfilled cod and bank_transfer for
+        // every store, so the previous hardcoded pair is no
+        // longer needed. PaymentChargeService still short-
+        // circuits those keys via its own OFFLINE_KEYS list.
 
         // Net-terms only for approved customers in a group
         // that offers them.
