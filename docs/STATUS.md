@@ -2,7 +2,7 @@
 
 **As of:** 2026-10-12
 **Version:** 0.31.0-alpha
-**Stage:** 009 (Forms & Submissions) complete. All four code sessions shipped: schema and models, admin surface (form CRUD and field editor), public surface (rendering at /forms/{slug}, submission processing with honeypot and conditional logic, multi-step navigation), and submissions admin (list with filters, bulk actions, CSV export, status change with notes, notification dispatch on new submissions). The webhook and event dispatcher are deferred to a future sub-stage 009.7; the codebase has no event bus and the notification service is the working dispatch path.
+**Stage:** 010 (Payments Deep) complete. Sub-stages shipping: 010.4 (Manual), 010.5 (Cash on Delivery), and 010.6 (Bank Transfer) closed 2026-10-16. 010.1 (M-Pesa), 010.2 (Pesapal), and 010.3 (Flutterwave) remain. Both online providers (Stripe and PayPal) are production-proven.
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -533,6 +533,52 @@ and fixed:
 Both Stripe and PayPal are production-proven. The
 `stage-010-complete` tag will land with the stage
 close docs.
+
+**The three offline payment providers shipped**
+(5bb5e76, 2026-10-16). Sub-stages 010.4 (Manual),
+010.5 (Cash on Delivery), and 010.6 (Bank
+Transfer) closed in one commit.
+
+Three new classes implement `PaymentProvider`:
+`CashOnDeliveryProvider`, `BankTransferProvider`,
+and `ManualProvider`. Each is small (~40 lines).
+No HTTP, no webhook, no signature. The charge and
+refund paths short-circuit on the keys via the
+`OFFLINE_KEYS` lists in `PaymentChargeService`
+and `PaymentRefundService`; the class methods
+exist to satisfy the interface.
+
+Migration 0342 backfilled three rows per store in
+`commerce_store_payment_methods`. `cod` and
+`bank_transfer` default to `is_enabled = 1`
+(they were always-on through a hardcoded pair in
+`CheckoutController::availablePaymentMethods()`
+before this change). `manual` defaults to `0`
+(it is a new provider; the merchant opts in via
+the Settings toggle). The migration is strictly
+additive - `ON DUPLICATE KEY UPDATE` is a
+self-assignment, so existing merchant state is
+preserved.
+
+The hardcoded pair in
+`CheckoutController::availablePaymentMethods()` is
+gone. The registry now supplies all five providers
+uniformly: `stripe`, `paypal`, `cod`,
+`bank_transfer`, `manual`.
+
+The cascade check's fourth direction - read the
+current state of what you are about to change -
+surfaced the regression that would have shipped
+without the migration: no row existed for `cod`
+or `bank_transfer`, so `enabledForStore()` would
+have returned them as absent and the checkout
+would have lost them. The migration is the fix.
+
+Verified in the browser: checkout payment step
+shows all five providers. Settings > Payments
+shows five toggle rows with the correct defaults.
+Toggling Manual on makes it appear at checkout;
+toggling COD off removes it.
 
 **Checkout quality and services questionnaire shipped**
 (3d04b5b, 587baef): a broad pass on the checkout flow,
