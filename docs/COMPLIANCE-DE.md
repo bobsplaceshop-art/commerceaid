@@ -1184,3 +1184,74 @@ only.
 share the same framework. The DPA work is done once
 per processor, at the operator's account creation.
 
+
+---
+
+## 25. M-Pesa (DSGVO Art. 28 Processor)
+
+**Requirement:** Safaricom's M-Pesa processes
+payments on behalf of the merchant. Under DSGVO
+Art. 28, Safaricom is a processor and requires a
+Data Processing Agreement with the controller.
+Same scope as entries 23 and 24.
+
+**Exposure:** Same as entries 23 and 24. Fines up
+to EUR 10 million or 2% of global annual turnover.
+
+**How we address it:** M-Pesa is used exclusively
+via the STK push flow. The customer enters their
+M-Pesa PIN on their own phone; card and bank
+details never touch the platform's servers. The
+merchant signs Safaricom's standard DPA before
+accepting live payments.
+
+**Checklist for the operator:**
+
+  [ ] Create a Safaricom Business account.
+  [ ] Complete the Daraja developer onboarding.
+  [ ] Register the production app and get the
+      consumer key, consumer secret, shortcode,
+      passkey.
+  [ ] Sign Safaricom's Data Processing Agreement.
+  [ ] Register the webhook URL in the Daraja
+      dashboard.
+  [ ] Record the DPA in the operator's processing
+      register (Verzeichnis von
+      Verarbeitungstaetigkeiten, DSGVO Art. 30).
+  [ ] Disclose M-Pesa in the Datenschutzerklaerung
+      as a payment processor.
+
+**Where the code lives:**
+
+  - `app/Commerce/Services/Payment/Providers/MpesaProvider.php`
+  - `app/Commerce/Controllers/Storefront/CheckoutController.php`
+  - `app/Commerce/Controllers/WebhookController.php`
+  - `app/Commerce/Repositories/MpesaRequestRepository.php`
+
+**Stage:** 010.1.
+
+**Status:** Not started as a documented step. The
+processor is live. The DPA is the merchant's to
+sign. This entry serves as the reminder.
+
+**Note on STK push and personal data:** the
+platform sends the customer's phone number and the
+order total to Safaricom as part of the STK push
+request. That is a transfer of personal data (the
+phone number) to a processor. The merchant's DPA
+covers it. The phone number is transient - it is
+used for the STK push and never written to the
+order's shipping data.
+
+**Note on callback verification:** M-Pesa does not
+sign its callbacks. The platform verifies a
+callback by looking up its CheckoutRequestID in
+`commerce_mpesa_requests`. A callback whose id
+does not match a pending request this store
+initiated is refused. The pending-request table is
+deleted by a cleanup cron after 24 hours.
+
+**See also:** entries 23 (Stripe) and 24 (PayPal).
+The three processors share the same framework. The
+DPA work is done once per processor, at the
+operator's account creation.

@@ -746,6 +746,33 @@ belong.
 engine - the order totals are now the source of truth),
 Stage 008H (returns - the refund intent is written).
 
+**Sub-stages:**
+
+| # | Provider | Status |
+|---|---|---|
+| 010  | Stripe, PayPal | Complete 2026-10-15 |
+| 010.1 | M-Pesa | Complete 2026-10-17 |
+| 010.2 | Pesapal | Planned |
+| 010.3 | Flutterwave | Planned |
+| 010.4 | Manual | Complete 2026-10-16 |
+| 010.5 | Cash on Delivery | Complete 2026-10-16 |
+| 010.6 | Bank Transfer | Complete 2026-10-16 |
+
+Each sub-stage ships one provider. The registry, the
+interface, and the HTTP client (Stage 010 Session 1)
+support every provider that follows.
+
+**Commits:**
+
+  010    863c950  PayPal webhook delivery and capture
+         08c0638  Stage 010 close (tag: stage-010-complete)
+  010.1  75b8e62  M-Pesa schema, settings, repository
+         581e802  M-Pesa phone field, failure cleanup,
+                  token trim
+  010.4  5bb5e76  Offline providers: cod, bank_transfer,
+  010.5           manual
+  010.6
+
 ### Stage 011 - Advanced Commerce
 
 **Goal:** Consumer features that extend the basic purchase

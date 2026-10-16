@@ -2,7 +2,7 @@
 
 **As of:** 2026-10-12
 **Version:** 0.31.0-alpha
-**Stage:** 010 (Payments Deep) complete. Sub-stages shipping: 010.4 (Manual), 010.5 (Cash on Delivery), and 010.6 (Bank Transfer) closed 2026-10-16. 010.1 (M-Pesa), 010.2 (Pesapal), and 010.3 (Flutterwave) remain. Both online providers (Stripe and PayPal) are production-proven.
+**Stage:** 010 (Payments Deep) complete. Sub-stages shipping: 010.1 (M-Pesa) closed 2026-10-17. 010.4 (Manual), 010.5 (Cash on Delivery), and 010.6 (Bank Transfer) closed 2026-10-16. 010.2 (Pesapal) and 010.3 (Flutterwave) remain. Three providers production-proven: Stripe, PayPal, and M-Pesa.
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.
@@ -579,6 +579,45 @@ shows all five providers. Settings > Payments
 shows five toggle rows with the correct defaults.
 Toggling Manual on makes it appear at checkout;
 toggling COD off removes it.
+
+**M-Pesa (010.1) is production-proven** (581e802,
+2026-10-17). The STK push flow verified end to end
+against the Daraja sandbox: OAuth token, STK push,
+sandbox prompt on the phone, PIN entry, callback to
+`/webhooks/mpesa`, order flipped to paid, waiting
+page polling detects it and redirects to
+confirmation.
+
+M-Pesa is the first real non-card, non-PayPal
+provider. It exercises the direct-charge path (no
+`redirect_url`), the callback-by-lookup verification
+scheme (no signature header; the CheckoutRequestID
+is the security boundary), and the waiting page
+polling flow.
+
+Four issues surfaced during the test. Two were
+code and two were configuration:
+
+  - The order currency was hardcoded to EUR.
+    Fixed in `9b27bef` - the checkout now reads the
+    store's `default_currency_id`.
+
+  - The inventory reservation was not released on
+    charge failure. Fixed in `581e802` -
+    `CheckoutController::cancelFailedOrder()`.
+
+  - The Daraja app did not have the Lipa Na M-Pesa
+    Sandbox product enabled. No code change.
+
+  - The settings transaction type was
+    `CustomerBuyGoodsOnline` paired with the Paybill
+    shortcode `174379`. Changed to
+    `CustomerPayBillOnline`. No code change.
+
+The M-Pesa phone field is a payment-step field, not
+a shipping-address field: the payer can differ from
+the shipping recipient (gift orders, third-party
+payments).
 
 **Checkout quality and services questionnaire shipped**
 (3d04b5b, 587baef): a broad pass on the checkout flow,
