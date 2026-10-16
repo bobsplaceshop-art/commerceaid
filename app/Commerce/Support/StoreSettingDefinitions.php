@@ -407,6 +407,68 @@ final class StoreSettingDefinitions
             'hint'    => 'Returned by PayPal when you register the webhook endpoint.',
         ],
 
+        'payments.mpesa.mode' => [
+            'label'   => 'M-Pesa mode',
+            'type'    => 'select',
+            'default' => 'sandbox',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Sandbox uses the Daraja test environment. Live charges real phones.',
+            'options' => ['sandbox' => 'Sandbox (test)', 'live' => 'Live (production)'],
+        ],
+        'payments.mpesa.consumer_key' => [
+            'label'   => 'M-Pesa consumer key',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'From the Daraja developer portal, My Apps.',
+        ],
+        'payments.mpesa.consumer_secret' => [
+            'label'   => 'M-Pesa consumer secret',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Paired with the consumer key. Stored in commerce_store_settings.',
+        ],
+        'payments.mpesa.shortcode' => [
+            'label'   => 'M-Pesa shortcode',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Paybill or Till number. Six digits typically.',
+        ],
+        'payments.mpesa.passkey' => [
+            'label'   => 'M-Pesa passkey',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Lipa na M-Pesa online passkey from the Daraja portal.',
+        ],
+        'payments.mpesa.callback_url' => [
+            'label'   => 'M-Pesa callback URL',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Copy this URL into the Daraja dashboard. It must be https and publicly reachable.',
+        ],
+        'payments.mpesa.transaction_type' => [
+            'label'   => 'M-Pesa transaction type',
+            'type'    => 'select',
+            'default' => 'CustomerPayBillOnline',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Paybill for a paybill shortcode. Buy Goods for a Till number.',
+            'options' => [
+                'CustomerPayBillOnline' => 'Paybill',
+                'CustomerBuyGoodsOnline' => 'Buy Goods (Till)',
+            ],
+        ],
+        'payments.mpesa.refund_enabled' => [
+            'label'   => 'M-Pesa refunds enabled',
+            'type'    => 'bool',
+            'default' => false,
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Turn on only if your Daraja plan exposes the refund endpoint. Otherwise refunds are recorded offline.',
+        ],
+
     ];
 
     /**
