@@ -28,6 +28,7 @@ declare(strict_types=1);
  */
 
 use CorporateAid\Commerce\Controllers\WebhookController;
+use CorporateAid\Commerce\Repositories\StoreSettingsRepository;
 use CorporateAid\Core\Request;
 
 return function ($container, PDO $pdo): bool|string {
@@ -49,18 +50,19 @@ return function ($container, PDO $pdo): bool|string {
     // from settings in the cleanup block.
     $webhookSecret = 'whsec_test_' . bin2hex(random_bytes(16));
 
-    $pdo->prepare(
-        "INSERT INTO `commerce_store_settings`
-            (`store_id`, `key_name`, `value`)
-         VALUES (?, 'payments.stripe.webhook_secret', ?)
-         ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)"
-    )->execute([$storeId, $webhookSecret]);
+    // Write through the repository, not raw $pdo. The
+    // repository caches its reads in-memory; a raw write
+    // bypasses the cache and the provider reads a stale
+    // value on the next setting read within the same
+    // process. StoreSettingsRepository::set() invalidates
+    // the cache, so the provider sees the value this case
+    // just wrote.
+    /** @var StoreSettingsRepository $settingsRepo */
+    $settingsRepo = $container->get(StoreSettingsRepository::class);
+    $settingsRepo->set('payments.stripe.webhook_secret', $webhookSecret);
 
-    $cleanupSettings = function () use ($pdo, $storeId): void {
-        $pdo->prepare(
-            "DELETE FROM `commerce_store_settings`
-              WHERE `store_id` = ? AND `key_name` = 'payments.stripe.webhook_secret'"
-        )->execute([$storeId]);
+    $cleanupSettings = function () use ($settingsRepo): void {
+        $settingsRepo->delete('payments.stripe.webhook_secret');
     };
 
     // --------------------------------------------------------------

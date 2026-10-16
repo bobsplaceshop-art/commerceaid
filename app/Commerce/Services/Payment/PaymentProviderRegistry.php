@@ -52,6 +52,7 @@ final class PaymentProviderRegistry
         return [
             'stripe'        => self::PROVIDER_NAMESPACE . 'StripeProvider',
             'paypal'        => self::PROVIDER_NAMESPACE . 'PayPalProvider',
+            'mpesa'         => self::PROVIDER_NAMESPACE . 'MpesaProvider',
             'cod'           => self::PROVIDER_NAMESPACE . 'CashOnDeliveryProvider',
             'bank_transfer' => self::PROVIDER_NAMESPACE . 'BankTransferProvider',
             'manual'        => self::PROVIDER_NAMESPACE . 'ManualProvider',
