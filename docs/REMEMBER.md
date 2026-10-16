@@ -2907,3 +2907,148 @@ is deferred to the customer's deployment.
 
 ---
 
+### Pattern 43 - A provider error message names the wrong cause when the app is not subscribed to the product
+
+**Problem:** a payment provider returns an error
+message that names a specific cause. The cause looks
+valid. The credential is present, well-formed, and
+unexpired. The request shape matches the provider's
+documentation. The provider still refuses with the
+same message every time.
+
+The message names the wrong thing. The actual cause
+is one layer out: the provider account is not
+subscribed to the product being called. The
+provider's gateway does not distinguish between
+"your credential is wrong" and "your app is not
+authorized for this endpoint." Both return the same
+code.
+
+**The tell:** the error message names a specific
+failure (a bad token, a bad signature, a bad key)
+but every check of that failure passes. The
+credential was issued by the provider moments ago.
+The signature verification uses the exact scheme in
+the provider's documentation. The key is on file
+and matches the value in the provider's dashboard.
+
+When the named cause has been eliminated by direct
+measurement and the error persists, the cause is
+not the named thing. Look one layer out.
+
+**The specific case:** M-Pesa's Daraja API returns
+404.001.03 "Invalid Access Token" for two distinct
+conditions:
+
+  1. The OAuth access token is expired, malformed,
+     or was issued for a different environment.
+  2. The Daraja app is not subscribed to the product
+     being called. The Lipa Na M-Pesa Sandbox
+     product must be ticked on the app before any
+     STK push call is accepted.
+
+Both return 404.001.03. The message names the first
+cause. In our case the token was clean - the byte
+diagnostic proved it - and the second cause was
+the real one. Enabling the product in the Daraja
+portal fixed it. No code change.
+
+**The rule:** when a provider error names a cause
+that has been ruled out by direct measurement,
+check the provider's product subscription, account
+state, and product enablement before continuing to
+debug the named cause. The message is a hint, not
+a diagnosis.
+
+**The diagnostic that distinguishes:** log the
+byte shape of the credential with `bin2hex`. A
+clean credential shows printable ASCII hex (`41`
+for `A`, `6e` for `n`). A credential with trailing
+whitespace shows `0a` or `0d`. A BOM shows
+`efbbbf`. The hex output is unambiguous;
+`var_dump` is not.
+
+**Where we hit it:** the M-Pesa STK push flow,
+2026-10-17. Two hours of debugging, all directed
+at a token that was provably correct. The Daraja
+app did not have the Lipa Na M-Pesa Sandbox
+product enabled.
+
+---
+
+### Pattern 44 - Two settings values that must move together are not validated as a pair
+
+**Problem:** the admin form offers two settings
+whose values are only valid in specific
+combinations. Each value is a legal value in
+isolation. Each is stored correctly. The pair is
+wrong. The provider rejects the request with an
+error that names one of the values, not the pair.
+
+**The specific case:** M-Pesa's Daraja API has a
+`TransactionType` field with two valid values:
+
+  - `CustomerPayBillOnline` - for a Paybill shortcode
+  - `CustomerBuyGoodsOnline` - for a Till (Buy
+    Goods) shortcode
+
+The shortcode is a separate setting. A Paybill
+number (like the sandbox `174379`) must be paired
+with the PayBill transaction type. A Till number
+must be paired with the BuyGoods type.
+
+The admin form offers both transaction types
+regardless of the shortcode the merchant entered.
+No validation checks that the pair is consistent.
+The merchant selects the wrong type, and Daraja
+returns "Bad Request - Invalid TransactionType" on
+every push.
+
+**The tell:** an error that names a value as
+invalid when the value is on the provider's list
+of valid values. `CustomerBuyGoodsOnline` is on
+the list. `174379` is a valid shortcode. Together
+they are not a valid request.
+
+When the error names one value but the value is
+plausible, check the paired value. The pair is
+the unit the provider validates.
+
+**The rule:** when two settings must be consistent
+with each other, validate the pair on save, not
+each value alone. The validation is provider-
+specific and belongs in the settings form's
+validation logic, not in the provider. The form
+is where the merchant sees the mismatch and can
+fix it.
+
+A future improvement to this codebase: the
+Settings > Payments tab validates the M-Pesa
+transaction type against the shortcode on save.
+If the shortcode is a known Paybill, the form
+offers only the PayBill type; if it is a known
+Till, only the BuyGoods type.
+
+**Where we hit it:** the M-Pesa settings,
+2026-10-17. The stored value was
+`CustomerBuyGoodsOnline`; the shortcode was
+`174379`, a Paybill. Every STK push returned
+"Bad Request - Invalid TransactionType" until
+the settings were corrected.
+
+**The general case:** the same pattern applies
+to any pair of provider settings. A test-mode
+key paired with a live-mode endpoint. A merchant
+ID paired with a partner ID from a different
+account. A region code paired with a currency
+code. The error names one value; the actual
+failure is the pair.
+
+When a settings form offers two values that
+describe different products, regimes, or modes,
+the form should validate that the two are
+compatible before saving. The merchant cannot be
+expected to know every provider-specific pairing.
+
+---
+
