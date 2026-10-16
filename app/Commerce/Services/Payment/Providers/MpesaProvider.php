@@ -717,7 +717,17 @@ final class MpesaProvider implements PaymentProvider
             return '';
         }
 
-        $token = (string) ($response['body']['access_token'] ?? '');
+        // Trim the token before caching it. Daraja's OAuth
+        // response can carry a trailing newline or other
+        // invisible whitespace. A token with trailing
+        // whitespace produces a malformed Authorization
+        // header, and Daraja returns 404.001.04
+        // ("Invalid Authentication Header") even though the
+        // token itself is valid. The trim is defensive; the
+        // response usually has no whitespace, but when it
+        // does the failure is silent and the error message
+        // points at the wrong thing.
+        $token = trim((string) ($response['body']['access_token'] ?? ''));
         if ($token === '') {
             return '';
         }

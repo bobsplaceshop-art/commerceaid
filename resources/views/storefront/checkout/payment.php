@@ -30,6 +30,7 @@ $errors                   = $errors                   ?? [];
 
 $selectedMethod = (string) ($state['payment_method'] ?? '');
 $poNumber = (string) ($state['po_number'] ?? '');
+$mpesaPhone = (string) ($state['mpesa_phone'] ?? '');
 
 $err = function (string $key) use ($errors): string {
     return isset($errors[$key]) ? (string) $errors[$key] : '';
@@ -138,6 +139,27 @@ $vatLabel = tax_note($pricing);
                 </div>
             <?php endif; ?>
 
+            <?php if (isset($availableMethods['mpesa'])): ?>
+                <div class="sf-field" id="mpesa-phone-group" hidden>
+                    <label for="mpesa_phone" class="sf-field-label">
+                        M-Pesa phone number *
+                    </label>
+                    <input type="tel" id="mpesa_phone" name="mpesa_phone"
+                           class="sf-input <?= $err('mpesa_phone') !== '' ? 'is-invalid' : '' ?>"
+                           value="<?= e($mpesaPhone) ?>"
+                           placeholder="254 7XX XXX XXX"
+                           inputmode="tel"
+                           autocomplete="tel">
+                    <p class="sf-form-help">
+                        The Safaricom number that will receive the payment prompt.
+                        It does not have to be the shipping phone.
+                    </p>
+                    <?php if ($err('mpesa_phone') !== ''): ?>
+                        <div class="sf-form-error"><?= e($err('mpesa_phone')) ?></div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
             <fieldset class="sf-checkout-legal">
                 <legend class="sf-field-label">Legal</legend>
 
@@ -222,3 +244,5 @@ $vatLabel = tax_note($pricing);
     </div>
 
 </div>
+
+<script src="<?= versioned_asset('js/checkout-payment.js') ?>" defer></script>

@@ -10,8 +10,10 @@ use CorporateAid\Commerce\Exceptions\CheckoutException;
 use CorporateAid\Commerce\Models\Customer;
 use CorporateAid\Commerce\Repositories\CustomerAddressRepository;
 use CorporateAid\Commerce\Repositories\CustomerGroupRepository;
+use CorporateAid\Commerce\Repositories\InventoryRepository;
 use CorporateAid\Commerce\Repositories\LegalPageRepository;
 use CorporateAid\Commerce\Repositories\MpesaRequestRepository;
+use CorporateAid\Commerce\Repositories\OrderItemRepository;
 use CorporateAid\Commerce\Repositories\OrderRepository;
 use CorporateAid\Commerce\Services\CartService;
 use CorporateAid\Commerce\Services\CheckoutService;
@@ -311,6 +313,7 @@ final class CheckoutController extends StorefrontController
 
         $method = (string) $request->input('payment_method', '');
         $poNumber = trim((string) $request->input('po_number', ''));
+        $mpesaPhone = trim((string) $request->input('mpesa_phone', ''));
         $agbAccepted = (bool) $request->input('agb_accepted', false);
         $widerrufAccepted = (bool) $request->input('widerruf_accepted', false);
 
@@ -346,6 +349,23 @@ final class CheckoutController extends StorefrontController
             $errors['po_number'] = 'Please enter a purchase order number.';
         }
 
+        // M-Pesa needs a phone number for the STK push. The
+        // number is collected on this step, not from the
+        // shipping address: the person paying can differ from
+        // the person receiving the goods (gift orders,
+        // third-party payments). The number is transient;
+        // it is passed to the provider for this charge only.
+        if ($method === 'mpesa') {
+            if ($mpesaPhone === '') {
+                $errors['mpesa_phone'] = 'Please enter the M-Pesa phone number.';
+            } else {
+                $digits = preg_replace('/\D+/', '', $mpesaPhone);
+                if (!is_string($digits) || strlen($digits) < 9 || strlen($digits) > 15) {
+                    $errors['mpesa_phone'] = 'Please enter a valid M-Pesa phone number.';
+                }
+            }
+        }
+
         if (!$agbAccepted) {
             $errors['agb_accepted'] = 'You must accept the Terms and Conditions.';
         }
@@ -361,6 +381,7 @@ final class CheckoutController extends StorefrontController
 
         $state['payment_method'] = $method;
         $state['po_number'] = $poNumber;
+        $state['mpesa_phone'] = $method === 'mpesa' ? $mpesaPhone : '';
         $state['shipping_method_code'] = $shippingMethodCode;
         $state['agb_accepted'] = true;
         $state['widerruf_accepted'] = true;
@@ -418,7 +439,8 @@ final class CheckoutController extends StorefrontController
             return Response::redirect('/checkout/payment');
         }
 
-        $customer = $this->currentCustomer();
+        $customer   = $this->currentCustomer();
+        $mpesaPhone = (string) ($state['mpesa_phone'] ?? '');
 
         try {
             $service = $this->container->get(CheckoutService::class);
@@ -466,13 +488,35 @@ final class CheckoutController extends StorefrontController
         //   failed     - provider error. Send the customer
         //                back to confirm to retry.
         $chargeService = $this->container->get(PaymentChargeService::class);
-        $charge = $chargeService->charge($order);
+
+        // Caller-supplied context for the provider. The M-Pesa
+        // phone arrives from the payment step and travels to
+        // the provider as 'customer_phone' - the generic key
+        // the PaymentProvider::charge() contract uses. The
+        // state stores it as 'mpesa_phone' (the form field
+        // name); the provider contract uses 'customer_phone'.
+        // Other providers ignore the key.
+        $chargeContext = [];
+        if ($mpesaPhone !== '') {
+            $chargeContext['customer_phone'] = $mpesaPhone;
+        }
+
+        $charge = $chargeService->charge($order, $chargeContext);
 
         if ($charge->status === 'redirected' && $charge->redirectUrl !== null) {
             return Response::redirect($charge->redirectUrl);
         }
 
         if ($charge->status === 'failed') {
+            // The order was created and its inventory was
+            // reserved inside placeOrder()'s transaction.
+            // The charge did not start. Release the
+            // reservation and cancel the order so the stock
+            // returns to available and the admin queue does
+            // not accumulate unpaid orders. The customer
+            // retries by placing a new order.
+            $this->cancelFailedOrder($order);
+
             $this->flashErrors('confirm', ['_general' =>
                 $charge->errorMessage ?? 'The payment provider could not start a charge.']);
             return Response::redirect('/checkout/confirm');
@@ -488,6 +532,39 @@ final class CheckoutController extends StorefrontController
         }
 
         return Response::redirect('/checkout/confirmation/' . $order->orderNumber);
+    }
+
+    /**
+     * Release an order's inventory reservation and cancel
+     * the order. Called when a charge fails after the order
+     * has been created. The order is terminal; the customer
+     * retries with a new order.
+     *
+     * The reservation was made inside placeOrder()'s
+     * transaction (reserved += qty). Nothing releases it on
+     * failure without this method. Every failed charge
+     * would otherwise leave the stock locked until the
+     * merchant manually cancels the order.
+     */
+    private function cancelFailedOrder(\CorporateAid\Commerce\Models\Order $order): void
+    {
+        $inventory = $this->container->get(InventoryRepository::class);
+        $items     = $this->container->get(OrderItemRepository::class);
+
+        foreach ($items->forOrder($order->id) as $item) {
+            $productId = $item->productId ?? 0;
+            $variantId = $item->variantId ?? 0;
+            if ($productId <= 0) {
+                continue;
+            }
+            $inventory->release($productId, $variantId, $item->quantity);
+        }
+
+        $orders = $this->container->get(OrderRepository::class);
+        $orders->update($order->id, [
+            'status'         => 'cancelled',
+            'payment_status' => 'failed',
+        ]);
     }
 
     // =================================================================

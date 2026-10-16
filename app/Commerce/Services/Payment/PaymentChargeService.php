@@ -72,7 +72,13 @@ final class PaymentChargeService
      * 'unpaid'. This method's job is to obtain a redirect
      * URL, a provider reference, or a failure reason.
      */
-    public function charge(Order $order): ChargeResult
+    /**
+     * @param array<string,mixed> $context  Caller-supplied
+     *        data the provider needs beyond the order. The
+     *        M-Pesa flow passes 'mpesa_phone' here. Other
+     *        callers pass nothing and get the default.
+     */
+    public function charge(Order $order, array $context = []): ChargeResult
     {
         $providerKey = (string) ($order->paymentProviderKey ?? '');
 
@@ -126,10 +132,16 @@ final class PaymentChargeService
 
         $cancelUrl = $appUrl . '/checkout/confirm';
 
-        $response = $provider->charge($order, [
+        // The provider context carries the return and cancel
+        // URLs plus any caller-supplied keys. The M-Pesa
+        // phone arrives as $context['mpesa_phone']. Stripe,
+        // PayPal, and the offline methods ignore unknown keys.
+        $providerContext = array_merge($context, [
             'return_url' => $returnUrl,
             'cancel_url' => $cancelUrl,
         ]);
+
+        $response = $provider->charge($order, $providerContext);
 
         if (($response['ok'] ?? false) !== true) {
             $error = (string) ($response['error'] ?? 'The payment provider could not start a charge.');
