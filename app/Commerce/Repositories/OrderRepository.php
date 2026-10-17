@@ -157,6 +157,47 @@ final class OrderRepository extends CommerceRepository
      *
      * @return array<string, int>
      */
+    /**
+     * Orders stuck in 'pending_payment' with an unpaid
+     * payment_status, older than the given threshold.
+     *
+     * These are orders a customer placed but never paid:
+     * an abandoned Stripe Checkout session, a closed PayPal
+     * approval page, an ignored M-Pesa PIN prompt. The
+     * inventory reservation holds the stock. The
+     * abandoned-order cron cancels them.
+     *
+     * The threshold is in minutes. 60 is the industry
+     * default for "abandoned". A merchant can override it
+     * per store with general.orders.abandoned_after_minutes.
+     *
+     * @return array<int, Order>
+     */
+    public function findAbandoned(int $minutes): array
+    {
+        if ($minutes < 1) {
+            return [];
+        }
+
+        $rows = $this->db->select(
+            "SELECT * FROM `commerce_orders`
+              WHERE `store_id` = ?
+                AND `status` = 'pending_payment'
+                AND `payment_status` = 'unpaid'
+                AND `created_at` < (NOW() - INTERVAL ? MINUTE)
+              ORDER BY `id` ASC",
+            [$this->storeId(), $minutes]
+        );
+
+        return array_map(fn ($r) => Order::fromRow($r), $rows);
+    }
+
+    /**
+     * Order counts grouped by the admin list's status tabs.
+     *
+     * @return array{new:int, processing:int, shipped:int,
+     *               done:int, all:int}
+     */
     public function countByStatusGroups(): array
     {
         $rows = $this->db->select(

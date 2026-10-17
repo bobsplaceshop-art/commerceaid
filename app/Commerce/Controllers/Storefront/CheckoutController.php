@@ -10,10 +10,8 @@ use CorporateAid\Commerce\Exceptions\CheckoutException;
 use CorporateAid\Commerce\Models\Customer;
 use CorporateAid\Commerce\Repositories\CustomerAddressRepository;
 use CorporateAid\Commerce\Repositories\CustomerGroupRepository;
-use CorporateAid\Commerce\Repositories\InventoryRepository;
 use CorporateAid\Commerce\Repositories\LegalPageRepository;
 use CorporateAid\Commerce\Repositories\MpesaRequestRepository;
-use CorporateAid\Commerce\Repositories\OrderItemRepository;
 use CorporateAid\Commerce\Repositories\OrderRepository;
 use CorporateAid\Commerce\Services\CartService;
 use CorporateAid\Commerce\Services\CheckoutService;
@@ -540,31 +538,17 @@ final class CheckoutController extends StorefrontController
      * has been created. The order is terminal; the customer
      * retries with a new order.
      *
-     * The reservation was made inside placeOrder()'s
-     * transaction (reserved += qty). Nothing releases it on
-     * failure without this method. Every failed charge
-     * would otherwise leave the stock locked until the
-     * merchant manually cancels the order.
+     * The release-and-cancel logic lives in
+     * OrderCancellationService. The cron at
+     * bin/cancel-abandoned-orders.php calls the same
+     * service. One implementation, two entry points.
      */
     private function cancelFailedOrder(\CorporateAid\Commerce\Models\Order $order): void
     {
-        $inventory = $this->container->get(InventoryRepository::class);
-        $items     = $this->container->get(OrderItemRepository::class);
-
-        foreach ($items->forOrder($order->id) as $item) {
-            $productId = $item->productId ?? 0;
-            $variantId = $item->variantId ?? 0;
-            if ($productId <= 0) {
-                continue;
-            }
-            $inventory->release($productId, $variantId, $item->quantity);
-        }
-
-        $orders = $this->container->get(OrderRepository::class);
-        $orders->update($order->id, [
-            'status'         => 'cancelled',
-            'payment_status' => 'failed',
-        ]);
+        $service = $this->container->get(
+            \CorporateAid\Commerce\Services\OrderCancellationService::class
+        );
+        $service->cancel($order, 'Charge failed');
     }
 
     // =================================================================

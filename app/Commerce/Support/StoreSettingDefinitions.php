@@ -80,6 +80,14 @@ final class StoreSettingDefinitions
             'hint'    => 'Short tagline shown in the storefront footer.',
         ],
 
+        'general.orders.abandoned_after_minutes' => [
+            'label'   => 'Cancel unpaid orders after',
+            'type'    => 'int',
+            'default' => 60,
+            'group'   => self::GROUP_GENERAL,
+            'hint'    => 'Minutes. An order that is not paid within this window is cancelled and its reserved stock released. The bin/cancel-abandoned-orders.php cron does the work; it must be scheduled on the host.',
+        ],
+
         // -------------------------------------------------------------
         // Branding (Stage 008G.4a)
         // -------------------------------------------------------------

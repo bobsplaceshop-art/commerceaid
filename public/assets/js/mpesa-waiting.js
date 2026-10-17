@@ -31,7 +31,7 @@
     var messageEl = root.querySelector('.sf-mpesa-waiting-message');
 
     var POLL_MS = 3000;
-    var MAX_POLL_MS = 5 * 60 * 1000; /* give up after 5 minutes */
+    var MAX_POLL_MS = 3 * 60 * 1000; /* give up after 3 minutes */
 
     var startedAt = Date.now();
 
