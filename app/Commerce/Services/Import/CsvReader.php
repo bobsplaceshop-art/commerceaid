@@ -116,7 +116,7 @@ final class CsvReader
             );
         }
 
-        if (isset($header[0]) && is_string($header[0])
+        if (isset($header[0])
             && str_starts_with($header[0], self::BOM)
         ) {
             $header[0] = substr($header[0], strlen(self::BOM));
@@ -169,7 +169,7 @@ final class CsvReader
         $allEmpty = true;
         $row = [];
         foreach ($header as $i => $name) {
-            $value = isset($line[$i]) && is_string($line[$i]) ? $line[$i] : '';
+            $value = isset($line[$i]) ? $line[$i] : '';
             if ($value !== '') {
                 $allEmpty = false;
             }

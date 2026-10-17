@@ -18,12 +18,18 @@ final class ImportRowRepository extends CommerceRepository
 {
     /**
      * Bulk-insert the parsed rows for a batch. One INSERT
-     * per batch, N value tuples. Returns nothing: the
-     * rows are anonymous until a commit assigns them an
-     * entity id.
+     * per chunk of 500. Each row carries its final status
+     * (valid or invalid) and an optional error message
+     * from the validator. The default status is 'pending'
+     * for any row where the caller did not supply one.
      *
-     * @param array<int, array{row_number: int, natural_key: string,
-     *                        payload_json: array<string, string>}> $rows
+     * @param array<int, array{
+     *     row_number: int,
+     *     natural_key: string,
+     *     payload_json: array<string, string>,
+     *     status?: string,
+     *     error?: ?string
+     * }> $rows
      */
     public function insertBatch(int $batchId, array $rows): void
     {
@@ -36,7 +42,7 @@ final class ImportRowRepository extends CommerceRepository
             $placeholders = [];
             $params       = [];
             foreach ($chunk as $r) {
-                $placeholders[] = '(?, ?, ?, ?, ?)';
+                $placeholders[] = '(?, ?, ?, ?, ?, ?, ?)';
                 $params[]       = $this->storeId();
                 $params[]       = $batchId;
                 $params[]       = (int) $r['row_number'];
@@ -45,11 +51,13 @@ final class ImportRowRepository extends CommerceRepository
                     $r['payload_json'],
                     JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
                 );
+                $params[]       = (string) ($r['status'] ?? 'pending');
+                $params[]       = isset($r['error']) ? (string) $r['error'] : null;
             }
             $this->db->execute(
                 "INSERT INTO `commerce_import_rows`
                     (`store_id`, `batch_id`, `row_number`,
-                     `natural_key`, `payload_json`)
+                     `natural_key`, `payload_json`, `status`, `error`)
                  VALUES " . implode(', ', $placeholders),
                 $params
             );

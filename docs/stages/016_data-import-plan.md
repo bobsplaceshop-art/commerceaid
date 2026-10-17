@@ -246,19 +246,35 @@ Handlers live at
 ### `ImportInventoryHandler`
 
   - Table: `commerce_inventory`
-  - Natural key: the `(store_id, product_id,
-    variant_id)` tuple. `variant_id = 0` for
-    simple products (the sentinel the codebase
-    uses).
+  - Natural key: the SKU, resolved to the
+    `(store_id, product_id, variant_id)` tuple.
+    `variant_id = 0` for simple products (the
+    sentinel the codebase uses).
   - Required: `sku`, `quantity`
-  - Validation: sku resolves to an imported
-    product or variant, quantity ≥ 0
-  - Create: INSERT
-  - Update: by the tuple; the delta is written
-    to `commerce_inventory_movements` with
-    `movement_type = 'import'` and a
-    reference to the batch id
-  - Depends on: products, variants
+  - Validation: SKU resolves to a simple product,
+    quantity is a non-negative integer
+  - Create: `InventoryRepository::adjust()` with
+    movement type `'opening'`
+  - Update: `InventoryRepository::adjust()` with
+    movement type `'stocktake'`
+  - Depends on: products
+  - **Variant-SKU inventory is deferred to
+    016.4.** The `ProductVariantRepository` has
+    no global SKU lookup - `findBySku()` takes
+    the parent product id. A CSV that carries
+    only a variant SKU cannot resolve without
+    that lookup. 016.4 adds `findBySkuGlobal()`
+    to the repository and extends this handler.
+    Session 2's inventory handler covers the
+    simple-product case.
+  - **The movement type is `'stocktake'`, not
+    `'import'`.** The repository's valid-type
+    list is closed and `'import'` is not in it.
+    `'stocktake'` is the semantically correct
+    choice: a full correction to a known value.
+    The `reason` option carries
+    "Imported from CSV", and `reference_type`
+    is `'import_batch'`.
 
 ### `ImportCustomerHandler`
 
@@ -582,45 +598,81 @@ create a role with or without it.
 
 ## Sessions
 
-Three sessions. Each ends with a commit.
+Four sessions. Each ends with a commit. The
+plan originally estimated three; the split
+of Session 2 into 2a and 2b happened at
+Session 2a's open, when the six remaining
+handlers plus the full pipeline proved too
+much for a single verifiable step.
 
 ### Session 1 - plan + schema + reader
 
+  [shipped 2026-10-17, commit ec2d6d9]
+
   - This plan document.
   - Migrations 0346 (batches) and 0347 (rows).
-  - Permission seeder (0348 or the next
-    available number).
+  - Permission seeder 0019.
   - The `CsvReader` class.
-  - The base `ImportHandler` interface.
+  - The `ImportHandler` interface.
+  - The `ImportBatchStatus` constants class.
   - The first handler, `ImportBrandHandler`.
   - `ImportBatchRepository`,
     `ImportRowRepository`.
   - The admin controller skeleton with the list
-    screen and the upload screen.
-  - The batch status state machine
-    (`ImportBatchStatus` enum).
-  - `php bin/smoke.php` gains one case:
-    `import-brand` — uploads a two-row CSV
-    in-memory, validates, commits, asserts
-    two brands exist, rolls back, asserts
-    zero exist.
+    and upload screens.
+  - The batch detail placeholder.
+  - Smoke case `import-brand`.
 
-### Session 2 - the remaining handlers + the pipeline
+### Session 2a - the six handlers + validate pipeline
 
-  - The six remaining handlers:
-    category, attribute, product, variant,
-    inventory, customer.
-  - The validation phase.
-  - The preview screen.
-  - The commit phase, chunked.
+  - The six remaining handlers: category,
+    attribute, product, variant, inventory,
+    customer.
+  - The `AttributeRepository` extension
+    (findBySlug, create, update, softDelete,
+    findValueIdBySlug, findValueIdByValue).
+  - `ImportController::handlerRegistry()`
+    gains the six new entries.
+  - `ImportValidator`: parse the batch CSV,
+    apply the mapping, walk rows, call
+    `$handler->validate()`, write per-row
+    status. Updates batch counters. Moves the
+    batch to `validated`.
+  - The map screen and its routes.
+  - The validate route.
+  - The batch detail screen (replaces the
+    Session 1 placeholder with the real
+    status and the map / validate buttons).
+  - Smoke case `import-product`.
+
+  At the end of Session 2a, a batch can be
+  uploaded, mapped, and validated. Nothing
+  commits yet. The preview and commit screens
+  do not exist. The batch detail shows the
+  per-row status counts and the "coming in
+  Session 2b" note.
+
+### Session 2b - the committer + the pipeline tail
+
+  - `ImportCommitter`: chunked transactional
+    commit. Per chunk: call `handler->create()`
+    or `handler->update()`, record the entity id
+    and previous values on the row, commit.
+    Per-row failures mark the row invalid and
+    continue.
+  - `ImportRollback`: reverse a committed batch
+    in dependency order. Creates → `delete()`.
+    Updates → `restore()`. Chunked.
+  - The preview screen (would-create,
+    would-update, invalid).
+  - The commit, rollback, and failed-export
+    routes.
   - The failed-row export.
-  - The rollback.
-  - The map screen.
-  - The batch detail screen.
-  - `php bin/smoke.php` gains two more cases:
-    `import-product` (a product with brand and
-    category) and `import-customer` (email
-    uniqueness, group assignment).
+  - Smoke case `import-customer`.
+
+  At the end of Session 2b, the pipeline is
+  complete: upload, map, validate, preview,
+  commit, export, rollback.
 
 ### Session 3 - the browser test + close
 

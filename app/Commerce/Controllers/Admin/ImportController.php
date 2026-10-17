@@ -4,9 +4,18 @@ declare(strict_types=1);
 namespace CorporateAid\Commerce\Controllers\Admin;
 
 use CorporateAid\Commerce\Repositories\ImportBatchRepository;
+use CorporateAid\Commerce\Repositories\ImportRowRepository;
+use CorporateAid\Commerce\Services\Import\CsvReader;
+use CorporateAid\Commerce\Services\Import\Handlers\ImportAttributeHandler;
 use CorporateAid\Commerce\Services\Import\Handlers\ImportBrandHandler;
+use CorporateAid\Commerce\Services\Import\Handlers\ImportCategoryHandler;
+use CorporateAid\Commerce\Services\Import\Handlers\ImportCustomerHandler;
+use CorporateAid\Commerce\Services\Import\Handlers\ImportInventoryHandler;
+use CorporateAid\Commerce\Services\Import\Handlers\ImportProductHandler;
+use CorporateAid\Commerce\Services\Import\Handlers\ImportVariantHandler;
 use CorporateAid\Commerce\Services\Import\ImportBatchStatus;
 use CorporateAid\Commerce\Services\Import\ImportHandler;
+use CorporateAid\Commerce\Services\Import\ImportValidator;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\Session;
@@ -163,15 +172,159 @@ final class ImportController extends AdminController
     public function show(Request $request, array $params = []): Response
     {
         $repo = $this->container->get(ImportBatchRepository::class);
+        $rowRepo = $this->container->get(ImportRowRepository::class);
         $id   = (int) ($params['id'] ?? 0);
         $batch = $repo->findById($id);
         if ($batch === null) {
             return $this->fail('Batch not found.');
         }
+        $rowCounts = $rowRepo->countByStatus($id);
+        $session = $this->container->get(Session::class);
         return $this->render('admin.import.show', [
-            'title'   => 'Import batch #' . $id,
-            'batch'   => $batch,
+            'title'      => 'Import batch #' . $id,
+            'batch'      => $batch,
+            'rowCounts'  => $rowCounts,
+            'handlers'   => $this->handlerLabels(),
+            'flashOk'    => $session->getFlash('import_success'),
+            'flashErr'   => $session->getFlash('import_errors', []),
         ]);
+    }
+
+    /**
+     * The map screen. Shows one select per handler field,
+     * populated from the CSV header. The merchant matches
+     * CSV columns to entity fields.
+     *
+     * @param array<string,string> $params
+     */
+    public function showMap(Request $request, array $params = []): Response
+    {
+        $repo = $this->container->get(ImportBatchRepository::class);
+        $id   = (int) ($params['id'] ?? 0);
+        $batch = $repo->findById($id);
+        if ($batch === null) {
+            return $this->fail('Batch not found.');
+        }
+
+        $entity = (string) $batch['entity'];
+        $handlers = $this->handlerRegistry();
+        if (!isset($handlers[$entity])) {
+            return $this->fail('Unknown entity on this batch.');
+        }
+        $handler = $handlers[$entity];
+
+        $storageDir = dirname(__DIR__, 4) . '/storage/imports';
+        $csvPath = $storageDir . '/' . $id . '.csv';
+        if (!is_file($csvPath)) {
+            return $this->fail('The uploaded CSV file is missing from disk.');
+        }
+
+        $reader = $this->container->get(CsvReader::class);
+        try {
+            [$header, $rows] = $reader->read($csvPath);
+        } catch (\RuntimeException $e) {
+            return $this->fail('Could not read the CSV: ' . $e->getMessage());
+        }
+
+        $session = $this->container->get(Session::class);
+        return $this->render('admin.import.map', [
+            'title'    => 'Map columns: batch #' . $id,
+            'batch'    => $batch,
+            'handler'  => $handler,
+            'header'   => $header,
+            'rowCount' => count($rows),
+            'mapping'  => $repo->getMapping($id),
+            'errors'   => $session->getFlash('import_errors', []),
+        ]);
+    }
+
+    /**
+     * Persist the merchant's column mapping. Redirects to
+     * the batch detail screen where the "Validate" button
+     * is waiting.
+     *
+     * @param array<string,string> $params
+     */
+    public function saveMap(Request $request, array $params = []): Response
+    {
+        $repo = $this->container->get(ImportBatchRepository::class);
+        $session = $this->container->get(Session::class);
+        $id   = (int) ($params['id'] ?? 0);
+        $batch = $repo->findById($id);
+        if ($batch === null) {
+            return $this->fail('Batch not found.');
+        }
+
+        $entity = (string) $batch['entity'];
+        $handlers = $this->handlerRegistry();
+        if (!isset($handlers[$entity])) {
+            return $this->fail('Unknown entity on this batch.');
+        }
+        $handler = $handlers[$entity];
+
+        $raw = (array) $request->input('map', []);
+        $mapping = [];
+        foreach ($handler->fields() as $fieldName => $fieldDef) {
+            $csvCol = (string) ($raw[$fieldName] ?? '');
+            if ($csvCol === '') {
+                if ($fieldDef['required']) {
+                    $session->flash('import_errors', [
+                        'map' => "Field '{$fieldDef['label']}' is required but not mapped to a CSV column.",
+                    ]);
+                    return Response::redirect('/commerce/ca-admin/import/' . $id . '/map');
+                }
+                continue;
+            }
+            $mapping[$fieldName] = $csvCol;
+        }
+
+        $repo->setMapping($id, $mapping);
+        $session->flash('import_success', 'Columns mapped. Validate the batch next.');
+        return Response::redirect('/commerce/ca-admin/import/' . $id);
+    }
+
+    /**
+     * Run the validation pass. Parses the CSV, applies
+     * the mapping, walks each row, calls the handler's
+     * validate(). Writes the per-row records and updates
+     * the batch counters. Nothing is committed to the
+     * entity tables.
+     *
+     * @param array<string,string> $params
+     */
+    public function runValidation(Request $request, array $params = []): Response
+    {
+        $repo = $this->container->get(ImportBatchRepository::class);
+        $session = $this->container->get(Session::class);
+        $id   = (int) ($params['id'] ?? 0);
+        $batch = $repo->findById($id);
+        if ($batch === null) {
+            return $this->fail('Batch not found.');
+        }
+
+        $entity = (string) $batch['entity'];
+        $handlers = $this->handlerRegistry();
+        if (!isset($handlers[$entity])) {
+            return $this->fail('Unknown entity on this batch.');
+        }
+        $handler = $handlers[$entity];
+
+        $validator = $this->container->get(ImportValidator::class);
+        try {
+            $result = $validator->validate($id, $handler);
+        } catch (\Throwable $e) {
+            $session->flash('import_errors', ['validate' => $e->getMessage()]);
+            return Response::redirect('/commerce/ca-admin/import/' . $id);
+        }
+
+        $msg = sprintf(
+            'Validated %d rows: %d valid, %d invalid.',
+            $result['total'],
+            $result['valid'],
+            $result['invalid']
+        );
+        $session->flash('import_success', $msg);
+        return Response::redirect('/commerce/ca-admin/import/' . $id);
     }
 
     // -----------------------------------------------------------------
@@ -190,7 +343,13 @@ final class ImportController extends AdminController
     private function handlerRegistry(): array
     {
         return [
-            'brand' => $this->container->get(ImportBrandHandler::class),
+            'brand'     => $this->container->get(ImportBrandHandler::class),
+            'category'  => $this->container->get(ImportCategoryHandler::class),
+            'attribute' => $this->container->get(ImportAttributeHandler::class),
+            'product'   => $this->container->get(ImportProductHandler::class),
+            'variant'   => $this->container->get(ImportVariantHandler::class),
+            'inventory' => $this->container->get(ImportInventoryHandler::class),
+            'customer'  => $this->container->get(ImportCustomerHandler::class),
         ];
     }
 
@@ -207,5 +366,20 @@ final class ImportController extends AdminController
             $labels[$key] = $handler->entityLabel();
         }
         return $labels;
+    }
+
+    /**
+     * Render a failure that should send the merchant back
+     * to the batch list. Flashes the message and redirects.
+     *
+     * Same shape as the sibling admin controllers'
+     * private fail() methods. Not on AdminController - the
+     * codebase's pattern is one per controller.
+     */
+    private function fail(string $message): Response
+    {
+        $session = $this->container->get(Session::class);
+        $session->flash('error', $message);
+        return Response::redirect('/commerce/ca-admin/import');
     }
 }

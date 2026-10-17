@@ -575,6 +575,18 @@ $router->post('/commerce/ca-admin/import/upload',
 $router->get('/commerce/ca-admin/import/{id}',
     [ImportController::class, 'show'],
     ['store', 'auth', 'permission:catalog.import']);
+
+$router->get('/commerce/ca-admin/import/{id}/map',
+    [ImportController::class, 'showMap'],
+    ['store', 'auth', 'permission:catalog.import']);
+
+$router->post('/commerce/ca-admin/import/{id}/map',
+    [ImportController::class, 'saveMap'],
+    ['store', 'auth', 'csrf', 'permission:catalog.import']);
+
+$router->post('/commerce/ca-admin/import/{id}/validate',
+    [ImportController::class, 'runValidation'],
+    ['store', 'auth', 'csrf', 'permission:catalog.import']);
 $router->post('/commerce/ca-admin/products',
     [ProductController::class, 'store'],
     ['store', 'auth', 'csrf']);
