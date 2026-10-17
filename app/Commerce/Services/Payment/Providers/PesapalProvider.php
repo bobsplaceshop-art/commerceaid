@@ -280,6 +280,53 @@ final class PesapalProvider implements PaymentProvider
     }
 
     /**
+     * Read the current status of a Pesapal transaction.
+     *
+     * Public entry point for the return controller. The
+     * IPN handler uses the same query logic internally;
+     * this method exposes it without the repository write.
+     *
+     * @return array{ok: bool, status?: string,
+     *               confirmation_code?: string,
+     *               error?: string}
+     */
+    public function readTransactionStatus(string $trackingId): array
+    {
+        if ($trackingId === '') {
+            return ['ok' => false, 'error' => 'Missing tracking id.'];
+        }
+
+        $token = $this->token();
+        if ($token === '') {
+            return ['ok' => false, 'error' => 'Pesapal is not configured.'];
+        }
+
+        $response = $this->http->get(
+            $this->apiBase() . '/api/Transactions/GetTransactionStatus'
+                . '?orderTrackingId=' . rawurlencode($trackingId),
+            [
+                'Authorization: Bearer ' . $token,
+            ]
+        );
+
+        if ($response['error'] !== null) {
+            return ['ok' => false, 'error' => $response['error']];
+        }
+        if ($response['status'] !== 200) {
+            return [
+                'ok'    => false,
+                'error' => 'Pesapal status query returned HTTP ' . $response['status'],
+            ];
+        }
+
+        return [
+            'ok'                => true,
+            'status'            => (string) ($response['body']['payment_status_description'] ?? ''),
+            'confirmation_code' => (string) ($response['body']['confirmation_code'] ?? ''),
+        ];
+    }
+
+    /**
      * Refund an amount against the original Pesapal charge.
      *
      * Pesapal's refund endpoint has limitations: the
@@ -449,34 +496,18 @@ final class PesapalProvider implements PaymentProvider
 
         $orderId = (int) ($row['order_id'] ?? 0);
 
-        $token = $this->token();
-        if ($token === '') {
-            return ['handled' => false, 'event_type' => 'pesapal.ipn',
-                    'note' => 'Pesapal not configured.'];
-        }
-
-        // Query the transaction status with the tracking id.
-        $statusResponse = $this->http->get(
-            $this->apiBase() . '/api/Transactions/GetTransactionStatus'
-                . '?orderTrackingId=' . rawurlencode($trackingId),
-            [
-                'Authorization: Bearer ' . $token,
-            ]
-        );
-
-        if ($statusResponse['error'] !== null) {
+        // Query the transaction status. Same method the return
+        // controller calls; the HTTP call logic lives once.
+        $statusResult = $this->readTransactionStatus($trackingId);
+        if (($statusResult['ok'] ?? false) !== true) {
             return ['handled' => false, 'event_type' => 'pesapal.ipn',
                     'order_id' => $orderId,
-                    'note' => 'Status query failed: ' . $statusResponse['error']];
-        }
-        if ($statusResponse['status'] !== 200) {
-            return ['handled' => false, 'event_type' => 'pesapal.ipn',
-                    'order_id' => $orderId,
-                    'note' => 'Status query returned HTTP ' . $statusResponse['status']];
+                    'note' => 'Status query failed: '
+                            . (string) ($statusResult['error'] ?? 'unknown')];
         }
 
-        $statusDesc = (string) ($statusResponse['body']['payment_status_description'] ?? '');
-        $confirmationCode = (string) ($statusResponse['body']['confirmation_code'] ?? '');
+        $statusDesc       = (string) ($statusResult['status'] ?? '');
+        $confirmationCode = (string) ($statusResult['confirmation_code'] ?? '');
 
         if ($statusDesc === 'COMPLETED') {
             $this->pesapalRequests->markCompleted(

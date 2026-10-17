@@ -21,6 +21,7 @@ use CorporateAid\Commerce\Controllers\Storefront\ReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
 use CorporateAid\Commerce\Controllers\Storefront\StripeReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\PayPalReturnController;
+use CorporateAid\Commerce\Controllers\Storefront\PesapalReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\NewsletterController;
 use CorporateAid\Commerce\Controllers\Storefront\FormController;
 
@@ -274,6 +275,13 @@ $router->get('/checkout/stripe/return', [StripeReturnController::class, 'handle'
 // writer; this route is the customer-facing step and is
 // idempotent against the webhook.
 $router->get('/checkout/paypal/return', [PayPalReturnController::class, 'handle'], ['store']);
+
+// Pesapal return. The customer lands here after paying
+// (or cancelling) on Pesapal's hosted page. The
+// controller queries GetTransactionStatus and writes the
+// paid state if COMPLETED. The IPN handler does the
+// same write; the two are idempotent.
+$router->get('/checkout/pesapal/return', [PesapalReturnController::class, 'handle'], ['store']);
 
 // Legal pages (public, one route for all four slugs)
 $router->get('/legal/{slug}', [CheckoutController::class, 'legalPage'], ['store']);
