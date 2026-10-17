@@ -752,7 +752,7 @@ Stage 008H (returns - the refund intent is written).
 |---|---|---|
 | 010  | Stripe, PayPal | Complete 2026-10-15 |
 | 010.1 | M-Pesa | Complete 2026-10-17 |
-| 010.2 | Pesapal | Planned |
+| 010.2 | Pesapal | Code complete 2026-10-17, browser test pending |
 | 010.3 | Flutterwave | Planned |
 | 010.4 | Manual | Complete 2026-10-16 |
 | 010.5 | Cash on Delivery | Complete 2026-10-16 |
@@ -769,6 +769,10 @@ support every provider that follows.
   010.1  75b8e62  M-Pesa schema, settings, repository
          581e802  M-Pesa phone field, failure cleanup,
                   token trim
+  010.2  f4140ee  Pesapal schema, settings, repository
+         6bbc911  Pesapal provider class and webhook
+         ea4096c  Pesapal return controller and cleanup
+                  cron
   010.4  5bb5e76  Offline providers: cod, bank_transfer,
   010.5           manual
   010.6

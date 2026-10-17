@@ -1255,3 +1255,72 @@ deleted by a cleanup cron after 24 hours.
 The three processors share the same framework. The
 DPA work is done once per processor, at the
 operator's account creation.
+
+---
+
+## 26. Pesapal (DSGVO Art. 28 Processor)
+
+**Requirement:** Pesapal processes payments on
+behalf of the merchant. Under DSGVO Art. 28,
+Pesapal is a processor and requires a Data
+Processing Agreement with the controller. Same
+scope as entries 23, 24, and 25.
+
+**Exposure:** Same as entries 23, 24, and 25.
+Fines up to EUR 10 million or 2% of global
+annual turnover.
+
+**How we address it:** Pesapal is used
+exclusively via the hosted payment page. Card
+and mobile money details never touch the
+platform's servers. The merchant signs Pesapal's
+standard DPA before accepting live payments.
+
+**Checklist for the operator:**
+
+  [ ] Create a Pesapal merchant account.
+  [ ] Complete the Pesapal developer onboarding
+      at developer.pesapal.com.
+  [ ] Register the IPN URL in the Pesapal
+      dashboard. Copy the returned IPN ID into
+      the payments.pesapal.ipn_id setting.
+  [ ] Sign Pesapal's Data Processing Agreement.
+  [ ] Record the DPA in the operator's processing
+      register (Verzeichnis von
+      Verarbeitungstaetigkeiten, DSGVO Art. 30).
+  [ ] Disclose Pesapal in the Datenschutzerklaerung
+      as a payment processor.
+
+**Where the code lives:**
+
+  - `app/Commerce/Services/Payment/Providers/PesapalProvider.php`
+  - `app/Commerce/Controllers/Storefront/PesapalReturnController.php`
+  - `app/Commerce/Controllers/WebhookController.php`
+  - `app/Commerce/Repositories/PesapalRequestRepository.php`
+
+**Stage:** 010.2.
+
+**Status:** Not started as a documented step. The
+processor is live (code-complete). The DPA is the
+merchant's to sign.
+
+**Note on data sent to Pesapal:** the platform
+sends the order reference, the amount, the
+currency, and the customer's email to Pesapal as
+part of the SubmitOrderRequest. That is a
+transfer of personal data to a processor. The
+merchant's DPA covers it.
+
+**Note on IPN verification:** Pesapal does not
+sign its IPNs. The platform verifies an IPN by
+looking up its order_tracking_id in
+commerce_pesapal_requests, then calling
+GetTransactionStatus to read the authoritative
+payment state. A callback whose id does not
+match a pending request this store initiated is
+refused.
+
+**See also:** entries 23 (Stripe), 24 (PayPal),
+and 25 (M-Pesa). The four processors share the
+same framework. The DPA work is done once per
+processor, at the operator's account creation.
