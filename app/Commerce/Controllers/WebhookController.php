@@ -19,6 +19,7 @@ use CorporateAid\Platform\Support\Logger;
  *   POST /webhooks/stripe
  *   POST /webhooks/paypal
  *   POST /webhooks/mpesa
+ *   POST /webhooks/pesapal
  *
  * Not admin-authenticated, not customer-authenticated. The
  * provider posts the webhook; the signature is what proves
@@ -77,6 +78,67 @@ final class WebhookController
     }
 
     /**
+     * Pesapal IPN receiver.
+     *
+     * Pesapal posts the IPN with query parameters, not a
+     * JSON body. The controller builds a synthetic JSON
+     * body from the query parameters and passes it to the
+     * shared handle(). Pesapal also requires a 200 response
+     * with the query parameters echoed back; handle()
+     * returns 204 on success, so this method overrides the
+     * success response.
+     *
+     * @param array<string,string> $params
+     */
+    public function pesapal(Request $request, array $params = []): Response
+    {
+        $trackingId  = trim((string) $request->query('pesapal_transaction_tracking_id', ''));
+        $merchantRef = trim((string) $request->query('pesapal_merchant_reference', ''));
+        $notifType   = trim((string) $request->query('pesapal_notification_type', 'CHANGE'));
+
+        if ($trackingId === '') {
+            return Response::json(['error' => 'Missing tracking id.'], 400);
+        }
+
+        // Build a synthetic JSON body so the shared handle()
+        // and the provider see the same shape.
+        $syntheticBody = (string) json_encode([
+            'order_tracking_id'  => $trackingId,
+            'merchant_reference' => $merchantRef,
+            'notification_type'  => $notifType,
+        ]);
+
+        $syntheticRequest = new Request(
+            'POST',
+            '/webhooks/pesapal',
+            '',
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            $syntheticBody
+        );
+
+        $response = $this->handle($syntheticRequest, 'pesapal');
+
+        // Pesapal requires 200 with the parameters echoed.
+        // 204 (success) and 200 both become the echo. A
+        // 400 (failure) passes through unchanged.
+        $code = $response->statusCode();
+        if ($code === 200 || $code === 204) {
+            return Response::json([
+                'order_tracking_id'  => $trackingId,
+                'merchant_reference' => $merchantRef,
+                'notification_type'  => $notifType,
+            ], 200);
+        }
+
+        return $response;
+    }
+
+    /**
      * The single webhook path. Every provider funnels here.
      */
     private function handle(Request $request, string $providerKey): Response
@@ -127,13 +189,19 @@ final class WebhookController
         // Parse the body for the event type. Stripe uses
         // 'type'; PayPal uses 'event_type'. Read either key
         // so the commerce_webhook_events row carries the
-        // correct event type for both providers. M-Pesa
-        // reports its own type from handleWebhook() below.
+        // correct event type for those providers.
+        //
+        // M-Pesa and Pesapal do not carry a top-level type
+        // key. Their bodies are provider-specific shapes.
+        // The fallback is a neutral 'webhook' string; the
+        // authoritative event type is the one
+        // handleWebhook() returns below, which the
+        // webhook.processed log line carries.
         $event = json_decode($rawBody, true);
         if (!is_array($event)) {
             return Response::json(['error' => 'Malformed payload.'], 400);
         }
-        $eventType = (string) ($event['type'] ?? $event['event_type'] ?? 'mpesa.callback');
+        $eventType = (string) ($event['type'] ?? $event['event_type'] ?? 'webhook');
 
         $events = $this->container->get(WebhookEventRepository::class);
 

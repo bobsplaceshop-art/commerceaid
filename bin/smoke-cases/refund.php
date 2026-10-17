@@ -10,8 +10,9 @@ declare(strict_types=1);
  *   1. Offline refund (cod) - no provider call, row is
  *      inserted as succeeded.
  *
- *   2. Provider key with no class in the registry (pesapal)
- *      - row is inserted as pending, no exception thrown.
+ *   2. Provider key with no class in the registry
+ *      (does-not-exist) - row is inserted as pending, no
+ *      exception thrown.
  *
  * Paths 3 and 4 (provider returns error, provider
  * succeeds) need a provider that resolves and a
@@ -105,21 +106,19 @@ return function ($container, PDO $pdo): bool|string {
     $cleanupProduct($productId);
 
     // --------------------------------------------------------------
-    // Path 2: provider key with no class in the registry (pesapal)
+    // Path 2: provider key with no class in the registry.
     // --------------------------------------------------------------
-    // The Pesapal provider class does not exist yet. The
-    // registry's resolve() returns null for it. The wrapper
-    // inserts the row as pending and returns without
-    // dispatching.
+    // The key 'does-not-exist' is deliberately never a real
+    // provider. The registry's resolve() returns null for it,
+    // which is exactly the branch this path exercises: a
+    // provider key whose class has not shipped yet.
     //
-    // Stripe, PayPal, and M-Pesa cannot be used for this
-    // path: all three classes ship and resolve. The registry
-    // returns a real provider for each. Pesapal ships as
-    // sub-stage 010.2. When it lands, this case's key moves
-    // to Flutterwave (010.3), and then to a permanently
-    // unresolved key or a test-only registry stub.
+    // Earlier versions of this case used a real provider key
+    // (stripe, mpesa, pesapal) as the stand-in. Each time the
+    // provider shipped, the case broke. The 'does-not-exist'
+    // key is permanent.
     $productId = $fx['createProduct']($pdo, $storeId);
-    $orderId   = $fx['createOrder']($pdo, $storeId, 'pesapal', 100.0);
+    $orderId   = $fx['createOrder']($pdo, $storeId, 'does-not-exist', 100.0);
     $itemId    = $fx['createOrderItem']($pdo, $storeId, $orderId, $productId, 1, 100.0);
     $reqId     = $fx['createReturnRequest']($pdo, $storeId, $orderId, $customerId, $itemId, 1, 100.0);
 
@@ -127,8 +126,8 @@ return function ($container, PDO $pdo): bool|string {
 
     if ($result->status !== 'pending') {
         $failures[] = "path 2 (registry-miss): expected status pending, got {$result->status}";
-    } elseif ($result->providerKey !== 'pesapal') {
-        $failures[] = "path 2 (registry-miss): expected provider pesapal, got {$result->providerKey}";
+    } elseif ($result->providerKey !== 'does-not-exist') {
+        $failures[] = "path 2 (registry-miss): expected provider does-not-exist, got {$result->providerKey}";
     } else {
         $row = $pdo->query(
             "SELECT `status` FROM `commerce_payment_refunds`

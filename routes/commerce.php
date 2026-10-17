@@ -1090,3 +1090,7 @@ $router->post('/webhooks/paypal',
 $router->post('/webhooks/mpesa',
     [WebhookController::class, 'mpesa'],
     ['store']);
+
+$router->post('/webhooks/pesapal',
+    [WebhookController::class, 'pesapal'],
+    ['store']);
