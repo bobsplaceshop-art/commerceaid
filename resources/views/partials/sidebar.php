@@ -99,6 +99,7 @@ $groups = [
             ['label' => 'Attributes', 'href' => '/commerce/ca-admin/attributes', 'icon' => 'bi-input-cursor-text'],
             ['label' => 'Media',      'href' => '/commerce/ca-admin/media',      'icon' => 'bi-images'],
             ['label' => 'Reviews',    'href' => '/commerce/ca-admin/reviews',    'icon' => 'bi-chat-square-text', 'badge' => admin_pending_review_count()],
+            ['label' => 'Import',     'href' => '/commerce/ca-admin/import',     'icon' => 'bi-file-earmark-arrow-up', 'permission' => 'catalog.import'],
         ],
     ],
     [

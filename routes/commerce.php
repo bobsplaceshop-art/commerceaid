@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use CorporateAid\Core\Router;
 use CorporateAid\Commerce\Controllers\Pwa\ManifestController;
+use CorporateAid\Commerce\Controllers\Admin\ImportController;
 use CorporateAid\Commerce\Controllers\Admin\MediaController;
 use CorporateAid\Commerce\Controllers\Admin\MediaLibraryController;
 use CorporateAid\Commerce\Controllers\MediaServeController;
@@ -554,6 +555,26 @@ $router->get('/commerce/ca-admin/products',
 $router->get('/commerce/ca-admin/products/create',
     [ProductController::class, 'showCreate'],
     ['store', 'auth']);
+
+// CSV import. The upload creates a batch row and stores
+// the file. The map / validate / preview / commit /
+// rollback screens ship in Stage 016 Session 2. The
+// index and upload screens are live now.
+$router->get('/commerce/ca-admin/import',
+    [ImportController::class, 'index'],
+    ['store', 'auth', 'permission:catalog.import']);
+
+$router->get('/commerce/ca-admin/import/upload',
+    [ImportController::class, 'showUpload'],
+    ['store', 'auth', 'permission:catalog.import']);
+
+$router->post('/commerce/ca-admin/import/upload',
+    [ImportController::class, 'upload'],
+    ['store', 'auth', 'csrf', 'permission:catalog.import']);
+
+$router->get('/commerce/ca-admin/import/{id}',
+    [ImportController::class, 'show'],
+    ['store', 'auth', 'permission:catalog.import']);
 $router->post('/commerce/ca-admin/products',
     [ProductController::class, 'store'],
     ['store', 'auth', 'csrf']);
