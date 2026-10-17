@@ -2,7 +2,7 @@
 
 **As of:** 2026-10-12
 **Version:** 0.31.0-alpha
-**Stage:** 010 (Payments Deep) complete. Sub-stages shipping: 010.1 (M-Pesa) closed 2026-10-17. 010.2 (Pesapal) code-complete 2026-10-17, browser test pending the sandbox account. 010.4 (Manual), 010.5 (Cash on Delivery), and 010.6 (Bank Transfer) closed 2026-10-16. 010.3 (Flutterwave) remains. Three providers production-proven: Stripe, PayPal, and M-Pesa.
+**Stage:** 010 (Payments Deep) complete. Sub-stages shipping: 010.1 (M-Pesa) closed 2026-10-17. 010.2 (Pesapal) and 010.3 (Flutterwave) code-complete 2026-10-17, browser tests pending their sandbox accounts. 010.4 (Manual), 010.5 (Cash on Delivery), and 010.6 (Bank Transfer) closed 2026-10-16. Three providers production-proven: Stripe, PayPal, and M-Pesa.
 
 One-page snapshot of where the project stands. For deeper context
 read `docs/REMEMBER.md` and `docs/ROADMAP.md`.

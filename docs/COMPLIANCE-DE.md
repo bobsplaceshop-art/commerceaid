@@ -1324,3 +1324,81 @@ refused.
 and 25 (M-Pesa). The four processors share the
 same framework. The DPA work is done once per
 processor, at the operator's account creation.
+
+---
+
+## 27. Flutterwave (DSGVO Art. 28 Processor)
+
+**Requirement:** Flutterwave processes payments on
+behalf of the merchant. Under DSGVO Art. 28,
+Flutterwave is a processor and requires a Data
+Processing Agreement with the controller. Same
+scope as entries 23 through 26.
+
+**Exposure:** Same as entries 23 through 26.
+Fines up to EUR 10 million or 2% of global
+annual turnover.
+
+**How we address it:** Flutterwave is used
+exclusively via the hosted payment page. Card
+and mobile money details never touch the
+platform's servers. The merchant signs
+Flutterwave's standard DPA before accepting
+live payments.
+
+**Checklist for the operator:**
+
+  [ ] Create a Flutterwave merchant account.
+  [ ] Complete the Flutterwave developer
+      onboarding.
+  [ ] Register the webhook URL in the Flutterwave
+      dashboard under Settings > Webhook. Set a
+      secret hash. Copy both into the
+      payments.flutterwave.secret_hash setting
+      and the redirect URL into the
+      payments.flutterwave.redirect_url field.
+  [ ] Sign Flutterwave's Data Processing
+      Agreement.
+  [ ] Record the DPA in the operator's processing
+      register (Verzeichnis von
+      Verarbeitungstaetigkeiten, DSGVO Art. 30).
+  [ ] Disclose Flutterwave in the
+      Datenschutzerklaerung as a payment
+      processor.
+
+**Where the code lives:**
+
+  - `app/Commerce/Services/Payment/Providers/FlutterwaveProvider.php`
+  - `app/Commerce/Controllers/Storefront/FlutterwaveReturnController.php`
+  - `app/Commerce/Controllers/WebhookController.php`
+  - `app/Commerce/Repositories/FlutterwaveRequestRepository.php`
+
+**Stage:** 010.3.
+
+**Status:** Not started as a documented step. The
+processor is live (code-complete). The DPA is the
+merchant's to sign.
+
+**Note on data sent to Flutterwave:** the platform
+sends the order reference, the amount, the
+currency, and the customer's email (or a
+placeholder if no email is on the order) to
+Flutterwave as part of POST /payments. That is a
+transfer of personal data to a processor. The
+merchant's DPA covers it.
+
+**Note on webhook signature:** Flutterwave sends
+the merchant's configured secret hash as a plain
+string in the verif-hash header. The platform
+compares the header against the store's
+payments.flutterwave.secret_hash setting. The
+tx_ref lookup in commerce_flutterwave_requests
+is the second security layer: an attacker with
+the secret hash cannot forge a tx_ref for an
+order the store never initiated.
+
+**See also:** entries 23 (Stripe), 24 (PayPal),
+25 (M-Pesa), and 26 (Pesapal). The five
+processors share the same framework. The DPA
+work is done once per processor, at the
+operator's account creation.
