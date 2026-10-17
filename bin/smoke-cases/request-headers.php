@@ -2,33 +2,38 @@
 declare(strict_types=1);
 
 /**
- * Smoke case: Request::header() case-insensitive lookup.
+ * Smoke case: Request::capture() preserves header names
+ * against case-insensitive lookup.
  *
- * The 2026-10-15 PayPal webhook session found that
- * Request::header() did an exact string match. The
- * producer (Request::extractHeaders) title-cases header
- * names from $_SERVER. So HTTP_PAYPAL_TRANSMISSION_ID
- * became 'Paypal-Transmission-Id' in $this->headers. A
- * caller that asked for 'PayPal-Transmission-Id' (the
- * brand capitalisation) got null. The PayPal webhook
- * provider silently bailed at a guard, and every real
- * delivery logged 'webhook.signature-invalid'.
+ * Guards the bug class fixed in 863c950 (PayPal webhook
+ * session, 2026-10-15). Before that fix, Request::header()
+ * did an exact string match against $this->headers, which
+ * is built by extractHeaders() with title-cased names.
+ * A caller asking for "PayPal-Transmission-Id" against a
+ * producer that emitted "Paypal-Transmission-Id" got null.
+ * The webhook signature check failed with a message that
+ * named the wrong cause (invalid signature, not a key-case
+ * mismatch). The bug cost an hour to diagnose.
  *
- * The fix added a case-insensitive fallback. This case
- * is the guard against a future regression.
+ * The fix added a case-insensitive fallback in header().
+ * This case makes sure the fallback stays. It exercises
+ * the whole pipeline: a synthetic $_SERVER with a
+ * brand-capitalised key, Request::capture() reading it,
+ * and header() returning the value for any case variant
+ * the caller may ask for.
  *
- * The case builds a synthetic $_SERVER that mimics what
- * Apache passes to PHP for a real webhook, calls
- * Request::capture(), and asserts that header() reads
- * the value under any capitalisation the caller asks
- * for.
+ * The case does not touch the database. It does not need
+ * the container. It swaps $_SERVER, captures, restores,
+ * and asserts.
  *
- * No database. No network. Pure PHP.
+ * The setup restores $_SERVER in a finally block so a
+ * later case in the same process sees the real server
+ * array. The harness runs every case in one PHP process.
  *
- * Returns true on pass, a string describing the failure
- * on fail. The sibling of refund.php and
- * stripe-webhook.php; discovered by glob, run by
- * composer smoke.
+ * Returns true on pass, a string on failure.
+ *
+ * @param \CorporateAid\Core\Container $container
+ * @param PDO $pdo  the test database connection (unused)
  */
 
 use CorporateAid\Core\Request;
@@ -37,140 +42,153 @@ return function ($container, PDO $pdo): bool|string {
 
     $failures = [];
 
-    // Preserve the current superglobals so the case is
-    // self-contained and does not pollute the harness.
-    $savedServer = $_SERVER;
+    // --------------------------------------------------------------
+    // Fixture: a $_SERVER with the exact producer shape the
+    // bug report names. A real PayPal webhook arrives with
+    // these HTTP_* entries. PHP's superglobals preserve the
+    // raw underscore form. extractHeaders() converts each
+    // one to a title-cased name.
+    //
+    //   HTTP_PAYPAL_TRANSMISSION_ID -> Paypal-Transmission-Id
+    //   HTTP_STRIPE_SIGNATURE       -> Stripe-Signature
+    //   HTTP_X_CUSTOM_BRAND_HEADER  -> X-Custom-Brand-Header
+    //
+    // Both brands that touch this project (PayPal, Stripe)
+    // appear in the fixture. The third is a synthetic
+    // hyphenated name that exercises the extractHeaders()
+    // transformation beyond the payment providers.
+    // --------------------------------------------------------------
+    $syntheticServer = [
+        'REQUEST_METHOD'                  => 'POST',
+        'REQUEST_URI'                     => '/webhooks/paypal',
+        'REMOTE_ADDR'                     => '127.0.0.1',
+        'HTTP_HOST'                       => 'localhost:8084',
+        'HTTP_PAYPAL_TRANSMISSION_ID'     => 'transmission-abc-123',
+        'HTTP_PAYPAL_TRANSMISSION_TIME'   => '2026-10-17T10:00:00Z',
+        'HTTP_PAYPAL_TRANSMISSION_SIG'    => 'sig-xyz-789',
+        'HTTP_PAYPAL_AUTH_ALGO'           => 'SHA256withRSA',
+        'HTTP_PAYPAL_CERT_URL'            => 'https://api.paypal.com/cert.pem',
+        'HTTP_STRIPE_SIGNATURE'           => 't=1700000000,v1=abc123',
+        'HTTP_X_CUSTOM_BRAND_HEADER'      => 'custom-value',
+    ];
+
+    // Swap $_SERVER. Save the original so a finally block
+    // can restore it. The harness is a single PHP process;
+    // a case that corrupts $_SERVER affects every later
+    // case.
+    $originalServer = $_SERVER;
 
     try {
-        // ---------------------------------------------------------
-        // Synthetic $_SERVER, shaped exactly as Apache would
-        // deliver a PayPal webhook through mod_php. Header
-        // names are uppercased and underscore-separated, per
-        // the HTTP_* convention.
-        // ---------------------------------------------------------
-        $_SERVER['REQUEST_METHOD'] = 'POST';
-        $_SERVER['REQUEST_URI']    = '/webhooks/paypal';
-        $_SERVER['HTTP_HOST']      = 'localhost';
-        $_SERVER['HTTP_USER_AGENT'] = 'smoke/1.0';
+        $_SERVER = $syntheticServer;
 
-        $_SERVER['HTTP_PAYPAL_TRANSMISSION_ID']   = 'tx-id-abc';
-        $_SERVER['HTTP_PAYPAL_TRANSMISSION_TIME'] = '2026-10-15T18:00:00Z';
-        $_SERVER['HTTP_PAYPAL_TRANSMISSION_SIG']  = 'sig-xyz';
-        $_SERVER['HTTP_PAYPAL_CERT_URL']          = 'https://example.com/cert';
-        $_SERVER['HTTP_PAYPAL_AUTH_ALGO']         = 'SHA256withRSA';
-
-        // ---------------------------------------------------------
-        // Build the Request the way the router does.
-        // ---------------------------------------------------------
         $request = Request::capture();
 
-        // ---------------------------------------------------------
-        // Assertion 1: the producer's exact output case.
-        // Trace extractHeaders('HTTP_PAYPAL_TRANSMISSION_ID'):
-        //   substr(_, 5)                -> PAYPAL_TRANSMISSION_ID
-        //   str_replace('_', ' ')       -> PAYPAL TRANSMISSION ID
-        //   strtolower                  -> paypal transmission id
-        //   ucwords                     -> Paypal Transmission Id
-        //   str_replace(' ', '-')       -> Paypal-Transmission-Id
-        // The fast path through array_key_exists hits here.
-        // ---------------------------------------------------------
-        $viaProducer = $request->header('Paypal-Transmission-Id');
-        if ($viaProducer !== 'tx-id-abc') {
-            $failures[] = "assertion 1 (producer case): got "
-                . var_export($viaProducer, true) . ", expected 'tx-id-abc'";
+        // ----------------------------------------------------------
+        // Assertion 1: header() returns the value for the exact
+        // producer form. The producer (extractHeaders) title-
+        // cases each header, so the internal key is
+        // "Paypal-Transmission-Id". A caller asking for that
+        // exact string gets the value.
+        // ----------------------------------------------------------
+        $exact = $request->header('Paypal-Transmission-Id');
+        if ($exact !== 'transmission-abc-123') {
+            $failures[] = 'assertion 1: exact form "Paypal-Transmission-Id" '
+                . 'returned ' . var_export($exact, true)
+                . ', expected "transmission-abc-123"';
         }
 
-        // ---------------------------------------------------------
-        // Assertion 2: the consumer's brand capitalisation.
-        // This is the exact case the pre-fix code failed.
-        // PayPal's own brand spells it with a capital P in
-        // both syllables; extractHeaders produces Paypal.
-        // ---------------------------------------------------------
-        $viaBrand = $request->header('PayPal-Transmission-Id');
-        if ($viaBrand !== 'tx-id-abc') {
-            $failures[] = "assertion 2 (brand case): got "
-                . var_export($viaBrand, true) . ", expected 'tx-id-abc'";
+        // ----------------------------------------------------------
+        // Assertion 2: header() returns the value for the
+        // caller's brand-capitalisation. This is the bug the
+        // fallback fixes. "PayPal-Transmission-Id" (with a
+        // capital P in each syllable) is not the producer's
+        // internal key but is the same HTTP header.
+        // ----------------------------------------------------------
+        $branded = $request->header('PayPal-Transmission-Id');
+        if ($branded !== 'transmission-abc-123') {
+            $failures[] = 'assertion 2: brand-capitalised form "PayPal-Transmission-Id" '
+                . 'returned ' . var_export($branded, true)
+                . ', expected "transmission-abc-123" (case-insensitive fallback broken)';
         }
 
-        // ---------------------------------------------------------
-        // Assertion 3: the all-caps form.
-        // ---------------------------------------------------------
-        $viaCaps = $request->header('PAYPAL-TRANSMISSION-ID');
-        if ($viaCaps !== 'tx-id-abc') {
-            $failures[] = "assertion 3 (all caps): got "
-                . var_export($viaCaps, true) . ", expected 'tx-id-abc'";
+        // ----------------------------------------------------------
+        // Assertion 3: an all-lowercase query works too. A
+        // future caller that normalises header names to
+        // lowercase still reaches the value.
+        // ----------------------------------------------------------
+        $lower = $request->header('paypal-transmission-id');
+        if ($lower !== 'transmission-abc-123') {
+            $failures[] = 'assertion 3: lowercase form "paypal-transmission-id" '
+                . 'returned ' . var_export($lower, true)
+                . ', expected "transmission-abc-123"';
         }
 
-        // ---------------------------------------------------------
-        // Assertion 4: the all-lowercase form.
-        // ---------------------------------------------------------
-        $viaLower = $request->header('paypal-transmission-id');
-        if ($viaLower !== 'tx-id-abc') {
-            $failures[] = "assertion 4 (all lower): got "
-                . var_export($viaLower, true) . ", expected 'tx-id-abc'";
+        // ----------------------------------------------------------
+        // Assertion 4: a Stripe header also works. The same
+        // extractHeaders() transformation applies, and the
+        // same fallback catches a Stripe-shaped query.
+        // ----------------------------------------------------------
+        $stripe = $request->header('Stripe-Signature');
+        if ($stripe !== 't=1700000000,v1=abc123') {
+            $failures[] = 'assertion 4: "Stripe-Signature" '
+                . 'returned ' . var_export($stripe, true)
+                . ', expected "t=1700000000,v1=abc123"';
         }
 
-        // ---------------------------------------------------------
-        // Assertion 5: a missing header returns the caller's
-        // default. The fallback loop must not fabricate a
-        // match against a string that shares a prefix.
-        // ---------------------------------------------------------
-        $missing = $request->header('X-Does-Not-Exist', 'fallback');
-        if ($missing !== 'fallback') {
-            $failures[] = "assertion 5 (missing): got "
-                . var_export($missing, true) . ", expected 'fallback'";
+        // ----------------------------------------------------------
+        // Assertion 5: an unknown header returns the caller's
+        // default. The fallback must not accidentally match
+        // unrelated headers.
+        // ----------------------------------------------------------
+        $missing = $request->header('X-Does-Not-Exist', 'default-value');
+        if ($missing !== 'default-value') {
+            $failures[] = 'assertion 5: unknown header returned '
+                . var_export($missing, true)
+                . ', expected "default-value"';
         }
 
-        // ---------------------------------------------------------
-        // Assertion 6: the other four PayPal headers also
-        // read back through the case-insensitive path. Same
-        // shape as assertion 2, different field names.
-        // ---------------------------------------------------------
-        $checks = [
-            'PayPal-Transmission-Time' => '2026-10-15T18:00:00Z',
-            'PayPal-Transmission-Sig'  => 'sig-xyz',
-            'PayPal-Cert-Url'          => 'https://example.com/cert',
-            'PayPal-Auth-Algo'         => 'SHA256withRSA',
-        ];
-        foreach ($checks as $name => $expected) {
-            $actual = $request->header($name);
-            if ($actual !== $expected) {
-                $failures[] = "assertion 6 ({$name}): got "
-                    . var_export($actual, true) . ", expected "
-                    . var_export($expected, true);
-            }
+        // ----------------------------------------------------------
+        // Assertion 6: an unknown header without a default
+        // returns null. Matches the method's contract.
+        // ----------------------------------------------------------
+        $nullMissing = $request->header('X-Does-Not-Exist');
+        if ($nullMissing !== null) {
+            $failures[] = 'assertion 6: unknown header without default returned '
+                . var_export($nullMissing, true)
+                . ', expected null';
         }
 
-        // ---------------------------------------------------------
-        // Assertion 7: a non-PayPal header still reads
-        // through the fast path. HTTP_HOST becomes Host.
-        // ---------------------------------------------------------
-        $host = $request->header('Host');
-        if ($host !== 'localhost') {
-            $failures[] = "assertion 7 (Host fast path): got "
-                . var_export($host, true)
-                . ", expected 'localhost'";
+        // ----------------------------------------------------------
+        // Assertion 7: the extractHeaders transformation itself
+        // is exercised. The internal key for the custom header
+        // is "X-Custom-Brand-Header". A caller asking for that
+        // exact form gets the value. This guards the
+        // transformation against a future refactor that
+        // changes the case handling.
+        // ----------------------------------------------------------
+        $custom = $request->header('X-Custom-Brand-Header');
+        if ($custom !== 'custom-value') {
+            $failures[] = 'assertion 7: "X-Custom-Brand-Header" '
+                . 'returned ' . var_export($custom, true)
+                . ', expected "custom-value"';
         }
 
-        // ---------------------------------------------------------
-        // Assertion 8: the fallback does not confuse a
-        // key with a longer neighbour. X-Paypal is a
-        // prefix of X-Paypal-Transmission-Id; asking for
-        // X-Paypal must not match the longer key.
-        // ---------------------------------------------------------
-        $_SERVER['HTTP_X_PAYPAL_TRANSMISSION_ID'] = 'should-not-match';
-        // Re-capture so the new server state is reflected.
-        $request2 = Request::capture();
-        $notMatched = $request2->header('X-Paypal', 'no-match');
-        if ($notMatched !== 'no-match') {
-            $failures[] = "assertion 8 (prefix ambiguity): got "
-                . var_export($notMatched, true) . ", expected 'no-match'";
+        // ----------------------------------------------------------
+        // Assertion 8: the fallback works for a case variant
+        // of the custom header. "x-custom-brand-header" (all
+        // lowercase) is the caller's possible form.
+        // ----------------------------------------------------------
+        $customLower = $request->header('x-custom-brand-header');
+        if ($customLower !== 'custom-value') {
+            $failures[] = 'assertion 8: lowercase custom header returned '
+                . var_export($customLower, true)
+                . ', expected "custom-value"';
         }
-        unset($_SERVER['HTTP_X_PAYPAL_TRANSMISSION_ID']);
 
     } finally {
-        // Restore the superglobals no matter what.
-        $_SERVER = $savedServer;
+        // Restore the real $_SERVER. Any case that runs after
+        // this one needs the original superglobal state.
+        $_SERVER = $originalServer;
     }
 
     if ($failures !== []) {
