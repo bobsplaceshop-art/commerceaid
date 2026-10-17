@@ -521,6 +521,50 @@ final class StoreSettingDefinitions
             'hint'    => 'Turn on only if your Pesapal plan exposes the refund endpoint. Otherwise refunds are recorded offline.',
         ],
 
+        'payments.flutterwave.mode' => [
+            'label'   => 'Flutterwave mode',
+            'type'    => 'select',
+            'default' => 'sandbox',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Sandbox uses the Flutterwave test environment. Live charges real cards and mobile money.',
+            'options' => ['sandbox' => 'Sandbox (test)', 'live' => 'Live (production)'],
+        ],
+        'payments.flutterwave.public_key' => [
+            'label'   => 'Flutterwave public key',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Begins with FLWPUBK_TEST- (sandbox) or FLWPUBK- (live).',
+        ],
+        'payments.flutterwave.secret_key' => [
+            'label'   => 'Flutterwave secret key',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Begins with FLWSECK_TEST- (sandbox) or FLWSECK- (live). Stored in commerce_store_settings.',
+        ],
+        'payments.flutterwave.secret_hash' => [
+            'label'   => 'Flutterwave secret hash',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'The value you set in the Flutterwave dashboard under Webhook Settings. Flutterwave sends it in the verif-hash header on every webhook. It is a plain shared secret, not an HMAC.',
+        ],
+        'payments.flutterwave.redirect_url' => [
+            'label'   => 'Flutterwave redirect URL',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'The URL the customer returns to after paying. It must be https and publicly reachable.',
+        ],
+        'payments.flutterwave.refund_enabled' => [
+            'label'   => 'Flutterwave refunds enabled',
+            'type'    => 'bool',
+            'default' => false,
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Turn on only if your Flutterwave plan exposes the refund endpoint. Otherwise refunds are recorded offline.',
+        ],
+
     ];
 
     /**
