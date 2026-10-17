@@ -141,9 +141,10 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     ]) ?>
 
     <?= view_partial('storefront/partials/header', [
-        'store'     => $store,
-        'brandName' => $brandName,
-        'cartCount' => $cartCount,
+        'store'         => $store,
+        'brandName'     => $brandName,
+        'cartCount'     => $cartCount,
+        'navCategories' => $navCategories ?? [],
     ]) ?>
 
     <?php if ($hasFlash): ?>

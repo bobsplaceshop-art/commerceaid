@@ -22,8 +22,9 @@
  *   - Language selector is in the utility bar (not here)
  */
 
-$store     = $store     ?? null;
-$brandName = $brandName ?? brand_name(null);
+$store         = $store         ?? null;
+$brandName     = $brandName     ?? brand_name(null);
+$navCategories = $navCategories ?? [];
 
 // Cart count. Resolved by the layout from CartService::count()
 // once per request and passed to this partial. Falls back to 0
@@ -50,24 +51,21 @@ $__unread = customer_unread_message_count();
 
 // Navigation items.
 //
-// Contract: eventually populated from `commerce_navigation_menu_items`
-// via the store builder admin. Today hardcoded. The view treats the
-// array as opaque - it just renders whatever it is given.
-//
-// Note: the design brief listed "Home" twice. The second occurrence
-// is replaced with "New In" as a reasonable substitute. Adjust when
-// the customer confirms.
+// The fixed items (Home, New In, Sale) always appear. The
+// category items are resolved from the store's active
+// categories by the StorefrontController. A store with no
+// categories shows only the fixed items.
 $navItems = [
-    ['label' => 'Home',               'href' => '/'],
-    ['label' => 'Women',              'href' => '/categories/women'],
-    ['label' => 'Bags & Accessories', 'href' => '/categories/bags-accessories'],
-    ['label' => 'Children',           'href' => '/categories/children'],
-    ['label' => 'Beauty & Lifestyle', 'href' => '/categories/beauty-lifestyle'],
-    ['label' => 'Gifts',              'href' => '/categories/gifts'],
-    ['label' => 'Mobile',             'href' => '/categories/mobile'],
-    ['label' => 'New In',             'href' => '/products?sort=newest'],
-    ['label' => 'Sale',               'href' => '/products?filter=sale', 'highlight' => true],
+    ['label' => 'Home',   'href' => '/'],
 ];
+foreach (($navCategories ?? []) as $cat) {
+    $navItems[] = [
+        'label' => $cat->name,
+        'href'  => '/categories/' . $cat->slug,
+    ];
+}
+$navItems[] = ['label' => 'New In', 'href' => '/products?sort=newest'];
+$navItems[] = ['label' => 'Sale',   'href' => '/products?filter=sale', 'highlight' => true];
 
 // Active-state detection: current path prefix-matches an item href.
 // Dashboard-style exact-match rule from the sidebar does not apply

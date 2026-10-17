@@ -53,6 +53,7 @@ abstract class StorefrontController
         $data['cartCount']           = $this->resolveCartCount();
         $data['wishlistProductIds']  = $this->resolveWishlistProductIds();
         $data['cookieBannerEnabled'] = $this->resolveCookieBannerEnabled();
+        $data['navCategories']       = $this->resolveNavCategories();
 
         return Response::html(
             $viewSvc->render($view, $data, 'storefront.layouts.main')
@@ -141,6 +142,28 @@ abstract class StorefrontController
     {
         try {
             return $this->container->get(WishlistService::class)->productIds();
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    /**
+     * The active categories for the storefront header's
+     * navigation. Resolved once per request.
+     *
+     * Defensive: returns an empty array on failure, so
+     * a broken category query does not break the whole
+     * storefront header.
+     *
+     * @return array<int, \CorporateAid\Commerce\Models\Category>
+     */
+    private function resolveNavCategories(): array
+    {
+        try {
+            $repo = $this->container->get(
+                \CorporateAid\Commerce\Repositories\CategoryRepository::class
+            );
+            return $repo->listAll(false);
         } catch (\Throwable $e) {
             return [];
         }
