@@ -45,4 +45,34 @@ return [
         'from_email' => 'no-reply@anayaglobal.test',
         'from_name'  => 'Your Store Name',
     ],
+
+    // Used by bin/render-harness.php. The harness spawns
+    // Chrome headless, drives it over the Chrome DevTools
+    // Protocol, and navigates every static route at four
+    // viewports to check for horizontal overflow.
+    //
+    // The harness runs in Laragon Terminal (native Windows),
+    // not WSL. Chrome is a Windows application at a Windows
+    // path, and the WSL filesystem cannot reach it.
+    'render' => [
+        // Path to the Chrome executable. The default is the
+        // standard Windows 64-bit install. Use forward slashes;
+        // Windows PHP accepts them in is_file() and proc_open().
+        //
+        // Edge also works: both speak CDP. If Chrome is
+        // removed, point at msedge.exe instead.
+        'chrome_path' => 'C:/Program Files/Google/Chrome/Application/chrome.exe',
+
+        // The base URL the harness navigates to. Local Apache
+        // is faster than the tunnel; use the tunnel only when
+        // testing the exact URL the payment APIs see.
+        'base_url'    => 'http://localhost:8084',
+
+        // Dev credentials the harness uses to log in once and
+        // check the admin routes. Never put production
+        // credentials here; the harness runs against a dev
+        // store, not a live one.
+        'admin_email'    => 'admin@anayaglobal.test',
+        'admin_password' => 'ChangeMe!2026',
+    ],
 ];

@@ -46,7 +46,8 @@
             "git config --unset core.hooksPath || true"
         ],
         "prevenger": "php bin/check.php",
-        "smoke": "php bin/smoke.php"
+        "smoke": "php bin/smoke.php",
+        "render": "php bin/render-harness.php"
     },
     "config": {
         "optimize-autoloader": true,
