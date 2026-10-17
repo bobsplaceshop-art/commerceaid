@@ -22,6 +22,7 @@ use CorporateAid\Commerce\Controllers\Storefront\CheckoutController;
 use CorporateAid\Commerce\Controllers\Storefront\StripeReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\PayPalReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\PesapalReturnController;
+use CorporateAid\Commerce\Controllers\Storefront\FlutterwaveReturnController;
 use CorporateAid\Commerce\Controllers\Storefront\NewsletterController;
 use CorporateAid\Commerce\Controllers\Storefront\FormController;
 
@@ -282,6 +283,13 @@ $router->get('/checkout/paypal/return', [PayPalReturnController::class, 'handle'
 // paid state if COMPLETED. The IPN handler does the
 // same write; the two are idempotent.
 $router->get('/checkout/pesapal/return', [PesapalReturnController::class, 'handle'], ['store']);
+
+// Flutterwave return. The customer lands here after
+// paying (or cancelling) on Flutterwave's hosted page.
+// The controller queries GET /verify and writes the
+// paid state if 'successful'. The webhook handler does
+// the same write; the two are idempotent.
+$router->get('/checkout/flutterwave/return', [FlutterwaveReturnController::class, 'handle'], ['store']);
 
 // Legal pages (public, one route for all four slugs)
 $router->get('/legal/{slug}', [CheckoutController::class, 'legalPage'], ['store']);

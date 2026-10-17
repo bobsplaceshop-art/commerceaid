@@ -124,11 +124,12 @@ final class PaymentChargeService
         $orderRef = rawurlencode((string) $order->orderNumber);
 
         $returnUrl = match ($providerKey) {
-            'stripe'  => $appUrl . '/checkout/stripe/return?order='
-                       . $orderRef . '&session_id={CHECKOUT_SESSION_ID}',
-            'paypal'  => $appUrl . '/checkout/paypal/return?order=' . $orderRef,
-            'pesapal' => $appUrl . '/checkout/pesapal/return?order=' . $orderRef,
-            default   => $appUrl . '/checkout/confirmation/' . $orderRef,
+            'stripe'      => $appUrl . '/checkout/stripe/return?order='
+                           . $orderRef . '&session_id={CHECKOUT_SESSION_ID}',
+            'paypal'      => $appUrl . '/checkout/paypal/return?order=' . $orderRef,
+            'pesapal'     => $appUrl . '/checkout/pesapal/return?order=' . $orderRef,
+            'flutterwave' => $appUrl . '/checkout/flutterwave/return?order=' . $orderRef,
+            default       => $appUrl . '/checkout/confirmation/' . $orderRef,
         };
 
         $cancelUrl = $appUrl . '/checkout/confirm';
