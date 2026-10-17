@@ -619,6 +619,94 @@ a shipping-address field: the payer can differ from
 the shipping recipient (gift orders, third-party
 payments).
 
+**Pesapal (010.2) is code-complete** (ea4096c,
+2026-10-17). The browser test against the Pesapal
+sandbox is pending the developer account. Three
+sessions shipped:
+
+  - Session 1 (f4140ee): migration 0344,
+    commerce_pesapal_requests, six settings
+    entries, PesapalRequestRepository.
+
+  - Session 2 (6bbc911): PesapalProvider (597
+    lines), registry entry, webhook route,
+    WebhookController::pesapal().
+
+  - Session 3 (ea4096c): PesapalReturnController,
+    PesapalProvider::readTransactionStatus(),
+    bin/cleanup-pesapal-requests.php.
+
+Pesapal differs from the four providers already
+shipped in two ways:
+
+  - The IPN carries query parameters, not a JSON
+    body. WebhookController::pesapal() builds a
+    synthetic JSON body from the query parameters
+    and delegates to the shared handle(). The
+    success response echoes the query parameters
+    with 200, per Pesapal's requirement.
+
+  - The access token expires after 5 minutes.
+    The provider fetches a fresh token on every
+    request. No caching.
+
+One bug the sub-stage surfaced:
+PaymentChargeService's returnUrl match had no
+'pesapal' branch, so Pesapal's callback_url fell
+through to the default confirmation page. The
+return controller never ran. Fixed in ea4096c.
+
+**Flutterwave (010.3) is code-complete** (f7b9fd8,
+2026-10-17). The browser test against the
+Flutterwave sandbox is pending the developer
+account. Three sessions shipped:
+
+  - Session 1 (eec5e75): migration 0345,
+    commerce_flutterwave_requests, six settings
+    entries, FlutterwaveRequestRepository.
+
+  - Session 2 (38c995d): FlutterwaveProvider
+    (592 lines), registry entry, webhook route,
+    WebhookController::flutterwave().
+
+  - Session 3 (f7b9fd8): FlutterwaveReturnController,
+    bin/cleanup-flutterwave-requests.php, the
+    PaymentChargeService 'flutterwave' branch.
+
+Flutterwave differs from the five providers
+already shipped in two ways:
+
+  - The webhook signature is a plain shared
+    secret in the verif-hash header, not an HMAC
+    of the payload. The provider compares the
+    header against the store's secret_hash
+    setting. The tx_ref lookup in
+    commerce_flutterwave_requests is the second
+    security layer.
+
+  - The webhook must return 200. The shared
+    handle() returns 204 on success; the
+    flutterwave() method overrides to 200.
+
+The PaymentChargeService 'flutterwave' branch
+was added in the same sub-stage. The Pesapal
+sub-stage had surfaced this as a missed step;
+Flutterwave's branch shipped with its Session 3
+rather than waiting to be found in the browser
+test.
+
+Eight providers now resolve: Stripe, PayPal,
+M-Pesa, Pesapal, Flutterwave, COD, Bank
+Transfer, Manual.
+
+The browser tests are the outstanding piece.
+Once the developer accounts are active, the
+tests prove the full flows against the live
+sandboxes. Until then, the code is structurally
+verified (PHPStan level 8, four prevenger
+checkers, five smoke cases) but not proven
+against the live APIs.
+
 **Checkout quality and services questionnaire shipped**
 (3d04b5b, 587baef): a broad pass on the checkout flow,
 plus the client services questionnaire.
