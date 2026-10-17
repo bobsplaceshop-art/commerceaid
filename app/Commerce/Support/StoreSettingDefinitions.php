@@ -477,6 +477,50 @@ final class StoreSettingDefinitions
             'hint'    => 'Turn on only if your Daraja plan exposes the refund endpoint. Otherwise refunds are recorded offline.',
         ],
 
+        'payments.pesapal.mode' => [
+            'label'   => 'Pesapal mode',
+            'type'    => 'select',
+            'default' => 'sandbox',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Sandbox uses the Pesapal test environment. Live charges real cards and mobile money.',
+            'options' => ['sandbox' => 'Sandbox (test)', 'live' => 'Live (production)'],
+        ],
+        'payments.pesapal.consumer_key' => [
+            'label'   => 'Pesapal consumer key',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'From the Pesapal merchant dashboard, API credentials.',
+        ],
+        'payments.pesapal.consumer_secret' => [
+            'label'   => 'Pesapal consumer secret',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Paired with the consumer key. Stored in commerce_store_settings.',
+        ],
+        'payments.pesapal.ipn_id' => [
+            'label'   => 'Pesapal IPN ID',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Returned by Pesapal when you register the IPN URL. Copy it here.',
+        ],
+        'payments.pesapal.callback_url' => [
+            'label'   => 'Pesapal callback URL',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'The URL the customer returns to after paying. It must be https and publicly reachable.',
+        ],
+        'payments.pesapal.refund_enabled' => [
+            'label'   => 'Pesapal refunds enabled',
+            'type'    => 'bool',
+            'default' => false,
+            'group'   => self::GROUP_PAYMENTS,
+            'hint'    => 'Turn on only if your Pesapal plan exposes the refund endpoint. Otherwise refunds are recorded offline.',
+        ],
+
     ];
 
     /**
