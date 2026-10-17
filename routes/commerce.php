@@ -1094,3 +1094,7 @@ $router->post('/webhooks/mpesa',
 $router->post('/webhooks/pesapal',
     [WebhookController::class, 'pesapal'],
     ['store']);
+
+$router->post('/webhooks/flutterwave',
+    [WebhookController::class, 'flutterwave'],
+    ['store']);

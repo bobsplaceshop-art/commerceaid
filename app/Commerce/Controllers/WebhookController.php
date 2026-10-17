@@ -20,6 +20,7 @@ use CorporateAid\Platform\Support\Logger;
  *   POST /webhooks/paypal
  *   POST /webhooks/mpesa
  *   POST /webhooks/pesapal
+ *   POST /webhooks/flutterwave
  *
  * Not admin-authenticated, not customer-authenticated. The
  * provider posts the webhook; the signature is what proves
@@ -133,6 +134,34 @@ final class WebhookController
                 'merchant_reference' => $merchantRef,
                 'notification_type'  => $notifType,
             ], 200);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Flutterwave webhook receiver.
+     *
+     * Flutterwave posts a JSON body and a verif-hash
+     * header. The body shape matches the other
+     * providers', so the shared handle() works without a
+     * synthetic body. The one difference: Flutterwave
+     * requires a 200 response. handle() returns 204 on
+     * success; this method overrides the success
+     * response to 200.
+     *
+     * @param array<string,string> $params
+     */
+    public function flutterwave(Request $request, array $params = []): Response
+    {
+        $response = $this->handle($request, 'flutterwave');
+
+        // Flutterwave requires 200. Any other status is
+        // treated as a failure. 204 (success) and 200
+        // both become 200 with an empty JSON body. A 400
+        // (failure) passes through unchanged.
+        if ($response->statusCode() === 204) {
+            return Response::json(['status' => 'ok'], 200);
         }
 
         return $response;
@@ -291,6 +320,7 @@ final class WebhookController
             'PayPal-Transmission-Sig',
             'PayPal-Cert-Url',
             'PayPal-Auth-Algo',
+            'Verif-Hash',
         ];
 
         $out = [];
