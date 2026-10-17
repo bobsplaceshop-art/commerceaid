@@ -150,9 +150,26 @@ final class ImportRowRepository extends CommerceRepository
     {
         $this->db->execute(
             "UPDATE `commerce_import_rows`
-                SET `status` = 'rolled_back'
+                SET `status` = 'rolled_back', `error` = NULL
               WHERE `store_id` = ? AND `id` = ?",
             [$this->storeId(), $rowId]
+        );
+    }
+
+    /**
+     * Record a rollback attempt that failed. The row
+     * stays in 'committed' so a re-run of the rollback
+     * retries it. The error message is appended to the
+     * row's error column; unlike markCommitFailed() this
+     * does not change the status.
+     */
+    public function markRollbackFailed(int $rowId, string $error): void
+    {
+        $this->db->execute(
+            "UPDATE `commerce_import_rows`
+                SET `error` = ?
+              WHERE `store_id` = ? AND `id` = ?",
+            [$error, $this->storeId(), $rowId]
         );
     }
 

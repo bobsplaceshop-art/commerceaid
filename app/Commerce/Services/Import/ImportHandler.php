@@ -136,4 +136,18 @@ interface ImportHandler
      * @param array<string, mixed> $previousValues
      */
     public function restore(int $entityId, array $previousValues): void;
+
+    /**
+     * The entity row's id for a given natural key, or null
+     * when the key does not resolve to an entity in the
+     * current store. Used by the committer to distinguish
+     * create from update, and to fill the entity_id on
+     * commerce_import_rows::markCommitted() for updates.
+     *
+     * A handler that also has a findById-style method on
+     * its repository delegates to that. A handler whose
+     * natural key is a tuple (variant) resolves the
+     * tuple first.
+     */
+    public function findIdByNaturalKey(string $naturalKey): ?int;
 }

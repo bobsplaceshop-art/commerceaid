@@ -572,6 +572,10 @@ $router->post('/commerce/ca-admin/import/upload',
     [ImportController::class, 'upload'],
     ['store', 'auth', 'csrf', 'permission:catalog.import']);
 
+$router->get('/commerce/ca-admin/import/template/{entity}',
+    [ImportController::class, 'template'],
+    ['store', 'auth', 'permission:catalog.import']);
+
 $router->get('/commerce/ca-admin/import/{id}',
     [ImportController::class, 'show'],
     ['store', 'auth', 'permission:catalog.import']);
@@ -587,6 +591,22 @@ $router->post('/commerce/ca-admin/import/{id}/map',
 $router->post('/commerce/ca-admin/import/{id}/validate',
     [ImportController::class, 'runValidation'],
     ['store', 'auth', 'csrf', 'permission:catalog.import']);
+
+$router->get('/commerce/ca-admin/import/{id}/preview',
+    [ImportController::class, 'preview'],
+    ['store', 'auth', 'permission:catalog.import']);
+
+$router->post('/commerce/ca-admin/import/{id}/commit',
+    [ImportController::class, 'commit'],
+    ['store', 'auth', 'csrf', 'permission:catalog.import']);
+
+$router->post('/commerce/ca-admin/import/{id}/rollback',
+    [ImportController::class, 'rollback'],
+    ['store', 'auth', 'csrf', 'permission:catalog.import']);
+
+$router->get('/commerce/ca-admin/import/{id}/failed.csv',
+    [ImportController::class, 'failedExport'],
+    ['store', 'auth', 'permission:catalog.import']);
 $router->post('/commerce/ca-admin/products',
     [ProductController::class, 'store'],
     ['store', 'auth', 'csrf']);

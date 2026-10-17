@@ -157,7 +157,7 @@ final class ImportInventoryHandler implements ImportHandler
         }
         $quantity = (int) ($row['quantity'] ?? 0);
 
-        $movement = $this->inventory->adjust(
+        $this->inventory->adjust(
             $unit['product_id'],
             $unit['variant_id'],
             $quantity,
@@ -168,10 +168,13 @@ final class ImportInventoryHandler implements ImportHandler
             ]
         );
 
-        // The pipeline records the created entity id as the
-        // inventory row's id (not the movement id). The
-        // movement id is in the ledger for audit.
-        return (int) $movement->id;
+        // The committer records the created entity id on
+        // the import row. For inventory, the entity is the
+        // inventory row itself, not the movement. The
+        // movement is the ledger entry for audit; the row
+        // is what a rollback targets. Return the row id.
+        $row = $this->inventory->forUnit($unit['product_id'], $unit['variant_id']);
+        return $row !== null ? $row->id : 0;
     }
 
     /**
@@ -242,6 +245,18 @@ final class ImportInventoryHandler implements ImportHandler
         // re-resolves the SKU, and calls
         // InventoryRepository::adjust() directly. The
         // handler's restore() is not used for inventory.
+    }
+
+    public function findIdByNaturalKey(string $naturalKey): ?int
+    {
+        $unit = $this->resolveUnit($naturalKey);
+        if ($unit === null) {
+            return null;
+        }
+        return $this->inventory->forUnit(
+            $unit['product_id'],
+            $unit['variant_id']
+        )?->id;
     }
 
     // -----------------------------------------------------------------

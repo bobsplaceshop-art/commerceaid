@@ -58,6 +58,24 @@ $val = fn(string $k, string $d = '') => e((string) ($old[$k] ?? $d));
                 <?= $err('csv') ?>
             </div>
 
+            <details class="mb-3">
+                <summary class="muted small" style="cursor:pointer;">
+                    <i class="bi bi-download me-1"></i> Not sure what columns to use? Download a template.
+                </summary>
+                <div class="mt-2 d-flex flex-wrap gap-2">
+                    <?php foreach ($handlers as $key => $label): ?>
+                        <a href="/commerce/ca-admin/import/template/<?= e($key) ?>"
+                           class="ra-btn ra-btn-sm ra-btn-outline">
+                            <i class="bi bi-file-earmark-spreadsheet me-1"></i> <?= e($label) ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+                <div class="muted small mt-2">
+                    Each template includes one example row in the correct format.
+                    You can upload it unchanged to test the pipeline before committing.
+                </div>
+            </details>
+
             <div class="d-flex gap-2">
                 <a href="/commerce/ca-admin/import" class="ra-btn ra-btn-outline">Cancel</a>
                 <button type="submit" class="ra-btn ra-btn-primary">

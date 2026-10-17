@@ -301,6 +301,19 @@ final class ImportVariantHandler implements ImportHandler
         // there is nothing to restore.
     }
 
+    public function findIdByNaturalKey(string $naturalKey): ?int
+    {
+        [$productSku, $variantSku] = $this->splitKey($naturalKey);
+        if ($productSku === '' || $variantSku === '') {
+            return null;
+        }
+        $product = $this->products->findBySku($productSku);
+        if ($product === null) {
+            return null;
+        }
+        return $this->variants->findBySku($product->id, $variantSku)?->id;
+    }
+
     // -----------------------------------------------------------------
 
     /**

@@ -76,16 +76,16 @@ $statusBadge = function (string $s): string {
     </a>
 </div>
 
-<ul class="nav nav-tabs ra-admin-tabs mb-3">
-    <?php foreach ($statusTabs as $key => $label): ?>
-        <li class="nav-item">
-            <a class="nav-link <?= $status === $key ? 'active' : '' ?>"
-               href="<?= e($tabUrl($key)) ?>">
+<div class="ra-card mb-3">
+    <nav class="ra-admin-tabs" aria-label="Batch status">
+        <?php foreach ($statusTabs as $key => $label): ?>
+            <a href="<?= e($tabUrl($key)) ?>"
+               class="ra-admin-tab<?= $status === $key ? ' is-active' : '' ?>">
                 <?= e($label) ?>
             </a>
-        </li>
-    <?php endforeach; ?>
-</ul>
+        <?php endforeach; ?>
+    </nav>
+</div>
 
 <div class="ra-card mb-4">
     <div class="ra-card-body">
@@ -109,67 +109,73 @@ $statusBadge = function (string $s): string {
 </div>
 
 <div class="ra-card">
-    <div class="ra-card-body p-0">
-        <div class="ra-table-responsive-wrap" data-responsive="cards">
-            <table class="table table-hover mb-0">
-                <thead>
+    <div class="ra-table-responsive-wrap" data-responsive="cards">
+        <table class="ra-table">
+            <thead>
+                <tr>
+                    <th style="width:80px;">#</th>
+                    <th>Entity</th>
+                    <th class="ra-hide-sm">File</th>
+                    <th style="width:140px;">Status</th>
+                    <th class="ra-hide-sm" style="width:140px;">Rows</th>
+                    <th class="ra-hide-sm" style="width:160px;">Created</th>
+                    <th style="width:100px;text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($items === []): ?>
                     <tr>
-                        <th data-label="#">#</th>
-                        <th data-label="Entity">Entity</th>
-                        <th data-label="Filename">File</th>
-                        <th data-label="Status">Status</th>
-                        <th data-label="Rows">Rows</th>
-                        <th data-label="Created">Created</th>
-                        <th data-label="">&nbsp;</th>
+                        <td colspan="7" data-label="No batches" data-col="full" class="text-center py-4 muted">
+                            No batches yet. Upload a CSV to start.
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    <?php if ($items === []): ?>
+                <?php else: ?>
+                    <?php foreach ($items as $batch): ?>
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">
-                                No batches yet. Upload a CSV to start.
+                            <td data-label="#" data-col="half" class="muted small"><?= (int) $batch['id'] ?></td>
+                            <td data-label="Entity" data-col="full">
+                                <?= e($handlers[$batch['entity']] ?? $batch['entity']) ?>
+                            </td>
+                            <td data-label="File" data-col="half" class="ra-hide-sm muted small">
+                                <?= e((string) $batch['filename']) ?>
+                            </td>
+                            <td data-label="Status" data-col="half">
+                                <span class="<?= $statusBadge((string) $batch['status']) ?>">
+                                    <?= e((string) $batch['status']) ?>
+                                </span>
+                            </td>
+                            <td data-label="Rows" data-col="half" class="ra-hide-sm muted small">
+                                <?= (int) $batch['rows_total'] ?>
+                                <?php if ((int) $batch['rows_invalid'] > 0): ?>
+                                    <span class="text-danger">(<?= (int) $batch['rows_invalid'] ?> failed)</span>
+                                <?php endif; ?>
+                            </td>
+                            <td data-label="Created" data-col="half" class="ra-hide-sm muted small">
+                                <?= e($fmtDateTime($batch['created_at'] ?? null)) ?>
+                            </td>
+                            <td data-label="Actions" data-col="full" class="text-end">
+                                <a href="/commerce/ca-admin/import/<?= (int) $batch['id'] ?>" class="ra-icon-btn" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
                             </td>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($items as $batch): ?>
-                            <tr>
-                                <td data-col="half"><?= (int) $batch['id'] ?></td>
-                                <td data-col="half"><?= e($handlers[$batch['entity']] ?? $batch['entity']) ?></td>
-                                <td data-col="half"><?= e((string) $batch['filename']) ?></td>
-                                <td data-col="half">
-                                    <span class="<?= $statusBadge((string) $batch['status']) ?>">
-                                        <?= e((string) $batch['status']) ?>
-                                    </span>
-                                </td>
-                                <td data-col="half">
-                                    <?= (int) $batch['rows_total'] ?>
-                                    <?php if ((int) $batch['rows_invalid'] > 0): ?>
-                                        <span class="text-muted">(<?= (int) $batch['rows_invalid'] ?> failed)</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td data-col="half"><?= e($fmtDateTime($batch['created_at'] ?? null)) ?></td>
-                                <td data-col="half">
-                                    <a href="/commerce/ca-admin/import/<?= (int) $batch['id'] ?>" class="ra-btn ra-btn-sm ra-btn-outline">
-                                        View
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <?php if ($pages > 1): ?>
-    <nav class="mt-3">
-        <ul class="pagination">
-            <?php for ($p = 1; $p <= $pages; $p++): ?>
-                <li class="page-item <?= $p === $page ? 'active' : '' ?>">
-                    <a class="page-link" href="<?= e($pageUrl($p)) ?>"><?= $p ?></a>
-                </li>
-            <?php endfor; ?>
-        </ul>
+    <nav class="mt-3 d-flex gap-2 justify-content-center" aria-label="Pagination">
+        <?php if ($page > 1): ?>
+            <a href="<?= e($pageUrl($page - 1)) ?>" class="ra-btn ra-btn-outline">&larr; Previous</a>
+        <?php endif; ?>
+        <span class="ra-btn ra-btn-outline" style="cursor:default;">
+            Page <?= (int) $page ?> of <?= (int) $pages ?>
+        </span>
+        <?php if ($page < $pages): ?>
+            <a href="<?= e($pageUrl($page + 1)) ?>" class="ra-btn ra-btn-outline">Next &rarr;</a>
+        <?php endif; ?>
     </nav>
 <?php endif; ?>

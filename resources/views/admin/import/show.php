@@ -34,6 +34,26 @@ $fmtDateTime = function (?string $dt): string {
     $ts = strtotime($dt);
     return $ts === false ? '—' : date('M j, Y H:i', $ts);
 };
+
+$statusBadgeClass = function (string $s): string {
+    return match ($s) {
+        'committed'           => 'ra-badge ra-badge-success',
+        'partially_committed' => 'ra-badge ra-badge-warn',
+        'rolled_back'         => 'ra-badge ra-badge-muted',
+        'cancelled'           => 'ra-badge ra-badge-muted',
+        default               => 'ra-badge',
+    };
+};
+
+$rowStatusBadgeClass = function (string $s): string {
+    return match ($s) {
+        'committed'   => 'ra-badge ra-badge-success',
+        'valid'       => 'ra-badge',
+        'invalid'     => 'ra-badge ra-badge-danger',
+        'rolled_back' => 'ra-badge ra-badge-muted',
+        default       => 'ra-badge',
+    };
+};
 ?>
 
 <nav aria-label="breadcrumb" class="mb-3">
@@ -46,10 +66,10 @@ $fmtDateTime = function (?string $dt): string {
 <h1 class="h3 mb-3">Import batch #<?= $batchId ?></h1>
 
 <?php if ($flashOk): ?>
-    <div class="alert alert-success"><?= e((string) $flashOk) ?></div>
+    <div class="ra-alert ra-alert-success"><?= e((string) $flashOk) ?></div>
 <?php endif; ?>
 <?php foreach ($flashErr as $msg): ?>
-    <div class="alert alert-danger"><?= e((string) $msg) ?></div>
+    <div class="ra-alert ra-alert-error"><?= e((string) $msg) ?></div>
 <?php endforeach; ?>
 
 <div class="ra-card mb-3">
@@ -62,7 +82,7 @@ $fmtDateTime = function (?string $dt): string {
             <dd class="col-sm-9"><?= e((string) ($batch['filename'] ?? '')) ?></dd>
 
             <dt class="col-sm-3">Status</dt>
-            <dd class="col-sm-9"><span class="ra-badge"><?= e($status) ?></span></dd>
+            <dd class="col-sm-9"><span class="<?= e($statusBadgeClass($status)) ?>"><?= e($status) ?></span></dd>
 
             <dt class="col-sm-3">Created</dt>
             <dd class="col-sm-9"><?= e($fmtDateTime($batch['created_at'] ?? null)) ?></dd>
@@ -85,7 +105,7 @@ $fmtDateTime = function (?string $dt): string {
             <h2 class="h5 mb-2">Row status</h2>
             <div class="d-flex flex-wrap gap-3">
                 <?php foreach ($rowCounts as $st => $cnt): ?>
-                    <div class="ra-badge"><?= e($st) ?>: <?= (int) $cnt ?></div>
+                    <div class="<?= e($rowStatusBadgeClass($st)) ?>"><?= e($st) ?>: <?= (int) $cnt ?></div>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -110,12 +130,41 @@ $fmtDateTime = function (?string $dt): string {
             </form>
             <a href="/commerce/ca-admin/import/<?= $batchId ?>/map" class="ra-btn ra-btn-outline">Edit mapping</a>
         <?php elseif ($status === 'validated'): ?>
-            <p class="mb-2">The batch is validated (<?= $valid ?> valid, <?= $invalid ?> invalid). The preview screen and the commit action ship in Session 2b.</p>
-            <button type="button" class="ra-btn ra-btn-primary" disabled>
-                <i class="bi bi-cloud-arrow-up me-1"></i> Preview and commit (coming in Session 2b)
-            </button>
+            <p class="mb-2">The batch is validated (<?= $valid ?> valid, <?= $invalid ?> invalid). Review the preview and commit.</p>
+            <a href="/commerce/ca-admin/import/<?= $batchId ?>/preview" class="ra-btn ra-btn-primary">
+                <i class="bi bi-eye me-1"></i> Preview and commit
+            </a>
+            <?php if ($invalid > 0): ?>
+                <a href="/commerce/ca-admin/import/<?= $batchId ?>/failed.csv" class="ra-btn ra-btn-outline">
+                    <i class="bi bi-download me-1"></i> Failed rows CSV
+                </a>
+            <?php endif; ?>
+        <?php elseif ($status === 'committed' || $status === 'partially_committed'): ?>
+            <p class="mb-2">
+                This batch has been committed.
+                <?php if (!empty($rowCounts['committed'])): ?>
+                    <?= (int) $rowCounts['committed'] ?> row<?= (int) $rowCounts['committed'] === 1 ? '' : 's' ?> committed.
+                <?php endif; ?>
+                <?php if (!empty($rowCounts['invalid'])): ?>
+                    <?= (int) $rowCounts['invalid'] ?> row<?= (int) $rowCounts['invalid'] === 1 ? '' : 's' ?> failed.
+                <?php endif; ?>
+            </p>
+            <form method="POST" action="/commerce/ca-admin/import/<?= $batchId ?>/rollback" class="d-inline"
+                  onsubmit="return confirm('Roll back this batch? The committed rows will be reversed.');">
+                <?= csrf_field() ?>
+                <button type="submit" class="ra-btn ra-btn-danger">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Roll back batch
+                </button>
+            </form>
+            <?php if (!empty($rowCounts['invalid'])): ?>
+                <a href="/commerce/ca-admin/import/<?= $batchId ?>/failed.csv" class="ra-btn ra-btn-outline">
+                    <i class="bi bi-download me-1"></i> Failed rows CSV
+                </a>
+            <?php endif; ?>
+        <?php elseif ($status === 'rolled_back'): ?>
+            <p class="mb-0">This batch has been rolled back. The entity rows it created were deleted or restored.</p>
         <?php else: ?>
-            <p class="mb-0">This batch is in the <strong><?= e($status) ?></strong> state. Session 2b adds the commit, rollback, and failed-row export.</p>
+            <p class="mb-0">This batch is in the <strong><?= e($status) ?></strong> state.</p>
         <?php endif; ?>
     </div>
 </div>

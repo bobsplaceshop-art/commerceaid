@@ -41,7 +41,7 @@ $err = fn(string $k) => isset($errors[$k])
 
 <h1 class="h3 mb-3">Map columns: <?= e((string) ($batch['filename'] ?? '')) ?></h1>
 
-<div class="alert alert-info mb-3">
+<div class="ra-alert mb-3">
     <strong><?= e($entityLabel) ?></strong>
     &mdash; <?= $rowCount ?> data row<?= $rowCount === 1 ? '' : 's' ?> in the file.
     Match each field to a column from your CSV. Required fields must be mapped.
@@ -54,53 +54,54 @@ $err = fn(string $k) => isset($errors[$k])
         <form method="POST" action="/commerce/ca-admin/import/<?= $batchId ?>/map">
             <?= csrf_field() ?>
 
-            <table class="table align-middle">
-                <thead>
-                    <tr>
-                        <th style="width:30%;">Field</th>
-                        <th style="width:40%;">CSV column</th>
-                        <th>Hint</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($fields as $fieldName => $fieldDef): ?>
-                        <?php
-                        $required = !empty($fieldDef['required']);
-                        $current  = (string) ($mapping[$fieldName] ?? '');
-                        ?>
+            <div class="ra-table-responsive-wrap" data-responsive="scroll">
+                <table class="ra-table">
+                    <thead>
                         <tr>
-                            <td>
-                                <strong><?= e((string) $fieldDef['label']) ?></strong>
-                                <?php if ($required): ?>
-                                    <span class="ra-badge ra-badge-danger">required</span>
-                                <?php endif; ?>
-                                <div class="text-muted small">
-                                    <code><?= e($fieldName) ?></code>
-                                </div>
-                            </td>
-                            <td>
-                                <select
-                                    name="map[<?= e($fieldName) ?>]"
-                                    class="form-select"
-                                    <?= $required ? '' : '' ?>
-                                >
-                                    <option value="">
-                                        <?= $required ? '— choose a column —' : '— do not import —' ?>
-                                    </option>
-                                    <?php foreach ($header as $col): ?>
-                                        <option value="<?= e($col) ?>" <?= $current === $col ? 'selected' : '' ?>>
-                                            <?= e($col) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </td>
-                            <td>
-                                <div class="text-muted small"><?= e((string) $fieldDef['hint']) ?></div>
-                            </td>
+                            <th style="width:30%;">Field</th>
+                            <th style="width:40%;">CSV column</th>
+                            <th>Hint</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($fields as $fieldName => $fieldDef): ?>
+                            <?php
+                            $required = !empty($fieldDef['required']);
+                            $current  = (string) ($mapping[$fieldName] ?? '');
+                            ?>
+                            <tr>
+                                <td>
+                                    <strong><?= e((string) $fieldDef['label']) ?></strong>
+                                    <?php if ($required): ?>
+                                        <span class="ra-badge ra-badge-danger">required</span>
+                                    <?php endif; ?>
+                                    <div class="muted small">
+                                        <code><?= e($fieldName) ?></code>
+                                    </div>
+                                </td>
+                                <td>
+                                    <select
+                                        name="map[<?= e($fieldName) ?>]"
+                                        class="form-select"
+                                    >
+                                        <option value="">
+                                            <?= $required ? '— choose a column —' : '— do not import —' ?>
+                                        </option>
+                                        <?php foreach ($header as $col): ?>
+                                            <option value="<?= e($col) ?>" <?= $current === $col ? 'selected' : '' ?>>
+                                                <?= e($col) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                                <td>
+                                    <div class="muted small"><?= e((string) $fieldDef['hint']) ?></div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
 
             <div class="d-flex gap-2 mt-3">
                 <a href="/commerce/ca-admin/import/<?= $batchId ?>" class="ra-btn ra-btn-outline">Cancel</a>

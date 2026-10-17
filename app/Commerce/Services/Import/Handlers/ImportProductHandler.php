@@ -332,6 +332,11 @@ final class ImportProductHandler implements ImportHandler
         }
     }
 
+    public function findIdByNaturalKey(string $naturalKey): ?int
+    {
+        return $this->products->findBySku($naturalKey)?->id;
+    }
+
     // -----------------------------------------------------------------
 
     private function resolveBrandId(string $brandSlug): ?int

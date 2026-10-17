@@ -15,6 +15,9 @@ use CorporateAid\Commerce\Services\Import\Handlers\ImportProductHandler;
 use CorporateAid\Commerce\Services\Import\Handlers\ImportVariantHandler;
 use CorporateAid\Commerce\Services\Import\ImportBatchStatus;
 use CorporateAid\Commerce\Services\Import\ImportHandler;
+use CorporateAid\Commerce\Services\Import\ImportCommitter;
+use CorporateAid\Commerce\Services\Import\ImportTemplateGenerator;
+use CorporateAid\Commerce\Services\Import\ImportRollback;
 use CorporateAid\Commerce\Services\Import\ImportValidator;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
@@ -164,8 +167,8 @@ final class ImportController extends AdminController
         }
 
         $session->flash('import_success',
-            'File uploaded. Session 2 of this stage adds the column-mapping and validation screens.');
-        return Response::redirect('/commerce/ca-admin/import');
+            'File uploaded. Map the columns to continue.');
+        return Response::redirect('/commerce/ca-admin/import/' . $batchId);
     }
 
     /** @param array<string,string> $params */
@@ -327,17 +330,265 @@ final class ImportController extends AdminController
         return Response::redirect('/commerce/ca-admin/import/' . $id);
     }
 
+    /**
+     * The preview screen. Partitions the batch's rows
+     * into would-create, would-update, and invalid. The
+     * merchant reviews before committing.
+     *
+     * @param array<string,string> $params
+     */
+    public function preview(Request $request, array $params = []): Response
+    {
+        $repo = $this->container->get(ImportBatchRepository::class);
+        $rowRepo = $this->container->get(ImportRowRepository::class);
+        $session = $this->container->get(Session::class);
+        $id   = (int) ($params['id'] ?? 0);
+        $batch = $repo->findById($id);
+        if ($batch === null) {
+            return $this->fail('Batch not found.');
+        }
+        if ((string) $batch['status'] !== ImportBatchStatus::VALIDATED) {
+            $session->flash('import_errors', ['preview' => 'The batch must be validated before it can be previewed.']);
+            return Response::redirect('/commerce/ca-admin/import/' . $id);
+        }
+
+        $entity = (string) $batch['entity'];
+        $handlers = $this->handlerRegistry();
+        if (!isset($handlers[$entity])) {
+            return $this->fail('Unknown entity on this batch.');
+        }
+        $handler = $handlers[$entity];
+
+        $rows = $rowRepo->listForBatch($id);
+        $wouldCreate = [];
+        $wouldUpdate = [];
+        $invalid = [];
+        foreach ($rows as $row) {
+            $status = (string) ($row['status'] ?? '');
+            if ($status === 'invalid') {
+                $invalid[] = $row;
+                continue;
+            }
+            if ($status !== 'valid') {
+                continue;
+            }
+            $naturalKey = (string) $row['natural_key'];
+            if ($handler->findIdByNaturalKey($naturalKey) !== null) {
+                $wouldUpdate[] = $row;
+            } else {
+                $wouldCreate[] = $row;
+            }
+        }
+
+        return $this->render('admin.import.preview', [
+            'title'       => 'Preview: batch #' . $id,
+            'batch'       => $batch,
+            'handler'     => $handler,
+            'wouldCreate' => $wouldCreate,
+            'wouldUpdate' => $wouldUpdate,
+            'invalid'     => $invalid,
+        ]);
+    }
+
+    /**
+     * Run the committer. Writes the valid rows to the
+     * entity tables. Redirects to the batch detail with
+     * the outcome in the flash.
+     *
+     * @param array<string,string> $params
+     */
+    public function commit(Request $request, array $params = []): Response
+    {
+        $repo = $this->container->get(ImportBatchRepository::class);
+        $session = $this->container->get(Session::class);
+        $id   = (int) ($params['id'] ?? 0);
+        $batch = $repo->findById($id);
+        if ($batch === null) {
+            return $this->fail('Batch not found.');
+        }
+
+        $entity = (string) $batch['entity'];
+        $handlers = $this->handlerRegistry();
+        if (!isset($handlers[$entity])) {
+            return $this->fail('Unknown entity on this batch.');
+        }
+        $handler = $handlers[$entity];
+
+        $committer = $this->container->get(ImportCommitter::class);
+        try {
+            $result = $committer->commit($id, $handler);
+        } catch (\Throwable $e) {
+            $session->flash('import_errors', ['commit' => $e->getMessage()]);
+            return Response::redirect('/commerce/ca-admin/import/' . $id);
+        }
+
+        $msg = sprintf(
+            'Commit finished: %d created, %d updated, %d failed.',
+            $result['created'],
+            $result['updated'],
+            $result['failed']
+        );
+        if ($result['failed'] > 0) {
+            $session->flash('import_errors', ['commit' => $msg . ' Fix the failed rows and re-run.']);
+        } else {
+            $session->flash('import_success', $msg);
+        }
+        return Response::redirect('/commerce/ca-admin/import/' . $id);
+    }
+
+    /**
+     * Roll back a committed batch. Reverses every
+     * committed row. Redirects to the batch detail.
+     *
+     * @param array<string,string> $params
+     */
+    public function rollback(Request $request, array $params = []): Response
+    {
+        $repo = $this->container->get(ImportBatchRepository::class);
+        $session = $this->container->get(Session::class);
+        $id   = (int) ($params['id'] ?? 0);
+        $batch = $repo->findById($id);
+        if ($batch === null) {
+            return $this->fail('Batch not found.');
+        }
+
+        $entity = (string) $batch['entity'];
+        $handlers = $this->handlerRegistry();
+        if (!isset($handlers[$entity])) {
+            return $this->fail('Unknown entity on this batch.');
+        }
+        $handler = $handlers[$entity];
+
+        $rollback = $this->container->get(ImportRollback::class);
+        try {
+            $result = $rollback->rollback($id, $handler);
+        } catch (\Throwable $e) {
+            $session->flash('import_errors', ['rollback' => $e->getMessage()]);
+            return Response::redirect('/commerce/ca-admin/import/' . $id);
+        }
+
+        $msg = sprintf(
+            'Rollback finished: %d reversed, %d failed.',
+            $result['reversed'],
+            $result['failed']
+        );
+        if ($result['failed'] > 0) {
+            $session->flash('import_errors', ['rollback' => $msg]);
+        } else {
+            $session->flash('import_success', $msg);
+        }
+        return Response::redirect('/commerce/ca-admin/import/' . $id);
+    }
+
+    /**
+     * The failed-row export. Emits a CSV of the batch's
+     * invalid rows with an appended _error column.
+     *
+     * @param array<string,string> $params
+     */
+    public function failedExport(Request $request, array $params = []): Response
+    {
+        $repo = $this->container->get(ImportBatchRepository::class);
+        $rowRepo = $this->container->get(ImportRowRepository::class);
+        $id   = (int) ($params['id'] ?? 0);
+        $batch = $repo->findById($id);
+        if ($batch === null) {
+            return $this->fail('Batch not found.');
+        }
+
+        $invalidRows = $rowRepo->listForBatchByStatus($id, 'invalid');
+
+        $out = fopen('php://temp', 'r+');
+        if ($out === false) {
+            return $this->fail('Could not open a temporary stream.');
+        }
+
+        // Header: every distinct key in the payloads plus _error.
+        $allKeys = ['_row_number', '_natural_key'];
+        foreach ($invalidRows as $row) {
+            $payload = json_decode((string) $row['payload_json'], true);
+            if (is_array($payload)) {
+                foreach (array_keys($payload) as $k) {
+                    if (!in_array($k, $allKeys, true)) {
+                        $allKeys[] = $k;
+                    }
+                }
+            }
+        }
+        $allKeys[] = '_error';
+        fputcsv($out, $allKeys);
+
+        foreach ($invalidRows as $row) {
+            $payload = json_decode((string) $row['payload_json'], true);
+            $payload = is_array($payload) ? $payload : [];
+            $line = [
+                '_row_number'  => (int) $row['row_number'],
+                '_natural_key' => (string) $row['natural_key'],
+            ];
+            foreach ($allKeys as $k) {
+                if ($k === '_row_number' || $k === '_natural_key' || $k === '_error') {
+                    continue;
+                }
+                $line[$k] = $payload[$k] ?? '';
+            }
+            $line['_error'] = (string) ($row['error'] ?? '');
+            fputcsv($out, $line);
+        }
+
+        rewind($out);
+        $csv = stream_get_contents($out);
+        fclose($out);
+        $csv = $csv === false ? '' : $csv;
+
+        $filename = 'import-' . $id . '-failed-' . date('Y-m-d') . '.csv';
+        return new Response($csv, 200, [
+            'Content-Type'        => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    /**
+     * Download a template CSV for an entity. The header
+     * is the handler's fields() keys, in order. One
+     * sample row demonstrates the expected format.
+     *
+     * @param array<string,string> $params
+     */
+    public function template(Request $request, array $params = []): Response
+    {
+        $entity = (string) ($params['entity'] ?? '');
+        $handlers = $this->handlerRegistry();
+        if (!isset($handlers[$entity])) {
+            return $this->fail('Unknown entity.');
+        }
+        $handler = $handlers[$entity];
+
+        $generator = $this->container->get(ImportTemplateGenerator::class);
+        [$header, $sample] = $generator->generate($handler);
+
+        $out = fopen('php://temp', 'r+');
+        if ($out === false) {
+            return $this->fail('Could not open a temporary stream.');
+        }
+        fputcsv($out, $header);
+        fputcsv($out, array_values($sample));
+        rewind($out);
+        $csv = stream_get_contents($out);
+        fclose($out);
+        $csv = $csv === false ? '' : $csv;
+
+        $filename = 'import-template-' . $entity . '.csv';
+        return new Response($csv, 200, [
+            'Content-Type'        => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
     // -----------------------------------------------------------------
     // The handler registry
     // -----------------------------------------------------------------
 
     /**
-     * Session 1 ships one handler. Session 2 adds the
-     * remaining six. The controller resolves the handler
-     * instances through the container (each handler's
-     * constructor takes a repository, auto-constructed
-     * via ADR-018).
-     *
      * @return array<string, ImportHandler>
      */
     private function handlerRegistry(): array

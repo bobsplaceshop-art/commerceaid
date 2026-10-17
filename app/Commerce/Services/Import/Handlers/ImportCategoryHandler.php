@@ -234,6 +234,11 @@ final class ImportCategoryHandler implements ImportHandler
         $this->categories->update($existing);
     }
 
+    public function findIdByNaturalKey(string $naturalKey): ?int
+    {
+        return $this->categories->findBySlug($naturalKey)?->id;
+    }
+
     // -----------------------------------------------------------------
 
     private function resolveParentId(string $parentSlug): ?int

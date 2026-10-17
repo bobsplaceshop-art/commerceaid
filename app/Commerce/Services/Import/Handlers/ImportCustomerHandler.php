@@ -323,6 +323,11 @@ final class ImportCustomerHandler implements ImportHandler
         $this->customers->update($existing);
     }
 
+    public function findIdByNaturalKey(string $naturalKey): ?int
+    {
+        return $this->customers->findByEmail($naturalKey)?->id;
+    }
+
     // -----------------------------------------------------------------
 
     private function resolveGroupId(string $groupSlug): ?int

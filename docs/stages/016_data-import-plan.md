@@ -64,8 +64,9 @@ The pipeline is:
   -> failed-row export -> (optionally) rollback
 
 Nothing is written during validate or preview.
-The commit phase is transactional per chunk.
-Every batch records what it created and what it
+The commit phase is per-row atomic and chunked
+at 500 for progress reporting and memory. Every
+batch records what it created and what it
 updated, so a batch can be reversed.
 
 **What the ROADMAP already committed to.**
@@ -77,8 +78,14 @@ The ROADMAP's data-import entry names:
   - Validation pass: per-row errors, nothing
     written.
   - Dry-run preview.
-  - Commit: transactional per chunk, with a
-    batch id.
+  - Commit: per-row atomic, chunked for
+    progress and memory, with a batch id.
+    (Amended during Session 2b: the
+    handlers' own transactions prevent a
+    chunk-level transaction, and a
+    chunk-level rollback would defeat the
+    "re-run only the failed rows"
+    idempotency the same paragraph names.)
   - Idempotency: match on natural key (SKU,
     slug, email).
   - Failed-row export.
@@ -404,13 +411,31 @@ The batch stays `'validated'`.
 
 `POST /commerce/ca-admin/import/{id}/commit`
 
-The batch is committed. The commit is chunked:
-every 500 rows is one transaction. If any row
-in a chunk fails (e.g. a uniqueness conflict
-that validation missed because a concurrent
-admin created the same SKU), the whole chunk
-rolls back, and the batch moves to
-`'partially_committed'`.
+The batch is committed. The commit is chunked
+at 500 rows for progress reporting and memory.
+Each row's handler write is its own transaction
+(via the handler's repository). If a row fails
+(e.g. a uniqueness conflict that validation
+missed because a concurrent admin created the
+same SKU), the row is marked `'invalid'` on
+`commerce_import_rows` with the failure reason,
+and the loop continues to the next row. The
+successful rows in the chunk stay committed.
+The batch moves to `'partially_committed'` if
+any row failed, or `'committed'` if none did.
+
+Why per-row and not per-chunk: several handlers
+open their own transactions (customer creation
+writes the customer row and a history row in
+one transaction; inventory adjustment writes
+the ledger row and the current stock row in
+one). A chunk-level transaction would nest on
+top and PDO would refuse with "There is
+already an active transaction." The per-row
+shape also preserves the "re-run only the
+failed rows" property - a re-run skips the
+rows already `'committed'` from a prior
+partial run.
 
 **The two commits that succeed, in one unit.**
 
@@ -451,9 +476,19 @@ row, in reverse dependency order:
   - If the row was updated, the previous values
     are restored from the row's JSON column.
 
-Rollback is transactional per chunk. A
-partially-committed batch can be rolled back
-up to the last successful chunk.
+Rollback is per-row atomic and chunked at 500
+for the same reason as the commit: each
+handler's delete() or restore() call manages
+its own transaction (or uses a repository
+method that does). A partially-committed batch
+can be rolled back row by row; a failure on
+one row records the failure and the loop
+continues, leaving the successful rollbacks
+in place. The batch moves to `'rolled_back'`
+when every committed row has been reversed or
+attempted, and `'partially_committed'` with an
+updated failure count if any rollback attempts
+failed.
 
 The batch moves to `'rolled_back'`.
 
@@ -654,12 +689,16 @@ much for a single verifiable step.
 
 ### Session 2b - the committer + the pipeline tail
 
-  - `ImportCommitter`: chunked transactional
-    commit. Per chunk: call `handler->create()`
-    or `handler->update()`, record the entity id
-    and previous values on the row, commit.
-    Per-row failures mark the row invalid and
-    continue.
+  - `ImportCommitter`: per-row atomic,
+    chunked at 500 for progress and memory.
+    Per row: call `handler->create()` or
+    `handler->update()`, record the entity id
+    and previous values on the row. Per-row
+    failures mark the row invalid and continue.
+    The handlers' own transactions prevent a
+    chunk-level transaction; per-row is also
+    what preserves the "re-run only the failed
+    rows" idempotency.
   - `ImportRollback`: reverse a committed batch
     in dependency order. Creates → `delete()`.
     Updates → `restore()`. Chunked.

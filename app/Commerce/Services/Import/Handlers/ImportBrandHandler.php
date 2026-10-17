@@ -177,4 +177,9 @@ final class ImportBrandHandler implements ImportHandler
 
         $this->brands->update($existing);
     }
+
+    public function findIdByNaturalKey(string $naturalKey): ?int
+    {
+        return $this->brands->findBySlug($naturalKey)?->id;
+    }
 }

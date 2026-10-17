@@ -204,6 +204,12 @@ final class ImportAttributeHandler implements ImportHandler
         ]);
     }
 
+    public function findIdByNaturalKey(string $naturalKey): ?int
+    {
+        $row = $this->attributes->findBySlug($naturalKey);
+        return $row !== null ? (int) $row['id'] : null;
+    }
+
     // -----------------------------------------------------------------
 
     private function normalizeInputType(string $type): string
