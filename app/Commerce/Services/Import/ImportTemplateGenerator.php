@@ -124,24 +124,14 @@ final class ImportTemplateGenerator
             $brandSlug = (string) $allBrands[0]->slug;
         }
 
-        $categorySlugs = '';
-        $firstCategory = $this->categories->findBySlug('example-category');
-        if ($firstCategory === null) {
-            $firstCategory = $this->categories->findBySlug('uncategorized');
-        }
-        if ($firstCategory !== null) {
-            $categorySlugs = (string) $firstCategory->slug;
-        }
-
         return [
-            'name'              => 'Example Product',
+            'name'              => 'Example Master Product',
             'sku'               => 'EXAMPLE-001',
-            'slug'              => 'example-product',
+            'slug'              => 'example-master-product',
             'price'             => '9.99',
+            'category_path'     => 'Example Category/Subcategory',
             'brand_slug'        => $brandSlug,
-            'category_slugs'    => $categorySlugs,
-            'short_description' => 'A one-line summary.',
-            'description'       => 'A longer description of the product.',
+            'stock_quantity'    => '50',
         ];
     }
 
