@@ -90,6 +90,10 @@ $router->post('/commerce/ca-admin/update/run',
     [\CorporateAid\Commerce\Controllers\Admin\AdminUpdateController::class, 'run'],
     ['store', 'auth', 'csrf']);
 
+$router->post('/commerce/ca-admin/update/status',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminUpdateController::class, 'saveStatus'],
+    ['store', 'auth', 'csrf']);
+
 $router->post('/commerce/ca-admin/update/schedule',
     [\CorporateAid\Commerce\Controllers\Admin\AdminUpdateController::class, 'schedule'],
     ['store', 'auth', 'csrf']);

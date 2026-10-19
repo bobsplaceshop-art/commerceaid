@@ -57,6 +57,8 @@ final class Kernel
         'store'         => \CorporateAid\Commerce\Middleware\StoreResolutionMiddleware::class,
         'setup.gate'    => \CorporateAid\Commerce\Middleware\SetupGateMiddleware::class,
         'customer.auth' => \CorporateAid\Commerce\Middleware\CustomerAuthMiddleware::class,
+        'maintenance'   => \CorporateAid\Commerce\Middleware\MaintenanceMiddleware::class,
+        'maintenance'   => \CorporateAid\Commerce\Middleware\MaintenanceMiddleware::class,
     ];
 
     public function __construct(Container $container)

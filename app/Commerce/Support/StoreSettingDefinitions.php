@@ -104,6 +104,27 @@ final class StoreSettingDefinitions
             'hint'    => 'YYYY-MM-DD HH:MM:SS. A banner appears on the storefront 24 hours before this time.',
         ],
 
+        'system.store_status' => [
+            'label'   => 'Storefront Status',
+            'type'    => 'select',
+            'options' => [
+                'live' => 'Live (Accepting Orders)',
+                'coming_soon' => 'Coming Soon (Pre-launch holding page)',
+                'maintenance' => 'Maintenance (503 Service Unavailable)',
+            ],
+            'default' => 'live',
+            'group'   => self::GROUP_GENERAL,
+            'hint'    => 'Use "Coming Soon" for pre-launch. Admins can always bypass this and view the live site.',
+        ],
+
+        'system.store_status_message' => [
+            'label'   => 'Status Message',
+            'type'    => 'string',
+            'default' => 'We are working hard to launch our new store. Please check back soon!',
+            'group'   => self::GROUP_GENERAL,
+            'hint'    => 'Shown on the Coming Soon and Maintenance pages.',
+        ],
+
         // -------------------------------------------------------------
         // Branding (Stage 008G.4a)
         // -------------------------------------------------------------

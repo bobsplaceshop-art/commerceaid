@@ -18,11 +18,15 @@ final class AdminUpdateController extends AdminController
 
         $settings = $this->container->get(StoreSettingsRepository::class);
         $scheduledAt = $settings->string('system.update.scheduled_at', '');
+        $storeStatus = $settings->string('system.store_status', 'live');
+        $statusMessage = $settings->string('system.store_status_message', '');
 
         return $this->render('admin.update.index', [
-            'title'       => 'System Update',
-            'pending'     => $pending,
-            'scheduledAt' => $scheduledAt,
+            'title'         => 'System Update',
+            'pending'       => $pending,
+            'scheduledAt'   => $scheduledAt,
+            'storeStatus'   => $storeStatus,
+            'statusMessage' => $statusMessage,
         ]);
     }
 
@@ -51,6 +55,24 @@ final class AdminUpdateController extends AdminController
             $session->flash('error', 'Migration failed: ' . $e->getMessage());
         }
 
+        return Response::redirect('/commerce/ca-admin/update');
+    }
+
+    public function saveStatus(Request $request, array $params = []): Response
+    {
+        $session = $this->container->get(Session::class);
+        $status = (string) $request->input('store_status', 'live');
+        $message = trim((string) $request->input('status_message', ''));
+
+        if (!in_array($status, ['live', 'coming_soon', 'maintenance'], true)) {
+            $status = 'live';
+        }
+
+        $settings = $this->container->get(StoreSettingsRepository::class);
+        $settings->set('system.store_status', $status);
+        $settings->set('system.store_status_message', $message);
+
+        $session->flash('success', 'Storefront status updated successfully.');
         return Response::redirect('/commerce/ca-admin/update');
     }
 

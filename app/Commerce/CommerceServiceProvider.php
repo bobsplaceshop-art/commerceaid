@@ -13,6 +13,7 @@ use CorporateAid\Core\Session;
 use CorporateAid\Commerce\Context\StoreContext;
 use CorporateAid\Platform\Middleware\GuestMiddleware;
 use CorporateAid\Commerce\Middleware\CustomerAuthMiddleware;
+use CorporateAid\Commerce\Middleware\MaintenanceMiddleware;
 use CorporateAid\Commerce\Middleware\SetupGateMiddleware;
 use CorporateAid\Commerce\Middleware\StoreResolutionMiddleware;
 use CorporateAid\Commerce\Repositories\BrandRepository;
@@ -477,6 +478,14 @@ final class CommerceServiceProvider
         $c->singleton(CustomerAuthMiddleware::class,
             fn() => new CustomerAuthMiddleware(
                 $c->get(CustomerAuthService::class)
+            ));
+
+        $c->singleton(MaintenanceMiddleware::class,
+            fn() => new MaintenanceMiddleware(
+                $c->get(Auth::class),
+                $c->get(\CorporateAid\Commerce\Repositories\StoreSettingsRepository::class),
+                $c->get(\CorporateAid\Core\View::class),
+                $c->get(\CorporateAid\Platform\Support\Logger::class)
             ));
 
         // ---------------------------------------------------------------

@@ -58,7 +58,7 @@ use CorporateAid\Commerce\Controllers\Storefront\FormController;
 // ---------------------------------------------------------------------
 // Home
 // ---------------------------------------------------------------------
-$router->get('/', [HomeController::class, 'index'], ['store']);
+$router->get('/', [HomeController::class, 'index'], ['store', 'maintenance']);
 
 // ---------------------------------------------------------------------
 // Offline fallback page
@@ -89,7 +89,7 @@ $router->get('/offline', function (Request $req, array $params): Response {
 // Specific route (/products) must precede the wildcard
 // (/products/{slug}) so /products matches the listing and not
 // a product named "products".
-$router->get('/products',        [CatalogController::class,  'index'], ['store']);
+$router->get('/products',        [CatalogController::class,  'index'], ['store', 'maintenance']);
 // ---------------------------------------------------------------------
 // Product reviews
 // ---------------------------------------------------------------------
@@ -99,17 +99,17 @@ $router->get('/products',        [CatalogController::class,  'index'], ['store']
 // missing. CSRF is enforced.
 //
 // Pagination is public. Returns JSON.
-$router->post('/products/{slug}/review',  [ProductReviewController::class, 'submit'],   ['store', 'csrf']);
-$router->get('/products/{slug}/reviews',  [ProductReviewController::class, 'paginate'], ['store']);
+$router->post('/products/{slug}/review',  [ProductReviewController::class, 'submit'],   ['store', 'maintenance', 'csrf']);
+$router->get('/products/{slug}/reviews',  [ProductReviewController::class, 'paginate'], ['store', 'maintenance']);
 
-$router->get('/products/{slug}', [ProductController::class,  'show'],  ['store']);
+$router->get('/products/{slug}', [ProductController::class,  'show'],  ['store', 'maintenance']);
 
 // ---------------------------------------------------------------------
 // Categories - index and detail
 // ---------------------------------------------------------------------
 // Same ordering rule: specific before wildcard.
-$router->get('/categories',        [CategoryController::class, 'index'], ['store']);
-$router->get('/categories/{slug}', [CategoryController::class, 'show'],  ['store']);
+$router->get('/categories',        [CategoryController::class, 'index'], ['store', 'maintenance']);
+$router->get('/categories/{slug}', [CategoryController::class, 'show'],  ['store', 'maintenance']);
 
 // ---------------------------------------------------------------------
 // Customer authentication (Stage 008C)
@@ -128,11 +128,11 @@ $router->get('/account/register',          [AuthController::class, 'showRegister
 $router->post('/account/register',         [AuthController::class, 'register'],           ['store', 'csrf', 'ratelimit:register,3,60']);
 $router->get('/account/login',             [AuthController::class, 'showLogin'],          ['store']);
 $router->post('/account/login',            [AuthController::class, 'login'],              ['store', 'csrf', 'ratelimit:login,5,15']);
-$router->post('/account/logout',           [AuthController::class, 'logout'],             ['store', 'csrf']);
-$router->get('/account/forgot-password',   [AuthController::class, 'showForgotPassword'], ['store']);
-$router->post('/account/forgot-password',  [AuthController::class, 'sendResetLink'],      ['store', 'csrf', 'ratelimit:forgot,3,60']);
-$router->get('/account/reset-password',    [AuthController::class, 'showResetPassword'],  ['store']);
-$router->post('/account/reset-password',   [AuthController::class, 'resetPassword'],      ['store', 'csrf', 'ratelimit:reset,5,60']);
+$router->post('/account/logout',           [AuthController::class, 'logout'],             ['store', 'maintenance', 'csrf']);
+$router->get('/account/forgot-password',   [AuthController::class, 'showForgotPassword'], ['store', 'maintenance']);
+$router->post('/account/forgot-password',  [AuthController::class, 'sendResetLink'],      ['store', 'maintenance', 'csrf', 'ratelimit:forgot,3,60']);
+$router->get('/account/reset-password',    [AuthController::class, 'showResetPassword'],  ['store', 'maintenance']);
+$router->post('/account/reset-password',   [AuthController::class, 'resetPassword'],      ['store', 'maintenance', 'csrf', 'ratelimit:reset,5,60']);
 
 // ---------------------------------------------------------------------
 // Customer account (guarded by customer.auth)
@@ -141,25 +141,25 @@ $router->post('/account/reset-password',   [AuthController::class, 'resetPasswor
 // These routes require a logged-in customer. The 'customer.auth'
 // alias maps to CustomerAuthMiddleware, which redirects to
 // /account/login?intended=... on failure.
-$router->get('/account',                         [AccountController::class, 'dashboard'],         ['store', 'customer.auth']);
-$router->get('/account/orders',                  [AccountController::class, 'orders'],            ['store', 'customer.auth']);
-$router->get('/account/orders/{orderNumber}',      [AccountController::class, 'orderDetail'],       ['store', 'customer.auth']);
+$router->get('/account',                         [AccountController::class, 'dashboard'],         ['store', 'maintenance', 'customer.auth']);
+$router->get('/account/orders',                  [AccountController::class, 'orders'],            ['store', 'maintenance', 'customer.auth']);
+$router->get('/account/orders/{orderNumber}',      [AccountController::class, 'orderDetail'],       ['store', 'maintenance', 'customer.auth']);
 
-$router->get('/account/addresses',               [AccountController::class, 'addresses'],         ['store', 'customer.auth']);
-$router->get('/account/addresses/create',        [AccountController::class, 'showCreateAddress'], ['store', 'customer.auth']);
-$router->post('/account/addresses',              [AccountController::class, 'createAddress'],     ['store', 'customer.auth', 'csrf']);
-$router->get('/account/addresses/{id}/edit',     [AccountController::class, 'showEditAddress'],   ['store', 'customer.auth']);
-$router->post('/account/addresses/{id}',         [AccountController::class, 'updateAddress'],     ['store', 'customer.auth', 'csrf']);
-$router->post('/account/addresses/{id}/delete',  [AccountController::class, 'deleteAddress'],     ['store', 'customer.auth', 'csrf']);
-$router->post('/account/addresses/{id}/default', [AccountController::class, 'setDefaultAddress'], ['store', 'customer.auth', 'csrf']);
+$router->get('/account/addresses',               [AccountController::class, 'addresses'],         ['store', 'maintenance', 'customer.auth']);
+$router->get('/account/addresses/create',        [AccountController::class, 'showCreateAddress'], ['store', 'maintenance', 'customer.auth']);
+$router->post('/account/addresses',              [AccountController::class, 'createAddress'],     ['store', 'maintenance', 'customer.auth', 'csrf']);
+$router->get('/account/addresses/{id}/edit',     [AccountController::class, 'showEditAddress'],   ['store', 'maintenance', 'customer.auth']);
+$router->post('/account/addresses/{id}',         [AccountController::class, 'updateAddress'],     ['store', 'maintenance', 'customer.auth', 'csrf']);
+$router->post('/account/addresses/{id}/delete',  [AccountController::class, 'deleteAddress'],     ['store', 'maintenance', 'customer.auth', 'csrf']);
+$router->post('/account/addresses/{id}/default', [AccountController::class, 'setDefaultAddress'], ['store', 'maintenance', 'customer.auth', 'csrf']);
 
-$router->get('/account/password',                [AccountController::class, 'showPassword'],      ['store', 'customer.auth']);
-$router->post('/account/password',               [AccountController::class, 'changePassword'],    ['store', 'customer.auth', 'csrf']);
+$router->get('/account/password',                [AccountController::class, 'showPassword'],      ['store', 'maintenance', 'customer.auth']);
+$router->post('/account/password',               [AccountController::class, 'changePassword'],    ['store', 'maintenance', 'customer.auth', 'csrf']);
 
 // Guest order claim (Stage 008E.2)
-$router->get('/account/claims',           [CustomerClaimController::class, 'list'],    ['store', 'customer.auth']);
-$router->post('/account/claims/link',     [CustomerClaimController::class, 'link'],    ['store', 'customer.auth', 'csrf']);
-$router->post('/account/claims/dismiss',  [CustomerClaimController::class, 'dismiss'], ['store', 'customer.auth', 'csrf']);
+$router->get('/account/claims',           [CustomerClaimController::class, 'list'],    ['store', 'maintenance', 'customer.auth']);
+$router->post('/account/claims/link',     [CustomerClaimController::class, 'link'],    ['store', 'maintenance', 'customer.auth', 'csrf']);
+$router->post('/account/claims/dismiss',  [CustomerClaimController::class, 'dismiss'], ['store', 'maintenance', 'customer.auth', 'csrf']);
 
 // ---------------------------------------------------------------------
 // Cart (Stage 008D)
@@ -174,14 +174,14 @@ $router->post('/account/claims/dismiss',  [CustomerClaimController::class, 'dism
 //
 // The /cart/count route is JSON-only and powers the mini-cart
 // badge in the header.
-$router->get('/cart',        [CartController::class, 'index'],  ['store']);
-$router->post('/cart/add',           [CartController::class, 'add'],          ['store', 'csrf']);
-$router->post('/cart/update',        [CartController::class, 'update'],       ['store', 'csrf']);
-$router->post('/cart/remove',        [CartController::class, 'remove'],       ['store', 'csrf']);
-$router->post('/cart/clear',         [CartController::class, 'clear'],        ['store', 'csrf']);
-$router->post('/cart/apply-coupon',  [CartController::class, 'applyCoupon'],  ['store', 'csrf']);
-$router->post('/cart/remove-coupon', [CartController::class, 'removeCoupon'], ['store', 'csrf']);
-$router->get('/cart/count',          [CartController::class, 'count'],        ['store']);
+$router->get('/cart',        [CartController::class, 'index'],  ['store', 'maintenance']);
+$router->post('/cart/add',           [CartController::class, 'add'],          ['store', 'maintenance', 'csrf']);
+$router->post('/cart/update',        [CartController::class, 'update'],       ['store', 'maintenance', 'csrf']);
+$router->post('/cart/remove',        [CartController::class, 'remove'],       ['store', 'maintenance', 'csrf']);
+$router->post('/cart/clear',         [CartController::class, 'clear'],        ['store', 'maintenance', 'csrf']);
+$router->post('/cart/apply-coupon',  [CartController::class, 'applyCoupon'],  ['store', 'maintenance', 'csrf']);
+$router->post('/cart/remove-coupon', [CartController::class, 'removeCoupon'], ['store', 'maintenance', 'csrf']);
+$router->get('/cart/count',          [CartController::class, 'count'],        ['store', 'maintenance']);
 
 // Wishlist (Stage 008G.1)
 //
@@ -190,30 +190,30 @@ $router->get('/cart/count',          [CartController::class, 'count'],        ['
 // links use /account/wishlist/remove (form POST, redirect). The
 // /account/wishlist page requires login; the mutation endpoints
 // work for guests via the session wishlist.
-$router->get('/account/wishlist',         [WishlistController::class, 'index'],  ['store']);
-$router->post('/account/wishlist/add',    [WishlistController::class, 'add'],    ['store', 'csrf']);
-$router->post('/account/wishlist/remove', [WishlistController::class, 'remove'], ['store', 'csrf']);
-$router->post('/account/wishlist/toggle', [WishlistController::class, 'toggle'], ['store', 'csrf']);
-$router->get('/account/wishlist/ids',     [WishlistController::class, 'ids'],    ['store']);
+$router->get('/account/wishlist',         [WishlistController::class, 'index'],  ['store', 'maintenance']);
+$router->post('/account/wishlist/add',    [WishlistController::class, 'add'],    ['store', 'maintenance', 'csrf']);
+$router->post('/account/wishlist/remove', [WishlistController::class, 'remove'], ['store', 'maintenance', 'csrf']);
+$router->post('/account/wishlist/toggle', [WishlistController::class, 'toggle'], ['store', 'maintenance', 'csrf']);
+$router->get('/account/wishlist/ids',     [WishlistController::class, 'ids'],    ['store', 'maintenance']);
 
 // Recently viewed (Stage 008G.2)
 //
 // Recording happens inside ProductController::show(), not via
 // a route. These two routes serve the account page and the
 // clear button.
-$router->get('/account/recent',        [RecentViewController::class, 'index'], ['store']);
-$router->post('/account/recent/clear', [RecentViewController::class, 'clear'], ['store', 'csrf']);
+$router->get('/account/recent',        [RecentViewController::class, 'index'], ['store', 'maintenance']);
+$router->post('/account/recent/clear', [RecentViewController::class, 'clear'], ['store', 'maintenance', 'csrf']);
 
 // Message center (Stage 008G.3)
 //
 // Every route requires login. The controller gates on
 // CustomerAuthService::user(). Same shape as the wishlist
 // and recent-view routes.
-$router->get('/account/messages',                [MessageController::class, 'index'],           ['store']);
-$router->post('/account/messages/mark-read',     [MessageController::class, 'markRead'],        ['store', 'csrf']);
-$router->post('/account/messages/mark-all-read', [MessageController::class, 'markAllRead'],     ['store', 'csrf']);
-$router->get('/account/messages/preferences',    [MessageController::class, 'preferences'],     ['store']);
-$router->post('/account/messages/preferences',   [MessageController::class, 'savePreferences'], ['store', 'csrf']);
+$router->get('/account/messages',                [MessageController::class, 'index'],           ['store', 'maintenance']);
+$router->post('/account/messages/mark-read',     [MessageController::class, 'markRead'],        ['store', 'maintenance', 'csrf']);
+$router->post('/account/messages/mark-all-read', [MessageController::class, 'markAllRead'],     ['store', 'maintenance', 'csrf']);
+$router->get('/account/messages/preferences',    [MessageController::class, 'preferences'],     ['store', 'maintenance']);
+$router->post('/account/messages/preferences',   [MessageController::class, 'savePreferences'], ['store', 'maintenance', 'csrf']);
 
 // Returns (Stage 008H)
 //
@@ -225,26 +225,26 @@ $router->post('/account/messages/preferences',   [MessageController::class, 'sav
 // Route order matters: /new/{orderNumber} must precede
 // /{requestNumber} so the literal "new" is not captured as a
 // request number.
-$router->get('/account/returns',                    [ReturnController::class, 'index'],  ['store']);
-$router->get('/account/returns/new/{orderNumber}',  [ReturnController::class, 'create'], ['store']);
-$router->post('/account/returns',                   [ReturnController::class, 'store'],  ['store', 'csrf']);
-$router->get('/account/returns/{requestNumber}',    [ReturnController::class, 'show'],   ['store']);
-$router->post('/account/returns/{id}/cancel',       [ReturnController::class, 'cancel'], ['store', 'csrf']);
+$router->get('/account/returns',                    [ReturnController::class, 'index'],  ['store', 'maintenance']);
+$router->get('/account/returns/new/{orderNumber}',  [ReturnController::class, 'create'], ['store', 'maintenance']);
+$router->post('/account/returns',                   [ReturnController::class, 'store'],  ['store', 'maintenance', 'csrf']);
+$router->get('/account/returns/{requestNumber}',    [ReturnController::class, 'show'],   ['store', 'maintenance']);
+$router->post('/account/returns/{id}/cancel',       [ReturnController::class, 'cancel'], ['store', 'maintenance', 'csrf']);
 
 // Search (Stage 008G)
-$router->get('/search', [SearchController::class, 'index'], ['store']);
+$router->get('/search', [SearchController::class, 'index'], ['store', 'maintenance']);
 
 // Checkout (Stage 008E)
-$router->get('/checkout',                      [CheckoutController::class, 'review'],       ['store']);
-$router->get('/checkout/info',                 [CheckoutController::class, 'info'],         ['store']);
-$router->post('/checkout/info',                [CheckoutController::class, 'saveInfo'],     ['store', 'csrf']);
-$router->get('/checkout/shipping',             [CheckoutController::class, 'shipping'],     ['store']);
-$router->post('/checkout/shipping',            [CheckoutController::class, 'saveShipping'], ['store', 'csrf']);
-$router->get('/checkout/payment',              [CheckoutController::class, 'payment'],      ['store']);
-$router->post('/checkout/payment',             [CheckoutController::class, 'savePayment'],  ['store', 'csrf']);
-$router->get('/checkout/confirm',              [CheckoutController::class, 'confirm'],      ['store']);
-$router->post('/checkout/place',               [CheckoutController::class, 'place'],        ['store', 'csrf']);
-$router->get('/checkout/confirmation/{orderNumber}', [CheckoutController::class, 'confirmation'], ['store']);
+$router->get('/checkout',                      [CheckoutController::class, 'review'],       ['store', 'maintenance']);
+$router->get('/checkout/info',                 [CheckoutController::class, 'info'],         ['store', 'maintenance']);
+$router->post('/checkout/info',                [CheckoutController::class, 'saveInfo'],     ['store', 'maintenance', 'csrf']);
+$router->get('/checkout/shipping',             [CheckoutController::class, 'shipping'],     ['store', 'maintenance']);
+$router->post('/checkout/shipping',            [CheckoutController::class, 'saveShipping'], ['store', 'maintenance', 'csrf']);
+$router->get('/checkout/payment',              [CheckoutController::class, 'payment'],      ['store', 'maintenance']);
+$router->post('/checkout/payment',             [CheckoutController::class, 'savePayment'],  ['store', 'maintenance', 'csrf']);
+$router->get('/checkout/confirm',              [CheckoutController::class, 'confirm'],      ['store', 'maintenance']);
+$router->post('/checkout/place',               [CheckoutController::class, 'place'],        ['store', 'maintenance', 'csrf']);
+$router->get('/checkout/confirmation/{orderNumber}', [CheckoutController::class, 'confirmation'], ['store', 'maintenance']);
 
 // M-Pesa STK push waiting flow. The customer stays on the
 // site; the phone prompts for a PIN. The waiting page polls
@@ -252,13 +252,13 @@ $router->get('/checkout/confirmation/{orderNumber}', [CheckoutController::class,
 // marks any pending request as failed and returns the
 // customer to the payment step.
 $router->get('/checkout/mpesa/waiting/{orderNumber}',
-    [CheckoutController::class, 'mpesaWaiting'], ['store']);
+    [CheckoutController::class, 'mpesaWaiting'], ['store', 'maintenance']);
 
 $router->post('/checkout/mpesa/status',
-    [CheckoutController::class, 'mpesaStatus'], ['store', 'csrf', 'ratelimit:mpesa_status,30,60']);
+    [CheckoutController::class, 'mpesaStatus'], ['store', 'maintenance', 'csrf', 'ratelimit:mpesa_status,30,60']);
 
 $router->get('/checkout/mpesa/cancel/{orderNumber}',
-    [CheckoutController::class, 'mpesaCancel'], ['store']);
+    [CheckoutController::class, 'mpesaCancel'], ['store', 'maintenance']);
 
 // Stripe Checkout return. The customer lands here after
 // paying (or cancelling) on Stripe's hosted page. The
@@ -266,7 +266,7 @@ $router->get('/checkout/mpesa/cancel/{orderNumber}',
 // redirects to the confirmation page. The webhook is what
 // writes payment_status; this route is the customer-facing
 // confirmation step.
-$router->get('/checkout/stripe/return', [StripeReturnController::class, 'handle'], ['store']);
+$router->get('/checkout/stripe/return', [StripeReturnController::class, 'handle'], ['store', 'maintenance']);
 
 // PayPal Orders v2 return. The customer lands here after
 // approving (or cancelling) on PayPal's hosted page. The
@@ -275,24 +275,24 @@ $router->get('/checkout/stripe/return', [StripeReturnController::class, 'handle'
 // confirmation page. The webhook is the authoritative
 // writer; this route is the customer-facing step and is
 // idempotent against the webhook.
-$router->get('/checkout/paypal/return', [PayPalReturnController::class, 'handle'], ['store']);
+$router->get('/checkout/paypal/return', [PayPalReturnController::class, 'handle'], ['store', 'maintenance']);
 
 // Pesapal return. The customer lands here after paying
 // (or cancelling) on Pesapal's hosted page. The
 // controller queries GetTransactionStatus and writes the
 // paid state if COMPLETED. The IPN handler does the
 // same write; the two are idempotent.
-$router->get('/checkout/pesapal/return', [PesapalReturnController::class, 'handle'], ['store']);
+$router->get('/checkout/pesapal/return', [PesapalReturnController::class, 'handle'], ['store', 'maintenance']);
 
 // Flutterwave return. The customer lands here after
 // paying (or cancelling) on Flutterwave's hosted page.
 // The controller queries GET /verify and writes the
 // paid state if 'successful'. The webhook handler does
 // the same write; the two are idempotent.
-$router->get('/checkout/flutterwave/return', [FlutterwaveReturnController::class, 'handle'], ['store']);
+$router->get('/checkout/flutterwave/return', [FlutterwaveReturnController::class, 'handle'], ['store', 'maintenance']);
 
 // Legal pages (public, one route for all four slugs)
-$router->get('/legal/{slug}', [CheckoutController::class, 'legalPage'], ['store']);
+$router->get('/legal/{slug}', [CheckoutController::class, 'legalPage'], ['store', 'maintenance']);
 
 // ---------------------------------------------------------------------
 // Newsletter (public, no auth)
@@ -321,19 +321,19 @@ $router->get('/legal/{slug}', [CheckoutController::class, 'legalPage'], ['store'
 
 $router->post('/newsletter/subscribe',
     [NewsletterController::class, 'subscribe'],
-    ['store', 'csrf', 'ratelimit:newsletter_subscribe,5,60']);
+    ['store', 'maintenance', 'csrf', 'ratelimit:newsletter_subscribe,5,60']);
 
 $router->get('/newsletter/confirm/{token}',
     [NewsletterController::class, 'showConfirm'],
-    ['store']);
+    ['store', 'maintenance']);
 
 $router->get('/newsletter/unsubscribe/{token}',
     [NewsletterController::class, 'showUnsubscribe'],
-    ['store']);
+    ['store', 'maintenance']);
 
 $router->post('/newsletter/unsubscribe/{token}',
     [NewsletterController::class, 'performUnsubscribe'],
-    ['store', 'csrf']);
+    ['store', 'maintenance', 'csrf']);
 
 // =====================================================================
 // Public forms (Stage 009 Session 3)
@@ -352,8 +352,8 @@ $router->post('/newsletter/unsubscribe/{token}',
 
 $router->get('/forms/{slug}',
     [FormController::class, 'show'],
-    ['store']);
+    ['store', 'maintenance']);
 
 $router->post('/forms/{slug}',
     [FormController::class, 'submit'],
-    ['store', 'csrf', 'ratelimit:form_submit,10,60']);
+    ['store', 'maintenance', 'csrf', 'ratelimit:form_submit,10,60']);
