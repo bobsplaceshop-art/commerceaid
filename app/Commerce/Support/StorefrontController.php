@@ -54,6 +54,7 @@ abstract class StorefrontController
         $data['wishlistProductIds']  = $this->resolveWishlistProductIds();
         $data['cookieBannerEnabled'] = $this->resolveCookieBannerEnabled();
         $data['navCategories']       = $this->resolveNavCategories();
+        $data['storeNotice']         = $this->resolveStoreNotice();
 
         return Response::html(
             $viewSvc->render($view, $data, 'storefront.layouts.main')
@@ -187,6 +188,55 @@ abstract class StorefrontController
             return $repo->findById($context->id());
         } catch (\Throwable) {
             return null;
+        }
+    }
+
+    /**
+     * The storefront banner notice. Reads the merchant's
+     * custom notice first; if empty, checks the scheduled
+     * update time and produces a "Scheduled maintenance"
+     * notice if the time is within the next 24 hours.
+     *
+     * The banner renders at the top of every storefront
+     * page. It is a read-only informational surface - it
+     * does NOT lock the site. The site stays usable until
+     * the scheduled time arrives, at which point a separate
+     * maintenance gate (Stage 017 Session 3) takes over.
+     *
+     * Defensive: returns '' on any failure, so a broken
+     * settings table cannot break the storefront.
+     */
+    private function resolveStoreNotice(): string
+    {
+        try {
+            $settings = $this->container->get(
+                \CorporateAid\Commerce\Repositories\StoreSettingsRepository::class
+            );
+
+            $custom = trim($settings->string('general.store_notice', ''));
+            if ($custom !== '') {
+                return $custom;
+            }
+
+            $scheduled = trim($settings->string('system.update.scheduled_at', ''));
+            if ($scheduled === '') {
+                return '';
+            }
+
+            $ts = strtotime($scheduled);
+            if ($ts === false) {
+                return '';
+            }
+
+            $now = time();
+            if ($ts <= $now || ($ts - $now) > 86400) {
+                return '';
+            }
+
+            return 'Scheduled maintenance on ' . date('M j \a\t H:i', $ts)
+                . '. The store may be briefly unavailable.';
+        } catch (\Throwable $e) {
+            return '';
         }
     }
 }

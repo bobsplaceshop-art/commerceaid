@@ -62,6 +62,21 @@ final class App
     private Container $container;
     private Router $router;
 
+    /**
+     * True when database/migrations contains at least one
+     * .sql file that is not recorded in core_migrations.
+     *
+     * Set once during run(), before routing, on non-CLI
+     * requests only. The admin topbar reads it to render
+     * the pending-update badge. The storefront layout reads
+     * it (indirectly, via the notice resolution path) to
+     * surface a "scheduled maintenance" banner.
+     *
+     * Defaults false so a fresh install or a failed migration
+     * check never blocks the boot.
+     */
+    public static bool $hasPendingUpdates = false;
+
     private function __construct(string $basePath)
     {
         $this->basePath = rtrim($basePath, '/\\');
@@ -159,6 +174,11 @@ final class App
         $c->singleton(Session::class,  fn() => new Session((array) $c->get('config')->get('app.session', [])));
         $c->singleton(Csrf::class,     fn() => new Csrf($c->get(Session::class)));
         $c->singleton(Kernel::class,   fn() => new Kernel($c));
+
+        $c->singleton(Migrator::class, function () use ($c) {
+            $pdo = $c->get(Database::class)->pdo();
+            return new Migrator($pdo, $this->basePath . '/database/migrations');
+        });
 
         $c->instance('basePath', $this->basePath);
         $c->instance('app.version', self::VERSION);
@@ -385,6 +405,28 @@ final class App
                 // Session not available in some boot contexts
                 // (very early errors). The overlay just does
                 // not turn on. Never block the request.
+            }
+        }
+
+        // Detect pending database migrations. The flag is
+        // read by the admin topbar (badge) and by the
+        // storefront notice path. It does NOT gate the site:
+        // a merchant sees the badge and schedules the update;
+        // customers keep shopping.
+        //
+        // Skipped on CLI because bin/*.php tools boot without
+        // a real store context and can run their own migrator
+        // (bin/migrate.php) without this check interfering.
+        //
+        // Wrapped so a broken migrations directory or an
+        // unreachable database cannot crash the boot. The
+        // flag defaults false.
+        if (PHP_SAPI !== 'cli') {
+            try {
+                $migrator = $this->container->get(Migrator::class);
+                self::$hasPendingUpdates = $migrator->getPendingMigrations() !== [];
+            } catch (\Throwable) {
+                self::$hasPendingUpdates = false;
             }
         }
 

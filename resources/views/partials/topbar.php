@@ -36,6 +36,11 @@ $title = $title ?? null;
             <i class="bi bi-display" style="display:none;" data-ra-icon-system></i>
         </button>
 
+        <?php if (\CorporateAid\Core\App::$hasPendingUpdates): ?>
+            <a href="/commerce/ca-admin/update" class="ra-icon-btn" title="Database updates pending">
+                <i class="bi bi-exclamation-triangle" style="color:#ef4444;"></i>
+            </a>
+        <?php endif; ?>
         <?php if ($user !== null && $user->can('core.settings.manage')): ?>
             <a href="/commerce/ca-admin/settings" class="ra-icon-btn" title="Settings">
                 <i class="bi bi-gear"></i>

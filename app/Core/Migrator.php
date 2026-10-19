@@ -58,6 +58,27 @@ final class Migrator
         return $names;
     }
 
+    /**
+     * Filenames present on disk but not yet recorded in the
+     * core_migrations table. Pure read - does not touch the
+     * database beyond SELECT, does not ensure the table
+     * exists, does not apply anything.
+     *
+     * available() is already sorted, so the filtered result
+     * preserves numeric order. A caller that wants the
+     * pending set in apply order can iterate it directly.
+     *
+     * @return string[]
+     */
+    public function getPendingMigrations(): array
+    {
+        $applied = $this->applied();
+        return array_values(array_filter(
+            $this->available(),
+            static fn(string $f): bool => !isset($applied[$f])
+        ));
+    }
+
     /** @return string[] */
     public function run(): array
     {

@@ -140,6 +140,12 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
         'store' => $store,
     ]) ?>
 
+    <?php if (!empty($storeNotice)): ?>
+        <div class="sf-store-notice" role="status">
+            <?= e($storeNotice) ?>
+        </div>
+    <?php endif; ?>
+
     <?= view_partial('storefront/partials/header', [
         'store'         => $store,
         'brandName'     => $brandName,

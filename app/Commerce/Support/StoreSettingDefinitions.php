@@ -88,6 +88,22 @@ final class StoreSettingDefinitions
             'hint'    => 'Minutes. An order that is not paid within this window is cancelled and its reserved stock released. The bin/cancel-abandoned-orders.php cron does the work; it must be scheduled on the host.',
         ],
 
+        'general.store_notice' => [
+            'label'   => 'Store notice',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_GENERAL,
+            'hint'    => 'Optional. Displayed at the top of every storefront page as a banner.',
+        ],
+
+        'system.update.scheduled_at' => [
+            'label'   => 'Scheduled update time',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_GENERAL,
+            'hint'    => 'YYYY-MM-DD HH:MM:SS. A banner appears on the storefront 24 hours before this time.',
+        ],
+
         // -------------------------------------------------------------
         // Branding (Stage 008G.4a)
         // -------------------------------------------------------------
