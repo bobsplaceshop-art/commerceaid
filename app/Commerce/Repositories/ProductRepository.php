@@ -708,4 +708,42 @@ final class ProductRepository extends CommerceRepository
         $key = (string) ($filters['sort'] ?? 'newest');
         return self::PUBLISHED_SORT_MAP[$key] ?? self::PUBLISHED_SORT_MAP['newest'];
     }
+
+    /**
+     * Search products by name or SKU (for the admin topbar search).
+     * Uses FULLTEXT for fuzzy matching, with a LIKE fallback for short queries.
+     * @return array<int, \CorporateAid\Commerce\Models\Product>
+     */
+    public function search(string $q, int $limit = 10): array
+    {
+        if (strlen(trim($q)) < 3) {
+            // Fallback to LIKE for very short queries (FULLTEXT minimum word length is usually 3)
+            $stmt = $this->db->select(
+                "SELECT * FROM `commerce_products` 
+                 WHERE `store_id` = ? 
+                   AND `deleted_at` IS NULL 
+                   AND (`name` LIKE ? OR `sku` LIKE ?) 
+                 ORDER BY `name` ASC 
+                 LIMIT ?",
+                [$this->storeId(), "%{$q}%", "%{$q}%", $limit]
+            );
+        } else {
+            // Use FULLTEXT search with wildcard for partial matches
+            $qWildcard = $q . '*';
+            $stmt = $this->db->select(
+                "SELECT *, MATCH(`name`, `sku`) AGAINST (? IN BOOLEAN MODE) AS score 
+                 FROM `commerce_products` 
+                 WHERE `store_id` = ? 
+                   AND `deleted_at` IS NULL 
+                   AND MATCH(`name`, `sku`) AGAINST (? IN BOOLEAN MODE) 
+                 ORDER BY score DESC 
+                 LIMIT ?",
+                [$qWildcard, $this->storeId(), $qWildcard, $limit]
+            );
+        }
+        
+        return array_map([\CorporateAid\Commerce\Models\Product::class, 'fromRow'], $stmt);
+    }
+
+
 }

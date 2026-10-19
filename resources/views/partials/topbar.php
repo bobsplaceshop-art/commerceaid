@@ -28,7 +28,12 @@ $title = $title ?? null;
     </div>
 
     <div class="d-flex align-items-center gap-2">
-        <input type="text" class="ra-search" placeholder="Search (coming soon)" disabled>
+        <script src="<?= versioned_asset('/js/admin-search.js') ?>"></script>
+        <div class="ra-search-wrapper" style="position:relative; width:300px;">
+            <form method="GET" action="/commerce/ca-admin/search" style="margin:0;">
+                <input type="text" name="q" class="ra-search" placeholder="Search admin..." value="<?= e($_GET['q'] ?? '') ?>" autocomplete="off" style="width:100%;">
+            </form>
+        </div>
 
         <button type="button" class="ra-icon-btn" data-ra-theme-toggle title="Theme">
             <i class="bi bi-sun-fill" style="display:none;" data-ra-icon-light></i>
@@ -42,7 +47,7 @@ $title = $title ?? null;
             </a>
         <?php endif; ?>
         <?php if ($user !== null && $user->can('core.settings.manage')): ?>
-            <a href="/commerce/ca-admin/settings" class="ra-icon-btn" title="Settings">
+            <a href="/commerce/ca-admin/store-settings" class="ra-icon-btn" title="Settings">
                 <i class="bi bi-gear"></i>
             </a>
         <?php endif; ?>

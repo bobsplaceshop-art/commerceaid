@@ -644,4 +644,24 @@ final class OrderRepository extends CommerceRepository
 
         return [implode(' AND ', $where), $params];
     }
+
+    /**
+     * Search orders by number or customer email.
+     * @return array<int, \CorporateAid\Commerce\Models\Order>
+     */
+    public function search(string $q, int $limit = 10): array
+    {
+        $stmt = $this->db->select(
+            "SELECT o.*, c.first_name, c.last_name 
+             FROM `commerce_orders` o 
+             LEFT JOIN `commerce_customers` c ON c.id = o.customer_id 
+             WHERE o.`store_id` = ? 
+               AND (o.`order_number` LIKE ? OR c.`email` LIKE ?) 
+             ORDER BY o.`created_at` DESC 
+             LIMIT ?",
+            [$this->storeId(), "%{$q}%", "%{$q}%", $limit]
+        );
+        return array_map([\CorporateAid\Commerce\Models\Order::class, 'fromRow'], $stmt);
+    }
+
 }

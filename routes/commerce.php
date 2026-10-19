@@ -98,6 +98,14 @@ $router->post('/commerce/ca-admin/update/schedule',
     [\CorporateAid\Commerce\Controllers\Admin\AdminUpdateController::class, 'schedule'],
     ['store', 'auth', 'csrf']);
 
+$router->get('/commerce/ca-admin/search',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminSearchController::class, 'index'],
+    ['store', 'auth']);
+
+$router->get('/commerce/ca-admin/search/live',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminSearchController::class, 'live'],
+    ['store', 'auth']);
+
 $router->get('/commerce/ca-admin/media',
     [MediaLibraryController::class, 'index'],
     ['store', 'auth']);

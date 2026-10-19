@@ -919,7 +919,8 @@ html[data-theme="light"] .ra-table-wrap {
     .ra-page-band-title { font-size: 1.5rem; }
 
     /* Hide desktop-only items */
-    .ra-search { display: none; }
+    .ra-search-wrapper { width: 200px !important; }
+    .ra-search { display: block !important; font-size: 0.85rem; padding: 0.4rem 0.6rem; }
     .ra-hamburger { display: inline-flex; }
 }
 

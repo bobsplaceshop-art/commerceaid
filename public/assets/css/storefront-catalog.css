@@ -281,21 +281,8 @@ select.sf-filter-input {
     position: relative;
     overflow: hidden;
     background: var(--sf-cream);
-    aspect-ratio: 4 / 5;
-}
-
-/* Tighter aspect at wider viewports - portrait but not tall.
- * Keeps six cards per row from becoming overwhelming. */
-@media (min-width: 1024px) {
-    .sf-product-card-media {
-        aspect-ratio: 3 / 4;
-    }
-}
-
-@media (min-width: 1280px) {
-    .sf-product-card-media {
-        aspect-ratio: 2 / 3;
-    }
+    aspect-ratio: 3 / 4;
+    max-height: 360px; /* Prevent oversized cards on ultra-wide screens */
 }
 
 .sf-product-card-image-link {
