@@ -81,6 +81,19 @@ $router->get('/commerce/ca-admin',
 // The /delete route from 008G.4a (POST /commerce/ca-admin/media/delete)
 // was retired. It was unused - no view posted to it. The
 // {id}/delete form is the single delete path.
+// Update System (Stage 017)
+$router->get('/commerce/ca-admin/update',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminUpdateController::class, 'index'],
+    ['store', 'auth']);
+
+$router->post('/commerce/ca-admin/update/run',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminUpdateController::class, 'run'],
+    ['store', 'auth', 'csrf']);
+
+$router->post('/commerce/ca-admin/update/schedule',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminUpdateController::class, 'schedule'],
+    ['store', 'auth', 'csrf']);
+
 $router->get('/commerce/ca-admin/media',
     [MediaLibraryController::class, 'index'],
     ['store', 'auth']);
