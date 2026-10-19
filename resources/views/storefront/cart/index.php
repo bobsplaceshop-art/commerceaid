@@ -144,4 +144,6 @@ $coupon        = $pricing['coupon'] ?? null;
 
     </div>
 
+    <?= view_partial('storefront/partials/_recommendations', ['recommendations' => $recommendations ?? []]) ?>
+
 </div>

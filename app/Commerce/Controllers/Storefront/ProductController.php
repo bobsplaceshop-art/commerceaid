@@ -52,6 +52,19 @@ final class ProductController extends StorefrontController
 
         $product = $products->findBySlug($slug);
 
+        $recommendations = [];
+        $reviewStats = ['average' => 0.0, 'count' => 0, 'distribution' => []];
+        
+        if ($product !== null) {
+            $recommendations = $products->getRecommendations($product->id, 4);
+            
+            // Fetch review stats
+            $reviewRepo = $this->container->get(\CorporateAid\Commerce\Repositories\ProductReviewRepository::class);
+            $reviewStats['average'] = $reviewRepo->averageForProduct($product->id) ?? 0.0;
+            $reviewStats['count'] = $reviewRepo->countApprovedForProduct($product->id);
+            $reviewStats['distribution'] = $reviewRepo->distributionForProduct($product->id);
+        }
+
         // Only serve published products to the storefront. Anything
         // else (draft, archived, soft-deleted, missing) redirects to
         // the catalog. A 404 would also be valid; the redirect is

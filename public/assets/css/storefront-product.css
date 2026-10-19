@@ -1168,3 +1168,124 @@
 .sf-product-rating-count {
     color: var(--sf-ink-soft);
 }
+
+/* =====================================================================
+ * Modern Review Summary (Product Page)
+ * ===================================================================== */
+
+.sf-reviews-header {
+    display: grid;
+    grid-template-columns: 180px 1fr auto;
+    align-items: center;
+    gap: 2.5rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--sf-border);
+}
+
+/* Score block */
+.sf-reviews-score-block {
+    text-align: center;
+}
+.sf-reviews-score-number {
+    font-family: var(--sf-font-display, Georgia, serif);
+    font-size: 3.5rem;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--sf-charcoal);
+}
+.sf-reviews-stars {
+    margin: 0.4rem 0 0.2rem;
+    color: var(--sf-gold);
+    font-size: 1rem;
+    letter-spacing: 2px;
+}
+.sf-reviews-count {
+    font-size: 0.8rem;
+    color: var(--sf-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Distribution block */
+.sf-reviews-distribution-block {
+    max-width: 420px;
+}
+.sf-reviews-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.75rem;
+}
+.sf-reviews-bar-label {
+    width: 70px;
+    color: var(--sf-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.sf-reviews-bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--sf-cream, #f7f3ec);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.sf-reviews-bar-fill {
+    height: 100%;
+    background: var(--sf-gold);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+.sf-reviews-bar-count {
+    width: 24px;
+    text-align: right;
+    color: var(--sf-charcoal);
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* Action block */
+.sf-reviews-action-block {
+    display: flex;
+    align-items: center;
+}
+.sf-review-cta {
+    background: var(--sf-charcoal);
+    color: var(--sf-cream);
+    border: none;
+    padding: 0.8rem 1.8rem;
+    font-family: var(--sf-font-body, sans-serif);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-radius: 0;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.sf-review-cta:hover {
+    background: var(--sf-gold);
+    color: var(--sf-charcoal);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .sf-reviews-header {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        text-align: center;
+    }
+    .sf-reviews-distribution-block {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    .sf-reviews-bar-label {
+        width: 60px;
+        font-size: 0.65rem;
+    }
+    .sf-review-cta {
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -746,4 +746,50 @@ final class ProductRepository extends CommerceRepository
     }
 
 
+
+    /**
+     * Auto-derived recommendations for a product.
+     * Finds products in the same category, excluding the product itself.
+     * Falls back to newest products if no categories match.
+     * @return array<int, \CorporateAid\Commerce\Models\Product>
+     */
+    public function getRecommendations(int $productId, int $limit = 4): array
+    {
+        $categoryIds = $this->categoryIdsFor($productId);
+        
+        if (!empty($categoryIds)) {
+            $in = implode(',', array_fill(0, count($categoryIds), '?'));
+            $sql = "SELECT DISTINCT p.* 
+                    FROM `commerce_products` p
+                    JOIN `commerce_product_categories` pc ON pc.product_id = p.id
+                    WHERE p.store_id = ? 
+                      AND p.id != ? 
+                      AND p.status = 'published' 
+                      AND p.deleted_at IS NULL
+                      AND pc.category_id IN ({$in})
+                    ORDER BY RAND()
+                    LIMIT ?";
+            
+            $params = array_merge([$this->storeId(), $productId], $categoryIds, [$limit]);
+            $rows = $this->db->select($sql, $params);
+            
+            if (!empty($rows)) {
+                return array_map([\CorporateAid\Commerce\Models\Product::class, 'fromRow'], $rows);
+            }
+        }
+        
+        // Fallback to newest products if no category matches
+        $rows = $this->db->select(
+            "SELECT * FROM `commerce_products` 
+             WHERE `store_id` = ? 
+               AND `id` != ? 
+               AND `status` = 'published' 
+               AND `deleted_at` IS NULL 
+             ORDER BY `created_at` DESC 
+             LIMIT ?",
+            [$this->storeId(), $productId, $limit]
+        );
+        return array_map([\CorporateAid\Commerce\Models\Product::class, 'fromRow'], $rows);
+    }
+
 }

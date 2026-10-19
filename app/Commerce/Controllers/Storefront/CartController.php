@@ -12,6 +12,7 @@ use CorporateAid\Commerce\Support\StorefrontController;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\Session;
+use CorporateAid\Commerce\Services\RecommendationService;
 
 /**
  * Storefront cart.
@@ -46,6 +47,12 @@ final class CartController extends StorefrontController
     public function index(Request $request, array $params = []): Response
     {
         $cart = $this->container->get(CartService::class);
+        
+        $recommendations = [];
+        $cartLines = $cart->items();
+        if (!empty($cartLines)) {
+            $recommendations = $this->container->get(RecommendationService::class)->forCart($cartLines, 4);
+        }
 
         // Pricing preview: the totals the customer would pay if
         // they checked out from here. Coupon (if any) is applied
