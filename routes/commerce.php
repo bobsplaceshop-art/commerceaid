@@ -552,6 +552,14 @@ $router->get('/commerce/ca-admin/products',
     [ProductController::class, 'index'],
     ['store', 'auth']);
 
+$router->get('/commerce/ca-admin/products/bulk-publish',
+    [ProductController::class, 'bulkPublish'],
+    ['store', 'auth']);
+
+$router->post('/commerce/ca-admin/products/bulk-publish',
+    [ProductController::class, 'processBulkPublish'],
+    ['store', 'auth', 'csrf']);
+
 $router->get('/commerce/ca-admin/products/create',
     [ProductController::class, 'showCreate'],
     ['store', 'auth']);

@@ -48,6 +48,73 @@ final class ProductController extends AdminController
     // Reads
     // =================================================================
 
+    /**
+     * Bulk Publish screen. Lists all draft products.
+     * Allows the merchant to select multiple drafts
+     * and flip them to active/published in one go.
+     *
+     * @param array<string,string> $params
+     */
+    public function bulkPublish(Request $request, array $params = []): Response
+    {
+        $repo = $this->container->get(ProductRepository::class);
+        // Fetch only drafts for this store
+        $result = $repo->paginate(['status' => 'draft'], 1, 100); 
+        
+        return $this->render('admin.products.bulk-publish', [
+            'title' => 'Publish Drafts',
+            'result' => $result,
+        ]);
+    }
+
+    /**
+     * Handle the bulk publish action.
+     *
+     * @param array<string,string> $params
+     */
+    public function processBulkPublish(Request $request, array $params = []): Response
+    {
+        $session = $this->container->get(Session::class);
+        $repo = $this->container->get(ProductRepository::class);
+        
+        $ids = (array) $request->input('product_ids', []);
+        $ids = array_map('intval', $ids);
+        
+        if (empty($ids)) {
+            $session->flash('error', 'No products selected.');
+            return Response::redirect('/commerce/ca-admin/products/bulk-publish');
+        }
+
+        $published = 0;
+        $skipped = 0;
+
+        foreach ($ids as $id) {
+            $product = $repo->findById($id);
+            if ($product === null) {
+                $skipped++;
+                continue;
+            }
+
+            // Readiness check: Refuse to publish if no image is set
+            $images = $this->container->get(\CorporateAid\Commerce\Repositories\ProductImageRepository::class)->listForProduct($id);
+            if (empty($images)) {
+                $skipped++;
+                continue; 
+            }
+
+            $repo->publish($id);
+            $published++;
+        }
+
+        $msg = "Published {$published} product(s).";
+        if ($skipped > 0) {
+            $msg .= " Skipped {$skipped} product(s) (missing images or not found).";
+        }
+        
+        $session->flash('success', $msg);
+        return Response::redirect('/commerce/ca-admin/products/bulk-publish');
+    }
+
     /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {

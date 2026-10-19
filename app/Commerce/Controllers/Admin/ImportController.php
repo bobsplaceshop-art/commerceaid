@@ -6,13 +6,9 @@ namespace CorporateAid\Commerce\Controllers\Admin;
 use CorporateAid\Commerce\Repositories\ImportBatchRepository;
 use CorporateAid\Commerce\Repositories\ImportRowRepository;
 use CorporateAid\Commerce\Services\Import\CsvReader;
-use CorporateAid\Commerce\Services\Import\Handlers\ImportAttributeHandler;
-use CorporateAid\Commerce\Services\Import\Handlers\ImportBrandHandler;
-use CorporateAid\Commerce\Services\Import\Handlers\ImportCategoryHandler;
 use CorporateAid\Commerce\Services\Import\Handlers\ImportCustomerHandler;
-use CorporateAid\Commerce\Services\Import\Handlers\ImportInventoryHandler;
 use CorporateAid\Commerce\Services\Import\Handlers\ImportProductHandler;
-use CorporateAid\Commerce\Services\Import\Handlers\ImportVariantHandler;
+use CorporateAid\Commerce\Services\Import\Handlers\ImportSalesHistoryHandler;
 use CorporateAid\Commerce\Services\Import\ImportBatchStatus;
 use CorporateAid\Commerce\Services\Import\ImportHandler;
 use CorporateAid\Commerce\Services\Import\ImportCommitter;
@@ -594,13 +590,9 @@ final class ImportController extends AdminController
     private function handlerRegistry(): array
     {
         return [
-            'brand'     => $this->container->get(ImportBrandHandler::class),
-            'category'  => $this->container->get(ImportCategoryHandler::class),
-            'attribute' => $this->container->get(ImportAttributeHandler::class),
-            'product'   => $this->container->get(ImportProductHandler::class),
-            'variant'   => $this->container->get(ImportVariantHandler::class),
-            'inventory' => $this->container->get(ImportInventoryHandler::class),
-            'customer'  => $this->container->get(ImportCustomerHandler::class),
+            'product'  => $this->container->get(ImportProductHandler::class),
+            'customer' => $this->container->get(ImportCustomerHandler::class),
+            'sales'    => $this->container->get(ImportSalesHistoryHandler::class),
         ];
     }
 

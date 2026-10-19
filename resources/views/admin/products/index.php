@@ -51,6 +51,9 @@ $statusBadge = function (string $status): string {
         </p>
     </div>
     <div class="d-flex gap-2">
+        <a href="/commerce/ca-admin/products/bulk-publish" class="ra-btn ra-btn-outline">
+            <i class="bi bi-cloud-arrow-up me-1"></i> Publish Drafts
+        </a>
         <a href="/commerce/ca-admin/products/create" class="ra-btn ra-btn-primary">
             <i class="bi bi-plus-lg me-1"></i> New product
         </a>

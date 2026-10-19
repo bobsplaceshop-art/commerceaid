@@ -3,65 +3,27 @@ declare(strict_types=1);
 
 namespace CorporateAid\Commerce\Services\Import\Handlers;
 
+use CorporateAid\Commerce\Models\Category;
 use CorporateAid\Commerce\Models\Product;
 use CorporateAid\Commerce\Repositories\BrandRepository;
 use CorporateAid\Commerce\Repositories\CategoryRepository;
+use CorporateAid\Commerce\Repositories\InventoryRepository;
+use CorporateAid\Commerce\Repositories\ProductImageRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
 use CorporateAid\Commerce\Services\Import\ImportHandler;
+use CorporateAid\Commerce\Context\StoreContext;
+use CorporateAid\Core\Database;
 
-/**
- * Import handler for commerce_products. Stage 016.
- *
- * Eight fields:
- *
- *   name             required  - the product name
- *   sku              required  - the natural key
- *   slug             required  - the URL slug, unique per store
- *   price            required  - the sale price
- *   brand_slug       optional  - resolves against commerce_brands
- *   category_slugs   optional  - comma-separated, resolves against commerce_categories
- *   short_description optional
- *   description      optional
- *
- * Natural key: the sku, trimmed and uppercased. SKUs are
- * conventionally uppercase in this codebase. A CSV with
- * "sku-123" and "SKU-123" resolves to the same product.
- *
- * Multi-write: the product row goes to commerce_products
- * via ProductRepository::create/update; the category
- * associations go to commerce_product_categories via
- * syncCategories(). Both calls happen inside the pipeline's
- * chunk transaction. A failure in either rolls back both.
- *
- * Update semantics: name, sku, slug, price, brand,
- * descriptions, and category associations are the fields
- * the CSV touches. A missing brand_slug leaves the brand
- * unchanged. A missing category_slugs leaves the existing
- * category associations alone (the handler does not call
- * syncCategories when the CSV column is absent or empty).
- * Every other product field - tax class, weight,
- * dimensions, SEO, stock status, manage stock, featured,
- * published state - is untouched on update.
- *
- * Products import as drafts. The merchant publishes them
- * after reviewing the batch. The status field is not in
- * the CSV; the handler sets 'draft' on create. On update,
- * the existing status is preserved.
- *
- * Rollback: a create is soft-deleted (the codebase's
- * default for commerce_products; the row survives for
- * audit). An update restores the previous name, sku,
- * slug, price, brand_id, short_description,
- * long_description, and the previous category id set.
- *
- * See docs/stages/016_data-import-plan.md.
- */
 final class ImportProductHandler implements ImportHandler
 {
     public function __construct(
+        private Database $db,
+        private StoreContext $storeContext,
         private ProductRepository $products,
         private BrandRepository $brands,
         private CategoryRepository $categories,
+        private InventoryRepository $inventory,
+        private ProductImageRepository $images,
     ) {
     }
 
@@ -75,9 +37,6 @@ final class ImportProductHandler implements ImportHandler
         return 'Product';
     }
 
-    /**
-     * @return array<string, array{label: string, required: bool, hint: string}>
-     */
     public function fields(): array
     {
         return [
@@ -94,39 +53,81 @@ final class ImportProductHandler implements ImportHandler
             'slug' => [
                 'label'    => 'Slug',
                 'required' => true,
-                'hint'     => 'Lowercase, letters, digits, and hyphens. Unique per store. Used in URLs.',
+                'hint'     => 'Lowercase, letters, digits, and hyphens. Unique per store.',
             ],
             'price' => [
                 'label'    => 'Price',
                 'required' => true,
                 'hint'     => 'The sale price. Decimal, e.g. 49.99.',
             ],
+            'cost_price' => [
+                'label'    => 'Cost Price',
+                'required' => false,
+                'hint'     => 'Optional. The cost to the merchant, for margin calculation.',
+            ],
+            'tax_status' => [
+                'label'    => 'Tax Status',
+                'required' => false,
+                'hint'     => 'Either "taxable" or "none". Defaults to "taxable".',
+            ],
+            'category_path' => [
+                'label'    => 'Category Path',
+                'required' => false,
+                'hint'     => 'Optional. Path to the category, e.g. "Women/Dresses". The system will auto-create it.',
+            ],
             'brand_slug' => [
                 'label'    => 'Brand slug',
                 'required' => false,
                 'hint'     => 'Optional. The slug of an existing brand.',
             ],
-            'category_slugs' => [
-                'label'    => 'Category slugs',
+            'stock_quantity' => [
+                'label'    => 'Stock Quantity',
                 'required' => false,
-                'hint'     => 'Optional. Comma-separated slugs of existing categories, e.g. "shirts,casual".',
+                'hint'     => 'Optional. Opening stock. Defaults to 0 if blank.',
             ],
-            'short_description' => [
-                'label'    => 'Short description',
+            'min_order_quantity' => [
+                'label'    => 'Min Order Qty',
                 'required' => false,
-                'hint'     => 'Optional. Plain text shown in product cards.',
+                'hint'     => 'Optional. Defaults to 1.',
             ],
-            'description' => [
-                'label'    => 'Description',
+            'product_type' => [
+                'label'    => 'Product Type',
                 'required' => false,
-                'hint'     => 'Optional. Plain text shown on the product page.',
+                'hint'     => 'Either "simple" or "variable". Defaults to "simple".',
+            ],
+            'image_filename' => [
+                'label'    => 'Image Filename',
+                'required' => false,
+                'hint'     => 'Optional. Matches a file in the Media Library by name.',
+            ],
+            'low_stock_threshold' => [
+                'label'    => 'Low Stock Threshold',
+                'required' => false,
+                'hint'     => 'Optional. Alert when stock falls below this number.',
+            ],
+            'weight' => [
+                'label'    => 'Weight',
+                'required' => false,
+                'hint'     => 'Optional. Uses the store\'s default weight unit.',
+            ],
+            'length' => [
+                'label'    => 'Length',
+                'required' => false,
+                'hint'     => 'Optional.',
+            ],
+            'width' => [
+                'label'    => 'Width',
+                'required' => false,
+                'hint'     => 'Optional.',
+            ],
+            'height' => [
+                'label'    => 'Height',
+                'required' => false,
+                'hint'     => 'Optional.',
             ],
         ];
     }
 
-    /**
-     * @param array<string, string> $row
-     */
     public function validate(array $row): ?string
     {
         $name  = trim((string) ($row['name'] ?? ''));
@@ -134,36 +135,14 @@ final class ImportProductHandler implements ImportHandler
         $slug  = trim((string) ($row['slug'] ?? ''));
         $price = trim((string) ($row['price'] ?? ''));
 
-        if ($name === '') {
-            return 'Name is required.';
-        }
-        if (mb_strlen($name) > 255) {
-            return 'Name must be 255 characters or fewer.';
-        }
-        if ($sku === '') {
-            return 'SKU is required.';
-        }
-        if (mb_strlen($sku) > 80) {
-            return 'SKU must be 80 characters or fewer.';
-        }
-        if ($slug === '') {
-            return 'Slug is required.';
-        }
-        if (!preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug)) {
-            return 'Slug must be lowercase letters, digits, and hyphens, '
-                . 'and cannot start or end with a hyphen.';
-        }
-        if (mb_strlen($slug) > 255) {
-            return 'Slug must be 255 characters or fewer.';
-        }
-        if ($price === '') {
-            return 'Price is required.';
-        }
-        if (!is_numeric($price)) {
-            return 'Price must be a number.';
-        }
-        if ((float) $price < 0) {
-            return 'Price must not be negative.';
+        if ($name === '') return 'Name is required.';
+        if ($sku === '') return 'SKU is required.';
+        if ($slug === '') return 'Slug is required.';
+        if (!is_numeric($price) || (float)$price < 0) return 'Price must be a positive number.';
+
+        $stock = trim((string) ($row['stock_quantity'] ?? ''));
+        if ($stock !== '' && (!ctype_digit($stock) || (int)$stock < 0)) {
+            return 'Stock Quantity must be a non-negative integer.';
         }
 
         $brandSlug = strtolower(trim((string) ($row['brand_slug'] ?? '')));
@@ -171,19 +150,13 @@ final class ImportProductHandler implements ImportHandler
             return "Brand '{$brandSlug}' not found. Import the brand first.";
         }
 
-        $categorySlugs = $this->splitSlugs((string) ($row['category_slugs'] ?? ''));
-        foreach ($categorySlugs as $catSlug) {
-            if ($this->categories->findBySlug($catSlug) === null) {
-                return "Category '{$catSlug}' not found. Import the category first.";
-            }
-        }
+        // Note: We do not validate category_path here because the importer
+        // auto-creates missing categories during create(). Validation only
+        // checks that the brand exists (since we don't auto-create brands).
 
         return null;
     }
 
-    /**
-     * @param array<string, string> $row
-     */
     public function naturalKey(array $row): string
     {
         return strtoupper(trim((string) ($row['sku'] ?? '')));
@@ -194,9 +167,6 @@ final class ImportProductHandler implements ImportHandler
         return $this->products->findBySku($naturalKey) !== null;
     }
 
-    /**
-     * @param array<string, string> $row
-     */
     public function create(array $row): int
     {
         $product = new Product();
@@ -204,72 +174,91 @@ final class ImportProductHandler implements ImportHandler
         $product->sku              = strtoupper(trim((string) ($row['sku'] ?? '')));
         $product->slug             = strtolower(trim((string) ($row['slug'] ?? '')));
         $product->price            = (float) ($row['price'] ?? 0);
-        $product->productType      = 'simple';
-        $product->brandId          = $this->resolveBrandId((string) ($row['brand_slug'] ?? ''));
-        $product->shortDescription = $this->nullIfBlank($row['short_description'] ?? null);
-        $product->description      = $this->nullIfBlank($row['description'] ?? null);
         $product->status           = 'draft';
+        $product->manageStock      = true;
+        $product->costPrice        = isset($row['cost_price']) && is_numeric($row['cost_price']) ? (float)$row['cost_price'] : null;
+        $product->minOrderQuantity = isset($row['min_order_quantity']) && is_numeric($row['min_order_quantity']) ? (int)$row['min_order_quantity'] : 1;
+        $product->lowStockThreshold = isset($row['low_stock_threshold']) && is_numeric($row['low_stock_threshold']) ? (int)$row['low_stock_threshold'] : null;
+        $product->weight           = isset($row['weight']) && is_numeric($row['weight']) ? (float)$row['weight'] : null;
+        $product->length           = isset($row['length']) && is_numeric($row['length']) ? (float)$row['length'] : null;
+        $product->width            = isset($row['width']) && is_numeric($row['width']) ? (float)$row['width'] : null;
+        $product->height           = isset($row['height']) && is_numeric($row['height']) ? (float)$row['height'] : null;
+        
+        $brandSlug = trim((string) ($row['brand_slug'] ?? ''));
+        $product->brandId = $brandSlug !== '' ? $this->resolveBrandId($brandSlug) : null;
+
+        $taxStatus = strtolower(trim((string) ($row['tax_status'] ?? 'taxable')));
+        $product->taxClassId = $taxStatus === 'none' 
+            ? $this->resolveTaxClassId('Zero') 
+            : $this->resolveTaxClassId('Standard');
+
+        $productType = strtolower(trim((string) ($row['product_type'] ?? 'simple')));
+        $product->productType = in_array($productType, ['simple', 'variable'], true) ? $productType : 'simple';
 
         $id = $this->products->create($product);
 
-        $categoryIds = $this->resolveCategoryIds((string) ($row['category_slugs'] ?? ''));
-        if ($categoryIds !== []) {
-            $this->products->syncCategories($id, $categoryIds);
+        $imageFilename = trim((string) ($row['image_filename'] ?? ''));
+        if ($imageFilename !== '') {
+            $this->attachImage($id, $imageFilename);
+        }
+
+        $categoryPath = trim((string) ($row['category_path'] ?? ''));
+        if ($categoryPath !== '') {
+            $categoryId = $this->resolveOrCreateCategoryPath($categoryPath);
+            if ($categoryId > 0) {
+                $this->products->syncCategories($id, [$categoryId]);
+            }
+        }
+
+        $stock = (int) ($row['stock_quantity'] ?? 0);
+        if ($stock > 0) {
+            $this->inventory->adjust($id, 0, $stock, 'opening', [
+                'reason' => 'Imported via Master File',
+            ]);
         }
 
         return $id;
     }
 
-    /**
-     * @param array<string, string> $row
-     * @return array<string, mixed>
-     */
     public function update(string $naturalKey, array $row): array
     {
         $existing = $this->products->findBySku($naturalKey);
-        if ($existing === null) {
-            return [];
-        }
-
-        $previousCategories = $this->products->categoryIdsFor($existing->id);
+        if ($existing === null) return [];
 
         $previous = [
-            'name'              => $existing->name,
-            'sku'               => $existing->sku,
-            'slug'              => $existing->slug,
-            'price'             => $existing->price,
-            'brand_id'          => $existing->brandId,
-            'short_description' => $existing->shortDescription,
-            'description'       => $existing->description,
-            'category_ids'      => $previousCategories,
+            'name'    => $existing->name,
+            'price'   => $existing->price,
+            'brand_id'=> $existing->brandId,
         ];
 
-        $existing->name  = trim((string) ($row['name'] ?? $existing->name));
-        $existing->sku   = strtoupper(trim((string) ($row['sku'] ?? $existing->sku)));
-        $existing->slug  = strtolower(trim((string) ($row['slug'] ?? $existing->slug)));
+        $existing->name = trim((string) ($row['name'] ?? $existing->name));
         if (array_key_exists('price', $row) && is_numeric($row['price'])) {
             $existing->price = (float) $row['price'];
         }
         if (array_key_exists('brand_slug', $row)) {
             $existing->brandId = $this->resolveBrandId((string) $row['brand_slug']);
         }
-        if (array_key_exists('short_description', $row)) {
-            $existing->shortDescription = $this->nullIfBlank($row['short_description']);
-        }
-        if (array_key_exists('description', $row)) {
-            $existing->description = $this->nullIfBlank($row['description']);
-        }
 
         $this->products->update($existing);
 
-        // Only sync categories when the CSV column is
-        // present and non-empty. A missing or blank column
-        // means "leave the associations alone."
-        if (array_key_exists('category_slugs', $row)
-            && trim((string) $row['category_slugs']) !== ''
-        ) {
-            $categoryIds = $this->resolveCategoryIds((string) $row['category_slugs']);
-            $this->products->syncCategories($existing->id, $categoryIds);
+        $categoryPath = trim((string) ($row['category_path'] ?? ''));
+        if ($categoryPath !== '') {
+            $categoryId = $this->resolveOrCreateCategoryPath($categoryPath);
+            if ($categoryId > 0) {
+                $this->products->syncCategories($existing->id, [$categoryId]);
+            }
+        }
+
+        $newStock = trim((string) ($row['stock_quantity'] ?? ''));
+        if ($newStock !== '' && ctype_digit($newStock)) {
+            $current = $this->inventory->forUnit($existing->id, 0);
+            $currentQty = $current ? $current->quantity : 0;
+            $delta = (int)$newStock - $currentQty;
+            if ($delta !== 0) {
+                $this->inventory->adjust($existing->id, 0, $delta, 'stocktake', [
+                    'reason' => 'Imported via Master File update',
+                ]);
+            }
         }
 
         return $previous;
@@ -280,56 +269,16 @@ final class ImportProductHandler implements ImportHandler
         $this->products->softDelete($entityId);
     }
 
-    /**
-     * @param array<string, mixed> $previousValues
-     */
     public function restore(int $entityId, array $previousValues): void
     {
         $existing = $this->products->findById($entityId);
-        if ($existing === null) {
-            return;
-        }
+        if ($existing === null) return;
 
-        if (array_key_exists('name', $previousValues)) {
-            $existing->name = (string) $previousValues['name'];
-        }
-        if (array_key_exists('sku', $previousValues)) {
-            $existing->sku = $previousValues['sku'] === null
-                ? null
-                : (string) $previousValues['sku'];
-        }
-        if (array_key_exists('slug', $previousValues)) {
-            $existing->slug = (string) $previousValues['slug'];
-        }
-        if (array_key_exists('price', $previousValues)) {
-            $existing->price = (float) $previousValues['price'];
-        }
-        if (array_key_exists('brand_id', $previousValues)) {
-            $existing->brandId = $previousValues['brand_id'] === null
-                ? null
-                : (int) $previousValues['brand_id'];
-        }
-        if (array_key_exists('short_description', $previousValues)) {
-            $existing->shortDescription = $previousValues['short_description'] === null
-                ? null
-                : (string) $previousValues['short_description'];
-        }
-        if (array_key_exists('description', $previousValues)) {
-            $existing->description = $previousValues['description'] === null
-                ? null
-                : (string) $previousValues['description'];
-        }
+        if (array_key_exists('name', $previousValues)) $existing->name = (string) $previousValues['name'];
+        if (array_key_exists('price', $previousValues)) $existing->price = (float) $previousValues['price'];
+        if (array_key_exists('brand_id', $previousValues)) $existing->brandId = $previousValues['brand_id'] === null ? null : (int) $previousValues['brand_id'];
 
         $this->products->update($existing);
-
-        if (array_key_exists('category_ids', $previousValues)
-            && is_array($previousValues['category_ids'])
-        ) {
-            $this->products->syncCategories(
-                $entityId,
-                array_map('intval', $previousValues['category_ids'])
-            );
-        }
     }
 
     public function findIdByNaturalKey(string $naturalKey): ?int
@@ -342,51 +291,64 @@ final class ImportProductHandler implements ImportHandler
     private function resolveBrandId(string $brandSlug): ?int
     {
         $slug = strtolower(trim($brandSlug));
-        if ($slug === '') {
+        if ($slug === '') return null;
+        return $this->brands->findBySlug($slug)?->id;
+    }
+
+    private function resolveTaxClassId(string $className): ?int
+    {
+        try {
+            $id = $this->db->scalar(
+                "SELECT `id` FROM `commerce_tax_classes` WHERE `store_id` = ? AND `name` = ? LIMIT 1",
+                [$this->storeContext->id(), $className]
+            );
+            return $id !== false && $id !== null ? (int)$id : null;
+        } catch (\Throwable $e) {
             return null;
         }
-        $brand = $this->brands->findBySlug($slug);
-        return $brand?->id;
     }
 
-    /**
-     * @return int[]
-     */
-    private function resolveCategoryIds(string $csv): array
+    private function attachImage(int $productId, string $filename): void
     {
-        $slugs = $this->splitSlugs($csv);
-        $ids = [];
-        foreach ($slugs as $slug) {
-            $category = $this->categories->findBySlug($slug);
-            if ($category !== null) {
-                $ids[] = $category->id;
+        try {
+            $fileId = $this->db->scalar(
+                "SELECT `id` FROM `core_files` WHERE `store_id` = ? AND `original_name` = ? AND `deleted_at` IS NULL LIMIT 1",
+                [$this->storeContext->id(), $filename]
+            );
+
+            if ($fileId !== false && $fileId !== null && (int)$fileId > 0) {
+                $this->images->add($productId, (int)$fileId, null, null);
             }
+        } catch (\Throwable $e) {
+            // Fail silently
         }
-        return $ids;
     }
 
-    /**
-     * @return string[]
-     */
-    private function splitSlugs(string $csv): array
+    private function resolveOrCreateCategoryPath(string $path): int
     {
-        $parts = explode(',', $csv);
-        $out = [];
-        foreach ($parts as $p) {
-            $trimmed = strtolower(trim($p));
-            if ($trimmed !== '') {
-                $out[] = $trimmed;
+        $parts = array_filter(array_map('trim', explode('/', $path)));
+        $parentId = null;
+
+        foreach ($parts as $part) {
+            $slug = strtolower(preg_replace('/[^a-z0-9-]+/i', '-', $part) ?? '');
+            $slug = trim($slug, '-');
+            if ($slug === '') continue;
+
+            $existing = $this->categories->findBySlug($slug);
+            if ($existing !== null) {
+                $parentId = $existing->id;
+                continue;
             }
-        }
-        return array_values(array_unique($out));
-    }
 
-    private function nullIfBlank(?string $value): ?string
-    {
-        if ($value === null) {
-            return null;
+            $category = new Category();
+            $category->name = $part;
+            $category->slug = $slug;
+            $category->parentId = $parentId;
+            $category->status = 'active';
+            
+            $parentId = $this->categories->create($category);
         }
-        $trimmed = trim($value);
-        return $trimmed === '' ? null : $trimmed;
+
+        return (int) $parentId;
     }
 }

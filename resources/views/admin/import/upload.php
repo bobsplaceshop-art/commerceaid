@@ -43,8 +43,8 @@ $val = fn(string $k, string $d = '') => e((string) ($old[$k] ?? $d));
                     <?php endforeach; ?>
                 </select>
                 <div class="form-text">
-                    Each entity imports independently. Import brands before products,
-                    and categories before products.
+                    The Master Product file handles categories, brands, and stock in one upload.
+                    Import customers and sales history separately if needed.
                 </div>
                 <?= $err('entity') ?>
             </div>

@@ -59,7 +59,7 @@ final class ImportValidator
             throw new RuntimeException('Columns have not been mapped yet.');
         }
 
-        $storageDir = dirname(__DIR__, 3) . '/storage/imports';
+        $storageDir = dirname(__DIR__, 4) . '/storage/imports';
         $csvPath = $storageDir . '/' . $batchId . '.csv';
         if (!is_file($csvPath)) {
             throw new RuntimeException('The uploaded CSV file is missing from disk.');
