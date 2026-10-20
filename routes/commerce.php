@@ -118,6 +118,27 @@ $router->get('/commerce/ca-admin/search/live',
     [\CorporateAid\Commerce\Controllers\Admin\AdminSearchController::class, 'live'],
     ['store', 'auth']);
 
+// Page builder (Stage 023 Session 2)
+$router->get('/commerce/ca-admin/pages',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'index'],
+    ['store', 'auth', 'permission:core.settings.manage']);
+
+$router->get('/commerce/ca-admin/pages/create',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'showCreate'],
+    ['store', 'auth', 'permission:core.settings.manage']);
+
+$router->post('/commerce/ca-admin/pages',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'store'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
+$router->get('/commerce/ca-admin/pages/{slug}',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'show'],
+    ['store', 'auth', 'permission:core.settings.manage']);
+
+$router->post('/commerce/ca-admin/pages/{slug}/delete',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'destroy'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
 $router->get('/commerce/ca-admin/media',
     [MediaLibraryController::class, 'index'],
     ['store', 'auth']);

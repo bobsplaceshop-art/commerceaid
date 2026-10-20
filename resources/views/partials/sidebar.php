@@ -79,6 +79,7 @@ $groups = [
         'label' => null,
         'items' => [
             ['label' => 'Dashboard', 'href' => '/commerce/ca-admin', 'icon' => 'bi-speedometer2'],
+            ['label' => 'Pages',     'href' => '/commerce/ca-admin/pages', 'icon' => 'bi-layout-text-window-reverse', 'permission' => 'core.settings.manage'],
         ],
     ],
     [
