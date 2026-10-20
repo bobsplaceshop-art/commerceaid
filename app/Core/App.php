@@ -169,7 +169,11 @@ final class App
         $c = $this->container;
 
         $c->singleton(Database::class, fn() => new Database((array) $c->get('config')->get('database', [])));
-        $c->singleton(View::class,     fn() => new View($this->basePath . '/resources/views', $c->get('config')));
+        $c->singleton(View::class,     fn() => new View(
+            $this->basePath . '/resources/views',
+            $c->get('config'),
+            $this->basePath . '/themes'
+        ));
         $c->singleton(Router::class,   fn() => new Router($c));
         $c->singleton(Session::class,  fn() => new Session((array) $c->get('config')->get('app.session', [])));
         $c->singleton(Csrf::class,     fn() => new Csrf($c->get(Session::class)));

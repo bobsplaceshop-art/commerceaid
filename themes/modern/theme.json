@@ -1,0 +1,8 @@
+{
+    "name": "Modern",
+    "slug": "modern",
+    "version": "1.0.0",
+    "author": "Corporate Aid Solutions",
+    "description": "The default Awalo Global layout: wide header, category nav, and full footer.",
+    "preview": "/themes/modern/preview.jpg"
+}

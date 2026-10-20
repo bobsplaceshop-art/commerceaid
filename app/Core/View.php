@@ -12,14 +12,16 @@ use RuntimeException;
 final class View
 {
     private string $viewPath;
+    private ?string $themePath = null;
     private Config $config;
     /** @var array<string,mixed> */
     private array $shared = [];
 
-    public function __construct(string $viewPath, Config $config)
+    public function __construct(string $viewPath, Config $config, ?string $themePath = null)
     {
         $this->viewPath = rtrim($viewPath, '/\\');
         $this->config = $config;
+        $this->themePath = $themePath !== null ? rtrim($themePath, '/\\') : null;
     }
 
     public function share(string $key, mixed $value): void
@@ -93,6 +95,17 @@ final class View
         // Strip a trailing '.php' properly (if present).
         if (str_ends_with($name, '.php')) {
             $name = substr($name, 0, -4);
+        }
+
+        // If the view name starts with 'themes/', look in the theme
+        // root first. Falls through to the default viewPath so
+        // partials inside a theme can still resolve normally.
+        if ($this->themePath !== null && str_starts_with($name, 'themes/')) {
+            $themeName = substr($name, strlen('themes/'));
+            $themeFile = $this->themePath . '/' . $themeName . '.php';
+            if (is_file($themeFile)) {
+                return $themeFile;
+            }
         }
 
         $file = $this->viewPath . '/' . $name . '.php';
