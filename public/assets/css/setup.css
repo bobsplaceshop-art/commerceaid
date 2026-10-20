@@ -367,7 +367,7 @@
 }
 
 .ra-content .text-danger {
-    color: #ef4444;
+    color: var(--ra-danger);
 }
 
 .ra-content .text-muted,
