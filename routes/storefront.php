@@ -4,6 +4,7 @@ declare(strict_types=1);
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\Router;
+use CorporateAid\Commerce\Controllers\Storefront\FeedController;
 use CorporateAid\Commerce\Controllers\Storefront\HomeController;
 use CorporateAid\Commerce\Controllers\Storefront\CatalogController;
 use CorporateAid\Commerce\Controllers\Storefront\CategoryController;
@@ -58,6 +59,14 @@ use CorporateAid\Commerce\Controllers\Storefront\FormController;
 // ---------------------------------------------------------------------
 // Home
 // ---------------------------------------------------------------------
+// Google Merchant Center feed. Public (no auth). Google
+// fetches this URL on its own schedule. The maintenance
+// gate is bypassed so the feed stays available even
+// during a scheduled window.
+$router->get('/feed/google-merchant.xml',
+    [\CorporateAid\Commerce\Controllers\Storefront\FeedController::class, 'googleMerchant'],
+    ['store']);
+
 $router->get('/', [HomeController::class, 'index'], ['store', 'maintenance']);
 
 // ---------------------------------------------------------------------

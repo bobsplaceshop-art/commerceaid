@@ -204,7 +204,15 @@ abstract class StorefrontController
      * The current store, or null if the store context hasn't been
      * populated.
      */
-    private function resolveStore(): ?\CorporateAid\Commerce\Models\Store
+    /**
+     * The current store, or null if the store context hasn't been
+     * populated.
+     *
+     * Protected so subclasses that render outside the storefront
+     * layout (feed endpoints, JSON APIs) can resolve the store
+     * without reimplementing the query.
+     */
+    protected function resolveStore(): ?\CorporateAid\Commerce\Models\Store
     {
         $context = $this->container->get(StoreContext::class);
         if (!$context->has()) {
