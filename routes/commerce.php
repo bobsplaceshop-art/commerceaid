@@ -69,6 +69,18 @@ $router->get('/commerce/ca-admin',
     [DashboardController::class, 'index'],
     ['store', 'auth']);
 
+$router->get('/commerce/ca-admin/reports',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminReportController::class, 'index'],
+    ['store', 'auth']);
+
+$router->get('/commerce/ca-admin/reports/download',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminReportController::class, 'downloadPdf'],
+    ['store', 'auth']);
+
+$router->get('/commerce/ca-admin/reports/print',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminReportController::class, 'print'],
+    ['store', 'auth']);
+
 // =====================================================================
 // Admin - media library
 // =====================================================================

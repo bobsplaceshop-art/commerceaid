@@ -195,4 +195,70 @@ final class ReportRepository
             'repeat_rate' => $total > 0 ? round(($returning / $total) * 100, 1) : 0.0,
         ];
     }
+
+    /**
+     * Products with stock on hand but few or no sales in the window.
+     * Sorted by highest stock + lowest sales first. This is the
+     * "dead inventory" report: what is sitting on the shelves
+     * tying up cash.
+     *
+     * @return array<int, array{product_id: int, name: string, sku: ?string, stock: int, sold: int, days_since_last_sale: ?int}>
+     */
+    public function slowMovingStock(int $days = 30, int $limit = 20): array
+    {
+        // Subquery: units sold per product in the window
+        $rows = $this->db->select(
+            "SELECT
+                p.`id` AS product_id,
+                p.`name`,
+                p.`sku`,
+                COALESCE(inv.total_qty, 0) AS stock,
+                COALESCE(sold.units_sold, 0) AS sold,
+                sold.last_sale_at
+             FROM `commerce_products` p
+             LEFT JOIN (
+                SELECT `product_id`, SUM(`quantity`) AS total_qty
+                FROM `commerce_inventory`
+                WHERE `store_id` = ?
+                GROUP BY `product_id`
+             ) inv ON inv.`product_id` = p.`id`
+             LEFT JOIN (
+                SELECT oi.`product_id`,
+                       SUM(oi.`quantity`) AS units_sold,
+                       MAX(o.`paid_at`) AS last_sale_at
+                FROM `commerce_order_items` oi
+                JOIN `commerce_orders` o ON o.`id` = oi.`order_id`
+                WHERE o.`store_id` = ?
+                  AND o.`paid_at` IS NOT NULL
+                  AND o.`paid_at` >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+                  AND o.`status` NOT IN ('cancelled', 'failed')
+                GROUP BY oi.`product_id`
+             ) sold ON sold.`product_id` = p.`id`
+             WHERE p.`store_id` = ?
+               AND p.`status` = 'published'
+               AND p.`deleted_at` IS NULL
+               AND COALESCE(inv.total_qty, 0) > 0
+               AND COALESCE(sold.units_sold, 0) <= 2
+             ORDER BY (COALESCE(inv.total_qty, 0) - COALESCE(sold.units_sold, 0)) DESC, p.`name` ASC
+             LIMIT ?",
+            [$this->storeId(), $this->storeId(), $days, $this->storeId(), $limit]
+        );
+
+        return array_map(function($r) {
+            $last = $r['last_sale_at'] ?? null;
+            $daysSince = null;
+            if ($last !== null) {
+                $daysSince = (int) floor((time() - strtotime((string) $last)) / 86400);
+            }
+            return [
+                'product_id'           => (int) $r['product_id'],
+                'name'                 => (string) $r['name'],
+                'sku'                  => $r['sku'] ?? null,
+                'stock'                => (int) $r['stock'],
+                'sold'                 => (int) $r['sold'],
+                'days_since_last_sale' => $daysSince,
+            ];
+        }, $rows);
+    }
+
 }
