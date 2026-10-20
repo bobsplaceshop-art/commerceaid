@@ -244,6 +244,10 @@ final class StoreRepository
             'font_display_slug',
             'font_script_slug',
             'theme_slug',
+            'seo_default_title',
+            'seo_default_description',
+            'seo_default_og_file_id',
+            'tagline',
         ];
 
         if (!in_array($column, $allowed, true)) {

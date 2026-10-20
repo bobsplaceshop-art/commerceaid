@@ -210,6 +210,45 @@ final class StoreSettingDefinitions
                          'Themes live in themes/{slug}/.',
         ],
 
+        'store.seo_default_title' => [
+            'label'   => 'Default SEO title',
+            'type'    => 'string',
+            'default' => '',
+            'group'   => self::GROUP_BRANDING,
+            'target'  => 'column',
+            'column'  => 'seo_default_title',
+            'hint'    => 'Fallback <title> tag for pages without their own. ' .
+                         'Example: "Awalo Global — Fashion, Beauty, Lifestyle". ' .
+                         'Aim for 50-60 characters.',
+        ],
+
+        'store.seo_default_description' => [
+            'label'   => 'Default SEO description',
+            'type'    => 'text',
+            'default' => '',
+            'group'   => self::GROUP_BRANDING,
+            'target'  => 'column',
+            'column'  => 'seo_default_description',
+            'hint'    => 'Shown in Google search results and link previews for pages ' .
+                         'without their own description. Aim for 150-160 characters. ' .
+                         'This is what WhatsApp, Facebook, and Google use for the homepage.',
+        ],
+
+        'store.seo_default_og_file_id' => [
+            'label'         => 'Default social share image',
+            'type'          => 'file',
+            'default'       => null,
+            'group'         => self::GROUP_BRANDING,
+            'target'        => 'column',
+            'column'        => 'seo_default_og_file_id',
+            'accept'        => 'image/png,image/jpeg,image/webp',
+            'max_mb'        => 2,
+            'media_context' => MediaVariantSet::CONTEXT_HERO_IMAGE,
+            'hint'          => 'The image shown when someone shares your site on WhatsApp, ' .
+                               'Facebook, or LinkedIn. Ideal size 1200x630. ' .
+                               'If blank, the platform uses the default brand card.',
+        ],
+
         // -------------------------------------------------------------
         // Fonts
         // -------------------------------------------------------------

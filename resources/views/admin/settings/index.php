@@ -151,6 +151,7 @@ $tabs['advanced'] = 'Advanced';
             <form method="POST"
                   action="/commerce/ca-admin/settings"
                   class="ra-settings-form"
+                  id="ra-settings-form"
                   enctype="multipart/form-data">
                 <?= csrf_field() ?>
                 <input type="hidden" name="_tab" value="<?= e($activeTab) ?>">
@@ -232,12 +233,16 @@ $tabs['advanced'] = 'Advanced';
                     ]) ?>
                 <?php endforeach; ?>
 
-                <div class="mt-4 pt-3" style="border-top:1px solid var(--ra-border,#1f2a44);">
-                    <button type="submit" class="ra-btn ra-btn-primary">
+            </form>
+
+            <div class="ra-sticky-actions">
+                <div class="ra-sticky-actions-inner">
+                    <button type="submit" form="ra-settings-form" class="ra-btn ra-btn-primary">
                         <i class="bi bi-check-lg me-1"></i> Save settings
                     </button>
                 </div>
-            </form>
+            </div>
+            <div class="ra-sticky-spacer"></div>
         <?php endif; ?>
 
     </div>

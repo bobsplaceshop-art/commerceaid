@@ -132,11 +132,70 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <link href="<?= versioned_asset('css/storefront-cart.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-checkout.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-search.css') ?>" rel="stylesheet">
+    <?= view_partial('storefront/partials/_meta-icons') ?>
+
     <link href="<?= versioned_asset('css/storefront-forms.css') ?>" rel="stylesheet">
 
     <!-- Theme-specific overrides. Loaded last so the theme
          can override any base storefront style. -->
     <link href="/themes/modern/css/theme.css?v=<?= time() ?>" rel="stylesheet">
+
+    <?php
+    // SEO: structured data + Open Graph + Twitter Card.
+    //
+    // Product pages get a full Product schema (JSON-LD) plus
+    // product-specific OG tags (price, availability, primary
+    // image). Every other page gets site-level OG defaults.
+    //
+    // This block is defensive: if the SEO services throw for
+    // any reason, the storefront still renders. A broken
+    // meta tag must never break the shop.
+    $__seoStore = $store ?? null;
+    if ($__seoStore !== null) {
+        try {
+            $__seoSocial = app(\CorporateAid\Commerce\Services\Seo\SocialMetaService::class);
+
+            if (isset($product) && $product instanceof \CorporateAid\Commerce\Models\Product) {
+                $__seoStructured = app(\CorporateAid\Commerce\Services\Seo\StructuredDataService::class);
+                $__seoSchema     = $__seoStructured->product($product, $__seoStore);
+
+                echo '<script type="application/ld+json">'
+                    . json_encode($__seoSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+                    . '</script>' . PHP_EOL;
+
+                foreach ($__seoSocial->product($product, $__seoStore) as $__seoProp => $__seoContent) {
+                    $__seoAttr = (str_starts_with($__seoProp, 'og:') || str_starts_with($__seoProp, 'product:')) ? 'property' : 'name';
+                    echo '<meta ' . $__seoAttr . '="' . e($__seoProp) . '" content="' . e($__seoContent) . '">' . PHP_EOL;
+                }
+            } else {
+                $__seoTitle = $title ?? '';
+                $__seoDesc  = $__seoStore->seoDefaultDescription ?? $__seoStore->tagline ?? $__seoStore->name ?? '';
+                $__seoMeta  = $__seoSocial->page($__seoTitle, $__seoDesc, $__seoStore);
+
+                // Emit the plain <meta name="description"> first, so it
+                // sits alongside og:description in the source. Search
+                // engines and social crawlers use the same value.
+                $__seoDescription = $__seoMeta['og:description'] ?? '';
+                if ($__seoDescription !== '') {
+                    echo '<meta name="description" content="' . e($__seoDescription) . '">' . PHP_EOL;
+                }
+
+                foreach ($__seoMeta as $__seoProp => $__seoContent) {
+                    $__seoAttr = str_starts_with($__seoProp, 'og:') ? 'property' : 'name';
+                    echo '<meta ' . $__seoAttr . '="' . e($__seoProp) . '" content="' . e($__seoContent) . '">' . PHP_EOL;
+                }
+            }
+        } catch (\Throwable $__seoEx) {
+            // Silent on the storefront. Log so the developer
+            // can see the failure in storage/logs.
+            try {
+                \CorporateAid\Platform\Support\Logger::error('SEO block failed: ' . $__seoEx->getMessage());
+            } catch (\Throwable) {
+                // Logger itself failed; nothing more we can do.
+            }
+        }
+    }
+    ?>
 </head>
 <body class="sf-body">
 
