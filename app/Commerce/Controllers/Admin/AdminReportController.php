@@ -13,6 +13,7 @@ final class AdminReportController extends AdminController
     /**
      * The interactive reports page. Accepts ?days=N (7|30|90|365).
      */
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $days = (int) $request->query('days', 30);
@@ -31,6 +32,7 @@ final class AdminReportController extends AdminController
      * A stripped-down print view. No sidebar, no topbar, no buttons.
      * The browser's "Save as PDF" turns this into a clean PDF.
      */
+    /** @param array<string,string> $params */
     public function print(Request $request, array $params = []): Response
     {
         $days = (int) $request->query('days', 30);
@@ -83,6 +85,7 @@ final class AdminReportController extends AdminController
      * mPDF is a pure-PHP library. No system binaries, no exec(),
      * no cPanel restrictions. Works identically on any host.
      */
+    /** @param array<string,string> $params */
     public function downloadPdf(Request $request, array $params = []): Response
     {
         $days = (int) $request->query('days', 30);
@@ -101,8 +104,8 @@ final class AdminReportController extends AdminController
         $viewSvc = $this->container->get(\CorporateAid\Core\View::class);
         $html = $viewSvc->render('admin.reports.pdf', $data);
 
-        $filename = preg_replace('/[^a-z0-9]+/i', '-', $storeName);
-        $filename = strtolower(trim($filename, '-')) . '-reports-' . date('Y-m-d') . '.pdf';
+        $filename = preg_replace('/[^a-z0-9]+/i', '-', (string) $storeName) ?? 'store';
+        $filename = strtolower(trim((string) $filename, '-')) . '-reports-' . date('Y-m-d') . '.pdf';
 
         @ini_set('memory_limit', '256M');
         @set_time_limit(60);

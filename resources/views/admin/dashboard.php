@@ -104,7 +104,7 @@ $categoryColors = ['#d4af37', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5c
         <?php if ($maxRevenue <= 0): ?>
             <p class="text-muted text-center py-4 mb-0">No paid orders yet. Your first sale will appear here.</p>
         <?php else: ?>
-            <svg viewBox="0 0 <?= $width ?> <?= $height ?>" style="width:100%; height:auto; min-width:500px;">
+            <svg viewBox="0 0 <?= $width ?> <?= $height ?>" style="width:100%; height:auto; display:block;">
                 <!-- Y-axis grid lines -->
                 <?php for ($i = 0; $i <= 4; $i++): ?>
                     <?php
@@ -140,21 +140,23 @@ $categoryColors = ['#d4af37', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5c
                 <?php if (empty($topProducts)): ?>
                     <p class="text-muted text-center py-4 mb-0">No products sold yet.</p>
                 <?php else: ?>
-                    <table class="ra-table">
-                        <thead><tr><th>Product</th><th style="text-align:right;">Units</th><th style="text-align:right;">Revenue</th></tr></thead>
-                        <tbody>
-                        <?php foreach ($topProducts as $p): ?>
-                            <tr>
-                                <td>
-                                    <div class="fw-bold"><?= e($p['name']) ?></div>
-                                    <div class="text-muted small"><?= e($p['sku'] ?? '—') ?></div>
-                                </td>
-                                <td style="text-align:right;"><?= (int) $p['units'] ?></td>
-                                <td style="text-align:right;"><?= number_format($p['revenue'], 2) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    <div data-responsive="scroll">
+                        <table class="ra-table">
+                            <thead><tr><th>Product</th><th style="text-align:right;">Units</th><th style="text-align:right;">Revenue</th></tr></thead>
+                            <tbody>
+                            <?php foreach ($topProducts as $p): ?>
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold"><?= e($p['name']) ?></div>
+                                        <div class="text-muted small"><?= e($p['sku'] ?? '—') ?></div>
+                                    </td>
+                                    <td style="text-align:right;"><?= (int) $p['units'] ?></td>
+                                    <td style="text-align:right;"><?= number_format($p['revenue'], 2) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>

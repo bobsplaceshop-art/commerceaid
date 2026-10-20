@@ -115,7 +115,7 @@ $statusLabels = [
         <?php if ($maxRevenue <= 0): ?>
             <p class="text-muted text-center py-4 mb-0">No paid orders in this window.</p>
         <?php else: ?>
-            <svg viewBox="0 0 <?= $width ?> <?= $height ?>" style="width:100%; height:auto; min-width:500px;">
+            <svg viewBox="0 0 <?= $width ?> <?= $height ?>" style="width:100%; height:auto; display:block;">
                 <?php for ($i = 0; $i <= 4; $i++): ?>
                     <?php $y = $padT + ($i / 4) * $chartH; $val = $maxRevenue * (1 - $i / 4); ?>
                     <line x1="<?= $padL ?>" y1="<?= $y ?>" x2="<?= $width - $padR ?>" y2="<?= $y ?>" stroke="#2d3748" stroke-width="1" stroke-dasharray="2 4"/>
@@ -141,22 +141,24 @@ $statusLabels = [
                 <?php if (empty($topProducts)): ?>
                     <p class="text-muted text-center py-4 mb-0">No products sold in this window.</p>
                 <?php else: ?>
-                    <table class="ra-table">
-                        <thead><tr><th>#</th><th>Product</th><th style="text-align:right;">Units</th><th style="text-align:right;">Revenue</th></tr></thead>
-                        <tbody>
-                        <?php foreach ($topProducts as $i => $p): ?>
-                            <tr>
-                                <td class="text-muted"><?= $i + 1 ?></td>
-                                <td>
-                                    <div class="fw-bold"><?= e($p['name']) ?></div>
-                                    <div class="text-muted small"><?= e($p['sku'] ?? '—') ?></div>
-                                </td>
-                                <td style="text-align:right;"><?= (int) $p['units'] ?></td>
-                                <td style="text-align:right;"><?= number_format($p['revenue'], 2) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    <div data-responsive="scroll">
+                        <table class="ra-table">
+                            <thead><tr><th>#</th><th>Product</th><th style="text-align:right;">Units</th><th style="text-align:right;">Revenue</th></tr></thead>
+                            <tbody>
+                            <?php foreach ($topProducts as $i => $p): ?>
+                                <tr>
+                                    <td class="text-muted"><?= $i + 1 ?></td>
+                                    <td>
+                                        <div class="fw-bold"><?= e($p['name']) ?></div>
+                                        <div class="text-muted small"><?= e($p['sku'] ?? '—') ?></div>
+                                    </td>
+                                    <td style="text-align:right;"><?= (int) $p['units'] ?></td>
+                                    <td style="text-align:right;"><?= number_format($p['revenue'], 2) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -208,16 +210,17 @@ $statusLabels = [
         <?php if (empty($slowMoving)): ?>
             <p class="text-muted text-center py-4 mb-0">All stocked products are selling well. No slow-movers to worry about.</p>
         <?php else: ?>
-            <table class="ra-table">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th style="text-align:right;">In Stock</th>
-                        <th style="text-align:right;">Sold (<?= $days ?>d)</th>
-                        <th>Last Sale</th>
-                        <th>Recommendation</th>
-                    </tr>
-                </thead>
+            <div data-responsive="scroll">
+                <table class="ra-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th style="text-align:right;">In Stock</th>
+                            <th style="text-align:right;">Sold (<?= $days ?>d)</th>
+                            <th>Last Sale</th>
+                            <th>Recommendation</th>
+                        </tr>
+                    </thead>
                 <tbody>
                 <?php foreach ($slowMoving as $p): ?>
                     <tr>
@@ -246,7 +249,8 @@ $statusLabels = [
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
-            </table>
+                </table>
+            </div>
         <?php endif; ?>
     </div>
 </div>

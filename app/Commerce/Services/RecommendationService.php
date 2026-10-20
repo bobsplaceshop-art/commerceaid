@@ -11,16 +11,22 @@ final class RecommendationService
     public function __construct(
         private ProductRepository $products,
         private Database $db,
+        private \CorporateAid\Commerce\Context\StoreContext $context,
     ) {
     }
 
+    /**
+     * @param array<int, \CorporateAid\Commerce\Models\CartLineItem> $cartLines
+     * @return array<int, \CorporateAid\Commerce\Models\Product>
+     */
     public function forCart(array $cartLines, int $limit = 4): array
     {
         if (empty($cartLines)) {
             return [];
         }
 
-        $productIds = array_map(fn($line) => $line->productId, $cartLines);
+        $productIds = array_map(fn($line) => $line->item->productId, $cartLines);
+        $productIds = array_filter($productIds);
         $excludeIds = implode(',', $productIds);
 
         // Find categories for the products in the cart
@@ -44,7 +50,7 @@ final class RecommendationService
                     ORDER BY RAND()
                     LIMIT ?";
             
-            $params = array_merge([$this->products->storeId()], $categoryIds, [$limit]);
+            $params = array_merge([$this->context->id()], $categoryIds, [$limit]);
             $rows = $this->db->select($sql, $params);
             
             if (!empty($rows)) {
@@ -61,7 +67,7 @@ final class RecommendationService
                AND `deleted_at` IS NULL 
              ORDER BY `created_at` DESC 
              LIMIT ?",
-            [$this->products->storeId(), $limit]
+            [$this->context->id(), $limit]
         );
         return array_map([\CorporateAid\Commerce\Models\Product::class, 'fromRow'], $rows);
     }

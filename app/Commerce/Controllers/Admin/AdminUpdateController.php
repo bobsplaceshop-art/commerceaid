@@ -11,6 +11,7 @@ use CorporateAid\Commerce\Repositories\StoreSettingsRepository;
 
 final class AdminUpdateController extends AdminController
 {
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $migrator = $this->container->get(Migrator::class);
@@ -30,6 +31,7 @@ final class AdminUpdateController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function run(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -58,6 +60,7 @@ final class AdminUpdateController extends AdminController
         return Response::redirect('/commerce/ca-admin/update');
     }
 
+    /** @param array<string,string> $params */
     public function saveStatus(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);
@@ -76,6 +79,7 @@ final class AdminUpdateController extends AdminController
         return Response::redirect('/commerce/ca-admin/update');
     }
 
+    /** @param array<string,string> $params */
     public function schedule(Request $request, array $params = []): Response
     {
         $session = $this->container->get(Session::class);

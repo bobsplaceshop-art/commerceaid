@@ -10,6 +10,7 @@ use CorporateAid\Commerce\Repositories\OrderRepository;
 
 final class AdminSearchController extends AdminController
 {
+    /** @param array<string,string> $params */
     public function index(Request $request, array $params = []): Response
     {
         $q = trim((string) $request->query('q', ''));
@@ -36,6 +37,7 @@ final class AdminSearchController extends AdminController
         ]);
     }
 
+    /** @param array<string,string> $params */
     public function live(Request $request, array $params = []): Response
     {
         $q = trim((string) $request->query('q', ''));

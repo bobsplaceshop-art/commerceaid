@@ -157,6 +157,7 @@ final class StoreRepository
         return array_map([Store::class, 'fromRow'], $rows);
     }
 
+    /** @return array<int, Store> */
     public function allActive(): array
     {
         $rows = $this->db->select(

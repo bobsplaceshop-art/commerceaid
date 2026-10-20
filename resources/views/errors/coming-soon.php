@@ -57,7 +57,8 @@ $storeName = $store->name ?? 'Our New Store';
         .sf-coming-soon {
             max-width: 650px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.85); /* semi-transparent */
+            /* semi-transparent */
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             padding: 4rem 3rem;

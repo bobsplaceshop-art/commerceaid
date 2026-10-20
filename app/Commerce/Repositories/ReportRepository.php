@@ -54,7 +54,8 @@ final class ReportRepository
 
         $series = [];
         for ($i = $days - 1; $i >= 0; $i--) {
-            $date = date('Y-m-d', strtotime("-{$i} days"));
+            $ts   = strtotime("-{$i} days");
+            $date = date('Y-m-d', $ts === false ? time() : $ts);
             $series[] = [
                 'date'    => $date,
                 'revenue' => $byDate[$date]['revenue'] ?? 0.0,

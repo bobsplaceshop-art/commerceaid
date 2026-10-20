@@ -212,6 +212,14 @@ html[data-theme="light"] {
     --ra-topbar-h:  60px;
     --ra-radius:    10px;
     --ra-radius-lg: 14px;
+
+    /* Solid status colors. Used by dashboard.php and reports KPI
+       tiles (--ra-success), the inventory count badge (--ra-warning),
+       and the setup error text (--ra-danger). The alert family has
+       its own --ra-success-bg/-fg/-bd triplet above. */
+    --ra-success: #10b981;
+    --ra-warning: #f59e0b;
+    --ra-danger:  #ef4444;
 }
 
 
@@ -1322,7 +1330,7 @@ html[data-theme="light"] .ra-table-wrap {
 }
 
 .ra-image-tile-badge-pending {
-    background: #f59e0b;
+    background: var(--ra-warning);
 }
 
 .ra-image-tile-thumb-fallback {

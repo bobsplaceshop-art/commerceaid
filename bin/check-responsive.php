@@ -105,6 +105,19 @@ foreach ($iterator as $file) {
     $rel = str_replace($root . DIRECTORY_SEPARATOR, '', $path);
     $rel = str_replace('\\', '/', $rel);
 
+    // PDF and print views render to A4 pages, not to a browser
+    // viewport. Their tables are laid out for print at 210mm wide,
+    // and their @media print blocks are for the print dialog, not
+    // for responsive layout. Exempt them from the responsive
+    // contract checks.
+    $responsiveExempt = [
+        'resources/views/admin/reports/pdf.php',
+        'resources/views/admin/reports/print.php',
+    ];
+    if (in_array($rel, $responsiveExempt, true)) {
+        continue;
+    }
+
     // --- Rule 1 ---
     $blocks = extract_style_blocks($path);
     foreach ($blocks as $block) {
