@@ -18,6 +18,8 @@ $flashError   = function_exists('flash') ? flash('error') : null;
     <link href="<?= versioned_asset('css/storefront-cart.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-checkout.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-auth.css') ?>" rel="stylesheet">
+    <?= view_partial('storefront/partials/_meta-icons') ?>
+
     <link href="<?= versioned_asset('css/storefront-forms.css') ?>" rel="stylesheet">
     <link href="/themes/minimal/css/theme-v2.css?v=<?= time() ?>" rel="stylesheet">
 </head>
