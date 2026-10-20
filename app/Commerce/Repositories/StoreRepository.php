@@ -132,6 +132,31 @@ final class StoreRepository
     }
 
     /** @return array<int, Store> */
+    /**
+     * Stores this user can access. Super-admins get every active
+     * store; other users get only what they're linked to via
+     * commerce_store_users.
+     *
+     * @return array<int, Store>
+     */
+    public function forUser(int $userId, bool $isSuperAdmin): array
+    {
+        if ($isSuperAdmin) {
+            return $this->allActive();
+        }
+        
+        $rows = $this->db->select(
+            "SELECT s.* 
+             FROM `commerce_stores` s
+             JOIN `commerce_store_users` su ON su.store_id = s.id
+             WHERE su.user_id = ?
+             ORDER BY s.name ASC",
+            [$userId]
+        );
+        
+        return array_map([Store::class, 'fromRow'], $rows);
+    }
+
     public function allActive(): array
     {
         $rows = $this->db->select(

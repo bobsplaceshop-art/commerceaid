@@ -56,6 +56,18 @@ final class StoreService
         return $this->stores->findDefault();
     }
 
+    /**
+     * Stores the given user can access. Super-admins see every
+     * active store; others see only their linked stores.
+     *
+     * @return array<int, Store>
+     */
+    public function forUser(\CorporateAid\Platform\Models\User $user): array
+    {
+        $isSuperAdmin = $user->can('core.settings.manage');
+        return $this->stores->forUser($user->id, $isSuperAdmin);
+    }
+
     /** @return array<int, Store> */
     public function allActive(): array
     {

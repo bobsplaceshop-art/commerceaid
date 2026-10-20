@@ -48,7 +48,8 @@ abstract class StorefrontController
     {
         $viewSvc = $this->container->get(View::class);
 
-        $data['store']               = $this->resolveStore();
+        $store = $this->resolveStore();
+        $data['store']               = $store;
         $data['title']               = $data['title'] ?? '';
         $data['cartCount']           = $this->resolveCartCount();
         $data['wishlistProductIds']  = $this->resolveWishlistProductIds();
@@ -56,8 +57,23 @@ abstract class StorefrontController
         $data['navCategories']       = $this->resolveNavCategories();
         $data['storeNotice']         = $this->resolveStoreNotice();
 
+        // Resolve the active theme's layout. Falls back to 'modern'
+        // if the store's chosen theme doesn't exist (broken install,
+        // removed folder).
+        $themeSlug = $store !== null ? $store->themeSlug : 'modern';
+        $layoutPath = 'themes.' . $themeSlug . '.layouts.main';
+
+        try {
+            $registry = $this->container->get(\CorporateAid\Commerce\Services\Theme\ThemeRegistry::class);
+            if (!$registry->exists($themeSlug)) {
+                $layoutPath = 'themes.modern.layouts.main';
+            }
+        } catch (\Throwable) {
+            $layoutPath = 'themes.modern.layouts.main';
+        }
+
         return Response::html(
-            $viewSvc->render($view, $data, 'storefront.layouts.main')
+            $viewSvc->render($view, $data, $layoutPath)
         );
     }
 

@@ -2355,3 +2355,43 @@ html[data-theme="light"] .ra-table-wrap {
         grid-template-columns: 1fr;
     }
 }
+
+/* =====================================================================
+ * Print stylesheet - hides chrome when the browser prints
+ * ===================================================================== */
+
+@media print {
+    .ra-sidebar,
+    .ra-topbar,
+    .ra-btn,
+    .ra-sticky-actions,
+    .ra-breadcrumbs,
+    .ra-user-menu,
+    .ra-hamburger,
+    .ra-search-wrapper,
+    .ra-icon-btn,
+    nav {
+        display: none !important;
+    }
+    .ra-main,
+    .ra-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: none !important;
+    }
+    body {
+        background: #fff !important;
+        color: #000 !important;
+    }
+    .ra-card {
+        box-shadow: none !important;
+        border: 1px solid #e5e7eb !important;
+        page-break-inside: avoid;
+    }
+    .ra-card-header {
+        background: #f9fafb !important;
+    }
+    a { color: #000 !important; text-decoration: none !important; }
+    table { width: 100% !important; }
+    svg { max-width: 100% !important; }
+}

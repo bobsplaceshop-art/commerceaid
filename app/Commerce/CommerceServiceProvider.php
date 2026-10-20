@@ -435,6 +435,10 @@ final class CommerceServiceProvider
                 $c->get(MediaProcessor::class)
             ));
 
+        // ---------- Themes ----------
+        $c->singleton(ThemeRegistry::class,
+            fn() => new ThemeRegistry(dirname(__DIR__, 3) . '/themes'));
+
         // ---------- Middleware ----------
         $c->singleton(StoreResolutionMiddleware::class,
             fn() => new StoreResolutionMiddleware(

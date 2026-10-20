@@ -29,6 +29,7 @@ $title = $title ?? null;
 
     <div class="d-flex align-items-center gap-2">
         <script src="<?= versioned_asset('/js/admin-search.js') ?>"></script>
+
         <div class="ra-search-wrapper" style="position:relative; width:300px;">
             <form method="GET" action="/commerce/ca-admin/search" style="margin:0;">
                 <input type="text" name="q" class="ra-search" placeholder="Search admin..." value="<?= e($_GET['q'] ?? '') ?>" autocomplete="off" style="width:100%;">
@@ -70,3 +71,5 @@ $title = $title ?? null;
         <?= view_partial('partials/user-dropdown', ['user' => $user]) ?>
     <?php endif; ?>
 </header>
+
+
