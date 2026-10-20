@@ -58,6 +58,31 @@ final class SettingsController extends AdminController
             ? []
             : StoreSettingDefinitions::forGroup($activeTab);
 
+        // Populate dynamic options for the theme selector.
+        // The definitions array is static, but the themes are
+        // discovered at runtime from themes/.
+        if ($activeTab === StoreSettingDefinitions::GROUP_BRANDING
+            && isset($definitions['store.theme_slug'])
+        ) {
+            try {
+                $registry = $this->container->get(
+                    \CorporateAid\Commerce\Services\Theme\ThemeRegistry::class
+                );
+                $themeOptions = [];
+                foreach ($registry->all() as $theme) {
+                    $slug = (string) ($theme['slug'] ?? '');
+                    $name = (string) ($theme['name'] ?? $slug);
+                    if ($slug !== '') {
+                        $themeOptions[$slug] = $name;
+                    }
+                }
+                $definitions['store.theme_slug']['options'] = $themeOptions;
+            } catch (\Throwable $e) {
+                // If the registry fails, leave options empty.
+                // The select will just render blank.
+            }
+        }
+
         // Column-target fields read their current value from
         // commerce_stores, not from the key-value table.
         // Merge those into $values so the view sees them under

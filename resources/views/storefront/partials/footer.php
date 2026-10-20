@@ -218,6 +218,10 @@ $paymentMethods = [
                 &copy; <?= e((string) $year) ?> <?= e($brandName) ?>. All rights reserved.
             </span>
 
+            <span class="sf-footer-powered">
+                Powered by <a href="https://corporateaidsolutions.co.ke" target="_blank" rel="noopener">Corporate Aid Solutions</a>
+            </span>
+
             <div class="sf-footer-payments" data-sf-section="footer-payments" aria-label="Accepted payment methods">
                 <?php foreach ($paymentMethods as $pm): ?>
                     <span class="sf-footer-payment sf-footer-payment-<?= e($pm['key']) ?>"

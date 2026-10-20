@@ -133,6 +133,10 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     <link href="<?= versioned_asset('css/storefront-checkout.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-search.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/storefront-forms.css') ?>" rel="stylesheet">
+
+    <!-- Theme-specific overrides. Loaded last so the theme
+         can override any base storefront style. -->
+    <link href="/themes/modern/css/theme.css?v=<?= time() ?>" rel="stylesheet">
 </head>
 <body class="sf-body">
 

@@ -1591,3 +1591,57 @@ h1, h2, h3, h4 {
     background: var(--sf-surface-2, #f3f4f6);
     outline: none;
 }
+
+/* =====================================================================
+ * Footer bottom row: copyright + powered-by + payment badges
+ * =====================================================================
+ * The three items sit in one flex row: copyright on the left,
+ * powered-by centered, payment badges on the right. Wraps on
+ * mobile so the copyright and powered-by stack above the badges.
+ */
+
+.sf-footer-bottom-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.sf-footer-copy {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.05em;
+}
+
+.sf-footer-powered {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.1em;
+    text-align: center;
+    flex: 1;
+}
+
+.sf-footer-powered a {
+    color: rgba(255, 255, 255, 0.55);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.sf-footer-powered a:hover {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.sf-footer-payments {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+    .sf-footer-bottom-inner {
+        flex-direction: column;
+        text-align: center;
+    }
+}

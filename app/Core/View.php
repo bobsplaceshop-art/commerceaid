@@ -8,11 +8,18 @@ use RuntimeException;
 /**
  * Renders PHP templates from resources/views/.
  * Views are plain PHP files. Layouts wrap views; partials are fragments.
+ *
+ * Theme support: when themePath is set (from App.php), views
+ * starting with 'themes/' resolve from the themes/ directory.
+ * Storefront partials (header, footer, utility-bar) resolve from
+ * themes/{activeTheme}/partials/ first, then fall back to the
+ * shared resources/views/storefront/partials/.
  */
 final class View
 {
     private string $viewPath;
     private ?string $themePath = null;
+    private ?string $activeTheme = null;
     private Config $config;
     /** @var array<string,mixed> */
     private array $shared = [];
@@ -22,6 +29,16 @@ final class View
         $this->viewPath = rtrim($viewPath, '/\\');
         $this->config = $config;
         $this->themePath = $themePath !== null ? rtrim($themePath, '/\\') : null;
+    }
+
+    /**
+     * Set the active theme slug so theme-overridable partials
+     * (header, footer, utility-bar) resolve from themes/{slug}/partials/
+     * before falling back to resources/views/storefront/partials/.
+     */
+    public function setActiveTheme(?string $themeSlug): void
+    {
+        $this->activeTheme = $themeSlug;
     }
 
     public function share(string $key, mixed $value): void
@@ -56,14 +73,6 @@ final class View
     /**
      * Render a single view file.
      *
-     * The parameter names here ($viewName, $viewData) deliberately do
-     * not match common view-variable names. Before this rename, a
-     * view that read `$name` from its render data received the
-     * view's dot-notation name instead, because `extract()` uses
-     * EXTR_SKIP and would not overwrite the parameter `$name`
-     * already in scope. Renaming the parameter removes that
-     * collision class entirely.
-     *
      * @param array<string,mixed> $viewData
      */
     private function renderFile(string $viewName, array $viewData): string
@@ -95,6 +104,26 @@ final class View
         // Strip a trailing '.php' properly (if present).
         if (str_ends_with($name, '.php')) {
             $name = substr($name, 0, -4);
+        }
+
+        // Theme-aware partial resolution. If the view name is
+        // 'storefront/partials/header', 'storefront/partials/footer',
+        // or 'storefront/partials/utility-bar', check the theme's
+        // partials/ directory first. Falls back to resources/views/
+        // when the theme doesn't ship its own version.
+        if ($this->themePath !== null && $this->activeTheme !== null) {
+            $themeOverridablePartials = [
+                'storefront/partials/header',
+                'storefront/partials/footer',
+                'storefront/partials/utility-bar',
+            ];
+            if (in_array($name, $themeOverridablePartials, true)) {
+                $base = basename($name);
+                $themeFile = $this->themePath . '/' . $this->activeTheme . '/partials/' . $base . '.php';
+                if (is_file($themeFile)) {
+                    return $themeFile;
+                }
+            }
         }
 
         // If the view name starts with 'themes/', look in the theme

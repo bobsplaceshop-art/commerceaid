@@ -65,6 +65,7 @@ use CorporateAid\Commerce\Services\StoreService;
 use CorporateAid\Commerce\Repositories\PaymentMethodRepository;
 use CorporateAid\Commerce\Services\Payment\PaymentProviderRegistry;
 use CorporateAid\Commerce\Controllers\WebhookController;
+use CorporateAid\Commerce\Services\Theme\ThemeRegistry;
 
 /**
  * Commerce Aid product provider.
@@ -437,7 +438,7 @@ final class CommerceServiceProvider
 
         // ---------- Themes ----------
         $c->singleton(ThemeRegistry::class,
-            fn() => new ThemeRegistry(dirname(__DIR__, 3) . '/themes'));
+            fn() => new ThemeRegistry(dirname(__DIR__, 2) . '/themes'));
 
         // ---------- Middleware ----------
         $c->singleton(StoreResolutionMiddleware::class,

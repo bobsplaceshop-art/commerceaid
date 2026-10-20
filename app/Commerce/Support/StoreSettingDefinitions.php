@@ -198,6 +198,17 @@ final class StoreSettingDefinitions
             'hint'    => 'Hex color (#RRGGBB). Shown briefly while ' .
                          'the app is loading.',
         ],
+        'store.theme_slug' => [
+            'label'   => 'Storefront theme',
+            'type'    => 'select',
+            'default' => 'modern',
+            'group'   => self::GROUP_BRANDING,
+            'target'  => 'column',
+            'column'  => 'theme_slug',
+            'options' => [],
+            'hint'    => 'The layout used by the public storefront. ' .
+                         'Themes live in themes/{slug}/.',
+        ],
 
         // -------------------------------------------------------------
         // Fonts

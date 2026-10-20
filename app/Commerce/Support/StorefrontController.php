@@ -14,20 +14,13 @@ use CorporateAid\Commerce\Services\WishlistService;
  * Base controller for every storefront page.
  *
  * Mirrors AdminController in shape. The difference is the layout:
- * storefront pages render into layouts.storefront (public shell)
- * instead of layouts.app (admin shell). Same View class, same
- * render pipeline, different shell.
+ * storefront pages render into the active theme's layout
+ * (themes/{slug}/layouts/main) instead of the admin shell.
+ * Same View class, same render pipeline, different shell.
  *
  * Context injected by render():
  *   - $store    - the resolved store, or null
  *   - $title    - page title (for <title> and breadcrumbs)
- *
- * Storefront controllers do NOT receive:
- *   - $user         - customers are not modeled here; individual
- *                     controllers that need the customer resolve
- *                     it from CustomerAuth
- *   - $setupComplete - that is an admin-only concern for gating
- *                      sidebar items
  *
  * See docs/stages/008_storefront-plan.md for the full design.
  */
@@ -38,7 +31,7 @@ abstract class StorefrontController
     }
 
     /**
-     * Render a view inside the storefront shell.
+     * Render a view inside the active theme's layout.
      *
      * @param string $view  dot-notation view name, e.g.
      *                      'storefront.home'
@@ -47,8 +40,8 @@ abstract class StorefrontController
     protected function render(string $view, array $data = []): Response
     {
         $viewSvc = $this->container->get(View::class);
+        $store   = $this->resolveStore();
 
-        $store = $this->resolveStore();
         $data['store']               = $store;
         $data['title']               = $data['title'] ?? '';
         $data['cartCount']           = $this->resolveCartCount();
@@ -59,18 +52,25 @@ abstract class StorefrontController
 
         // Resolve the active theme's layout. Falls back to 'modern'
         // if the store's chosen theme doesn't exist (broken install,
-        // removed folder).
-        $themeSlug = $store !== null ? $store->themeSlug : 'modern';
+        // removed folder, or unset column).
+        $themeSlug  = $store !== null ? $store->themeSlug : 'modern';
         $layoutPath = 'themes.' . $themeSlug . '.layouts.main';
 
         try {
             $registry = $this->container->get(\CorporateAid\Commerce\Services\Theme\ThemeRegistry::class);
             if (!$registry->exists($themeSlug)) {
+                $themeSlug  = 'modern';
                 $layoutPath = 'themes.modern.layouts.main';
             }
         } catch (\Throwable) {
+            $themeSlug  = 'modern';
             $layoutPath = 'themes.modern.layouts.main';
         }
+
+        // Tell View which theme is active so view_partial() calls
+        // for storefront/partials/header|footer|utility-bar resolve
+        // the theme's own version first.
+        $viewSvc->setActiveTheme($themeSlug);
 
         return Response::html(
             $viewSvc->render($view, $data, $layoutPath)
@@ -78,149 +78,12 @@ abstract class StorefrontController
     }
 
     /**
-     * Whether the cookie consent banner should render on this
-     * page load. Reads the store setting once per request.
+     * The storefront banner notice. Reads the merchant's custom
+     * notice first; if empty, checks the scheduled update time
+     * and produces a "Scheduled maintenance" notice if the time
+     * is within the next 24 hours.
      *
-     * The layout renders the banner partial, its CSS, and its JS
-     * only when this returns true. The CSS and JS are not loaded
-     * at all when the banner is disabled - no dead assets.
-     *
-     * Defensive: if the settings read fails for any reason, the
-     * banner is disabled. A broken settings table should not
-     * break the storefront.
-     */
-    private function resolveCookieBannerEnabled(): bool
-    {
-        try {
-            $settings = $this->container->get(
-                \CorporateAid\Commerce\Repositories\StoreSettingsRepository::class
-            );
-            // Default true: German deployment requires the banner.
-            // The row is absent on a fresh store until someone
-            // visits Store Settings and toggles it.
-            return $settings->bool('compliance.cookie_banner.enabled', true);
-        } catch (\Throwable $e) {
-            return false;
-        }
-    }
-
-    /**
-     * Filter flag for the storefront catalog: hide products
-     * whose every sellable unit is out of stock.
-     *
-     * Read once per request. Returns ['hide_out_of_stock' => true]
-     * when the setting is on, an empty array otherwise so it
-     * can be merged into any filter array.
-     *
-     * @return array<string,mixed>
-     */
-    protected function hideOutOfStockFilter(): array
-    {
-        try {
-            $settings = $this->container->get(
-                \CorporateAid\Commerce\Repositories\StoreSettingsRepository::class
-            );
-            $enabled = $settings->bool('catalog.hide_out_of_stock', false);
-            return $enabled ? ['hide_out_of_stock' => true] : [];
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-    /**
-     * Cart unit count for the header badge. Resolved once per
-     * request so views and the layout share the same value.
-     *
-     * Defensive: if the cart service fails for any reason, the
-     * page still renders with a count of 0. A broken cart should
-     * not break the whole storefront.
-     */
-    private function resolveCartCount(): int
-    {
-        try {
-            return $this->container->get(CartService::class)->count();
-        } catch (\Throwable $e) {
-            return 0;
-        }
-    }
-
-    /**
-     * Wishlist product IDs for the current viewer. Used to pre-
-     * fill the heart state on every product card without an
-     * AJAX round-trip. Guests get their session wishlist;
-     * logged-in customers get their DB wishlist.
-     *
-     * Defensive: if the service fails for any reason, the array
-     * is empty. A broken wishlist should not break the storefront.
-     *
-     * @return array<int, int>
-     */
-    private function resolveWishlistProductIds(): array
-    {
-        try {
-            return $this->container->get(WishlistService::class)->productIds();
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-    /**
-     * The active categories for the storefront header's
-     * navigation. Resolved once per request.
-     *
-     * Defensive: returns an empty array on failure, so
-     * a broken category query does not break the whole
-     * storefront header.
-     *
-     * @return array<int, \CorporateAid\Commerce\Models\Category>
-     */
-    private function resolveNavCategories(): array
-    {
-        try {
-            $repo = $this->container->get(
-                \CorporateAid\Commerce\Repositories\CategoryRepository::class
-            );
-            return $repo->listAll(false);
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-    /**
-     * The current store, or null if the store context hasn't been
-     * populated. Called inside render() so every view receives it.
-     */
-    private function resolveStore(): ?\CorporateAid\Commerce\Models\Store
-    {
-        $context = $this->container->get(StoreContext::class);
-        if (!$context->has()) {
-            return null;
-        }
-
-        try {
-            $repo = $this->container->get(
-                \CorporateAid\Commerce\Repositories\StoreRepository::class
-            );
-            return $repo->findById($context->id());
-        } catch (\Throwable) {
-            return null;
-        }
-    }
-
-    /**
-     * The storefront banner notice. Reads the merchant's
-     * custom notice first; if empty, checks the scheduled
-     * update time and produces a "Scheduled maintenance"
-     * notice if the time is within the next 24 hours.
-     *
-     * The banner renders at the top of every storefront
-     * page. It is a read-only informational surface - it
-     * does NOT lock the site. The site stays usable until
-     * the scheduled time arrives, at which point a separate
-     * maintenance gate (Stage 017 Session 3) takes over.
-     *
-     * Defensive: returns '' on any failure, so a broken
-     * settings table cannot break the storefront.
+     * Defensive: returns '' on any failure.
      */
     private function resolveStoreNotice(): string
     {
@@ -251,8 +114,110 @@ abstract class StorefrontController
 
             return 'Scheduled maintenance on ' . date('M j \a\t H:i', $ts)
                 . '. The store may be briefly unavailable.';
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return '';
+        }
+    }
+
+    /**
+     * Whether the cookie consent banner should render.
+     * Defensive: returns false on any failure.
+     */
+    private function resolveCookieBannerEnabled(): bool
+    {
+        try {
+            $settings = $this->container->get(
+                \CorporateAid\Commerce\Repositories\StoreSettingsRepository::class
+            );
+            return $settings->bool('compliance.cookie_banner.enabled', true);
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Filter flag for the storefront catalog: hide products
+     * whose every sellable unit is out of stock.
+     *
+     * @return array<string,mixed>
+     */
+    protected function hideOutOfStockFilter(): array
+    {
+        try {
+            $settings = $this->container->get(
+                \CorporateAid\Commerce\Repositories\StoreSettingsRepository::class
+            );
+            $enabled = $settings->bool('catalog.hide_out_of_stock', false);
+            return $enabled ? ['hide_out_of_stock' => true] : [];
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Cart unit count for the header badge.
+     * Defensive: returns 0 on failure.
+     */
+    private function resolveCartCount(): int
+    {
+        try {
+            return $this->container->get(CartService::class)->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
+     * Wishlist product IDs for the current viewer.
+     * Defensive: returns [] on failure.
+     *
+     * @return array<int,int>
+     */
+    private function resolveWishlistProductIds(): array
+    {
+        try {
+            return $this->container->get(WishlistService::class)->productIds();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Active categories for the storefront header navigation.
+     * Defensive: returns [] on failure.
+     *
+     * @return array<int,\CorporateAid\Commerce\Models\Category>
+     */
+    private function resolveNavCategories(): array
+    {
+        try {
+            $repo = $this->container->get(
+                \CorporateAid\Commerce\Repositories\CategoryRepository::class
+            );
+            return $repo->listAll(false);
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * The current store, or null if the store context hasn't been
+     * populated.
+     */
+    private function resolveStore(): ?\CorporateAid\Commerce\Models\Store
+    {
+        $context = $this->container->get(StoreContext::class);
+        if (!$context->has()) {
+            return null;
+        }
+
+        try {
+            $repo = $this->container->get(
+                \CorporateAid\Commerce\Repositories\StoreRepository::class
+            );
+            return $repo->findById($context->id());
+        } catch (\Throwable) {
+            return null;
         }
     }
 }

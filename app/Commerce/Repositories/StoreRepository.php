@@ -242,6 +242,7 @@ final class StoreRepository
             'font_body_slug',
             'font_display_slug',
             'font_script_slug',
+            'theme_slug',
         ];
 
         if (!in_array($column, $allowed, true)) {
