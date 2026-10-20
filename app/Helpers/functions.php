@@ -1,6 +1,33 @@
 <?php
 declare(strict_types=1);
 
+if (!function_exists('app')) {
+    /**
+     * Resolve a class from the application container.
+     *
+     * Convenience for views and helpers that need a service
+     * without injecting the whole container. The container
+     * auto-constructs any class whose constructor dependencies
+     * are resolvable, so this works for repositories and
+     * services that haven't been bound explicitly.
+     *
+     * Never use this in controllers or services. Use
+     * constructor injection there. The helper exists for the
+     * edge cases: layouts, partials, and global functions
+     * that cannot receive dependencies.
+     *
+     * @template T of object
+     * @param class-string<T> $class
+     * @return T
+     */
+    function app(string $class): object
+    {
+        return \CorporateAid\Core\App::instance()
+            ->container()
+            ->get($class);
+    }
+}
+
 /**
  * Awalo Global - global helper functions.
  * Loaded automatically by Composer's autoloader.

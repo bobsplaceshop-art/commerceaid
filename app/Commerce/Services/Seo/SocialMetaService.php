@@ -68,7 +68,18 @@ final class SocialMetaService
     public function page(string $title, string $description, Store $store): array
     {
         $storeName = $store->name ?? 'Store';
-        $fullTitle = $title !== '' ? $title . ' — ' . $storeName : $storeName;
+
+        // Title fallback chain:
+        //   1. Explicit page title (e.g. a category name)
+        //   2. Store SEO default title
+        //   3. Store name
+        $effectiveTitle = trim($title);
+        if ($effectiveTitle === '' && $store->seoDefaultTitle !== null) {
+            $effectiveTitle = trim((string) $store->seoDefaultTitle);
+        }
+        if ($effectiveTitle === '') {
+            $effectiveTitle = $storeName;
+        }
 
         // Description fallback chain:
         //   1. Explicit description passed by the caller
@@ -77,7 +88,7 @@ final class SocialMetaService
         //   4. Generic store description
         $description = trim($description);
         if ($description === '' && $store->seoDefaultDescription !== null) {
-            $description = $store->seoDefaultDescription;
+            $description = trim((string) $store->seoDefaultDescription);
         }
         if ($description === '' && $store->tagline !== null) {
             $description = $store->tagline;
@@ -89,17 +100,20 @@ final class SocialMetaService
 
         $meta = [
             'og:type'             => 'website',
-            'og:title'            => $fullTitle,
+            'og:title'            => $effectiveTitle,
             'og:description'      => $descText,
             'og:site_name'        => $storeName,
             'twitter:card'        => 'summary_large_image',
-            'twitter:title'       => $fullTitle,
+            'twitter:title'       => $effectiveTitle,
             'twitter:description' => $descText,
         ];
 
         // The share image. Prefer the merchant's uploaded OG
-        // image; fall back to the shipped brand card.
-        $ogImageUrl = $this->resolveOgImage($store) ?? '/assets/seo/og-image.png';
+        // image; fall back to the shipped brand card. Both
+        // are converted to absolute URLs because the OG spec
+        // requires them.
+        $ogImageUrl = $this->resolveOgImage($store)
+            ?? $this->absoluteUrl('/assets/seo/og-image.png');
 
         $meta['og:image']        = $ogImageUrl;
         $meta['og:image:type']   = 'image/png';
@@ -126,7 +140,7 @@ final class SocialMetaService
             if (empty($media)) {
                 return null;
             }
-            return '/media/' . $media[0]->file->uuid . '/lg.png';
+            return $this->absoluteUrl('/media/' . $media[0]->file->uuid . '/lg.png');
         } catch (\Throwable) {
             return null;
         }
@@ -155,4 +169,43 @@ final class SocialMetaService
             default        => 'in stock',
         };
     }
+
+    /**
+     * Convert a root-relative path to an absolute URL.
+     *
+     * OG and Twitter Cards require absolute URLs. Relative
+     * paths are silently ignored by every scraper.
+     */
+    /**
+     * Convert a root-relative path to an absolute URL.
+     *
+     * The scheme is determined by the request, not by a
+     * hardcoded assumption. In production the storefront
+     * sits behind a reverse proxy (Cloudflare Tunnel) that
+     * terminates TLS and forwards to Apache over plain HTTP.
+     * Reading \$_SERVER['HTTPS'] alone would return 'http'
+     * on the tunnel even though the customer used HTTPS.
+     *
+     * The fix is to prefer X-Forwarded-Proto, which every
+     * standard reverse proxy sets. If that header is absent
+     * (direct Apache, no proxy), fall back to Apache's own
+     * HTTPS flag. If neither is present, the request is on
+     * plain HTTP and 'http' is correct.
+     */
+    private function absoluteUrl(string $path): string
+    {
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+        $proto = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
+        if ($proto !== 'http' && $proto !== 'https') {
+            $proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        }
+
+        return $proto . '://' . $host . '/' . ltrim($path, '/');
+    }
+
 }

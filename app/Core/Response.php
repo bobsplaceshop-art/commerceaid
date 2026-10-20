@@ -116,6 +116,16 @@ final class Response
                 header($name . ': ' . $value);
             }
         }
+
+        // HTTP HEAD: emit headers, skip body. This is the
+        // framework's HTTP boundary, so the check lives here
+        // instead of in every controller. Any response can be
+        // returned by a controller; send() decides whether the
+        // body is emitted based on the request method.
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'HEAD') {
+            return;
+        }
+
         echo $this->body;
     }
 }

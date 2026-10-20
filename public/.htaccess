@@ -10,6 +10,12 @@ DirectoryIndex index.php
     # Never serve dotfiles
     RewriteRule ^\. - [F,L]
 
+    # Service worker: serve through sw.php so CACHE_VERSION
+    # auto-bumps on every deploy. This rewrite must run
+    # BEFORE the existing-file check below, or Apache will
+    # serve sw.js directly and the PHP shim never fires.
+    RewriteRule ^sw\.js$ sw.php [L,QSA]
+
     # Serve existing files and directories as-is
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d

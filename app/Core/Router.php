@@ -73,6 +73,14 @@ final class Router
         $method = $request->method();
         $path = $request->path();
 
+        // HTTP HEAD should return the same headers as GET with
+        // an empty body. The router registers GET routes only,
+        // so treat HEAD as a GET when no explicit HEAD route
+        // exists. The body is stripped in Response::send().
+        if ($method === 'HEAD' && !isset($this->routes['HEAD'])) {
+            $method = 'GET';
+        }
+
         if (!isset($this->routes[$method])) {
             throw HttpException::unmatchedRoute();
         }

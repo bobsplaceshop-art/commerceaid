@@ -17,7 +17,7 @@
  * whose name does not match the current version.
  */
 
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = '__COMMIT__';
 const CACHE_NAME    = `anaya-${CACHE_VERSION}`;
 
 /*
