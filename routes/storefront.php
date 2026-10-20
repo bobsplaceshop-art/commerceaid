@@ -5,6 +5,7 @@ use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\Router;
 use CorporateAid\Commerce\Controllers\Storefront\FeedController;
+use CorporateAid\Commerce\Controllers\Storefront\SitemapController;
 use CorporateAid\Commerce\Controllers\Storefront\HomeController;
 use CorporateAid\Commerce\Controllers\Storefront\CatalogController;
 use CorporateAid\Commerce\Controllers\Storefront\CategoryController;
@@ -65,6 +66,14 @@ use CorporateAid\Commerce\Controllers\Storefront\FormController;
 // during a scheduled window.
 $router->get('/feed/google-merchant.xml',
     [\CorporateAid\Commerce\Controllers\Storefront\FeedController::class, 'googleMerchant'],
+    ['store']);
+
+// Sitemap. Public (no auth). Search engine crawlers fetch
+// this URL and use it to discover every public page. The
+// maintenance gate is bypassed so the sitemap stays
+// available during a scheduled window.
+$router->get('/sitemap.xml',
+    [\CorporateAid\Commerce\Controllers\Storefront\SitemapController::class, 'xml'],
     ['store']);
 
 $router->get('/', [HomeController::class, 'index'], ['store', 'maintenance']);

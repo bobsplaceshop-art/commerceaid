@@ -1,0 +1,52 @@
+# Awalo Global - robots.txt
+#
+# Allows search engine crawlers and social link scrapers to
+# index and share the public storefront. Disallows the
+# private surfaces (cart, checkout, account, admin, API).
+# Points Google at the sitemap.
+
+User-agent: *
+Disallow: /cart
+Disallow: /checkout
+Disallow: /account
+Disallow: /commerce
+Disallow: /api
+Disallow: /media/
+Disallow: /feed/
+Allow: /
+
+# Explicit allowances for the crawlers that matter most.
+# Some respect a named entry over the wildcard; the explicit
+# Allow entries are cheap and remove ambiguity.
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: Pinterest
+Allow: /
+
+Sitemap: https://www.awaloglobal.com/sitemap.xml
