@@ -2403,3 +2403,82 @@ html[data-theme="light"] .ra-table-wrap {
     table { width: 100% !important; }
     svg { max-width: 100% !important; }
 }
+
+/* --- Fix Customizer Layout Constraints --- */
+.ra-customizer {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #0f172a;
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+}
+
+.ra-customizer-body {
+    display: flex;
+    flex: 1 1 auto; /* Force expand */
+    overflow: hidden;
+    height: calc(100vh - 60px); /* minus topbar */
+}
+
+.ra-customizer-sidebar {
+    width: 340px;
+    flex-shrink: 0;
+    background: #1a2235;
+    border-right: 1px solid #2d3748;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.ra-customizer-preview {
+    flex: 1 1 auto; /* Force expand */
+    background: #e2e8f0;
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+    overflow: auto;
+    min-width: 0; /* Prevents flex children from overflowing */
+}
+
+.ra-preview-frame-wrapper {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: width 0.3s ease;
+}
+
+.ra-preview-frame-wrapper iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.ra-preview-frame-wrapper.device-tablet {
+    width: 768px;
+    max-width: 100%;
+}
+
+.ra-preview-frame-wrapper.device-mobile {
+    width: 375px;
+    max-width: 100%;
+}
+
+/* ------------------------------------------------------------
+   Page Builder: modals must render above the Customizer overlay
+   ------------------------------------------------------------
+   Bootstrap's modal z-index is 1055 by default. The Customizer
+   overlay is 9999. Without this rule, clicking "Add block" opens
+   the modal (Bootstrap sets display:block on it) but it renders
+   BEHIND the overlay, so the merchant sees nothing happen. */
+body.modal-open .modal {
+    z-index: 10000 !important;
+}
+body.modal-open .modal-backdrop {
+    z-index: 9999 !important;
+}

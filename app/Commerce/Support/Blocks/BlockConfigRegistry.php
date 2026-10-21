@@ -33,6 +33,7 @@ final class BlockConfigRegistry
             'rich-text'     => self::richText(),
             'newsletter'    => self::newsletter(),
             'promo-panel'   => self::promoPanel(),
+            'spacer'        => self::spacer(),
             default         => [],
         };
     }
@@ -199,6 +200,19 @@ final class BlockConfigRegistry
                 'label'   => 'Button text',
                 'type'    => 'string',
                 'default' => 'Subscribe',
+            ],
+        ];
+    }
+
+    /** @return array<string, array<string,mixed>> */
+    private static function spacer(): array
+    {
+        return [
+            'height' => [
+                'label'   => 'Height (px)',
+                'type'    => 'int',
+                'default' => 48,
+                'hint'    => 'Vertical space in pixels. Try 24 for tight, 48 for standard, 96 for a big break.',
             ],
         ];
     }

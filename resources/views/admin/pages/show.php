@@ -60,6 +60,10 @@
                                 <span class="fw-bold ms-2"><?= e($block->typeLabel()) ?></span>
                                 <div class="ms-auto d-flex gap-1">
                                     <button type="button" class="ra-icon-btn ra-open-settings" data-block-id="<?= (int) $block->id ?>"><i class="bi bi-pencil"></i></button>
+                                    <form method="POST" action="/commerce/ca-admin/pages/<?= e($slug) ?>/blocks/<?= (int) $block->id ?>/duplicate" class="m-0" onsubmit="return confirm('Duplicate this block?');">
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="ra-icon-btn" title="Duplicate"><i class="bi bi-files"></i></button>
+                                    </form>
                                     <form method="POST" action="/commerce/ca-admin/pages/<?= e($slug) ?>/blocks/<?= (int) $block->id ?>/delete" class="m-0" onsubmit="return confirm('Delete this block?');">
                                         <?= csrf_field() ?>
                                         <button type="submit" class="ra-icon-btn text-danger"><i class="bi bi-trash"></i></button>

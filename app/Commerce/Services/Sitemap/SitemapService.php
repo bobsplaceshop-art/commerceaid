@@ -53,13 +53,11 @@ final class SitemapService
         // Categories
         $categoryList = $this->categories->listAll(false);
         foreach ($categoryList as $category) {
-            if ($category instanceof Category) {
-                $urls[] = [
-                    'loc'      => $baseUrl . '/categories/' . rawurlencode($category->slug),
-                    'lastmod'  => $this->isoDate($category->updatedAt ?? null),
-                    'priority' => '0.7',
-                ];
-            }
+            $urls[] = [
+                'loc'      => $baseUrl . '/categories/' . rawurlencode($category->slug),
+                'lastmod'  => $this->isoDate($category->updatedAt ?? null),
+                'priority' => '0.7',
+            ];
         }
 
         // Products (paginated loop)
@@ -70,9 +68,6 @@ final class SitemapService
             $pages  = (int) $result['pages'];
 
             foreach ($result['items'] as $product) {
-                if (!$product instanceof Product) {
-                    continue;
-                }
                 $urls[] = [
                     'loc'      => $baseUrl . '/products/' . rawurlencode($product->slug),
                     'lastmod'  => $this->isoDate($product->updatedAt ?? null),
@@ -95,7 +90,7 @@ final class SitemapService
     // -----------------------------------------------------------------
 
     /**
-     * @param array<int, array{loc:string, lastmod?:string, priority?:string}> $urls
+     * @param array<int, array{loc:string, lastmod?:?string, priority?:?string}> $urls
      */
     private function renderXml(array $urls): string
     {

@@ -45,17 +45,13 @@ final class AdminPageController extends AdminController
             array_unshift($pageSlugs, 'home');
         }
 
-        // Detect which pages have an unpublished draft under the
-        // store's active theme. Each draft is a Changeset stored
-        // in the session; the Pages list shows a "Draft" badge so
-        // the merchant knows to open the page and either Publish
-        // or Discard.
+        // Detect which pages have an unpublished draft.
         $themeSlug = $this->activeThemeSlug();
-        $allDrafts = $_SESSION['builder_draft'][$themeSlug] ?? [];
+        $draftManager = $this->container->get(\CorporateAid\Commerce\Services\Builder\DraftManager::class);
 
         $pages = [];
         foreach ($pageSlugs as $slug) {
-            $hasDraft = !empty($allDrafts[$slug]);
+            $hasDraft = $draftManager->hasDrafts($slug, $themeSlug);
             $pages[] = [
                 'slug'       => $slug,
                 'label'      => $this->labelFor($slug),
@@ -156,20 +152,9 @@ final class AdminPageController extends AdminController
             return Response::redirect('/commerce/ca-admin/pages');
         }
 
-        $repo = $this->container->get(PageBlockRepository::class);
-        $blocks = $repo->listForPage($slug, false);
-
-        // Merge the theme-scoped session draft into each block so
-        // the sidebar form reflects unsaved changes. Without this,
-        // typing "8" in a field saves to the session but the page
-        // reload re-renders the DB value "4".
         $themeSlug = $this->activeThemeSlug();
-        $draft     = $_SESSION['builder_draft'][$themeSlug][$slug] ?? [];
-        foreach ($blocks as $block) {
-            if (isset($draft[$block->id])) {
-                $block->config = array_merge($block->config, $draft[$block->id]);
-            }
-        }
+        $draftManager = $this->container->get(\CorporateAid\Commerce\Services\Builder\DraftManager::class);
+        $blocks = $draftManager->getMergedBlocks($slug, $themeSlug);
 
         // The block config modals render inline in show.php.
         // They need the category list (for category_select
@@ -180,11 +165,10 @@ final class AdminPageController extends AdminController
         // Render the customizer content, then wrap it in its own
         // layout (no admin shell, no sidebar).
         $view = $this->container->get(\CorporateAid\Core\View::class);
-        // Whether a session draft exists for this page + theme.
-        // Drives the Save Draft and Discard buttons: they only
-        // appear when there is something to act on.
-        $themeSlugForView = $this->activeThemeSlug();
-        $hasDraft = !empty($_SESSION['builder_draft'][$themeSlugForView][$slug]);
+        // Whether any draft exists for this page + theme.
+        // Drives the Save Draft and Discard buttons: they
+        // only appear when there is something to act on.
+        $hasDraft = $draftManager->hasDrafts($slug, $themeSlug);
 
         $inner = $view->render('admin.pages.show', [
             'title'          => $this->labelFor($slug) . ' — Editor',
@@ -255,16 +239,51 @@ final class AdminPageController extends AdminController
         $allowedTypes = [
             'hero', 'product-grid', 'category-grid',
             'promo-panel', 'banner', 'rich-text', 'newsletter',
+            'spacer',
         ];
         if (!in_array($type, $allowedTypes, true)) {
             $session->flash('error', 'Unknown block type.');
             return Response::redirect('/commerce/ca-admin/pages/' . $slug);
         }
 
-        $repo = $this->container->get(PageBlockRepository::class);
-        $repo->create($slug, $type, []);
+        $themeSlug = $this->activeThemeSlug();
+        $draftRepo = $this->container->get(\CorporateAid\Commerce\Repositories\PageDraftRepository::class);
+        $blockRepo = $this->container->get(PageBlockRepository::class);
+        
+        // Get next sort order based on existing DB blocks (draft manager handles merged count)
+        $existing = $blockRepo->listForPage($slug, false);
+        $nextSort = count($existing) + 1;
+        
+        $draftRepo->addDraftBlock($slug, $themeSlug, $type, $nextSort);
 
-        $session->flash('success', 'Block added.');
+        $session->flash('success', 'Block added (draft). Click Publish to go live.');
+        return Response::redirect('/commerce/ca-admin/pages/' . $slug);
+    }
+
+    /**
+     * POST /commerce/ca-admin/pages/{slug}/blocks/{id}/duplicate
+     *
+     * Insert a copy of the block immediately below (well, at the
+     * bottom — sort order is bumped to the end). Works for both
+     * published blocks and pending drafts.
+     *
+     * @param array<string,string> $params
+     */
+    public function duplicateBlock(Request $request, array $params = []): Response
+    {
+        $session = $this->container->get(Session::class);
+        $slug    = (string) ($params['slug'] ?? '');
+        $id      = (int) ($params['id'] ?? 0);
+
+        if ($slug === '' || $id === 0) {
+            return Response::redirect('/commerce/ca-admin/pages');
+        }
+
+        $themeSlug    = $this->activeThemeSlug();
+        $draftManager = $this->container->get(\CorporateAid\Commerce\Services\Builder\DraftManager::class);
+        $draftManager->duplicateBlock($id, $slug, $themeSlug);
+
+        $session->flash('success', 'Block duplicated (draft). Click Publish to go live.');
         return Response::redirect('/commerce/ca-admin/pages/' . $slug);
     }
 
@@ -284,14 +303,22 @@ final class AdminPageController extends AdminController
         $slug    = (string) ($params['slug'] ?? '');
         $id      = (int) ($params['id'] ?? 0);
 
-        if ($slug === '' || $id <= 0) {
+        if ($slug === '' || $id === 0) {
             return Response::redirect('/commerce/ca-admin/pages');
         }
 
-        $repo = $this->container->get(PageBlockRepository::class);
-        $repo->delete($id);
+        $themeSlug = $this->activeThemeSlug();
+        $draftRepo = $this->container->get(\CorporateAid\Commerce\Repositories\PageDraftRepository::class);
+        
+        if ($id < 0) {
+            // Deleting a pending addition: just remove the draft row entirely
+            $draftRepo->removePendingAdd(abs($id));
+        } else {
+            // Deleting an existing block: mark it for deletion
+            $draftRepo->markDelete($id, $slug, $themeSlug);
+        }
 
-        $session->flash('success', 'Block removed.');
+        $session->flash('success', 'Block removed (draft). Click Publish to go live.');
         return Response::redirect('/commerce/ca-admin/pages/' . $slug);
     }
 
@@ -384,12 +411,11 @@ final class AdminPageController extends AdminController
         $slug = (string) ($params['slug'] ?? '');
         $id   = (int) ($params['id'] ?? 0);
 
-        if ($slug === '' || $id <= 0) {
+        if ($slug === '' || $id === 0) {
             return Response::redirect('/commerce/ca-admin/pages');
         }
 
-        $repo  = $this->container->get(PageBlockRepository::class);
-        $block = $repo->findById($id);
+        $block = $this->findBlockOrDraft($id, $slug);
         if ($block === null) {
             return Response::redirect('/commerce/ca-admin/pages/' . $slug);
         }
@@ -425,12 +451,11 @@ final class AdminPageController extends AdminController
         $slug    = (string) ($params['slug'] ?? '');
         $id      = (int) ($params['id'] ?? 0);
 
-        if ($slug === '' || $id <= 0) {
+        if ($slug === '' || $id === 0) {
             return Response::redirect('/commerce/ca-admin/pages');
         }
 
-        $repo  = $this->container->get(PageBlockRepository::class);
-        $block = $repo->findById($id);
+        $block = $this->findBlockOrDraft($id, $slug);
         if ($block === null) {
             $session->flash('error', 'Block not found.');
             return Response::redirect('/commerce/ca-admin/pages/' . $slug);
@@ -481,12 +506,17 @@ final class AdminPageController extends AdminController
             return Response::redirect('/commerce/ca-admin/pages/' . $slug);
         }
 
-        // Save to the "Changeset" (Session draft), scoped by
-        // the store's active theme, so switching themes keeps
-        // each theme's draft separate.
+        // Save to the database draft table.
         $themeSlug = $this->activeThemeSlug();
-        $draft = $_SESSION['builder_draft'][$themeSlug][$slug][$id] ?? [];
-        $_SESSION['builder_draft'][$themeSlug][$slug][$id] = array_merge($draft, $config);
+        $draftRepo = $this->container->get(\CorporateAid\Commerce\Repositories\PageDraftRepository::class);
+        
+        if ($id < 0) {
+            // This is a pending_add block. Update its config directly.
+            $draftRepo->updatePendingAdd(abs($id), $config);
+        } else {
+            // This is an existing published block. Mark for update.
+            $draftRepo->saveUpdate($id, $slug, $themeSlug, $config);
+        }
 
         if ($request->header('X-Requested-With') === 'XMLHttpRequest') {
             return Response::json(['ok' => true]);
@@ -524,13 +554,14 @@ final class AdminPageController extends AdminController
      */
     public function previewBlock(Request $request, array $params = []): Response
     {
-        $id = (int) ($params['id'] ?? 0);
-        if ($id <= 0) {
+        $id   = (int) ($params['id'] ?? 0);
+        $slug = (string) ($params['slug'] ?? '');
+
+        if ($id === 0) {
             return Response::json(['error' => 'Invalid block'], 400);
         }
 
-        $repo  = $this->container->get(PageBlockRepository::class);
-        $block = $repo->findById($id);
+        $block = $this->findBlockOrDraft($id, $slug);
         if ($block === null) {
             return Response::json(['error' => 'Block not found'], 404);
         }
@@ -607,8 +638,9 @@ final class AdminPageController extends AdminController
             return Response::redirect('/commerce/ca-admin/pages');
         }
 
-        $themeSlug = $this->activeThemeSlug();
-        $hasDraft  = !empty($_SESSION['builder_draft'][$themeSlug][$slug]);
+        $themeSlug    = $this->activeThemeSlug();
+        $draftManager = $this->container->get(\CorporateAid\Commerce\Services\Builder\DraftManager::class);
+        $hasDraft     = $draftManager->hasDrafts($slug, $themeSlug);
 
         $session = $this->container->get(Session::class);
         if ($hasDraft) {
@@ -636,7 +668,8 @@ final class AdminPageController extends AdminController
         }
 
         $themeSlug = $this->activeThemeSlug();
-        unset($_SESSION['builder_draft'][$themeSlug][$slug]);
+        $draftRepo = $this->container->get(\CorporateAid\Commerce\Repositories\PageDraftRepository::class);
+        $draftRepo->clearDrafts($slug, $themeSlug);
 
         $session = $this->container->get(Session::class);
         $session->flash('success', 'Draft discarded. The live site was never changed.');
@@ -648,25 +681,9 @@ final class AdminPageController extends AdminController
     {
         $slug      = (string) ($params['slug'] ?? '');
         $themeSlug = $this->activeThemeSlug();
-        $draft     = $_SESSION['builder_draft'][$themeSlug][$slug] ?? [];
-        $repo      = $this->container->get(PageBlockRepository::class);
 
-        foreach ($draft as $blockId => $blockDraft) {
-            // Merge the draft onto the block's existing config so
-            // we never overwrite fields the user did not touch.
-            // update() replaces config_json wholesale; a draft
-            // containing only ['columns' => 8] would otherwise
-            // wipe out title, source, limit, etc.
-            $existing = $repo->findById($blockId);
-            if ($existing === null) {
-                continue;
-            }
-            $merged = array_merge($existing->config, $blockDraft);
-            $repo->update($blockId, $merged);
-        }
-
-        // Clear the draft for this theme + page only
-        unset($_SESSION['builder_draft'][$themeSlug][$slug]);
+        $publisher = $this->container->get(\CorporateAid\Commerce\Services\Builder\DraftPublisher::class);
+        $publisher->publish($slug, $themeSlug);
 
         $session = $this->container->get(Session::class);
         $session->flash('success', 'Page published successfully.');
@@ -711,6 +728,41 @@ final class AdminPageController extends AdminController
         $html .= '<script src="/assets/js/preview-bridge.js"></script></body></html>';
 
         return Response::html($html);
+    }
+
+    /**
+     * Fetch a block by ID, transparently handling both
+     * published blocks (positive IDs, from commerce_page_blocks)
+     * and pending draft additions (negative IDs, from
+     * commerce_page_drafts). Used by saveBlockConfig,
+     * configBlock, and previewBlock so the negative-ID
+     * branch doesn't have to be repeated in three places.
+     */
+    private function findBlockOrDraft(int $id, string $slug): ?\CorporateAid\Commerce\Models\PageBlock
+    {
+        if ($id === 0) {
+            return null;
+        }
+
+        if ($id < 0) {
+            $draftRepo = $this->container->get(\CorporateAid\Commerce\Repositories\PageDraftRepository::class);
+            $drafts    = $draftRepo->getDraftsForPage($slug, $this->activeThemeSlug());
+            foreach ($drafts as $draft) {
+                if ((int) $draft['id'] === abs($id) && $draft['status'] === 'pending_add') {
+                    $block = new \CorporateAid\Commerce\Models\PageBlock();
+                    $block->id        = $id;
+                    $block->pageSlug  = $slug;
+                    $block->blockType = (string) $draft['block_type'];
+                    $block->config    = json_decode((string) $draft['config_json'], true) ?: [];
+                    $block->sortOrder = (int) $draft['sort_order'];
+                    $block->isEnabled = true;
+                    return $block;
+                }
+            }
+            return null;
+        }
+
+        return $this->container->get(PageBlockRepository::class)->findById($id);
     }
 
     /**

@@ -23,13 +23,14 @@ final class SocialMetaService
     public function __construct(
         private ProductImageRepository $images,
         private MediaRepository $media,
+        private \CorporateAid\Commerce\Repositories\StoreRepository $stores,
     ) {
     }
 
     /** @return array<string,string> */
     public function product(Product $product, Store $store): array
     {
-        $storeName = $store->name ?? 'Store';
+        $storeName = $store->name !== '' ? $store->name : 'Store';
 
         $description = strip_tags(
             $product->shortDescription ?? $product->description ?? ''
@@ -46,7 +47,7 @@ final class SocialMetaService
             'og:url'                 => '/products/' . $product->slug,
             'og:site_name'           => $storeName,
             'product:price:amount'   => number_format($product->price, 2, '.', ''),
-            'product:price:currency' => strtoupper((string) ($store->defaultCurrency ?? 'EUR')),
+            'product:price:currency' => strtoupper($this->stores->currencyCodeForStore((int) $store->id)),
             'product:availability'   => $this->ogAvailability($product->stockStatus),
             'twitter:card'           => 'summary_large_image',
             'twitter:title'          => $product->name,
@@ -67,7 +68,7 @@ final class SocialMetaService
     /** @return array<string,string> */
     public function page(string $title, string $description, Store $store): array
     {
-        $storeName = $store->name ?? 'Store';
+        $storeName = $store->name !== '' ? $store->name : 'Store';
 
         // Title fallback chain:
         //   1. Explicit page title (e.g. a category name)

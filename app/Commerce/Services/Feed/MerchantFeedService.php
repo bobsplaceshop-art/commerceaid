@@ -54,7 +54,7 @@ final class MerchantFeedService
     public function buildXml(Store $store, string $baseUrl): string
     {
         $storeId   = (int) $store->id;
-        $storeName = (string) ($store->name ?? 'Store');
+        $storeName = $store->name !== '' ? $store->name : 'Store';
         $currency  = $this->stores->currencyCodeForStore($storeId);
 
         $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL;

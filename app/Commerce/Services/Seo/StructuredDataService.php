@@ -34,6 +34,7 @@ final class StructuredDataService
         private ProductVariantRepository $variants,
         private ProductReviewRepository $reviews,
         private MediaRepository $media,
+        private \CorporateAid\Commerce\Repositories\StoreRepository $stores,
     ) {
     }
 
@@ -190,7 +191,7 @@ final class StructuredDataService
     private function currencyCode(Store $store): string
     {
         try {
-            return strtoupper((string) ($store->defaultCurrency ?? 'EUR'));
+            return strtoupper($this->stores->currencyCodeForStore((int) $store->id));
         } catch (\Throwable) {
             return 'EUR';
         }

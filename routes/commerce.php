@@ -175,6 +175,10 @@ $router->post('/commerce/ca-admin/pages/{slug}/blocks/{id}/delete',
     [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'deleteBlock'],
     ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
 
+$router->post('/commerce/ca-admin/pages/{slug}/blocks/{id}/duplicate',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'duplicateBlock'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
 $router->post('/commerce/ca-admin/pages/{slug}/blocks/{id}/toggle',
     [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'toggleBlock'],
     ['store', 'auth', 'permission:core.settings.manage', 'csrf']);

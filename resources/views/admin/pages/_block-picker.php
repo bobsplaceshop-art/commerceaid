@@ -14,6 +14,7 @@ $types = [
     'banner'        => ['label' => 'Banner',        'icon' => 'bi-rectangle-wide','hint' => 'A full-width banner with text overlay.'],
     'rich-text'     => ['label' => 'Rich Text',     'icon' => 'bi-text-paragraph','hint' => 'A block of copy (headings, paragraphs, links).'],
     'newsletter'    => ['label' => 'Newsletter',    'icon' => 'bi-envelope',     'hint' => 'A subscribe form.'],
+    'spacer'        => ['label' => 'Spacer',        'icon' => 'bi-arrows-expand', 'hint' => 'Empty vertical space. Useful between two similar blocks.'],
 ];
 ?>
 <div class="modal fade" id="ra-block-picker-modal" tabindex="-1" aria-labelledby="ra-block-picker-label" aria-hidden="true">
