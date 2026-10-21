@@ -45,13 +45,23 @@ final class AdminPageController extends AdminController
             array_unshift($pageSlugs, 'home');
         }
 
+        // Detect which pages have an unpublished draft under the
+        // store's active theme. Each draft is a Changeset stored
+        // in the session; the Pages list shows a "Draft" badge so
+        // the merchant knows to open the page and either Publish
+        // or Discard.
+        $themeSlug = $this->activeThemeSlug();
+        $allDrafts = $_SESSION['builder_draft'][$themeSlug] ?? [];
+
         $pages = [];
         foreach ($pageSlugs as $slug) {
+            $hasDraft = !empty($allDrafts[$slug]);
             $pages[] = [
                 'slug'       => $slug,
                 'label'      => $this->labelFor($slug),
                 'blockCount' => $repo->countForPage($slug),
                 'isHome'     => $slug === 'home',
+                'hasDraft'   => $hasDraft,
             ];
         }
 
@@ -149,6 +159,18 @@ final class AdminPageController extends AdminController
         $repo = $this->container->get(PageBlockRepository::class);
         $blocks = $repo->listForPage($slug, false);
 
+        // Merge the theme-scoped session draft into each block so
+        // the sidebar form reflects unsaved changes. Without this,
+        // typing "8" in a field saves to the session but the page
+        // reload re-renders the DB value "4".
+        $themeSlug = $this->activeThemeSlug();
+        $draft     = $_SESSION['builder_draft'][$themeSlug][$slug] ?? [];
+        foreach ($blocks as $block) {
+            if (isset($draft[$block->id])) {
+                $block->config = array_merge($block->config, $draft[$block->id]);
+            }
+        }
+
         // The block config modals render inline in show.php.
         // They need the category list (for category_select
         // fields) and the media library (for file fields).
@@ -158,6 +180,12 @@ final class AdminPageController extends AdminController
         // Render the customizer content, then wrap it in its own
         // layout (no admin shell, no sidebar).
         $view = $this->container->get(\CorporateAid\Core\View::class);
+        // Whether a session draft exists for this page + theme.
+        // Drives the Save Draft and Discard buttons: they only
+        // appear when there is something to act on.
+        $themeSlugForView = $this->activeThemeSlug();
+        $hasDraft = !empty($_SESSION['builder_draft'][$themeSlugForView][$slug]);
+
         $inner = $view->render('admin.pages.show', [
             'title'          => $this->labelFor($slug) . ' — Editor',
             'slug'           => $slug,
@@ -165,6 +193,7 @@ final class AdminPageController extends AdminController
             'blocks'         => $blocks,
             'categories'     => $categories,
             'mediaLibrary'   => $mediaLibrary,
+            'hasDraft'       => $hasDraft,
         ]);
         $html = $view->render('layouts.customizer', [
             'title'   => $this->labelFor($slug) . ' — Editor',
@@ -415,11 +444,15 @@ final class AdminPageController extends AdminController
 
         $config = [];
         $errors = [];
+        $posted = $request->input('config');
+        if (!is_array($posted)) {
+            $posted = [];
+        }
 
         foreach ($schema as $name => $meta) {
             $type    = (string) ($meta['type'] ?? 'string');
             $required = !empty($meta['required']);
-            $raw     = $request->input($name);
+            $raw     = $posted[$name] ?? null;
 
             // Checkbox absent = unchecked. Everything else:
             // missing = use the default.
@@ -502,8 +535,12 @@ final class AdminPageController extends AdminController
             return Response::json(['error' => 'Block not found'], 404);
         }
 
-        // Read the config from the theme-scoped Session draft
-        // first, then fall back to the saved DB config.
+        // Build the config the preview should render:
+        //   1. Start with the DB config.
+        //   2. Overlay any session draft for this block.
+        //   3. Overlay any live-typed fields from the current POST.
+        // That order means the preview matches what Publish would
+        // produce if the merchant hit the button right now.
         $slug      = (string) ($params['slug'] ?? '');
         $themeSlug = $this->activeThemeSlug();
         $config    = $block->config;
@@ -512,7 +549,6 @@ final class AdminPageController extends AdminController
             $config = array_merge($config, $_SESSION['builder_draft'][$themeSlug][$slug][$id]);
         }
 
-        // Also merge any live-typed config from the request
         $postedConfig = $request->input('config');
         if (is_array($postedConfig)) {
             $config = array_merge($config, $postedConfig);
@@ -554,6 +590,59 @@ final class AdminPageController extends AdminController
      *
      * Applies the session draft to the database.
      */
+    /**
+     * POST /commerce/ca-admin/pages/{slug}/save-draft
+     *
+     * The session draft is already being kept up to date by the
+     * JS on every keystroke (saveBlockConfig). This action exists
+     * purely to give the merchant explicit visual confirmation
+     * that their work is safe without publishing to the live site.
+     *
+     * @param array<string,string> $params
+     */
+    public function saveDraft(Request $request, array $params = []): Response
+    {
+        $slug = (string) ($params['slug'] ?? '');
+        if ($slug === '') {
+            return Response::redirect('/commerce/ca-admin/pages');
+        }
+
+        $themeSlug = $this->activeThemeSlug();
+        $hasDraft  = !empty($_SESSION['builder_draft'][$themeSlug][$slug]);
+
+        $session = $this->container->get(Session::class);
+        if ($hasDraft) {
+            $session->flash('success', 'Draft saved. You can safely close this page.');
+        } else {
+            $session->flash('warning', 'No changes to save yet. Edit a block first.');
+        }
+        return Response::redirect('/commerce/ca-admin/pages/' . $slug);
+    }
+
+    /**
+     * POST /commerce/ca-admin/pages/{slug}/discard-draft
+     *
+     * Drops the session draft for this page + theme. The live
+     * storefront is unchanged. The next time the page loads in
+     * the customizer, the form shows the saved DB values.
+     *
+     * @param array<string,string> $params
+     */
+    public function discardDraft(Request $request, array $params = []): Response
+    {
+        $slug = (string) ($params['slug'] ?? '');
+        if ($slug === '') {
+            return Response::redirect('/commerce/ca-admin/pages');
+        }
+
+        $themeSlug = $this->activeThemeSlug();
+        unset($_SESSION['builder_draft'][$themeSlug][$slug]);
+
+        $session = $this->container->get(Session::class);
+        $session->flash('success', 'Draft discarded. The live site was never changed.');
+        return Response::redirect('/commerce/ca-admin/pages/' . $slug);
+    }
+
     /** @param array<string,string> $params */
     public function publish(Request $request, array $params = []): Response
     {
@@ -562,8 +651,18 @@ final class AdminPageController extends AdminController
         $draft     = $_SESSION['builder_draft'][$themeSlug][$slug] ?? [];
         $repo      = $this->container->get(PageBlockRepository::class);
 
-        foreach ($draft as $blockId => $config) {
-            $repo->update($blockId, $config);
+        foreach ($draft as $blockId => $blockDraft) {
+            // Merge the draft onto the block's existing config so
+            // we never overwrite fields the user did not touch.
+            // update() replaces config_json wholesale; a draft
+            // containing only ['columns' => 8] would otherwise
+            // wipe out title, source, limit, etc.
+            $existing = $repo->findById($blockId);
+            if ($existing === null) {
+                continue;
+            }
+            $merged = array_merge($existing->config, $blockDraft);
+            $repo->update($blockId, $merged);
         }
 
         // Clear the draft for this theme + page only

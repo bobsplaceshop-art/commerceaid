@@ -159,6 +159,14 @@ $router->post('/commerce/ca-admin/pages/{slug}/publish',
     [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'publish'],
     ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
 
+$router->post('/commerce/ca-admin/pages/{slug}/save-draft',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'saveDraft'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
+$router->post('/commerce/ca-admin/pages/{slug}/discard-draft',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'discardDraft'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
 $router->get('/commerce/ca-admin/pages/{slug}/preview',
     [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'previewIframe'],
     ['store', 'auth', 'permission:core.settings.manage']);

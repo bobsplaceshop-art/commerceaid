@@ -11,22 +11,32 @@
 ?>
 <div class="ra-customizer" id="ra-customizer" data-slug="<?= e($slug) ?>" data-csrf="<?= e(csrf_token()) ?>">
 
-    <div class="ra-customizer-topbar">
-        <div class="ra-customizer-brand">
+    <div class="ra-customizer-topbar d-flex justify-content-between align-items-center px-3 w-100">
+        <div class="ra-customizer-brand fw-bold text-light d-flex align-items-center">
             <i class="bi bi-layout-text-window me-2"></i> <?= e($label) ?>
         </div>
 
-        <div class="ra-customizer-devices">
-            <button type="button" class="device-btn active" data-device="desktop" title="Desktop"><i class="bi bi-display"></i></button>
-            <button type="button" class="device-btn" data-device="tablet" title="Tablet"><i class="bi bi-tablet"></i></button>
-            <button type="button" class="device-btn" data-device="mobile" title="Mobile"><i class="bi bi-phone"></i></button>
+        <div class="ra-customizer-devices d-flex gap-2 bg-dark p-1 rounded border border-secondary">
+            <button type="button" class="device-btn active" data-device="desktop" title="Desktop" style="background:none;border:none;color:#d4af37;"><i class="bi bi-display fs-5"></i></button>
+            <button type="button" class="device-btn" data-device="tablet" title="Tablet" style="background:none;border:none;color:#64748b;"><i class="bi bi-tablet fs-5"></i></button>
+            <button type="button" class="device-btn" data-device="mobile" title="Mobile" style="background:none;border:none;color:#64748b;"><i class="bi bi-phone fs-5"></i></button>
         </div>
 
-        <div class="ra-customizer-actions">
-            <a href="/commerce/ca-admin/pages" class="ra-btn ra-btn-outline me-2">Close</a>
+        <div class="ra-customizer-actions d-flex gap-2 align-items-center">
+            <a href="/commerce/ca-admin/pages" class="ra-btn ra-btn-outline ra-btn-sm text-light border-secondary">Close</a>
+            <form method="POST" action="/commerce/ca-admin/pages/<?= e($slug) ?>/save-draft" class="m-0">
+                <?= csrf_field() ?>
+                <button type="submit" class="ra-btn ra-btn-outline ra-btn-sm text-light border-secondary">Save Draft</button>
+            </form>
+            <?php if (!empty($hasDraft)): ?>
+                <form method="POST" action="/commerce/ca-admin/pages/<?= e($slug) ?>/discard-draft" class="m-0" onsubmit="return confirm('Discard the draft? The live site was never changed.');">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="ra-btn ra-btn-outline ra-btn-sm text-light border-danger" style="border-color:#dc2626;color:#dc2626;">Discard</button>
+                </form>
+            <?php endif; ?>
             <form method="POST" action="/commerce/ca-admin/pages/<?= e($slug) ?>/publish" class="m-0">
                 <?= csrf_field() ?>
-                <button type="submit" class="ra-btn ra-btn-primary">Publish</button>
+                <button type="submit" class="ra-btn ra-btn-primary ra-btn-sm">Publish</button>
             </form>
         </div>
     </div>
@@ -88,7 +98,10 @@
 
 <?php foreach ($blocks as $block): ?>
     <template id="tpl-settings-<?= (int) $block->id ?>">
-        <form class="ra-live-config-form" data-block-id="<?= (int) $block->id ?>" data-preview-url="/commerce/ca-admin/pages/<?= e($slug) ?>/blocks/<?= (int) $block->id ?>/preview">
+        <form class="ra-live-config-form"
+              data-block-id="<?= (int) $block->id ?>"
+              data-preview-url="/commerce/ca-admin/pages/<?= e($slug) ?>/blocks/<?= (int) $block->id ?>/preview"
+              data-save-url="/commerce/ca-admin/pages/<?= e($slug) ?>/blocks/<?= (int) $block->id ?>/config">
             <?= csrf_field() ?>
             <?php
             $schema = \CorporateAid\Commerce\Support\Blocks\BlockConfigRegistry::schema($block->blockType);

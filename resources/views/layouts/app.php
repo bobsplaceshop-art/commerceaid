@@ -17,7 +17,8 @@ $pageScripts   = $pageScripts   ?? [];
 
 $flashSuccess = function_exists('flash') ? flash('success') : null;
 $flashError   = function_exists('flash') ? flash('error')   : null;
-$hasFlash     = ($flashSuccess !== null || $flashError !== null);
+$flashWarning = function_exists('flash') ? flash('warning') : null;
+$hasFlash     = ($flashSuccess !== null || $flashError !== null || $flashWarning !== null);
 
 // Store-scoped brand name. Reads the resolved store's
 // name first, falls back to config('branding.product_name')
@@ -94,6 +95,9 @@ if (!in_array($serverTheme, ['dark', 'light', 'system'], true)) {
             <?php endif; ?>
             <?php if ($flashError !== null): ?>
                 <div class="ra-alert ra-alert-error"><?= e((string) $flashError) ?></div>
+            <?php endif; ?>
+            <?php if ($flashWarning !== null): ?>
+                <div class="ra-alert ra-alert-warn"><?= e((string) $flashWarning) ?></div>
             <?php endif; ?>
 
             <?= $content ?? '' ?>
