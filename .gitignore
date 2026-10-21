@@ -138,3 +138,5 @@ pnpm-lock.yaml
 .githooks/pre-push
 .githooks/post-checkout
 storage/imports/
+bin/tmp-seed-stripe.php
+storage/sw-version.txt
