@@ -135,6 +135,42 @@ $router->get('/commerce/ca-admin/pages/{slug}',
     [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'show'],
     ['store', 'auth', 'permission:core.settings.manage']);
 
+$router->post('/commerce/ca-admin/pages/{slug}/blocks',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'addBlock'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
+$router->post('/commerce/ca-admin/pages/{slug}/blocks/reorder',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'reorderBlocks'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
+$router->get('/commerce/ca-admin/pages/{slug}/blocks/{id}/config',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'configBlock'],
+    ['store', 'auth', 'permission:core.settings.manage']);
+
+$router->post('/commerce/ca-admin/pages/{slug}/blocks/{id}/config',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'saveBlockConfig'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
+$router->post('/commerce/ca-admin/pages/{slug}/blocks/{id}/preview',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'previewBlock'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
+$router->post('/commerce/ca-admin/pages/{slug}/publish',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'publish'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
+$router->get('/commerce/ca-admin/pages/{slug}/preview',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'previewIframe'],
+    ['store', 'auth', 'permission:core.settings.manage']);
+
+$router->post('/commerce/ca-admin/pages/{slug}/blocks/{id}/delete',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'deleteBlock'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
+$router->post('/commerce/ca-admin/pages/{slug}/blocks/{id}/toggle',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'toggleBlock'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
 $router->post('/commerce/ca-admin/pages/{slug}/delete',
     [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'destroy'],
     ['store', 'auth', 'permission:core.settings.manage', 'csrf']);

@@ -1,0 +1,405 @@
+
+/* --- Page Builder Live Editor --- */
+.ra-builder-layout {
+    display: flex;
+    height: calc(100vh - 60px); /* Adjust based on topbar */
+    margin: -1.5rem; /* Negate shell padding */
+    background: #0f172a;
+}
+
+.ra-builder-sidebar {
+    width: 380px;
+    flex-shrink: 0;
+    background: #1a2235;
+    border-right: 1px solid #2d3748;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.ra-builder-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #2d3748;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background: #1a2235;
+    z-index: 10;
+}
+
+.ra-builder-blocks {
+    padding: 1rem;
+}
+
+.ra-builder-block {
+    background: #0f172a;
+    border: 1px solid #2d3748;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+
+.ra-builder-block-header {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    gap: 0.75rem;
+}
+
+.ra-builder-block-header:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+.drag-handle {
+    cursor: grab;
+    color: #64748b;
+}
+
+.ra-builder-block-settings {
+    padding: 1rem;
+    border-top: 1px solid #2d3748;
+    background: #1a2235;
+}
+
+.ra-builder-preview {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f1f5f9; /* Fallback before iframe loads */
+}
+
+.ra-builder-preview-header {
+    padding: 0.5rem 1rem;
+    background: #1a2235;
+    border-bottom: 1px solid #2d3748;
+    display: flex;
+    justify-content: center;
+}
+
+.ra-builder-preview-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    background: #fff;
+    color: #333;
+}
+
+/* Responsive split view */
+@media (max-width: 900px) {
+    .ra-builder-layout {
+        flex-direction: column;
+        height: auto;
+        margin: 0;
+    }
+    .ra-builder-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #2d3748;
+        height: auto;
+    }
+    .ra-builder-preview {
+        height: 600px;
+    }
+}
+
+/* --- WordPress Customizer Layout --- */
+.ra-customizer {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #f1f5f9;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+}
+
+.ra-customizer-topbar {
+    height: 50px;
+    background: #1a2235;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    border-bottom: 1px solid #2d3748;
+}
+
+.ra-customizer-devices .device-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.2rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.ra-customizer-devices .device-btn.active,
+.ra-customizer-devices .device-btn:hover {
+    color: #fff;
+}
+
+.ra-customizer-body {
+    flex-grow: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.ra-customizer-sidebar {
+    width: 320px;
+    background: #1a2235;
+    color: #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #2d3748;
+}
+
+.ra-customizer-panel {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.ra-customizer-block {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background: #0f172a;
+    border: 1px solid #2d3748;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+}
+.ra-customizer-block:hover {
+    border-color: #d4af37;
+}
+
+.ra-customizer-preview {
+    flex-grow: 1;
+    background: #e2e8f0;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+    padding: 2rem;
+}
+
+.ra-preview-frame-wrapper {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    background: #fff;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    transition: width 0.3s ease, max-width 0.3s ease;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.ra-preview-frame-wrapper iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Device Emulation */
+.ra-preview-frame-wrapper.device-tablet {
+    width: 768px;
+}
+.ra-preview-frame-wrapper.device-mobile {
+    width: 375px;
+}
+
+/* --- Fix Customizer Overlay --- */
+.ra-customizer {
+    position: fixed !important;
+    top: 0 !important; 
+    left: 0 !important; 
+    right: 0 !important; 
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #f1f5f9;
+    z-index: 9999; /* Above admin sidebar */
+    display: flex;
+    flex-direction: column;
+}
+
+.ra-customizer-topbar {
+    height: 60px;
+    background: #1a2235;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid #2d3748;
+    flex-shrink: 0;
+}
+
+.ra-customizer-brand {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.ra-customizer-devices {
+    display: flex;
+    gap: 0.5rem;
+    background: #0f172a;
+    padding: 0.25rem;
+    border-radius: 6px;
+}
+
+.ra-customizer-devices .device-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 1.2rem;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ra-customizer-devices .device-btn:hover {
+    color: #e2e8f0;
+}
+
+.ra-customizer-devices .device-btn.active {
+    background: #2d3748;
+    color: #d4af37; /* Gold accent */
+}
+
+.ra-customizer-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Body Layout */
+.ra-customizer-body {
+    flex-grow: 1;
+    display: flex;
+    overflow: hidden;
+    background: #0f172a;
+}
+
+.ra-customizer-sidebar {
+    width: 340px;
+    background: #1a2235;
+    color: #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #2d3748;
+    flex-shrink: 0;
+}
+
+.ra-customizer-preview {
+    flex-grow: 1;
+    background: #e2e8f0;
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    overflow: auto;
+}
+
+.ra-preview-frame-wrapper {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    transition: width 0.3s ease;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.ra-preview-frame-wrapper.device-tablet {
+    width: 768px;
+    height: 100%;
+}
+
+.ra-preview-frame-wrapper.device-mobile {
+    width: 375px;
+    height: 100%;
+}
+
+.ra-preview-frame-wrapper iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Fix block items */
+.ra-customizer-block {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background: #0f172a;
+    border: 1px solid #2d3748;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.ra-customizer-block:hover {
+    border-color: #d4af37;
+}
+
+/* --- Force Customizer Layout --- */
+#ra-customizer {
+    position: fixed !important;
+    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    width: 100vw !important; height: 100vh !important;
+    background: #f1f5f9;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.ra-customizer-topbar {
+    height: 60px;
+    background: #1a2235;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid #2d3748;
+}
+
+.ra-customizer-devices {
+    display: flex;
+    gap: 0.25rem;
+    background: #0f172a;
+    padding: 0.35rem;
+    border-radius: 6px;
+    border: 1px solid #2d3748;
+}
+
+.ra-customizer-devices .device-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 1.2rem;
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ra-customizer-devices .device-btn:hover {
+    color: #fff;
+}
+
+.ra-customizer-devices .device-btn.active {
+    background: #2d3748;
+    color: #d4af37;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Ensure the topbar buttons look like buttons */
+.ra-customizer-topbar .ra-btn {
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 4px;
+}

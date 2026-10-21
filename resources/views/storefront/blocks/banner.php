@@ -1,0 +1,15 @@
+<?php
+$bgUrl = !empty($config['image_file_id']) ? '/media/' . $config['image_file_id'] . '/lg.jpg' : '';
+$style = $bgUrl ? "background-image: url('{$bgUrl}');" : "background-color: var(--sf-accent); color: white;";
+?>
+<section class="sf-banner" style="<?= e($style) ?> background-size: cover; background-position: center; padding: 5rem 2rem; text-align: center;">
+    <div style="max-width: 800px; margin: 0 auto;">
+        <h2 style="font-family: var(--sf-font-display); font-size: 2.5rem; margin-bottom: 1rem;"><?= e($config['headline'] ?? '') ?></h2>
+        <p style="font-size: 1.2rem; margin-bottom: 2rem;"><?= e($config['subheadline'] ?? '') ?></p>
+        <?php if (!empty($config['cta_text'])): ?>
+            <a href="<?= e($config['cta_url'] ?? '/products') ?>" class="sf-btn sf-btn-outline" style="border-color: currentColor; color: inherit;">
+                <?= e($config['cta_text']) ?>
+            </a>
+        <?php endif; ?>
+    </div>
+</section>

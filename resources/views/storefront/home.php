@@ -1,5 +1,43 @@
 <?php
 /**
+ * @var array $blocks
+ */
+?>
+<?php if (!empty($blocks)): ?>
+    <?php foreach ($blocks as $block): ?>
+        <?php
+        // Render the block partial
+        $viewData = ['config' => $block->config];
+        
+        // Fetch data needed by specific blocks
+        if ($block->blockType === 'product-grid') {
+            $productRepo = app(\CorporateAid\Commerce\Repositories\ProductRepository::class);
+            $result = $productRepo->paginatePublished([], 1, (int)($block->config['limit'] ?? 4));
+            $viewData['products'] = $result['items'];
+        } elseif ($block->blockType === 'category-grid') {
+            $catRepo = app(\CorporateAid\Commerce\Repositories\CategoryRepository::class);
+            $viewData['categories'] = $catRepo->listAll(false);
+        }
+        
+        if (isset($_GET['customize_preview'])) {
+            echo '<div data-block-id="' . (int) $block->id . '" class="ra-preview-block">';
+        }
+        echo view_partial('storefront/blocks/' . $block->blockType, $viewData);
+        if (isset($_GET['customize_preview'])) {
+            echo '</div>';
+        }
+        ?>
+    <?php endforeach; ?>
+    
+    <?php if (isset($_GET['customize_preview'])): ?>
+        <script src="<?= versioned_asset('js/preview-bridge.js') ?>" defer></script>
+    <?php endif; ?>
+    
+    <?php return; // Stop rendering the old hardcoded home page below ?>
+<?php endif; ?>
+
+<?php
+/**
  * Storefront home page.
  *
  * Renders the storefront merchandising rhythm from the design

@@ -8,6 +8,7 @@ use CorporateAid\Core\Response;
 use CorporateAid\Commerce\Repositories\CategoryRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
 use CorporateAid\Commerce\Support\StorefrontController;
+use CorporateAid\Commerce\Repositories\PageBlockRepository;
 
 /**
  * Storefront home page.
@@ -89,7 +90,30 @@ final class HomeController extends StorefrontController
             }
         }
 
+        $blockRepo = $this->container->get(PageBlockRepository::class);
+        $blocks = $blockRepo->listForPage('home', true); // true = active only
+
+        // Customizer preview mode: if ?customize_preview=1 is set
+        // and the session has draft configs for this page, merge
+        // each draft into the block's config before rendering.
+        // The live storefront never carries this query param, so
+        // this branch is dead on every real request.
+        if (isset($_GET['customize_preview'])) {
+            $store     = $this->resolveStore();
+            $themeSlug = $store !== null && $store->themeSlug !== ''
+                ? $store->themeSlug
+                : 'modern';
+            $draft     = $_SESSION['builder_draft'][$themeSlug]['home'] ?? [];
+
+            foreach ($blocks as $block) {
+                if (isset($draft[$block->id])) {
+                    $block->config = array_merge($block->config, $draft[$block->id]);
+                }
+            }
+        }
+
         return $this->render('storefront.home', [
+            'blocks' => $blocks,
             'title'         => '',
             'featured'      => $featured['items'],
             'newArrivals'   => $newArrivals['items'],
