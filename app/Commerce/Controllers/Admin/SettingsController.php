@@ -547,10 +547,25 @@ final class SettingsController extends AdminController
         }
 
         $file = $request->file($uploadKey);
+
+        // The media picker writes the file ID into the plain
+        // [name] input, not [name]__upload. If the picker set
+        // a value, save it directly. If not, and no file was
+        // uploaded, skip.
         if ($file === null) {
-            // Nothing was uploaded and nothing was removed.
-            // This is the common case for a save that only
-            // touched text fields on the same tab.
+            $picked = $request->input($field, null);
+            if ($picked !== null) {
+                $pickedId = (int) $picked;
+                if ($pickedId > 0) {
+                    $this->container->get(StoreRepository::class)
+                        ->updateColumn($storeId, $column, $pickedId);
+                    return 'saved';
+                }
+                // Empty string = clear.
+                $this->container->get(StoreRepository::class)
+                    ->updateColumn($storeId, $column, null);
+                return 'saved';
+            }
             return 'skipped';
         }
 

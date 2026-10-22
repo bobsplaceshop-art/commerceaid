@@ -15,7 +15,7 @@ $showViewAll = !empty($config['show_view_all']);
                 <a href="/products" style="color: var(--sf-accent); font-weight: 600;">View All &rarr;</a>
             <?php endif; ?>
         </div>
-        <div class="sf-block-grid sf-block-grid-cols-<?= $columns ?>">
+        <div class="sf-block-grid" style="--sf-block-grid-cols: <?= (int) $columns ?>;">
             <?php if (empty($products)): ?>
                 <p style="grid-column: span <?= $columns ?>; text-align: center; color: var(--sf-muted); padding: 2rem;">No products found for this configuration.</p>
             <?php else: ?>

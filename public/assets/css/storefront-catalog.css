@@ -1618,21 +1618,24 @@ select.sf-filter-input {
     grid-template-columns: 1fr;
 }
 
-/* Tablet (2 cols) */
+/* Tablet: cap at 2 columns, regardless of merchant choice. */
 @media (min-width: 768px) {
-    .sf-block-grid { grid-template-columns: repeat(2, 1fr); }
-    .sf-block-grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
-    .sf-block-grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
+    .sf-block-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-/* Desktop */
+/* Desktop: respect the merchant's choice, capped at 6
+   to keep cards readable. Anything above 6 falls back
+   to 6. */
 @media (min-width: 1024px) {
-    .sf-block-grid { grid-template-columns: repeat(3, 1fr); }
-    .sf-block-grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-    .sf-block-grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-    .sf-block-grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .sf-block-grid {
+        grid-template-columns: repeat(
+            min(var(--sf-block-grid-cols, 4), 6),
+            1fr
+        );
+    }
     
-    /* Categories specifically need to auto-fit, not fixed columns */
     .sf-block-grid-categories {
         grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     }
