@@ -90,35 +90,40 @@ final class HomeController extends StorefrontController
             }
         }
 
-        $blockRepo = $this->container->get(PageBlockRepository::class);
-        $blocks = $blockRepo->listForPage('home', true); // true = active only
-
-        // Customizer preview mode: if ?customize_preview=1 is set
-        // and the session has draft configs for this page, merge
-        // each draft into the block's config before rendering.
-        // The live storefront never carries this query param, so
-        // this branch is dead on every real request.
+        // In Customizer preview mode, read from DraftManager
+        // (merged published + draft table). Otherwise, read
+        // the published blocks only.
         if (isset($_GET['customize_preview'])) {
             $store     = $this->resolveStore();
             $themeSlug = $store !== null && $store->themeSlug !== ''
                 ? $store->themeSlug
                 : 'modern';
-            $draft     = $_SESSION['builder_draft'][$themeSlug]['home'] ?? [];
-
-            foreach ($blocks as $block) {
-                if (isset($draft[$block->id])) {
-                    $block->config = array_merge($block->config, $draft[$block->id]);
-                }
-            }
+            $draftManager = $this->container->get(
+                \CorporateAid\Commerce\Services\Builder\DraftManager::class
+            );
+            $blocks = $draftManager->getMergedBlocks('home', $themeSlug);
+        } else {
+            $blockRepo = $this->container->get(PageBlockRepository::class);
+            $blocks = $blockRepo->listForPage('home', true); // true = active only
         }
 
+        // Merge ratings across all product arrays. Duplicates
+        // are deduped by product id inside ratingsForProducts().
+        $allProducts = array_merge(
+            $featured['items'],
+            $newArrivals['items'],
+            $bestSellers['items']
+        );
+        $productRatings = $this->ratingsForProducts($allProducts);
+
         return $this->render('storefront.home', [
-            'blocks' => $blocks,
-            'title'         => '',
-            'featured'      => $featured['items'],
-            'newArrivals'   => $newArrivals['items'],
-            'bestSellers'   => $bestSellers['items'],
-            'topCategories' => $topCategories,
+            'blocks'         => $blocks,
+            'title'          => '',
+            'featured'       => $featured['items'],
+            'newArrivals'    => $newArrivals['items'],
+            'bestSellers'    => $bestSellers['items'],
+            'topCategories'  => $topCategories,
+            'productRatings' => $productRatings,
         ]);
     }
 }

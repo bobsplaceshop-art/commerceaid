@@ -1439,3 +1439,216 @@ select.sf-filter-input {
     flex-shrink: 0;
     margin: 0;
 }
+
+/* ------------------------------------------------------------
+   Product card: Add to Cart form
+   ------------------------------------------------------------
+   The card renders .sf-product-card-add as a <form> when the
+   product is in stock, and as an <a> when out of stock. The
+   form's button must look identical to the link. */
+.sf-product-card-add-form {
+    padding: 0;
+    border: none;
+    background: transparent;
+    margin-top: .35rem;
+}
+
+.sf-product-card-add-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    width: 100%;
+    padding: .65rem .75rem;
+    border: 1px solid var(--sf-gold);
+    border-radius: var(--sf-radius);
+    background: var(--sf-gold);
+    color: var(--sf-white);
+    font-family: var(--sf-font-body);
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.sf-product-card-add-button:hover {
+    background: var(--sf-gold-dark);
+    border-color: var(--sf-gold-dark);
+}
+
+.sf-product-card-add-button:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+.sf-product-card-add-button i {
+    font-size: .95rem;
+}
+
+/* ------------------------------------------------------------
+   Product card: Add to Cart form
+   ------------------------------------------------------------
+   The card renders .sf-product-card-add as a <form> when the
+   product is in stock, and as an <a> when out of stock. The
+   form's button must look identical to the link. */
+.sf-product-card-add-form {
+    padding: 0;
+    border: none;
+    background: transparent;
+    margin-top: .35rem;
+}
+
+.sf-product-card-add-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    width: 100%;
+    padding: .65rem .75rem;
+    border: 1px solid var(--sf-gold);
+    border-radius: var(--sf-radius);
+    background: var(--sf-gold);
+    color: var(--sf-white);
+    font-family: var(--sf-font-body);
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.sf-product-card-add-button:hover {
+    background: var(--sf-gold-dark);
+    border-color: var(--sf-gold-dark);
+}
+
+.sf-product-card-add-button:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+.sf-product-card-add-button i {
+    font-size: .95rem;
+}
+
+/* ------------------------------------------------------------
+   Storefront popup banner
+   ------------------------------------------------------------ */
+.sf-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 1rem;
+}
+
+.sf-popup-overlay.is-visible {
+    display: flex;
+}
+.sf-popup-content {
+    background: var(--sf-white, #fff);
+    width: 100%;
+    max-width: 500px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+.sf-popup-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.sf-popup-close:hover { background: #fff; }
+.sf-popup-image img {
+    width: 100%;
+    height: auto;
+    max-height: 50vh;
+    object-fit: contain;
+    display: block;
+}
+.sf-popup-body {
+    padding: 2rem;
+    text-align: center;
+}
+.sf-popup-headline {
+    font-family: var(--sf-font-display);
+    font-size: 2rem;
+    margin: 0 0 1rem;
+    color: var(--sf-ink);
+}
+.sf-popup-text {
+    color: var(--sf-ink-muted);
+    margin: 0 0 2rem;
+    line-height: 1.6;
+}
+.sf-popup-btn {
+    display: inline-block;
+    width: 100%;
+}
+
+/* ------------------------------------------------------------
+   Page Builder Block Grids (Responsive)
+   ------------------------------------------------------------ */
+
+/* Base: 1 column on mobile */
+.sf-block-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 1fr;
+}
+
+/* Tablet (2 cols) */
+@media (min-width: 768px) {
+    .sf-block-grid { grid-template-columns: repeat(2, 1fr); }
+    .sf-block-grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
+    .sf-block-grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+    .sf-block-grid { grid-template-columns: repeat(3, 1fr); }
+    .sf-block-grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .sf-block-grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .sf-block-grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    
+    /* Categories specifically need to auto-fit, not fixed columns */
+    .sf-block-grid-categories {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+}
+
+/* Responsive Hero Block */
+.sf-hero {
+    min-height: 300px;
+    padding: 2rem 1rem;
+}
+@media (min-width: 768px) {
+    .sf-hero { min-height: 500px; padding: 4rem 2rem; }
+}
+.sf-hero-content {
+    padding: 1.5rem;
+}
+@media (min-width: 768px) {
+    .sf-hero-content { padding: 3rem; }
+}

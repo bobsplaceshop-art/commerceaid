@@ -83,6 +83,25 @@ final class MediaServeController
 
         $variantItem = $media->findVariantBySourceUuid($uuid, $variant, $format);
         if ($variantItem === null) {
+            // No variant row. Try to generate variants
+            // on demand before falling back to the source.
+            $sourceItem = $media->findByUuid($uuid);
+            if ($sourceItem !== null) {
+                $media->ensureVariants($sourceItem->file);
+                $variantItem = $media->findVariantBySourceUuid($uuid, $variant, $format);
+            }
+
+            if ($variantItem !== null) {
+                $absolute = $this->absolutePath($variantItem->file->storagePath);
+                if (is_file($absolute)) {
+                    return Response::file(
+                        $absolute,
+                        $variantItem->file->mimeType,
+                        ['Content-Disposition' => 'inline']
+                    );
+                }
+            }
+
             // Fall back to the source. A caller that asked
             // for a variant we do not have still gets an
             // image.
@@ -103,6 +122,26 @@ final class MediaServeController
 
         $absolute = $this->absolutePath($variantItem->file->storagePath);
         if (!is_file($absolute)) {
+            // The variant row exists but the file on disk is
+            // missing. Try to regenerate it on demand before
+            // giving up.
+            $sourceItem = $media->findByUuid($uuid);
+            if ($sourceItem !== null) {
+                $media->ensureVariants($sourceItem->file);
+
+                // Retry the lookup after regeneration.
+                $variantItem = $media->findVariantBySourceUuid($uuid, $variant, $format);
+                if ($variantItem !== null) {
+                    $absolute = $this->absolutePath($variantItem->file->storagePath);
+                    if (is_file($absolute)) {
+                        return Response::file(
+                            $absolute,
+                            $variantItem->file->mimeType,
+                            ['Content-Disposition' => 'inline']
+                        );
+                    }
+                }
+            }
             return $this->notFound();
         }
 

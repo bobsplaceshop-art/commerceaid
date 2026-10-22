@@ -149,6 +149,24 @@ final class SettingsController extends AdminController
             return Response::redirect('/commerce/ca-admin/settings?tab=' . urlencode($activeTab));
         }
 
+        // -------------------------------------------------------------
+        // Pre-save validation for the Popup tab. The ends_at date
+        // must not be earlier than starts_at. Reject before any
+        // write so the merchant sees the error on the same page.
+        // -------------------------------------------------------------
+        if ($activeTab === StoreSettingDefinitions::GROUP_POPUP) {
+            $startsRaw = (string) $request->input($this->fieldName('popup.starts_at'), '');
+            $endsRaw   = (string) $request->input($this->fieldName('popup.ends_at'), '');
+
+            $starts = trim($startsRaw);
+            $ends   = trim($endsRaw);
+
+            if ($starts !== '' && $ends !== '' && $ends < $starts) {
+                $session->flash('error', 'The popup end date must be on or after the start date.');
+                return Response::redirect('/commerce/ca-admin/settings?tab=' . urlencode($activeTab));
+            }
+        }
+
         $savedCount = 0;
         $fileErrors = [];
 
@@ -180,8 +198,24 @@ final class SettingsController extends AdminController
                 continue;
             }
 
+            // File fields on the key-value target: the hidden
+            // input carries the file ID from the media picker.
+            // We just save it as a plain string, like any other.
+            if (($def['type'] ?? 'string') === 'file') {
+                $removeKey = $field . '__remove';
+
+                if ($request->input($removeKey, null) !== null) {
+                    $settings->set($key, '', $userId);
+                    $savedCount++;
+                    continue;
+                }
+
+                // Fall through to the standard string save.
+                // The picker writes the ID into the main input.
+            }
+
             if ($posted === null) {
-                // Non-boolean field was not in the POST. Skip.
+                // Non-boolean, non-file field was not in the POST. Skip.
                 continue;
             }
 

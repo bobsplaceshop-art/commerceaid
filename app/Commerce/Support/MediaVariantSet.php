@@ -64,6 +64,7 @@ final class MediaVariantSet
             self::CONTEXT_BRAND_LOGO     => self::brandLogo(),
             self::CONTEXT_BANNER_IMAGE   => self::bannerImage(),
             self::CONTEXT_HERO_IMAGE     => self::heroImage(),
+            self::CONTEXT_GENERAL        => self::general(),
             default                      => self::generic(),
         };
     }
@@ -190,6 +191,33 @@ final class MediaVariantSet
             variants: [
                 new MediaVariantSpec('lg', 1920, 960, ['webp', 'jpeg'], self::FIT_COVER),
                 new MediaVariantSpec('md', 1200, 600, ['webp', 'jpeg'], self::FIT_COVER),
+            ],
+        );
+    }
+
+    /**
+     * The general-purpose media context.
+     *
+     * This is the context any feature that does not have a
+     * specialized need (popup image, settings image, page
+     * block image, etc.) should use. It produces the same
+     * full size list as productImage(), so any caller that
+     * requests lg / md / card gets a real file.
+     *
+     * Before this existed, general fell through to generic(),
+     * which only produced a single 'default' variant. That
+     * broke every feature that expected the standard sizes.
+     */
+    private static function general(): MediaContextSpec
+    {
+        return new MediaContextSpec(
+            sourceMaxMb: 5,
+            sharpen:     true,
+            variants: [
+                new MediaVariantSpec('lg',   1200, 1500, ['webp', 'jpeg'], self::FIT_INSIDE),
+                new MediaVariantSpec('md',    800, 1000, ['webp', 'jpeg'], self::FIT_INSIDE),
+                new MediaVariantSpec('card',  400,  500, ['webp', 'jpeg'], self::FIT_INSIDE),
+                new MediaVariantSpec('thumb', 200,  250, ['webp', 'jpeg'], self::FIT_INSIDE),
             ],
         );
     }

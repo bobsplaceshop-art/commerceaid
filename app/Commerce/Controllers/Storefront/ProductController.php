@@ -256,6 +256,10 @@ final class ProductController extends StorefrontController
         // ----- SEO title fallback -----
         $title = $product->seoTitle ?: $product->name;
 
+        $productRatings = $this->ratingsForProducts($related);
+
+        $productRatings = $this->ratingsForProducts($related);
+
         return $this->render('storefront.product.show', [
             'title'           => $title,
             'product'         => $product,
@@ -264,6 +268,7 @@ final class ProductController extends StorefrontController
             'parentCategory'  => $parentCategory,
             'stockQty'        => $stockQty,
             'isLiveSoldOut'   => $isLiveSoldOut,
+            'productRatings'  => $productRatings,
             'variants'          => $variantList,
             'related'           => $related,
             'gallery'           => $gallery,

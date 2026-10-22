@@ -402,3 +402,50 @@ $tabs['advanced'] = 'Advanced';
     margin: 1.5rem 0;
 }
 </style>
+<script>
+(function () {
+    'use strict';
+    document.addEventListener('DOMContentLoaded', function () {
+        var startsInput = document.querySelector('[data-sf-date-field="popup__starts_at"]');
+        var endsInput   = document.querySelector('[data-sf-date-field="popup__ends_at"]');
+        if (!startsInput || !endsInput) return;
+
+        function syncMin() {
+            if (startsInput.value) {
+                endsInput.min = startsInput.value;
+                if (endsInput.value && endsInput.value < startsInput.value) {
+                    endsInput.value = startsInput.value;
+                }
+            } else {
+                endsInput.removeAttribute('min');
+            }
+        }
+
+        startsInput.addEventListener('change', syncMin);
+        endsInput.addEventListener('change', syncMin);
+        syncMin();
+    });
+})();
+</script>
+
+<?php
+// Include the media picker modal if any file fields are present.
+$hasFileFields = false;
+foreach ($definitions as $def) {
+    if (($def['type'] ?? '') === 'file') {
+        $hasFileFields = true;
+        break;
+    }
+}
+if ($hasFileFields):
+    $container = \CorporateAid\Core\App::instance()->container();
+    $mediaRepo = $container->get(\CorporateAid\Commerce\Repositories\MediaRepository::class);
+    $mediaLibrary = $mediaRepo->paginateForStore(
+        $container->get(\CorporateAid\Commerce\Context\StoreContext::class)->id(),
+        [],
+        1,
+        200
+    )['items'];
+    ?>
+    <?= view_partial('admin/pages/_block-media-picker', ['mediaLibrary' => $mediaLibrary]) ?>
+<?php endif; ?>

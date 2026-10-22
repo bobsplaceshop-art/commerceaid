@@ -1,98 +1,41 @@
 <?php
 /**
- * File-type settings field.
- *
- * Renders an upload widget for a column-target settings
- * field. Called from _field.php when $type === 'file'.
- *
- * Vars:
- *   @var string              $key          dotted setting key
- *   @var array<string,mixed> $def          the definition
- *   @var string              $value        current file ID as string, or ''
- *   @var string              $fieldName    form field name (dots -> __)
- *
- * The upload input and the remove flag use the field name
- * with suffixes. The controller's saveFileColumn() reads
- * them by the same name.
- *
- * No JavaScript yet. This is the progressive-enhancement
- * version: a plain multipart upload. The AJAX widget lands
- * in a follow-up commit that adds media-upload.js.
+ * File-type settings field using the Media Library picker.
  */
-
 $value     = (string) ($value     ?? '');
 $def       = $def                 ?? [];
 $fieldName = (string) ($fieldName ?? '');
 $label     = (string) ($def['label'] ?? '');
-$hint      = (string) ($def['hint']  ?? '');
-$accept    = (string) ($def['accept'] ?? 'image/*');
-$maxMb     = (int)    ($def['max_mb'] ?? 5);
-$context   = (string) ($def['media_context'] ?? '');
+$fileId    = (int) $value;
 
-$fileId = (int) $value;
-$removeKey = $fieldName . '__remove';
-$uploadKey = $fieldName . '__upload';
-
-// Resolve the current file to a preview URL when set.
 $previewUrl = null;
-$previewName = null;
 if ($fileId > 0) {
     try {
         $container = \CorporateAid\Core\App::instance()->container();
-        $media = $container->get(
-            \CorporateAid\Commerce\Repositories\MediaRepository::class
-        );
+        $media = $container->get(\CorporateAid\Commerce\Repositories\MediaRepository::class);
         $item = $media->findById($fileId);
-        if ($item !== null) {
-            $previewUrl  = $item->url();
-            $previewName = $item->file->originalName;
-        }
-    } catch (\Throwable) {
-        // Silently fall through with no preview.
-    }
+        if ($item !== null) $previewUrl = $item->url();
+    } catch (\Throwable) {}
 }
+$fieldId = 'set-' . e($fieldName);
 ?>
-
-<div class="ra-file-field">
-        <div class="ra-file-preview">
-            <?php if ($previewUrl !== null): ?>
-                <img src="<?= e($previewUrl) ?>"
-                     alt="<?= e($label) ?> preview"
-                     class="ra-file-preview-img"
-                     loading="lazy">
-            <?php else: ?>
-                <div class="ra-file-preview-empty" aria-hidden="true">
-                    <i class="bi bi-image"></i>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <div class="ra-file-controls">
-            <input type="file"
-                   id="set-<?= e($fieldName) ?>"
-                   name="<?= e($uploadKey) ?>"
-                   accept="<?= e($accept) ?>"
-                   class="ra-file-input">
-
-            <div class="ra-file-meta">
-                <span class="ra-file-hint">
-                    Accepted: <?= e($accept) ?>. Max <?= (int) $maxMb ?> MB.
-                </span>
-                <?php if ($previewName !== null): ?>
-                    <span class="ra-file-current">
-                        Current: <strong><?= e($previewName) ?></strong>
-                    </span>
-                <?php endif; ?>
+<div class="ra-file-field" data-reload-on-pick="true">
+    <div class="ra-file-preview" id="<?= $fieldId ?>-preview-wrap">
+        <?php if ($previewUrl !== null): ?>
+            <img src="<?= e($previewUrl) ?>" alt="Preview" style="width:80px; height:80px; object-fit:cover; border-radius:4px;">
+        <?php else: ?>
+            <div style="width:80px; height:80px; background:#0f172a; border:1px dashed #2d3748; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#64748b;">
+                <i class="bi bi-image"></i>
             </div>
-
-            <?php if ($fileId > 0): ?>
-                <label class="ra-file-remove">
-                    <input type="checkbox"
-                           name="<?= e($removeKey) ?>"
-                           value="1">
-                    <span>Remove this file</span>
-                </label>
-            <?php endif; ?>
-        </div>
+        <?php endif; ?>
+    </div>
+    <div class="ra-file-controls" style="margin-top: 1rem;">
+        <input type="hidden" id="<?= $fieldId ?>" name="<?= e($fieldName) ?>" value="<?= $fileId > 0 ? $fileId : '' ?>">
+        <button type="button" class="ra-btn ra-btn-outline ra-btn-sm" data-settings-media-open="<?= $fieldId ?>">
+            <i class="bi bi-images me-1"></i> Choose image
+        </button>
+        <button type="button" class="ra-btn ra-btn-outline ra-btn-sm text-danger ms-2" style="border-color:#dc2626; color:#dc2626; <?= $fileId > 0 ? '' : 'display:none;' ?>" data-settings-media-clear="<?= $fieldId ?>">
+            <i class="bi bi-x-circle me-1"></i> Remove
+        </button>
     </div>
 </div>

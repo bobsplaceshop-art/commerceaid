@@ -128,4 +128,3 @@
 <?= view_partial('admin/pages/_block-picker', ['slug' => $slug]) ?>
 <?= view_partial('admin/pages/_block-media-picker', ['mediaLibrary' => $mediaLibrary]) ?>
 <script src="<?= versioned_asset('js/page-builder-customizer.js') ?>"></script>
-<script src="<?= versioned_asset('js/block-media-picker.js') ?>"></script>

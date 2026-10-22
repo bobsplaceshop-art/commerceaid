@@ -218,6 +218,10 @@ final class CategoryController extends StorefrontController
             $parent = $categoryRepo->findById($category->parentId);
         }
 
+        $productRatings = $this->ratingsForProducts($result['items']);
+
+        $productRatings = $this->ratingsForProducts($result['items']);
+
         return $this->render('storefront.category.show', [
             'title'          => $category->name,
             'category'       => $category,
@@ -228,6 +232,7 @@ final class CategoryController extends StorefrontController
             'brandOptions'   => $brandOptions,
             'sortOptions'    => $sortOptions,
             'hasFilters'     => $hasFilters,
+            'productRatings' => $productRatings,
             'activeChips'    => $activeChips,
             'clearFilterUrl' => $clearFilterUrl,
         ]);

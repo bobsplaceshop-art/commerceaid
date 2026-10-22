@@ -107,6 +107,7 @@ if (!in_array($serverTheme, ['dark', 'light', 'system'], true)) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?= asset('js/app.js') ?>"></script>
     <script src="<?= asset('js/admin-filters.js') ?>"></script>
+    <script src="<?= versioned_asset('js/block-media-picker.js') ?>"></script>
     <?php foreach ($pageScripts as $script): ?>
         <script src="<?= asset($script) ?>"></script>
     <?php endforeach; ?>

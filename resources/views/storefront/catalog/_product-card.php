@@ -34,8 +34,10 @@
  *   (future), stars and count render here.
  */
 
-$product       = $product       ?? null;
-$categoryLabel = $categoryLabel ?? null;
+$product        = $product        ?? null;
+$categoryLabel  = $categoryLabel  ?? null;
+$productRatings = $productRatings ?? [];
+
 if ($product === null) {
     return;
 }
@@ -59,10 +61,12 @@ if ($product->isOutOfStock()) {
 
 $detailUrl = '/products/' . rawurlencode($product->slug);
 
-// Rating stub. Replace with real data when reviews ship. When
-// zero, the whole rating block is omitted (per the collapse rule).
-$ratingAvg   = 0.0;
-$ratingCount = 0;
+// Rating data. When the caller has not passed any (e.g. the
+// related-products strip on a product page), the block is
+// omitted entirely (per the collapse rule).
+$ratingData  = $productRatings[$product->id] ?? null;
+$ratingAvg   = $ratingData['avg']   ?? 0.0;
+$ratingCount = $ratingData['count'] ?? 0;
 ?>
 
 <article class="sf-product-card" id="<?= e($cardId) ?>" aria-labelledby="<?= e($cardId) ?>-name">
@@ -152,12 +156,27 @@ $ratingCount = 0;
             <?= e($stockLabel) ?>
         </div>
 
-        <a href="<?= e($detailUrl) ?>"
-           class="sf-product-card-add sf-product-card-add-link"
-           data-sf-card-action="view-product">
-            <i class="bi bi-bag-plus" aria-hidden="true"></i>
-            <span>View product</span>
-        </a>
+        <?php if (!$product->isOutOfStock()): ?>
+            <form method="POST"
+                  action="/cart/add"
+                  class="sf-product-card-add sf-product-card-add-form"
+                  data-sf-add-to-cart>
+                <?= csrf_field() ?>
+                <input type="hidden" name="product_id" value="<?= (int) $product->id ?>">
+                <input type="hidden" name="quantity"   value="1">
+                <button type="submit" class="sf-product-card-add-button">
+                    <i class="bi bi-bag-plus" aria-hidden="true"></i>
+                    <span>Add to cart</span>
+                </button>
+            </form>
+        <?php else: ?>
+            <a href="<?= e($detailUrl) ?>"
+               class="sf-product-card-add sf-product-card-add-link"
+               data-sf-card-action="view-product">
+                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                <span>View product</span>
+            </a>
+        <?php endif; ?>
 
     </div>
 </article>

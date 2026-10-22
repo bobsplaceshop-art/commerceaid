@@ -172,6 +172,81 @@ final class MediaRepository
     }
 
     /**
+     * Ensure that a source file has generated variants.
+     *
+     * Called from MediaServeController when a requested
+     * variant is missing on disk. Regenerates the full
+     * variant set for the source file, then registers
+     * the new rows in core_media_variants.
+     *
+     * Idempotent: if a variant row already exists AND
+     * the file on disk is present, this method is a
+     * no-op. If the row exists but the file is gone,
+     * the file is regenerated.
+     *
+     * @param \CorporateAid\Platform\Models\File $source
+     */
+    public function ensureVariants(\CorporateAid\Platform\Models\File $source): void
+    {
+        if (!str_starts_with($source->mimeType, 'image/')) {
+            return;
+        }
+        if ($source->isDeleted()) {
+            return;
+        }
+
+        $absolute = $this->files->absolutePath($source);
+        if (!is_file($absolute)) {
+            return;
+        }
+
+        // Determine the category from storage_path:
+        // storage/uploads/{category}/{uuid}.{ext}
+        $parts = explode('/', trim($source->storagePath, '/'));
+        // Expected: ["storage", "uploads", "{category}", "{file}"]
+        $category = $parts[2] ?? 'general';
+        if ($category === '' || $category === 'variants') {
+            $category = 'general';
+        }
+
+        // Does a variant row exist for THIS source UUID, with
+        // the file on disk? Stale rows can exist (from earlier
+        // uploads that linked the wrong UUID). The check below
+        // requires the variant's storage_path to contain the
+        // source's own UUID. Anything else is stale and must
+        // be regenerated.
+        $rows = $this->db->select(
+            "SELECT vf.`storage_path`
+               FROM `core_media_variants` cv
+               JOIN `core_files` vf ON vf.`id` = cv.`variant_file_id`
+              WHERE cv.`source_file_id` = ?
+                AND vf.`deleted_at` IS NULL",
+            [$source->id]
+        );
+
+        $expectedUuid = (string) $source->uuid;
+        foreach ($rows as $row) {
+            $path = (string) $row['storage_path'];
+            if ($expectedUuid !== '' && !str_contains($path, $expectedUuid)) {
+                continue; // Stale row for a different UUID.
+            }
+            $variantAbsolute = $this->files->basePath() . '/' . ltrim($path, '/');
+            if (is_file($variantAbsolute)) {
+                return; // Already healthy for THIS source.
+            }
+        }
+
+        // Missing or stale. Regenerate.
+        $this->registerVariants(
+            $source,
+            $absolute,
+            $source->mimeType,
+            'general',
+            $category
+        );
+    }
+
+    /**
      * Write a core_entity_files link from a file to a store.
      *
      * Idempotent via the UNIQUE key on

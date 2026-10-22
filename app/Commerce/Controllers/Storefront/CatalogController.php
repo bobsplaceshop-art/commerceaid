@@ -149,6 +149,8 @@ final class CatalogController extends StorefrontController
             $title = 'Search: ' . $q;
         }
 
+        $productRatings = $this->ratingsForProducts($result['items']);
+
         return $this->render('storefront.catalog.index', [
             'title'            => $title,
             'result'           => $result,
@@ -158,6 +160,7 @@ final class CatalogController extends StorefrontController
             'brandOptions'     => $brandOptions,
             'resolvedCategory' => $resolvedCategory,
             'resolvedBrand'    => $resolvedBrand,
+            'productRatings'   => $productRatings,
         ]);
     }
 }

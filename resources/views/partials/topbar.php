@@ -48,7 +48,7 @@ $title = $title ?? null;
             </a>
         <?php endif; ?>
         <?php if ($user !== null && $user->can('core.settings.manage')): ?>
-            <a href="/commerce/ca-admin/store-settings" class="ra-icon-btn" title="Settings">
+            <a href="/commerce/ca-admin/settings" class="ra-icon-btn" title="Settings">
                 <i class="bi bi-gear"></i>
             </a>
         <?php endif; ?>

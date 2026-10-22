@@ -47,6 +47,7 @@ abstract class StorefrontController
         $data['cartCount']           = $this->resolveCartCount();
         $data['wishlistProductIds']  = $this->resolveWishlistProductIds();
         $data['cookieBannerEnabled'] = $this->resolveCookieBannerEnabled();
+        $data['popupEnabled']        = $this->resolvePopupEnabled();
         $data['navCategories']       = $this->resolveNavCategories();
         $data['storeNotice']         = $this->resolveStoreNotice();
 
@@ -75,6 +76,41 @@ abstract class StorefrontController
         return Response::html(
             $viewSvc->render($view, $data, $layoutPath)
         );
+    }
+
+    /**
+     * Build a map of product_id => ['avg' => float, 'count' => int]
+     * for the given products. Used by _product-card.php to render
+     * star ratings. Products without any approved reviews are
+     * omitted, so the card's rating block hides itself.
+     *
+     * @param array<int, \CorporateAid\Commerce\Models\Product> $products
+     * @return array<int, array{avg: float, count: int}>
+     */
+    protected function ratingsForProducts(array $products): array
+    {
+        if ($products === []) {
+            return [];
+        }
+
+        $reviews = $this->container->get(
+            \CorporateAid\Commerce\Repositories\ProductReviewRepository::class
+        );
+
+        $out = [];
+        foreach ($products as $product) {
+            $id = (int) $product->id;
+            $count = $reviews->countApprovedForProduct($id);
+            if ($count === 0) {
+                continue;
+            }
+            $out[$id] = [
+                'avg'   => (float) ($reviews->averageForProduct($id) ?? 0.0),
+                'count' => $count,
+            ];
+        }
+
+        return $out;
     }
 
     /**
@@ -130,6 +166,62 @@ abstract class StorefrontController
                 \CorporateAid\Commerce\Repositories\StoreSettingsRepository::class
             );
             return $settings->bool('compliance.cookie_banner.enabled', true);
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Whether the popup banner should render on this request.
+     *
+     * True only when:
+     *   - popup.enabled is set
+     *   - popup.headline is non-empty
+     *   - the current date is within popup.starts_at / popup.ends_at
+     *     (blank bounds are unbounded)
+     *
+     * The cookie-based dismissal is handled client-side.
+     * This method only gates server-side rendering.
+     */
+    private function resolvePopupEnabled(): bool
+    {
+        try {
+            $settings = $this->container->get(
+                \CorporateAid\Commerce\Repositories\StoreSettingsRepository::class
+            );
+
+            if (!$settings->bool('popup.enabled', false)) {
+                return false;
+            }
+
+            $headline = trim($settings->string('popup.headline', ''));
+            if ($headline === '') {
+                return false;
+            }
+
+            $startsAt = trim($settings->string('popup.starts_at', ''));
+            $endsAt   = trim($settings->string('popup.ends_at', ''));
+            $now      = new \DateTimeImmutable('now');
+
+            if ($startsAt !== '') {
+                $start = \DateTimeImmutable::createFromFormat('Y-m-d', $startsAt);
+                if ($start === false || $now < $start) {
+                    return false;
+                }
+            }
+
+            if ($endsAt !== '') {
+                $end = \DateTimeImmutable::createFromFormat('Y-m-d', $endsAt);
+                if ($end === false) {
+                    return false;
+                }
+                $end = $end->modify('+1 day');
+                if ($now >= $end) {
+                    return false;
+                }
+            }
+
+            return true;
         } catch (\Throwable) {
             return false;
         }

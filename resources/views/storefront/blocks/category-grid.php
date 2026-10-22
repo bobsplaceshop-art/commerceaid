@@ -11,7 +11,7 @@ if (empty($categories)) {
 <section class="sf-section sf-category-grid-section" style="padding: 4rem 2rem; background: var(--sf-surface-1);">
     <div style="max-width: 1200px; margin: 0 auto;">
         <h2 style="font-family: var(--sf-font-display); font-size: 2rem; text-align: center; margin-bottom: 2.5rem;"><?= e($title) ?></h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1.5rem;">
+        <div class="sf-block-grid sf-block-grid-categories">
             <?php foreach ($categories as $cat): ?>
                 <a href="/categories/<?= e($cat->slug) ?>" style="display: flex; flex-direction: column; align-items: center; text-decoration: none; color: inherit; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
                     <div style="width: 120px; height: 120px; background: var(--sf-surface-2); border-radius: 50%; overflow: hidden; margin-bottom: 0.75rem; border: 2px solid var(--sf-border);">

@@ -48,6 +48,14 @@ $boolOn = in_array(strtolower(trim($value)), ['1','true','on','yes'], true);
                value="<?= e($value) ?>"
                class="ra-settings-input">
 
+    <?php elseif ($type === 'date'): ?>
+        <input type="date"
+               id="set-<?= e($fieldName) ?>"
+               name="<?= e($fieldName) ?>"
+               value="<?= e($value) ?>"
+               class="ra-settings-input"
+               data-sf-date-field="<?= e($fieldName) ?>">
+
     <?php elseif ($type === 'file'): ?>
         <?php
         // File fields use their own partial. The partial

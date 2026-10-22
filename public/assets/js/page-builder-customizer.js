@@ -66,13 +66,27 @@
     function bindLiveForm(form) {
         if (!form) return;
         var previewUrl = form.getAttribute('data-preview-url');
+        var saveUrl    = form.getAttribute('data-save-url');
         var blockId    = form.getAttribute('data-block-id');
         var debounce;
 
-        function sendPreview() {
+        function persistAndPreview() {
             clearTimeout(debounce);
             debounce = setTimeout(function () {
                 var formData = new FormData(form);
+
+                // 1. Persist to the session draft via saveBlockConfig
+                if (saveUrl) {
+                    fetch(saveUrl, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    }).catch(function (err) {
+                        console.error('[customizer] save failed:', err);
+                    });
+                }
+
+                // 2. Fetch the rendered HTML and inject it
                 fetch(previewUrl, {
                     method: 'POST',
                     body: formData,
@@ -94,8 +108,8 @@
             }, 400);
         }
 
-        form.addEventListener('input', sendPreview);
-        form.addEventListener('change', sendPreview);
+        form.addEventListener('input', persistAndPreview);
+        form.addEventListener('change', persistAndPreview);
     }
 
     var list = document.getElementById('ra-blocks-list');

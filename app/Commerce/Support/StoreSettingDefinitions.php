@@ -41,6 +41,7 @@ final class StoreSettingDefinitions
     public const GROUP_COMPLIANCE = 'compliance';
     public const GROUP_NEWSLETTER = 'newsletter';
     public const GROUP_PAYMENTS   = 'payments';
+    public const GROUP_POPUP      = 'popup';
 
     /**
      * Every known setting, keyed by dotted key name.
@@ -86,6 +87,64 @@ final class StoreSettingDefinitions
             'default' => 60,
             'group'   => self::GROUP_GENERAL,
             'hint'    => 'Minutes. An order that is not paid within this window is cancelled and its reserved stock released. The bin/cancel-abandoned-orders.php cron does the work; it must be scheduled on the host.',
+        ],
+
+        // -------------------------------------------------------------
+        // Popup banner (Stage 025)
+        // -------------------------------------------------------------
+        'popup.enabled' => [
+            'label'   => 'Enable popup banner',
+            'type'    => 'boolean',
+            'default' => false,
+            'group'   => self::GROUP_POPUP,
+            'hint'    => 'When enabled, the popup appears to first-time visitors during the scheduled window.',
+        ],
+        'popup.headline' => [
+            'label'   => 'Headline',
+            'type'    => 'string',
+            'default' => 'Black Friday Sale',
+            'group'   => self::GROUP_POPUP,
+        ],
+        'popup.body' => [
+            'label'   => 'Body text',
+            'type'    => 'text',
+            'default' => 'Get 20% off sitewide. Use code BLACK20 at checkout.',
+            'group'   => self::GROUP_POPUP,
+        ],
+        'popup.image_file_id' => [
+            'label'         => 'Image',
+            'type'          => 'file',
+            'default'       => null,
+            'group'         => self::GROUP_POPUP,
+            'hint'          => 'Optional. Displayed at the top of the popup.',
+            'media_context' => 'general',
+            'max_mb'        => 5,
+        ],
+        'popup.cta_text' => [
+            'label'   => 'Button text',
+            'type'    => 'string',
+            'default' => 'Shop the Sale',
+            'group'   => self::GROUP_POPUP,
+        ],
+        'popup.cta_url' => [
+            'label'   => 'Button URL',
+            'type'    => 'string',
+            'default' => '/products',
+            'group'   => self::GROUP_POPUP,
+        ],
+        'popup.starts_at' => [
+            'label'   => 'Show from',
+            'type'    => 'date',
+            'default' => '',
+            'group'   => self::GROUP_POPUP,
+            'hint'    => 'Format YYYY-MM-DD. Leave blank to show immediately.',
+        ],
+        'popup.ends_at' => [
+            'label'   => 'Show until',
+            'type'    => 'date',
+            'default' => '',
+            'group'   => self::GROUP_POPUP,
+            'hint'    => 'Format YYYY-MM-DD. Leave blank to show indefinitely.',
         ],
 
         'general.store_notice' => [

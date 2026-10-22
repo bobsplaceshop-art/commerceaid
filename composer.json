@@ -56,7 +56,8 @@
         "sort-packages": true,
         "platform": {
             "php": "8.2.0"
-        }
+        },
+        "process-timeout": 1200
     },
     "minimum-stability": "stable",
     "prefer-stable": true
