@@ -101,10 +101,26 @@ $mediaLibrary = $mediaLibrary ?? [];
             body: formData,
             credentials: 'same-origin',
         })
-        .then(function (r) { return r.json(); })
+        .then(function (r) {
+            return r.text().then(function (text) {
+                try { return JSON.parse(text); }
+                catch (e) {
+                    throw new Error('Server returned ' + r.status + ': ' +
+                        text.replace(/<[^>]+>/g, ' ').trim().slice(0, 200));
+                }
+            });
+        })
         .then(function (data) {
-            if (!data || !data.ok || !data.file) {
-                status.textContent = (data && data.message) ? data.message : 'Upload failed.';
+            // Server response shape (MediaController::upload):
+            //   { ok: true, id, uuid, url, name, mime, size,
+            //     dimensions, variants: [...] }
+            // The previous version read data.file, which does
+            // not exist. Every upload silently failed. Same fix
+            // as product-images-admin.js.
+            if (!data || data.ok !== true || !data.id) {
+                status.textContent = (data && data.errors && data.errors[0])
+                    ? data.errors[0]
+                    : 'Upload failed.';
                 status.style.color = '#ef4444';
                 return;
             }
@@ -112,20 +128,19 @@ $mediaLibrary = $mediaLibrary ?? [];
             status.textContent = 'Uploaded. Click to select.';
             status.style.color = '#22c55e';
 
-            var fileData = data.file;
             var tile = document.createElement('button');
             tile.type = 'button';
             tile.className = 'ra-block-media-tile';
             tile.setAttribute('data-block-media-pick', '');
-            tile.setAttribute('data-file-id', String(fileData.id));
-            tile.setAttribute('data-file-url', fileData.url || '');
+            tile.setAttribute('data-file-id', String(data.id));
+            tile.setAttribute('data-file-url', data.url || '');
             tile.style.padding = '0';
             tile.style.background = 'transparent';
             tile.style.border = '2px solid transparent';
             tile.style.borderRadius = '4px';
             tile.style.cursor = 'pointer';
             tile.style.overflow = 'hidden';
-            tile.innerHTML = '<img src="' + (fileData.thumb_url || fileData.url || '') + '" style="width:100%;height:auto;display:block;">';
+            tile.innerHTML = '<img src="' + (data.url || '') + '" style="width:100%;height:auto;display:block;">';
 
             // Insert at the top of the grid
             var innerGrid = grid.querySelector('div[style*="display:grid"]');

@@ -201,9 +201,9 @@ final class CategoryRepository extends CommerceRepository
         return $this->db->insert(
             "INSERT INTO `commerce_categories`
                 (`store_id`, `parent_id`, `slug`, `name`, `description`,
-                 `image_file_id`, `sort_order`,
+                 `image_file_id`, `card_image_file_id`, `sort_order`,
                  `seo_title`, `seo_description`, `seo_keywords`, `status`)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 $this->storeId(),
                 $category->parentId,
@@ -211,6 +211,7 @@ final class CategoryRepository extends CommerceRepository
                 $category->name,
                 $category->description,
                 $category->imageFileId,
+                $category->cardImageFileId,
                 $category->sortOrder,
                 $category->seoTitle,
                 $category->seoDescription,
@@ -237,7 +238,7 @@ final class CategoryRepository extends CommerceRepository
         $this->db->execute(
             "UPDATE `commerce_categories`
                 SET `parent_id` = ?, `slug` = ?, `name` = ?, `description` = ?,
-                    `image_file_id` = ?, `sort_order` = ?,
+                    `image_file_id` = ?, `card_image_file_id` = ?, `sort_order` = ?,
                     `seo_title` = ?, `seo_description` = ?, `seo_keywords` = ?,
                     `status` = ?
               WHERE `id` = ? AND `store_id` = ?",
@@ -247,6 +248,7 @@ final class CategoryRepository extends CommerceRepository
                 $category->name,
                 $category->description,
                 $category->imageFileId,
+                $category->cardImageFileId,
                 $category->sortOrder,
                 $category->seoTitle,
                 $category->seoDescription,

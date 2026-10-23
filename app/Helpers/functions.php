@@ -487,7 +487,10 @@ if (!function_exists('category_image_url')) {
             return null;
         }
 
-        $fileId = (int) ($category->imageFileId ?? 0);
+        // Prefer the square card image; fall back to the
+        // wide banner if no card image is set. Both are
+        // stored through the media library.
+        $fileId = (int) (($category->cardImageFileId ?? null) ?? $category->imageFileId ?? 0);
         if ($fileId <= 0) {
             return null;
         }
@@ -827,7 +830,11 @@ if (!function_exists('category_primary_media_item')) {
             return null;
         }
 
-        $fileId = (int) ($category->imageFileId ?? 0);
+        // Prefer the square card image; fall back to the wide
+        // banner if no card image is set. Same precedence as
+        // category_image_url() so picture_url() and picture_tag()
+        // render the same file.
+        $fileId = (int) (($category->cardImageFileId ?? null) ?? $category->imageFileId ?? 0);
         if ($fileId <= 0) {
             return null;
         }

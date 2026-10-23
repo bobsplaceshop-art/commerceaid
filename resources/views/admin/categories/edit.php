@@ -68,25 +68,26 @@ $categoryId = $category !== null ? (int) $category->id : 0;
     <?= csrf_field() ?>
 
     <?php
-    // Category image preview. $imageMediaItem is passed by
-    // the controller when the category has an image.
-    // Null when creating a new category or when no image
-    // is set.
-    $imageMediaItem = $imageMediaItem ?? null;
-    $currentImageUrl = null;
-    if ($imageMediaItem !== null) {
-        $currentImageUrl = $imageMediaItem->variantUrl('md', 'webp');
-    }
+    $imageMediaItem     = $imageMediaItem ?? null;
+    $cardImageMediaItem = $cardImageMediaItem ?? null;
+    $mediaLibrary       = $mediaLibrary ?? [];
+
+    $currentImageUrl = $imageMediaItem !== null
+        ? $imageMediaItem->variantUrl('md', 'webp')
+        : null;
+    $currentCardImageUrl = $cardImageMediaItem !== null
+        ? $cardImageMediaItem->variantUrl('md', 'webp')
+        : null;
     ?>
 
     <div class="ra-card mb-4">
         <div class="ra-card-header">
-            <h2 class="h6 mb-0">Category image</h2>
+            <h2 class="h6 mb-0">Banner image</h2>
         </div>
         <div class="ra-card-body">
             <p class="muted small mb-3">
-                Shown on the category index page, on this category's
-                detail page header, and in the home page category grid.
+                Shown on this category's detail page header. Wide, cinematic 3:1.
+                The square cards on the home page use the Card image below.
             </p>
 
             <div class="ra-file-field">
@@ -104,19 +105,65 @@ $categoryId = $category !== null ? (int) $category->id : 0;
                 </div>
 
                 <div class="ra-file-controls">
-                    <input type="file"
-                           id="category-image"
-                           name="image"
-                           accept="image/png,image/jpeg,image/webp,image/gif"
-                           class="ra-file-input">
-
+                    <input type="hidden"
+                           id="category-banner-image-id"
+                           name="image_file_id"
+                           value="<?= $category !== null && $category->imageFileId !== null ? (int) $category->imageFileId : '' ?>">
+                    <button type="button"
+                            class="ra-btn ra-btn-outline ra-btn-sm"
+                            data-block-media-open="category-banner-image-id">
+                        <i class="bi bi-images me-1"></i> Choose image
+                    </button>
                     <div class="ra-file-meta">
                         <span class="ra-file-hint">
                             <strong>Recommended: 1600 &times; 533 pixels (3:1 aspect).</strong>
                             PNG, JPEG, or WebP. Max 5 MB.
-                            Images with a different aspect ratio are
-                            cropped to fill the banner &mdash; keep
-                            important content centered.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ra-card mb-4">
+        <div class="ra-card-header">
+            <h2 class="h6 mb-0">Card image <span class="muted fw-normal">(square)</span></h2>
+        </div>
+        <div class="ra-card-body">
+            <p class="muted small mb-3">
+                Shown on the home page category grid and the category index
+                card grid. Square 1:1. If not set, the banner image above
+                is used, cropped to a square.
+            </p>
+
+            <div class="ra-file-field">
+                <div class="ra-file-preview">
+                    <?php if ($currentCardImageUrl !== null): ?>
+                        <img src="<?= e($currentCardImageUrl) ?>"
+                             alt="<?= e($category !== null ? $category->name : 'Category') ?> card"
+                             class="ra-file-preview-img"
+                             loading="lazy">
+                    <?php else: ?>
+                        <div class="ra-file-preview-empty" aria-hidden="true">
+                            <i class="bi bi-image"></i>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="ra-file-controls">
+                    <input type="hidden"
+                           id="category-card-image-id"
+                           name="card_image_file_id"
+                           value="<?= $category !== null && $category->cardImageFileId !== null ? (int) $category->cardImageFileId : '' ?>">
+                    <button type="button"
+                            class="ra-btn ra-btn-outline ra-btn-sm"
+                            data-block-media-open="category-card-image-id">
+                        <i class="bi bi-images me-1"></i> Choose image
+                    </button>
+                    <div class="ra-file-meta">
+                        <span class="ra-file-hint">
+                            <strong>Recommended: 800 &times; 800 pixels (1:1 aspect).</strong>
+                            PNG, JPEG, or WebP. Max 5 MB.
                         </span>
                     </div>
                 </div>
@@ -209,6 +256,8 @@ $categoryId = $category !== null ? (int) $category->id : 0;
     </div>
 
 </form>
+
+<?= view_partial('admin/pages/_block-media-picker', ['mediaLibrary' => $mediaLibrary ?? []]) ?>
 
 <?php if ($mode === 'edit' && $category !== null): ?>
 

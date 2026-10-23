@@ -7,11 +7,8 @@ use CorporateAid\Commerce\Models\Category;
 use CorporateAid\Commerce\Repositories\CategoryRepository;
 use CorporateAid\Commerce\Repositories\MediaRepository;
 use CorporateAid\Commerce\Context\StoreContext;
-use CorporateAid\Commerce\Support\MediaVariantSet;
-use CorporateAid\Core\Auth;
 use CorporateAid\Commerce\Repositories\AttributeRepository;
 use CorporateAid\Commerce\Repositories\CategoryAttributeRepository;
-use CorporateAid\Commerce\Services\CatalogService;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\Session;
@@ -69,6 +66,8 @@ final class CategoryController extends AdminController
             'mappedAttributes'    => [],
             'availableAttributes' => [],
             'imageMediaItem'      => null,
+            'cardImageMediaItem'  => null,
+            'mediaLibrary'        => $this->mediaLibraryItems(),
         ]);
     }
 
@@ -111,6 +110,17 @@ final class CategoryController extends AdminController
             }
         }
 
+        $cardImageMediaItem = null;
+        if ($category->cardImageFileId !== null && $category->cardImageFileId > 0) {
+            try {
+                $cardImageMediaItem = $this->container
+                    ->get(MediaRepository::class)
+                    ->findById((int) $category->cardImageFileId);
+            } catch (\Throwable) {
+                $cardImageMediaItem = null;
+            }
+        }
+
         return $this->render('admin.categories.edit', [
             'title'               => 'Edit: ' . $category->name,
             'category'            => $category,
@@ -121,6 +131,8 @@ final class CategoryController extends AdminController
             'mappedAttributes'    => $mappedAttributes,
             'availableAttributes' => $availableAttributes,
             'imageMediaItem'      => $imageMediaItem,
+            'cardImageMediaItem'  => $cardImageMediaItem,
+            'mediaLibrary'        => $this->mediaLibraryItems(),
         ]);
     }
 
@@ -143,22 +155,18 @@ final class CategoryController extends AdminController
             return Response::redirect('/commerce/ca-admin/categories/create');
         }
 
-        // Upload the category image before the row is
-        // created so the create() call can write the file
-        // id in one insert.
-        $imageFileId = $this->handleImageUpload($request);
-
         $category = new Category();
-        $category->slug           = $data['slug'];
-        $category->name           = $data['name'];
-        $category->parentId       = $data['parent_id'];
-        $category->description    = $data['description'];
-        $category->imageFileId    = $imageFileId;
-        $category->sortOrder      = $data['sort_order'];
-        $category->seoTitle       = $data['seo_title'];
-        $category->seoDescription = $data['seo_description'];
-        $category->seoKeywords    = $data['seo_keywords'];
-        $category->status         = 'active';
+        $category->slug            = $data['slug'];
+        $category->name            = $data['name'];
+        $category->parentId        = $data['parent_id'];
+        $category->description     = $data['description'];
+        $category->imageFileId     = $data['image_file_id'];
+        $category->cardImageFileId = $data['card_image_file_id'];
+        $category->sortOrder       = $data['sort_order'];
+        $category->seoTitle        = $data['seo_title'];
+        $category->seoDescription  = $data['seo_description'];
+        $category->seoKeywords     = $data['seo_keywords'];
+        $category->status          = 'active';
 
         $repo->create($category);
 
@@ -188,19 +196,12 @@ final class CategoryController extends AdminController
             return Response::redirect('/commerce/ca-admin/categories/' . $id . '/edit');
         }
 
-        // Upload the category image before the update.
-        // Passing null means "no change" if no file is
-        // uploaded; the repository will not overwrite the
-        // existing image unless a file was supplied.
-        $uploadedFileId = $this->handleImageUpload($request);
-
-        $category->slug           = $data['slug'];
-        $category->name           = $data['name'];
-        $category->parentId       = $data['parent_id'];
-        $category->description    = $data['description'];
-        if ($uploadedFileId !== null) {
-            $category->imageFileId = $uploadedFileId;
-        }
+        $category->slug            = $data['slug'];
+        $category->name            = $data['name'];
+        $category->parentId        = $data['parent_id'];
+        $category->description     = $data['description'];
+        $category->imageFileId     = $data['image_file_id'];
+        $category->cardImageFileId = $data['card_image_file_id'];
         $category->sortOrder      = $data['sort_order'];
         $category->seoTitle       = $data['seo_title'];
         $category->seoDescription = $data['seo_description'];
@@ -381,7 +382,8 @@ final class CategoryController extends AdminController
             'seo_title'       => trim((string) $request->input('seo_title', '')) ?: null,
             'seo_description' => trim((string) $request->input('seo_description', '')) ?: null,
             'seo_keywords'    => trim((string) $request->input('seo_keywords', '')) ?: null,
-            'image_file_id'   => $this->nullableInt($request->input('image_file_id')),
+            'image_file_id'      => $this->nullableInt($request->input('image_file_id')),
+            'card_image_file_id' => $this->nullableInt($request->input('card_image_file_id')),
         ];
     }
 
@@ -476,53 +478,17 @@ final class CategoryController extends AdminController
     }
 
     /**
-     * Handle an uploaded category image.
+     * Recent media library items for the image picker.
+     * 40 items is enough for the picker; the "Upload new
+     * image" button inside the modal covers older files.
      *
-     * Reads a file from the request's `image` input. When a
-     * file was uploaded, delegates to MediaRepository with
-     * the category-image context, which handles validation,
-     * EXIF stripping, and variant generation.
-     *
-     * Returns the new file id, or null when nothing was
-     * uploaded. The caller decides what to do with the null
-     * (create: leave image_file_id null; update: leave the
-     * existing image untouched).
+     * @return array<int, \CorporateAid\Commerce\Models\MediaItem>
      */
-    private function handleImageUpload(Request $request): ?int
+    private function mediaLibraryItems(): array
     {
-        $file = $request->file('image');
-        if ($file === null) {
-            return null;
-        }
-
-        $storeContext = $this->container->get(StoreContext::class);
-        if (!$storeContext->has()) {
-            return null;
-        }
-
-        $auth   = $this->container->get(Auth::class);
-        $userId = $auth->user()?->id;
-
+        $ctx   = $this->container->get(StoreContext::class);
         $media = $this->container->get(MediaRepository::class);
-
-        $result = $media->storeFromUpload(
-            $file,
-            $storeContext->id(),
-            'category-image',
-            MediaVariantSet::CONTEXT_CATEGORY_IMAGE,
-            5,
-            $userId
-        );
-
-        if (is_array($result)) {
-            // Validation failed. Flash the first error and
-            // return null so the caller keeps the previous
-            // state.
-            $session = $this->container->get(Session::class);
-            $session->flash('error', (string) ($result[0] ?? 'Image upload failed.'));
-            return null;
-        }
-
-        return (int) $result->file->id;
+        $result = $media->paginateForStore($ctx->id(), [], 1, 40);
+        return $result['items'];
     }
 }
