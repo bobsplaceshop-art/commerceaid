@@ -32,6 +32,9 @@
         </div>
 
         <div class="ra-customizer-actions d-flex gap-2 align-items-center">
+            <button type="button" class="ra-btn ra-btn-outline ra-btn-sm text-light border-secondary" data-page-settings-open>
+                <i class="bi bi-gear me-1"></i> Page Settings
+            </button>
             <a href="/commerce/ca-admin/pages" class="ra-btn ra-btn-outline ra-btn-sm text-light border-secondary">Close</a>
             <form method="POST" action="/commerce/ca-admin/pages/<?= e($slug) ?>/save-draft" class="m-0">
                 <?= csrf_field() ?>
@@ -142,6 +145,50 @@
         </form>
     </template>
 <?php endforeach; ?>
+
+<div class="modal fade" id="ra-page-settings-modal" tabindex="-1" aria-labelledby="ra-page-settings-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form method="POST" action="/commerce/ca-admin/pages/<?= e($slug) ?>/settings" class="modal-content" style="background:#1a2235; color:#e5e7eb; border:1px solid #2d3748;">
+            <?= csrf_field() ?>
+            <div class="modal-header" style="border-bottom:1px solid #2d3748;">
+                <h5 class="modal-title" id="ra-page-settings-label">Page Settings</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label text-light">Page title</label>
+                    <input type="text" name="title" class="form-control" required
+                           value="<?= e((string) ($page['title'] ?? $label)) ?>">
+                    <div class="form-text" style="color:#94a3b8;">Shown in the browser tab and as the heading on search results.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-light">Meta description</label>
+                    <textarea name="meta_description" class="form-control" rows="3" maxlength="320"><?= e((string) ($page['meta_description'] ?? '')) ?></textarea>
+                    <div class="form-text" style="color:#94a3b8;">155–160 characters recommended. Shown under the title in search results.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-light">Status</label>
+                    <select name="status" class="form-select">
+                        <?php $__status = (string) ($page['status'] ?? 'draft'); ?>
+                        <option value="draft" <?= $__status === 'draft' ? 'selected' : '' ?>>Draft (not visible to customers)</option>
+                        <option value="published" <?= $__status === 'published' ? 'selected' : '' ?>>Published (visible at /pages/<?= e($slug) ?>)</option>
+                        <option value="archived" <?= $__status === 'archived' ? 'selected' : '' ?>>Archived (hidden, redirects to 404)</option>
+                    </select>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="noindex" id="ra-page-noindex" value="1" <?= !empty($page['noindex']) ? 'checked' : '' ?>>
+                    <label class="form-check-label text-light" for="ra-page-noindex">
+                        Hide from search engines (noindex)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #2d3748;">
+                <button type="button" class="ra-btn ra-btn-outline text-light border-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="ra-btn ra-btn-primary">Save page settings</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <?= view_partial('admin/pages/_block-picker', ['slug' => $slug]) ?>
 <?= view_partial('admin/pages/_block-media-picker', ['mediaLibrary' => $mediaLibrary]) ?>

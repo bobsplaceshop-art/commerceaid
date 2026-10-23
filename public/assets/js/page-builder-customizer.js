@@ -20,6 +20,16 @@
     var backBtn         = document.getElementById('back-to-blocks');
     var csrf            = root.getAttribute('data-csrf');
 
+    // Page Settings modal. Opens the metadata editor
+    // (title, meta description, status, noindex).
+    var pageSettingsBtn = document.querySelector('[data-page-settings-open]');
+    if (pageSettingsBtn && window.bootstrap) {
+        pageSettingsBtn.addEventListener('click', function () {
+            var modal = new bootstrap.Modal(document.getElementById('ra-page-settings-modal'));
+            modal.show();
+        });
+    }
+
     // Mobile sidebar toggle. Below md the sidebar is a
     // slide-over drawer; this button opens and closes it.
     // Above md the button is display:none, so the handler

@@ -59,6 +59,22 @@ final class StoreSettingDefinitions
         // -------------------------------------------------------------
         // General
         // -------------------------------------------------------------
+        'utility_bar.items' => [
+            'label'   => 'Trust bar items',
+            'type'    => 'text',
+            'default' => "bi-globe2|Worldwide Shipping|/pages/shipping\n"
+                       . "bi-truck|Fast & Safe Delivery|/pages/shipping\n"
+                       . "bi-shield-check|Secure Payment|/pages/secure-payment\n"
+                       . "bi-headset|24/7 Customer Support|/pages/contact",
+            'group'   => self::GROUP_GENERAL,
+            'hint'    => 'One item per line: icon|label|url. '
+                       . 'Icon is a Bootstrap Icon name (bi-globe2, bi-truck, '
+                       . 'bi-shield-check, bi-headset, etc.). '
+                       . 'URL is optional — leave the third column blank to render '
+                       . 'the item as text only. Leave the entire field blank to '
+                       . 'hide the bar.',
+        ],
+
         'general.contact_email' => [
             'label'   => 'Contact email',
             'type'    => 'string',

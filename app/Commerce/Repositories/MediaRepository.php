@@ -188,6 +188,8 @@ final class MediaRepository
      */
     public function ensureVariants(\CorporateAid\Platform\Models\File $source): void
     {
+        $__ensureStart = microtime(true);
+
         if (!str_starts_with($source->mimeType, 'image/')) {
             return;
         }
@@ -244,6 +246,11 @@ final class MediaRepository
             'general',
             $category
         );
+        \CorporateAid\Platform\Support\Logger::info('ensureVariants regenerated', [
+            'file_id' => $source->id,
+            'uuid'    => $source->uuid,
+            'ms'      => (int) ((microtime(true) - $__ensureStart) * 1000),
+        ]);
     }
 
     /**

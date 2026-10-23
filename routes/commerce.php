@@ -187,6 +187,18 @@ $router->post('/commerce/ca-admin/pages/{slug}/delete',
     [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'destroy'],
     ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
 
+// Page-level metadata editor (title, meta description, OG image,
+// noindex, status). Separate from the block editor.
+$router->post('/commerce/ca-admin/pages/{slug}/settings',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'savePageSettings'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
+// Hard delete of the page metadata row AND every block on it.
+// The homepage is refused server-side.
+$router->post('/commerce/ca-admin/pages/{slug}/delete-page',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminPageController::class, 'deletePage'],
+    ['store', 'auth', 'permission:core.settings.manage', 'csrf']);
+
 $router->get('/commerce/ca-admin/media',
     [MediaLibraryController::class, 'index'],
     ['store', 'auth']);

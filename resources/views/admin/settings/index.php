@@ -444,7 +444,7 @@ if ($hasFileFields):
         $container->get(\CorporateAid\Commerce\Context\StoreContext::class)->id(),
         [],
         1,
-        200
+        40
     )['items'];
     ?>
     <?= view_partial('admin/pages/_block-media-picker', ['mediaLibrary' => $mediaLibrary]) ?>

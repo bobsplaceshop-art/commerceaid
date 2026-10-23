@@ -57,6 +57,8 @@ $mediaLibrary = $mediaLibrary ?? [];
                                     onmouseout="this.style.borderColor='transparent';">
                                 <img src="/media/<?= e($item->file->uuid) ?>/thumb.jpg"
                                      alt="<?= e($item->file->originalName ?? '') ?>"
+                                     loading="lazy"
+                                     decoding="async"
                                      style="width:100%; height:auto; display:block;">
                             </button>
                         <?php endforeach; ?>

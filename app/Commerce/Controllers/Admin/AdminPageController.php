@@ -7,6 +7,7 @@ use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\Session;
 use CorporateAid\Commerce\Repositories\PageBlockRepository;
+use CorporateAid\Commerce\Repositories\StorePageRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
 use CorporateAid\Commerce\Repositories\CategoryRepository;
 use CorporateAid\Commerce\Support\Blocks\BlockConfigRegistry;
@@ -35,29 +36,29 @@ final class AdminPageController extends AdminController
      */
     public function index(Request $request, array $params = []): Response
     {
-        $repo = $this->container->get(PageBlockRepository::class);
+        $pageRepo   = $this->container->get(StorePageRepository::class);
+        $blockRepo  = $this->container->get(PageBlockRepository::class);
 
-        $pageSlugs = $repo->pageSlugs();
+        // Ensure the homepage row exists so the merchant can
+        // edit its title and meta description without first
+        // opening the customizer.
+        $pageRepo->ensure('home', 'Homepage');
 
-        // Always show 'home' even before it has any blocks.
-        // The page list is the entry point for the builder.
-        if (!in_array('home', $pageSlugs, true)) {
-            array_unshift($pageSlugs, 'home');
-        }
+        $rows = $pageRepo->list();
 
         // Detect which pages have an unpublished draft.
-        $themeSlug = $this->activeThemeSlug();
+        $themeSlug    = $this->activeThemeSlug();
         $draftManager = $this->container->get(\CorporateAid\Commerce\Services\Builder\DraftManager::class);
 
         $pages = [];
-        foreach ($pageSlugs as $slug) {
-            $hasDraft = $draftManager->hasDrafts($slug, $themeSlug);
+        foreach ($rows as $row) {
+            $slug = (string) $row['slug'];
             $pages[] = [
                 'slug'       => $slug,
-                'label'      => $this->labelFor($slug),
-                'blockCount' => $repo->countForPage($slug),
+                'label'      => (string) $row['title'],
+                'blockCount' => $blockRepo->countForPage($slug),
                 'isHome'     => $slug === 'home',
-                'hasDraft'   => $hasDraft,
+                'hasDraft'   => $draftManager->hasDrafts($slug, $themeSlug),
             ];
         }
 
@@ -113,21 +114,27 @@ final class AdminPageController extends AdminController
             return Response::redirect('/commerce/ca-admin/pages/create');
         }
 
-        // Persist the page by creating a marker block? No —
-        // pages are identified by the block rows that reference
-        // them. An empty page is a valid state, so we create
-        // a placeholder 'rich-text' block with the page title
-        // so the page_slug appears in pageSlugs() and the
-        // merchant sees it in the list. This block is editable
-        // and deletable. When Session 3 adds the builder, the
-        // merchant can replace it with real content.
-        $repo = $this->container->get(PageBlockRepository::class);
-        $repo->create(
+        // Insert the page metadata row first. This is the
+        // authoritative record of the page. Status starts as
+        // 'draft' — the merchant publishes via the page
+        // settings modal or the Publish button in the builder.
+        $pageRepo = $this->container->get(StorePageRepository::class);
+        if ($pageRepo->exists($slug)) {
+            $session->flash('error', 'A page with that slug already exists.');
+            $session->flashOldInput(['title' => $title, 'slug' => $slug]);
+            return Response::redirect('/commerce/ca-admin/pages/create');
+        }
+        $pageRepo->create($slug, $title, null, 'draft');
+
+        // Insert the placeholder block so the builder opens
+        // with something visible. The merchant can delete it,
+        // replace it, or reorder it — it is a real block.
+        $blockRepo = $this->container->get(PageBlockRepository::class);
+        $blockRepo->create(
             $slug,
             'rich-text',
             [
-                'html'      => '<h1>' . htmlspecialchars($title, ENT_QUOTES) . '</h1>',
-                'max_width' => 'narrow',
+                'content' => '<h1>' . htmlspecialchars($title, ENT_QUOTES) . '</h1>',
             ]
         );
 
@@ -170,6 +177,13 @@ final class AdminPageController extends AdminController
         // only appear when there is something to act on.
         $hasDraft = $draftManager->hasDrafts($slug, $themeSlug);
 
+        // Load (or auto-create) the store_pages metadata row.
+        // A legacy block-only page opened for the first time
+        // gets a row so the merchant can edit its metadata.
+        $pageRepo = $this->container->get(StorePageRepository::class);
+        $pageRepo->ensure($slug, $this->labelFor($slug));
+        $page = $pageRepo->find($slug);
+
         $inner = $view->render('admin.pages.show', [
             'title'          => $this->labelFor($slug) . ' — Editor',
             'slug'           => $slug,
@@ -178,6 +192,7 @@ final class AdminPageController extends AdminController
             'categories'     => $categories,
             'mediaLibrary'   => $mediaLibrary,
             'hasDraft'       => $hasDraft,
+            'page'           => $page,
         ]);
         $html = $view->render('layouts.customizer', [
             'title'   => $this->labelFor($slug) . ' — Editor',
@@ -539,7 +554,12 @@ final class AdminPageController extends AdminController
     {
         $ctx = $this->container->get(\CorporateAid\Commerce\Context\StoreContext::class);
         $media = $this->container->get(\CorporateAid\Commerce\Repositories\MediaRepository::class);
-        $result = $media->paginateForStore($ctx->id(), [], 1, 200);
+        // 40 recent images is enough for the picker. The
+        // "Upload new image" button inside the modal covers
+        // anything older. paginateForStore caps at 100, so 200
+        // silently became 100 — which fired 100 thumbnail
+        // requests on every admin page load.
+        $result = $media->paginateForStore($ctx->id(), [], 1, 40);
         return $result['items'];
     }
 
@@ -786,10 +806,95 @@ final class AdminPageController extends AdminController
      */
     private function labelFor(string $slug): string
     {
+        $pageRepo = $this->container->get(StorePageRepository::class);
+        $page = $pageRepo->find($slug);
+        if ($page !== null && !empty($page['title'])) {
+            return (string) $page['title'];
+        }
         if ($slug === 'home') {
             return 'Homepage';
         }
         $words = preg_split('/[-_]+/', $slug) ?: [$slug];
         return implode(' ', array_map('ucfirst', $words));
+    }
+
+    /**
+     * POST /commerce/ca-admin/pages/{slug}/settings
+     *
+     * Save page-level metadata (title, meta description, OG
+     * image, noindex, status). The blocks are saved separately.
+     *
+     * @param array<string,string> $params
+     */
+    public function savePageSettings(Request $request, array $params = []): Response
+    {
+        $session = $this->container->get(Session::class);
+        $slug    = (string) ($params['slug'] ?? '');
+
+        if ($slug === '') {
+            return Response::redirect('/commerce/ca-admin/pages');
+        }
+
+        $pageRepo = $this->container->get(StorePageRepository::class);
+        if (!$pageRepo->exists($slug)) {
+            $session->flash('error', 'Page not found.');
+            return Response::redirect('/commerce/ca-admin/pages');
+        }
+
+        $title = trim((string) $request->input('title', ''));
+        if ($title === '') {
+            $session->flash('error', 'Title is required.');
+            return Response::redirect('/commerce/ca-admin/pages/' . $slug);
+        }
+
+        $metaDescription = trim((string) $request->input('meta_description', ''));
+        $ogImageId       = $request->input('og_image_file_id', null);
+        $noindex         = $request->input('noindex', null) !== null;
+        $status          = (string) $request->input('status', 'draft');
+
+        if (!in_array($status, ['draft', 'published', 'archived'], true)) {
+            $status = 'draft';
+        }
+
+        $pageRepo->update($slug, [
+            'title'            => $title,
+            'meta_description' => $metaDescription !== '' ? $metaDescription : null,
+            'og_image_file_id' => $ogImageId !== null && $ogImageId !== '' ? (int) $ogImageId : null,
+            'noindex'          => $noindex ? 1 : 0,
+            'status'           => $status,
+        ]);
+
+        $session->flash('success', 'Page settings saved.');
+        return Response::redirect('/commerce/ca-admin/pages/' . $slug);
+    }
+
+    /**
+     * POST /commerce/ca-admin/pages/{slug}/delete-page
+     *
+     * Hard delete: removes the metadata row and every block on
+     * the page. The homepage is protected.
+     *
+     * @param array<string,string> $params
+     */
+    public function deletePage(Request $request, array $params = []): Response
+    {
+        $session = $this->container->get(Session::class);
+        $slug    = (string) ($params['slug'] ?? '');
+
+        if ($slug === '' || $slug === 'home') {
+            $session->flash('error', 'The homepage cannot be deleted.');
+            return Response::redirect('/commerce/ca-admin/pages');
+        }
+
+        $pageRepo  = $this->container->get(StorePageRepository::class);
+        $blockRepo = $this->container->get(PageBlockRepository::class);
+
+        // Delete blocks first (no FK cascade from blocks to
+        // pages in this schema), then the page row.
+        $blockRepo->deleteAllForPage($slug);
+        $pageRepo->delete($slug);
+
+        $session->flash('success', 'Page deleted.');
+        return Response::redirect('/commerce/ca-admin/pages');
     }
 }

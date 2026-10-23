@@ -211,4 +211,18 @@ final class PageBlockRepository extends CommerceRepository
         );
         return $count !== false && $count !== null ? (int) $count : 0;
     }
+
+    /**
+     * Hard-delete every block on a page. Used when the page
+     * itself is being deleted. Does not touch drafts — those
+     * are cleaned up separately by the page draft purge.
+     */
+    public function deleteAllForPage(string $pageSlug): void
+    {
+        $this->db->execute(
+            "DELETE FROM `commerce_page_blocks`
+              WHERE `store_id` = ? AND `page_slug` = ?",
+            [$this->storeId(), $pageSlug]
+        );
+    }
 }

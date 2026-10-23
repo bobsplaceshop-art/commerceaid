@@ -212,6 +212,17 @@ h1, h2, h3, h4 {
     color: var(--sf-cream);
     opacity: .92;
 }
+.sf-utility-badge-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    color: inherit;
+    text-decoration: none;
+}
+.sf-utility-badge-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
 
 .sf-utility-badge i {
     font-size: .85rem;
