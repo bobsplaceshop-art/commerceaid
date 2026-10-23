@@ -20,16 +20,70 @@
     var backBtn         = document.getElementById('back-to-blocks');
     var csrf            = root.getAttribute('data-csrf');
 
+    // Mobile sidebar toggle. Below md the sidebar is a
+    // slide-over drawer; this button opens and closes it.
+    // Above md the button is display:none, so the handler
+    // is a no-op and the sidebar stays permanently visible.
+    var sidebarToggle = document.querySelector('[data-customizer-sidebar-toggle]');
+    var sidebar       = document.querySelector('.ra-customizer-sidebar');
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function () {
+            var isOpen = sidebar.classList.toggle('is-open');
+            sidebarToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+
+        // Tapping a block on mobile closes the drawer so the
+        // preview is visible immediately.
+        document.querySelectorAll('.ra-open-settings').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (window.innerWidth < 768) {
+                    sidebar.classList.remove('is-open');
+                    sidebarToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        });
+    }
+
     document.querySelectorAll('.device-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
+            if (!wrapper) {
+                console.error('[customizer] preview-wrapper missing');
+                return;
+            }
+
+            // 1. Visual state: only the clicked button is active.
             document.querySelectorAll('.device-btn').forEach(function (b) {
                 b.classList.remove('active');
             });
             btn.classList.add('active');
-            wrapper.className = 'ra-preview-frame-wrapper';
-            var device = btn.getAttribute('data-device');
+
+            var device = btn.getAttribute('data-device') || 'desktop';
+
+            // 2. Wrapper class. Removes both device classes,
+            //    then adds the one that applies. The CSS in
+            //    main-v2.css drives the wrapper's width from
+            //    this class (or the data-active-device attr).
+            wrapper.classList.remove('device-tablet', 'device-mobile');
             if (device === 'tablet') wrapper.classList.add('device-tablet');
             if (device === 'mobile') wrapper.classList.add('device-mobile');
+            wrapper.setAttribute('data-active-device', device);
+
+            // 3. The wrapper width is set by CSS. But the iframe
+            //    inside does not always recompute its internal
+            //    viewport when its parent's width changes. To
+            //    force the browser to re-run the iframe's media
+            //    queries, we reset the iframe's src. This is
+            //    the only reliable cross-browser way to make
+            //    the storefront inside render at the new width.
+            var iframe = document.getElementById('preview-iframe');
+            if (iframe) {
+                var w = '100%';
+                if (device === 'tablet') w = '768px';
+                if (device === 'mobile') w = '375px';
+                iframe.style.width = w;
+                // Force the internal document to re-run.
+                iframe.src = iframe.src;
+            }
         });
     });
 

@@ -1,3 +1,6 @@
+/* Breakpoint scale: base / sm 576 / md 768 / lg 992 / xl 1200 / xxl 1400.
+   Matches storefront.css. Do not introduce intermediate values. */
+
 /* =====================================================================
  * ANAYA GLOBAL - Storefront product detail stylesheet
  * =====================================================================
@@ -22,7 +25,7 @@
     padding: 0 1.25rem 3rem;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 576px) {
     .sf-product-detail {
         padding: 0 2rem 3rem;
     }
@@ -39,7 +42,7 @@
     margin-bottom: 3rem;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .sf-product-layout {
         /* Media column: bounded. Hero image sits at ~420px
            wide regardless of viewport. The 4:5 aspect makes
@@ -170,7 +173,7 @@
     gap: .85rem;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .sf-product-info {
         position: sticky;
         top: 6rem;
@@ -209,7 +212,7 @@
     overflow: hidden;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 576px) {
     .sf-product-title {
         font-size: 1.75rem;
         line-height: 1.1;
@@ -470,7 +473,7 @@
     max-width: 100%;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 575px) {
     /* Tighter thumbs on small screens. The strip still
        scrolls horizontally. Thumbs shrink to 64px so 5-6
        fit visible width on a typical phone. */
@@ -491,7 +494,7 @@
    sizes at phone widths. Scale down at <640px.
    ===================================================================== */
 
-@media (max-width: 639px) {
+@media (max-width: 575px) {
     .sf-product-title {
         font-size: 1.3rem;
         line-height: 1.2;
@@ -722,7 +725,7 @@
     color: var(--sf-ink);
 }
 
-@media (max-width: 639px) {
+@media (max-width: 575px) {
     .sf-product-specs {
         font-size: .9rem;
     }
@@ -845,7 +848,7 @@
     font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 575px) {
     .sf-reviews-summary {
         flex-direction: column;
         gap: 1.5rem;
@@ -1270,7 +1273,7 @@
 }
 
 /* Responsive */
-@media (max-width: 900px) {
+@media (max-width: 767px) {
     .sf-reviews-header {
         grid-template-columns: 1fr;
         gap: 1.5rem;

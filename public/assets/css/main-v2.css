@@ -427,6 +427,9 @@ a:hover { color: var(--ra-link-hover); }
 
 .ra-hamburger { display: none; }
 
+/* Mobile-only search toggle. Hidden by default; shown below md. */
+.ra-search-toggle-mobile { display: none; }
+
 .ra-user-menu {
     display: flex;
     align-items: center;
@@ -505,6 +508,23 @@ a:hover { color: var(--ra-link-hover); }
     justify-content: space-between;
     gap: 1rem;
     flex-wrap: wrap;
+}
+
+/* Flex-safe text wrapper.
+   Apply to any anonymous flex child whose text may be long
+   (product names, descriptions, URLs). Without `min-width: 0`,
+   the flex algorithm refuses to shrink the child below its
+   content's intrinsic width, which forces the whole row wider
+   than the viewport and produces a horizontal scrollbar. */
+.ra-flex-text {
+    min-width: 0;
+}
+.ra-flex-text p,
+.ra-flex-text h1,
+.ra-flex-text h2,
+.ra-flex-text h3 {
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 /* ---------- Tiles (shortcut cards) ---------- */
@@ -894,7 +914,7 @@ html[data-theme="light"] .ra-table-wrap {
 /* ------------------------------------------------------------
    11. RESPONSIVE (mobile)
    ------------------------------------------------------------ */
-@media (max-width: 900px) {
+@media (max-width: 767px) {
     /* Sidebar becomes an off-canvas drawer */
     .ra-sidebar {
         transform: translateX(-100%);
@@ -926,10 +946,13 @@ html[data-theme="light"] .ra-table-wrap {
     }
     .ra-page-band-title { font-size: 1.5rem; }
 
-    /* Hide desktop-only items */
-    .ra-search-wrapper { width: 200px !important; }
-    .ra-search { display: block !important; font-size: 0.85rem; padding: 0.4rem 0.6rem; }
+    /* Mobile-only items */
     .ra-hamburger { display: inline-flex; }
+    .ra-search-toggle-mobile { display: inline-flex; }
+
+    /* The inline search is hidden below md. The magnifying
+       glass icon links directly to the full search page. */
+    .ra-search-wrapper { display: none; }
 }
 
 /* ============================================================
@@ -1496,7 +1519,7 @@ html[data-theme="light"] .ra-table-wrap {
     color: var(--ra-muted);
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
     /* Horizontal scroll instead of wrap. The tabs stay on
        one line and the strip scrolls. The scrollbar is
        hidden so the strip reads as a frameless pill row,
@@ -1516,7 +1539,7 @@ html[data-theme="light"] .ra-table-wrap {
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 575px) {
     .ra-admin-tabs {
         padding: 0 .75rem;
     }
@@ -1533,7 +1556,7 @@ html[data-theme="light"] .ra-table-wrap {
    .ra-admin-tabs: horizontal scroll instead of wrap below 899,
    scrollbar hidden. */
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
     .ra-content .nav-tabs {
         flex-wrap: nowrap;
         overflow-x: auto;
@@ -1663,7 +1686,7 @@ html[data-theme="light"] .ra-table-wrap {
     background: transparent;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 575px) {
     .ra-perm-group-summary {
         flex-wrap: wrap;
         gap: .4rem;
@@ -1734,7 +1757,7 @@ html[data-theme="light"] .ra-table-wrap {
     font-size: .82rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 767px) {
     .ra-sticky-actions {
         left: 0;
         padding: 1rem;
@@ -1789,7 +1812,7 @@ html[data-theme="light"] .ra-table-wrap {
     min-width: 720px;
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
     [data-responsive="scroll"] > table {
         min-width: 640px;
     }
@@ -1824,7 +1847,7 @@ html[data-theme="light"] .ra-table-wrap {
    table sits inside the wrapper.
    ------------------------------------------------------------ */
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
 
     [data-responsive="cards"] {
         display: block;
@@ -1938,13 +1961,13 @@ html[data-theme="light"] .ra-table-wrap {
     .ra-grid-3 { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
     .ra-grid-4 { grid-template-columns: repeat(2, 1fr); }
     .ra-grid-3 { grid-template-columns: repeat(2, 1fr); }
     .ra-grid-2 { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 639px) {
+@media (max-width: 575px) {
     .ra-grid-4,
     .ra-grid-3,
     .ra-grid-2 { grid-template-columns: 1fr; }
@@ -1992,7 +2015,7 @@ html[data-theme="light"] .ra-table-wrap {
     outline-offset: 2px;
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
     .ra-filter-bar {
         display: none;
     }
@@ -2019,7 +2042,7 @@ html[data-theme="light"] .ra-table-wrap {
    width so the tap target is the whole row.
    ------------------------------------------------------------ */
 
-@media (max-width: 639px) {
+@media (max-width: 575px) {
     .ra-sticky-actions-inner {
         flex-direction: column-reverse;
         align-items: stretch;
@@ -2041,7 +2064,7 @@ html[data-theme="light"] .ra-table-wrap {
    the panel anchors it to the bottom edge.
    ------------------------------------------------------------ */
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
     .ra-modal {
         padding: 0 !important;
         align-items: flex-end !important;
@@ -2055,7 +2078,7 @@ html[data-theme="light"] .ra-table-wrap {
     }
 }
 
-@media (max-width: 639px) {
+@media (max-width: 575px) {
     .ra-modal {
         align-items: stretch !important;
     }
@@ -2084,7 +2107,7 @@ html[data-theme="light"] .ra-table-wrap {
    against the full-width layout; remove it.
    ------------------------------------------------------------ */
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
     .ra-page-band {
         margin-left: 0;
         margin-right: 0;
@@ -2112,7 +2135,7 @@ html[data-theme="light"] .ra-table-wrap {
     grid-column: 1 / -1;
 }
 
-@media (max-width: 639px) {
+@media (max-width: 575px) {
     .ra-form-grid {
         grid-template-columns: 1fr;
     }
@@ -2121,7 +2144,7 @@ html[data-theme="light"] .ra-table-wrap {
     }
 }
 
-@media (max-width: 639px) {
+@media (max-width: 575px) {
     .form-control,
     .form-select,
     .ra-input {
@@ -2147,7 +2170,7 @@ html[data-theme="light"] .ra-table-wrap {
    this one.
    ------------------------------------------------------------ */
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
     .ra-hide-sm {
         display: none;
     }
@@ -2162,7 +2185,7 @@ html[data-theme="light"] .ra-table-wrap {
    the overlay below the small-mobile boundary.
    ------------------------------------------------------------ */
 
-@media (max-width: 639px) {
+@media (max-width: 575px) {
     #ra-debug-overlay {
         display: none !important;
     }
@@ -2355,7 +2378,7 @@ html[data-theme="light"] .ra-table-wrap {
    single column so the tiles read at full width rather than
    squeezing into a sub-240px track. */
 
-@media (max-width: 639px) {
+@media (max-width: 575px) {
     .ra-health-grid,
     .ra-inv-summary,
     .ra-payment-grid,
@@ -2416,6 +2439,62 @@ html[data-theme="light"] .ra-table-wrap {
     z-index: 9999;
 }
 
+/* Customizer topbar. Three sections: brand, device toggle,
+   and actions. Bootstrap flexbox handles the layout; this
+   rule only supplies visual chrome (background, border,
+   fixed height) so the flexbox has a defined container. */
+.ra-customizer-topbar {
+    background: #0b1220;
+    border-bottom: 1px solid #2d3748;
+    min-height: 60px;
+    flex-shrink: 0;
+    gap: 1rem;
+}
+
+.ra-customizer-brand {
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+}
+
+.ra-customizer-devices .device-btn {
+    padding: .4rem .55rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+    background: none;
+    border: none;
+    color: #64748b;
+}
+.ra-customizer-devices .device-btn:hover {
+    color: #e2e8f0;
+}
+.ra-customizer-devices .device-btn.active {
+    background: rgba(212, 175, 55, 0.15);
+    color: #d4af37;
+}
+
+.ra-customizer-actions {
+    flex-shrink: 0;
+}
+
+/* Mobile toggle button (hidden by default, shown below md). */
+.ra-customizer-mobile-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #2d3748;
+    border-radius: 6px;
+    background: transparent;
+    color: #e2e8f0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
 .ra-customizer-body {
     display: flex;
     flex: 1 1 auto; /* Force expand */
@@ -2433,16 +2512,22 @@ html[data-theme="light"] .ra-table-wrap {
     overflow-y: auto;
 }
 
+/* The preview area is a flex container that centers its
+   child and scrolls when the child is wider than the pane.
+   The wrapper is the flex child. It has the device width. */
 .ra-customizer-preview {
-    flex: 1 1 auto; /* Force expand */
+    flex: 1 1 auto;
     background: #e2e8f0;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
     padding: 1rem;
     overflow: auto;
-    min-width: 0; /* Prevents flex children from overflowing */
+    min-width: 0;
 }
 
+/* The wrapper is the device frame. It owns the width.
+   The iframe inside fills 100% of the wrapper. */
 .ra-preview-frame-wrapper {
     width: 100%;
     height: 100%;
@@ -2451,23 +2536,80 @@ html[data-theme="light"] .ra-table-wrap {
     border-radius: 6px;
     overflow: hidden;
     transition: width 0.3s ease;
+    flex-shrink: 0;
 }
 
 .ra-preview-frame-wrapper iframe {
     width: 100%;
     height: 100%;
     border: none;
+    display: block;
 }
 
-.ra-preview-frame-wrapper.device-tablet {
+/* Device presets. The wrapper is always flex-shrink: 0
+   so the parent cannot clamp it below the declared width.
+   If the pane is narrower, the parent's overflow:auto
+   scrolls horizontally. */
+.ra-preview-frame-wrapper.device-tablet,
+.ra-preview-frame-wrapper[data-active-device="tablet"] {
     width: 768px;
-    max-width: 100%;
+    max-width: none;
+    flex-shrink: 0;
 }
 
-.ra-preview-frame-wrapper.device-mobile {
+.ra-preview-frame-wrapper.device-mobile,
+.ra-preview-frame-wrapper[data-active-device="mobile"] {
     width: 375px;
-    max-width: 100%;
+    max-width: none;
+    flex-shrink: 0;
 }
+
+/* Tablet: shrink the sidebar, everything else stays. */
+@media (max-width: 991px) and (min-width: 768px) {
+    .ra-customizer-sidebar { width: 280px; }
+}
+
+/* Mobile: sidebar becomes a slide-over drawer. The
+   preview fills the viewport. A hamburger toggle in
+   the topbar reveals the sidebar. */
+@media (max-width: 767px) {
+    .ra-customizer-brand { display: none; }
+
+    .ra-customizer-topbar {
+        gap: .5rem;
+        padding: 0 .75rem !important;
+    }
+
+    .ra-customizer-mobile-toggle {
+        display: inline-flex;
+    }
+
+    /* Sidebar: off-canvas drawer */
+    .ra-customizer-sidebar {
+        position: absolute;
+        top: 60px;
+        left: 0;
+        bottom: 0;
+        width: 320px;
+        max-width: 85vw;
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 40;
+        box-shadow: 20px 0 60px rgba(0,0,0,.5);
+    }
+    .ra-customizer-sidebar.is-open {
+        transform: translateX(0);
+    }
+
+    /* Preview fills the space below the topbar */
+    .ra-customizer-preview {
+        padding: .5rem;
+    }
+
+    /* Tablet / mobile device previews take the full pane on a
+       small screen — the merchant is already on a small device,
+       so a 375px-wide "mobile preview" inside a 375px viewport
+       is meaningless. Show the preview at the natural width. */}
 
 /* ------------------------------------------------------------
    Page Builder: modals must render above the Customizer overlay

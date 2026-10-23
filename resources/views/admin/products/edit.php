@@ -40,7 +40,7 @@ $status = (string) $val('status', 'draft');
 ?>
 
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-    <div>
+    <div class="ra-flex-text">
         <h1 class="h3 mb-1"><?= $mode === 'edit' ? 'Edit product' : 'New product' ?></h1>
         <p class="muted mb-0">
             <?php if ($mode === 'edit' && $product !== null): ?>

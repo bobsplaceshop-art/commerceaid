@@ -1,4 +1,20 @@
 /* =====================================================================
+ * Breakpoint scale (Bootstrap 5, mobile-first)
+ *
+ *   base  0+       mobile portrait
+ *   sm    576px+   landscape phone
+ *   md    768px+   tablet
+ *   lg    992px+   small desktop
+ *   xl    1200px+  desktop
+ *   xxl   1400px+  large desktop
+ *
+ * Every @media in this file uses one of the min-widths above.
+ * Do not introduce intermediate values without updating this
+ * comment and the same comment in storefront-catalog.css,
+ * storefront-product.css, and storefront-search.css.
+ * ===================================================================== */
+
+/* =====================================================================
  * ANAYA GLOBAL - Storefront core stylesheet
  * =====================================================================
  *
@@ -143,7 +159,7 @@ h1, h2, h3, h4 {
     padding: 0 1.25rem;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 576px) {
     .sf-container { padding: 0 2rem; }
 }
 
@@ -172,7 +188,7 @@ h1, h2, h3, h4 {
     min-height: 34px;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 576px) {
     .sf-utility-inner { padding: .55rem 2rem; }
 }
 
@@ -185,7 +201,7 @@ h1, h2, h3, h4 {
     padding: 0;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .sf-utility-badges { display: flex; }
 }
 
@@ -268,7 +284,7 @@ h1, h2, h3, h4 {
 /* On wide screens, push the actions to the far right and let
  * the nav row below handle navigation. The middle of the header
  * is intentionally empty - a search bar can live there later. */
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .sf-header-inner {
         gap: 3rem;
     }
@@ -278,7 +294,7 @@ h1, h2, h3, h4 {
     }
 }
 
-@media (min-width: 640px) {
+@media (min-width: 576px) {
     .sf-header-inner { padding: .9rem 2rem; min-height: 88px; }
 }
 
@@ -329,7 +345,7 @@ h1, h2, h3, h4 {
     padding-left: 1px;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 576px) {
     .sf-logo-name { font-size: 1.35rem; }
 }
 
@@ -345,7 +361,7 @@ h1, h2, h3, h4 {
     border-top: 1px solid var(--sf-border);
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .sf-nav-row {
         display: block;
     }
@@ -363,7 +379,7 @@ h1, h2, h3, h4 {
 
 /* Mobile: when the hamburger toggles, the nav opens as a
  * full-width dropdown below the header. */
-@media (max-width: 899px) {
+@media (max-width: 767px) {
     .sf-nav-row.is-open {
         display: block;
         border-top: 1px solid var(--sf-border);
@@ -430,7 +446,7 @@ h1, h2, h3, h4 {
 
 /* Between 900 and 1140px, the horizontal nav is tight. Reduce
    gaps and font sizes so multi-word labels stay on one line. */
-@media (min-width: 900px) and (max-width: 1140px) {
+@media (min-width: 768px) and (max-width: 991px) {
     .sf-header-inner { gap: 1rem; }
     .sf-nav-list { gap: 1rem; }
     .sf-nav-link { font-size: .72rem; letter-spacing: .02em; }
@@ -504,13 +520,13 @@ h1, h2, h3, h4 {
     margin-left: auto;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .sf-nav-toggle { display: none; }
 }
 
 /* ----- Mobile nav open state ----- */
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
     .sf-nav.is-open {
         display: block;
         position: absolute;
@@ -701,7 +717,7 @@ h1, h2, h3, h4 {
     margin: 0 auto;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 576px) {
     .sf-flash-wrap { padding: 1rem 2rem 0; }
 }
 
@@ -780,7 +796,7 @@ h1, h2, h3, h4 {
     text-align: center;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .sf-footer-top-inner {
         grid-template-columns: 1fr 1.5fr 1fr;
         justify-items: stretch;
@@ -857,7 +873,7 @@ h1, h2, h3, h4 {
     justify-content: flex-start;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .sf-footer-socials { justify-content: flex-end; }
 }
 
@@ -896,7 +912,7 @@ h1, h2, h3, h4 {
     text-align: center;
 }
 
-@media (min-width: 640px) and (max-width: 899px) {
+@media (min-width: 576px) and (max-width: 767px) {
     .sf-footer-columns-inner {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -910,7 +926,7 @@ h1, h2, h3, h4 {
     }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .sf-footer-columns-inner {
         grid-template-columns: repeat(4, 1fr) 1.5fr;
         justify-items: start;
@@ -1115,7 +1131,7 @@ h1, h2, h3, h4 {
    Fix: hide the wordmark on mobile, keep only the emblem.
    The emblem is the recognizable mark. Desktop unchanged.
    ---- */
-@media (max-width: 639px) {
+@media (max-width: 575px) {
     .sf-logo-text {
         display: none;
     }
@@ -1289,7 +1305,7 @@ h1, h2, h3, h4 {
 
 /* Mobile: the panel spans the header action cluster width
    instead of hanging off the icon. Prevents clipping at 375px. */
-@media (max-width: 480px) {
+@media (max-width: 575px) {
     .sf-account-menu-panel {
         right: -60px;
         min-width: 220px;
@@ -1440,7 +1456,7 @@ h1, h2, h3, h4 {
 
 /* Mobile: pin the panel to the right edge so it does not clip
    off screen at 375px. */
-@media (max-width: 480px) {
+@media (max-width: 575px) {
     .sf-bell-menu-panel {
         right: -120px;
         min-width: 300px;
@@ -1469,7 +1485,7 @@ h1, h2, h3, h4 {
     color: inherit;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 575px) {
     .sf-icon-btn-labeled {
         width: 40px;
         padding: 0;
@@ -1502,7 +1518,7 @@ h1, h2, h3, h4 {
     object-fit: contain;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 575px) {
     .sf-logo-image {
         height: 40px;
         max-width: 160px;
@@ -1546,7 +1562,7 @@ h1, h2, h3, h4 {
     background: #22c55e;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 575px) {
     .sf-icon-btn-labeled.is-signed-out::after,
     .sf-icon-btn-labeled.is-signed-in::after,
     .sf-account-menu-toggle.is-signed-out::after,
@@ -1639,7 +1655,7 @@ h1, h2, h3, h4 {
     flex-shrink: 0;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 575px) {
     .sf-footer-bottom-inner {
         flex-direction: column;
         text-align: center;

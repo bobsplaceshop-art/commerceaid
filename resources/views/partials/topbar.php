@@ -18,6 +18,10 @@ $title = $title ?? null;
             <i class="bi bi-list" style="font-size:1.15rem;"></i>
         </button>
 
+        <a href="/commerce/ca-admin/search" class="ra-icon-btn ra-search-toggle-mobile" aria-label="Search">
+            <i class="bi bi-search"></i>
+        </a>
+
         <div class="ra-breadcrumbs d-none d-md-flex">
             <a href="/commerce/ca-admin">Admin</a>
             <?php if (!empty($title) && $title !== 'Dashboard'): ?>
@@ -30,7 +34,7 @@ $title = $title ?? null;
     <div class="d-flex align-items-center gap-2">
         <script src="<?= versioned_asset('/js/admin-search.js') ?>"></script>
 
-        <div class="ra-search-wrapper" style="position:relative; width:300px;">
+        <div class="ra-search-wrapper" style="position:relative;">
             <form method="GET" action="/commerce/ca-admin/search" style="margin:0;">
                 <input type="text" name="q" class="ra-search" placeholder="Search admin..." value="<?= e($_GET['q'] ?? '') ?>" autocomplete="off" style="width:100%;">
             </form>

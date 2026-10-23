@@ -12,14 +12,23 @@
 <div class="ra-customizer" id="ra-customizer" data-slug="<?= e($slug) ?>" data-csrf="<?= e(csrf_token()) ?>">
 
     <div class="ra-customizer-topbar d-flex justify-content-between align-items-center px-3 w-100">
-        <div class="ra-customizer-brand fw-bold text-light d-flex align-items-center">
-            <i class="bi bi-layout-text-window me-2"></i> <?= e($label) ?>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button"
+                    class="ra-customizer-mobile-toggle"
+                    data-customizer-sidebar-toggle
+                    aria-label="Show blocks"
+                    aria-expanded="false">
+                <i class="bi bi-list fs-5"></i>
+            </button>
+            <div class="ra-customizer-brand fw-bold text-light d-flex align-items-center">
+                <i class="bi bi-layout-text-window me-2"></i> <?= e($label) ?>
+            </div>
         </div>
 
         <div class="ra-customizer-devices d-flex gap-2 bg-dark p-1 rounded border border-secondary">
-            <button type="button" class="device-btn active" data-device="desktop" title="Desktop" style="background:none;border:none;color:#d4af37;"><i class="bi bi-display fs-5"></i></button>
-            <button type="button" class="device-btn" data-device="tablet" title="Tablet" style="background:none;border:none;color:#64748b;"><i class="bi bi-tablet fs-5"></i></button>
-            <button type="button" class="device-btn" data-device="mobile" title="Mobile" style="background:none;border:none;color:#64748b;"><i class="bi bi-phone fs-5"></i></button>
+            <button type="button" class="device-btn active" data-device="desktop" title="Desktop"><i class="bi bi-display fs-5"></i></button>
+            <button type="button" class="device-btn" data-device="tablet" title="Tablet"><i class="bi bi-tablet fs-5"></i></button>
+            <button type="button" class="device-btn" data-device="mobile" title="Mobile"><i class="bi bi-phone fs-5"></i></button>
         </div>
 
         <div class="ra-customizer-actions d-flex gap-2 align-items-center">
@@ -55,7 +64,7 @@
                         <p class="text-muted small text-center py-3">No blocks yet. Click + to add one.</p>
                     <?php else: ?>
                         <?php foreach ($blocks as $block): ?>
-                            <div class="ra-customizer-block" data-block-id="<?= (int) $block->id ?>">
+                            <div class="ra-customizer-block" data-block-id="<?= (int) $block->id ?>" draggable="true">
                                 <i class="bi bi-grip-vertical drag-handle"></i>
                                 <span class="fw-bold ms-2"><?= e($block->typeLabel()) ?></span>
                                 <div class="ms-auto d-flex gap-1">
@@ -92,9 +101,18 @@
                 // merges the session draft. Non-home pages (about-us,
                 // contact) fall back to the home page until custom
                 // page routes exist (Session 5).
-                $previewUrl = '/?customize_preview=1';
+                //
+                // The cache-buster is keyed on the mtime of the
+                // storefront CSS, so the iframe picks up new CSS
+                // on the next customizer load (Chrome caches
+                // iframe HTTP separately from the parent page).
+                $cssFile = dirname(__DIR__, 4) . '/public/assets/css/storefront-catalog.css';
+                $cssHash = is_file($cssFile) ? substr(md5_file($cssFile), 0, 8) : '0';
+                $previewUrl = '/?customize_preview=1&v=' . $cssHash;
                 ?>
-                <iframe src="<?= e($previewUrl) ?>" id="preview-iframe"></iframe>
+                <iframe src="<?= e($previewUrl) ?>"
+                        id="preview-iframe"
+                        title="Storefront preview"></iframe>
             </div>
         </div>
     </div>
