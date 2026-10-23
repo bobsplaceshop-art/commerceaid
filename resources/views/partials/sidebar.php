@@ -136,6 +136,7 @@ $groups = [
             ['label' => 'Users',          'href' => '/commerce/ca-admin/users',    'icon' => 'bi-person-badge', 'permission' => 'core.users.view'],
             ['label' => 'Roles',          'href' => '/commerce/ca-admin/roles',    'icon' => 'bi-shield-lock',  'permission' => 'core.roles.view'],
             ['label' => 'System Status',  'href' => '/commerce/ca-admin/update',        'icon' => 'bi-speedometer2',  'permission' => 'core.settings.manage'],
+            ['label' => 'Performance',    'href' => '/commerce/ca-admin/system/performance', 'icon' => 'bi-activity',      'permission' => 'core.settings.manage'],
             ['label' => 'Logs',           'href' => '/commerce/ca-admin/logs',          'icon' => 'bi-journal-text',  'permission' => 'core.audit.view'],
         ],
     ],

@@ -833,6 +833,14 @@ $router->get('/commerce/ca-admin/settings',
     [SettingsController::class, 'index'],
     ['store', 'auth']);
 
+$router->get('/commerce/ca-admin/system/performance',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminDiagnosticsController::class, 'show'],
+    ['store', 'auth']);
+
+$router->post('/commerce/ca-admin/system/performance/run',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminDiagnosticsController::class, 'run'],
+    ['store', 'auth', 'csrf']);
+
 $router->post('/commerce/ca-admin/settings',
     [SettingsController::class, 'save'],
     ['store', 'auth', 'csrf']);

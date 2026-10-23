@@ -182,31 +182,6 @@
     padding: 2rem;
 }
 
-.ra-preview-frame-wrapper {
-    width: 100%;
-    max-width: 100%;
-    height: 100%;
-    background: #fff;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    transition: width 0.3s ease, max-width 0.3s ease;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.ra-preview-frame-wrapper iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* Device Emulation */
-.ra-preview-frame-wrapper.device-tablet {
-    width: 768px;
-}
-.ra-preview-frame-wrapper.device-mobile {
-    width: 375px;
-}
-
 /* --- Fix Customizer Overlay --- */
 .ra-customizer {
     position: fixed !important;
@@ -298,32 +273,6 @@
     justify-content: center;
     padding: 2rem;
     overflow: auto;
-}
-
-.ra-preview-frame-wrapper {
-    width: 100%;
-    height: 100%;
-    background: #fff;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    transition: width 0.3s ease;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.ra-preview-frame-wrapper.device-tablet {
-    width: 768px;
-    height: 100%;
-}
-
-.ra-preview-frame-wrapper.device-mobile {
-    width: 375px;
-    height: 100%;
-}
-
-.ra-preview-frame-wrapper iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
 }
 
 /* Fix block items */
