@@ -127,3 +127,47 @@ never seen) or to edit from the Windows side once.
     four directions).
   - `docs/stages/015_render-harness-plan.md` (the harness
     plan).
+
+## OPcache (enabled 2026-10-23)
+
+The `php.ini` for the installed PHP 8.3.36 (NTS) has opcache
+active:
+
+  zend_extension=opcache      (line 833, uncommented)
+  [opcache]                   (line 1666)
+  opcache.enable=1
+  opcache.enable_cli=1
+  opcache.memory_consumption=256
+  opcache.interned_strings_buffer=16
+  opcache.max_accelerated_files=20000
+  opcache.validate_timestamps=1
+  opcache.revalidate_freq=2
+  opcache.file_update_protection=0
+
+Impact (measured with `php bin/perf-check.php` warm):
+
+  Before OPcache   After OPcache
+  --------------   -------------
+  582ms            62ms     (/)
+  286ms            64ms     (/products)
+  500ms            43ms     (/commerce/ca-admin)
+  1013ms           39ms     (/commerce/ca-admin/pages/home)
+  3576ms           58ms     (/commerce/ca-admin/settings?tab=branding)
+  2388ms           128ms    (/products/wool-crew-neck-sweater)
+
+Verify with:
+
+  php -m | findstr -i opcache         # Should show "Zend OPcache"
+  php -i | findstr -i "opcache.enable" # Should show "On => On"
+
+If Apache fails to start after enabling opcache, check the
+Apache error log. The most common cause is a duplicate
+`zend_extension=opcache` line in another loaded .ini file.
+PHP CLI tolerates the duplicate with a warning; Apache
+aborts on it.
+
+`opcache.validate_timestamps=1` with `revalidate_freq=2`
+means file changes are picked up within 2 seconds without
+an Apache restart. During active development that's
+usually fine. If a change seems not to take effect, hard
+reload the browser (Ctrl+Shift+R) or restart Apache.
