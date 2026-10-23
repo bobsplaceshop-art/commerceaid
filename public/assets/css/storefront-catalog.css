@@ -1641,11 +1641,7 @@ select.sf-filter-input {
     .sf-block-grid {
         grid-template-columns: repeat(var(--sf-block-grid-cols, 4), 1fr);
     }
-    
-    .sf-block-grid-categories {
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     }
-}
 
 /* Responsive Hero Block */
 .sf-hero {

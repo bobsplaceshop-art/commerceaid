@@ -253,12 +253,6 @@ final class BlockConfigRegistry
                 'type'    => 'string',
                 'default' => 'Shop by Category',
             ],
-            'category_slugs' => [
-                'label'   => 'Categories',
-                'type'    => 'string',
-                'default' => '',
-                'hint'    => 'Comma-separated slugs. Leave blank to show the top-level categories.',
-            ],
         ];
     }
 }
