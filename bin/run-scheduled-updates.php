@@ -29,9 +29,12 @@ if ($ts === false || $ts > time()) {
     exit(0);
 }
 
-// 3. Time is due. Lock the storefront!
+// 3. Time is due. Lock the storefront via system.store_status
+//    (the key MaintenanceMiddleware actually reads). Preserve
+//    the previous value so we can restore it after the run.
 echo "Maintenance window reached. Locking storefront...\n";
-$settings->set('system.maintenance_mode', '1');
+$prevStatus = $settings->string('system.store_status', 'live');
+$settings->set('system.store_status', 'maintenance');
 
 // 4. Run the migrations
 echo "Running pending migrations...\n";
@@ -46,10 +49,10 @@ try {
     exit(1);
 }
 
-// 5. Cleanup: clear schedule, unlock site
+// 5. Cleanup: clear schedule, restore previous store status
 echo "Update finished. Unlocking storefront...\n";
 $settings->set('system.update.scheduled_at', '');
-$settings->set('system.maintenance_mode', '0');
+$settings->set('system.store_status', $prevStatus);
 
 echo "Done.\n";
 exit(0);
