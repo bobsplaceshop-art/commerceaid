@@ -364,13 +364,15 @@ final class AdminPageController extends AdminController
             return Response::json(['ok' => false, 'error' => 'No block ids provided.'], 400);
         }
 
-        $cleanIds = array_values(array_filter(
-            array_map('intval', $ids),
-            static fn (int $v): bool => $v > 0
-        ));
+        // Do not filter out negative IDs. A negative ID is a
+        // pending_add draft row. PageDraftRepository::saveReorder()
+        // knows how to resolve it (by `id` instead of `block_id`).
+        // Filtering them out here meant a drag involving a newly
+        // added block silently dropped that block from the order.
+        $cleanIds = array_values(array_map('intval', $ids));
 
         if ($cleanIds === []) {
-            return Response::json(['ok' => false, 'error' => 'No valid block ids.'], 400);
+            return Response::json(['ok' => false, 'error' => 'No block ids provided.'], 400);
         }
 
         // Reordering is a draft edit, same as add, delete, and
