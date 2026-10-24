@@ -428,14 +428,28 @@ documented developer guide.
 The graph's tiers are the build order. Within each tier, the
 items in order.
 
-### Session A — Tier 0.1 (this session's next, if you say go)
+### Session A — Tier 0.1
 
 - Create `app/Commerce/Support/Blocks/ConfigFieldRegistry.php`.
-- Refactor `_config-field.php` to consume it. Seven existing
-  types port to registry entries. The `category_multi_select`
-  and `color` types from the category-grid discussion become
-  the first two new entries.
-- Commit. `composer analyse` green.
+- Refactor `_config-field.php` to consume it. Eight existing
+  types port to registry entries: string, text, int, boolean,
+  select, category_select, category_multi_select, file. One
+  new type is added: color.
+- Refactor `AdminPageController::saveBlockConfig()` to call
+  the registry's `sanitize` closure instead of its current
+  match. The boolean and category_multi_select short-circuits
+  stay in `saveBlockConfig` — they run before the required/
+  empty check, and that order must survive the refactor.
+- Commit. `composer analyse` green. `composer smoke` must
+  still pass byte-identical (the shaper case, captured
+  at 0f061f7, is the acceptance criterion).
+
+**Amendment (2026-10-24):** the original wording said "seven
+existing types" and named `category_multi_select` as new.
+That was written before the category grid controls shipped;
+`category_multi_select` landed at ae8dc3e. The count is
+eight existing types, one new. Corrected here so the plan
+matches reality.
 
 ### Session B — Tier 0.2
 
