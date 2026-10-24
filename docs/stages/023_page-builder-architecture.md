@@ -465,19 +465,36 @@ BlockRenderer) are useful, and they shipped, but they are
 the schema layer. The document model is the frame. Without
 the frame, no amount of schema work makes a Section possible.
 
-**The corrected Tier 0, in build order:**
+**The corrected Tier 0, in build order, with shipped status:**
 
-  0.1  ConfigFieldRegistry      — shipped (Session A)
+  0.1  ConfigFieldRegistry      — shipped 58df9c0
   0.2  BlockTypeRegistry        — next
   0.3  BlockRenderer            — after 0.2
-  0.4  parent_id on blocks + drafts       — migration 0354
+  0.4  parent_id on blocks + drafts       — shipped dc9f74d
   0.5  children() traversal on PageBlock
        and DraftManager
+         5a  PageBlock::$parentId/$children
+                                  — shipped 850817c
+         5b  repository parent-aware
+                                  — shipped 32677a7
+         5c  DraftManager::getMergedTree()
+                                  — after 0.2, 0.3
   0.6  DraftPublisher two-pass publish
-       (parents before children)
+       (parents before children)  — after 5c
   0.7  tree-aware BlockRenderer
        (Section/Container accept children)
+                                  — after 0.3, 5c
   0.8  section and container block types
+                                  — after 0.7
+
+**Status at 2026-10-24 session close:** 0.1, 0.4, 5a,
+5b shipped. 0.2 and 0.3 are open. 5c, 0.6, 0.7, 0.8
+remain. The tree is at 5b: the schema and model carry
+parent_id, but nothing reads children yet, and home.php
+still renders a flat list. The next session opens with
+0.2 (BlockTypeRegistry), not 5c — the tree traversal is
+only useful once BlockRenderer knows what block types
+exist and can dispatch to a tree walker.
 
 0.1-0.3 were built first because the schema layer is small
 and self-contained. 0.4-0.8 are the document model. Tier 1
