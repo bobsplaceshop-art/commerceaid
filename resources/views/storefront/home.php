@@ -289,30 +289,6 @@ $trustRow = [
 <?php endif; ?>
 
 <!-- ============================================================= -->
-<!-- NEW ARRIVALS (collapses when empty)                           -->
-<!-- ============================================================= -->
-<?php if (!empty($newArrivals)): ?>
-    <section class="sf-home-products" data-sf-section="new-arrivals">
-        <div class="sf-container">
-
-            <header class="sf-home-section-heading sf-home-section-heading-left">
-                <h2 class="sf-home-heading-text">New Arrivals</h2>
-                <a href="/products?sort=newest" class="sf-home-heading-link">
-                    View All <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                </a>
-            </header>
-
-            <div class="sf-product-grid">
-                <?php foreach ($newArrivals as $p): ?>
-                    <?= view_partial('storefront/catalog/_product-card', ['product' => $p]) ?>
-                <?php endforeach; ?>
-            </div>
-
-        </div>
-    </section>
-<?php endif; ?>
-
-<!-- ============================================================= -->
 <!-- PROMOTIONAL STRIP (always renders)                            -->
 <!-- ============================================================= -->
 <section class="sf-home-strip" data-sf-section="promo-strip">
@@ -347,30 +323,6 @@ $trustRow = [
         </ul>
     </div>
 </section>
-
-<!-- ============================================================= -->
-<!-- BEST SELLERS (collapses when empty)                           -->
-<!-- ============================================================= -->
-<?php if (!empty($bestSellers)): ?>
-    <section class="sf-home-products" data-sf-section="best-sellers">
-        <div class="sf-container">
-
-            <header class="sf-home-section-heading sf-home-section-heading-left">
-                <h2 class="sf-home-heading-text">Best Sellers</h2>
-                <a href="/products" class="sf-home-heading-link">
-                    View All <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                </a>
-            </header>
-
-            <div class="sf-product-grid">
-                <?php foreach ($bestSellers as $p): ?>
-                    <?= view_partial('storefront/catalog/_product-card', ['product' => $p]) ?>
-                <?php endforeach; ?>
-            </div>
-
-        </div>
-    </section>
-<?php endif; ?>
 
 <!-- ============================================================= -->
 <!-- NEWSLETTER (always renders - placeholder for theme builder)   -->

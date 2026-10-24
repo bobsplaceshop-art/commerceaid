@@ -112,8 +112,22 @@ final class BlockRenderer
         $viewData = ['config' => $block->config];
 
         if ($block->blockType === 'product-grid') {
-            $limit  = max(1, (int) ($block->config['limit'] ?? 4));
-            $result = $this->products->paginatePublished([], 1, $limit);
+            $limit = max(1, (int) ($block->config['limit'] ?? 4));
+            $filters = [
+                'sort' => $block->config['source'] ?? 'newest',
+            ];
+
+            if (!empty($block->config['category_slug'])) {
+                $cat = $this->categories->findBySlug((string) $block->config['category_slug']);
+                if ($cat !== null) {
+                    $filters['category_id'] = (int) $cat->id;
+                } else {
+                    // Slug doesn't exist (deleted). Force empty result.
+                    $filters['category_id'] = -1;
+                }
+            }
+
+            $result = $this->products->paginatePublished($filters, 1, $limit);
             $viewData['products'] = $result['items'];
         } elseif ($block->blockType === 'category-grid') {
             $all = $this->categories->listAll(false);
