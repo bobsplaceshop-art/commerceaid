@@ -62,6 +62,25 @@ final class BlockRenderer
         $partial  = BlockTypeRegistry::partial($block->blockType);
         $viewData = $this->prepareViewData($block);
 
+        // Tree-aware render. Child-capable block types (Section,
+        // Container — added in Tier 0.8) receive the rendered
+        // HTML of their children in $viewData['children_html'].
+        // The partial writes it wherever children belong
+        // inside its own markup.
+        //
+        // Leaf types (accepts_children false) never see this
+        // key; the partial does not reference it. That is the
+        // current state of all eight types. Section and
+        // Container are the first to set accepts_children true.
+        // The renderer is ready before the type is.
+        if (BlockTypeRegistry::acceptsChildren($block->blockType)) {
+            $childrenHtml = '';
+            foreach ($block->children as $child) {
+                $childrenHtml .= $this->render($child);
+            }
+            $viewData['children_html'] = $childrenHtml;
+        }
+
         try {
             return $this->view->render($partial, $viewData);
         } catch (\Throwable $e) {

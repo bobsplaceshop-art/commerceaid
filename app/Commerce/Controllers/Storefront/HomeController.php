@@ -101,7 +101,11 @@ final class HomeController extends StorefrontController
             $draftManager = $this->container->get(
                 \CorporateAid\Commerce\Services\Builder\DraftManager::class
             );
-            $blocks = $draftManager->getMergedBlocks('home', $themeSlug);
+            // getMergedTree() returns the same PageBlock
+            // objects as getMergedBlocks(), grouped by parent.
+            // The storefront renders roots; each root's
+            // children render via BlockRenderer's recursion.
+            $blocks = $draftManager->getMergedTree('home', $themeSlug);
         } else {
             $blockRepo = $this->container->get(PageBlockRepository::class);
             $blocks = $blockRepo->listForPage('home', true); // true = active only

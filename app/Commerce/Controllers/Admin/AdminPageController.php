@@ -163,7 +163,13 @@ final class AdminPageController extends AdminController
 
         $themeSlug = $this->activeThemeSlug();
         $draftManager = $this->container->get(\CorporateAid\Commerce\Services\Builder\DraftManager::class);
-        $blocks = $draftManager->getMergedBlocks($slug, $themeSlug);
+        // getMergedTree() returns roots with $children
+        // populated. The sidebar iterates roots; a Section's
+        // children render inside the Section on the
+        // storefront via BlockRenderer's recursion. A future
+        // commit (Tier 0.8 or the sidebar-tree UI) indents
+        // children under their parent in the sidebar.
+        $blocks = $draftManager->getMergedTree($slug, $themeSlug);
 
         // The block config modals render inline in show.php.
         // They need the category list (for category_select
