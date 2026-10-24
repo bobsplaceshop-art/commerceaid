@@ -277,13 +277,35 @@ final class AdminPageController extends AdminController
 
         $themeSlug = $this->activeThemeSlug();
         $draftRepo = $this->container->get(\CorporateAid\Commerce\Repositories\PageDraftRepository::class);
-        $blockRepo = $this->container->get(PageBlockRepository::class);
-        
-        // Get next sort order based on existing DB blocks (draft manager handles merged count)
-        $existing = $blockRepo->listForPage($slug, false);
-        $nextSort = count($existing) + 1;
-        
-        $draftRepo->addDraftBlock($slug, $themeSlug, $type, $nextSort);
+
+        // Read the optional parent_id from POST. Empty string,
+        // missing key, and null all mean 'add as root.' A real
+        // id (positive for a published block, negative for a
+        // pending_add draft) means 'add as child of that block.'
+        $parentIdRaw = $request->input('parent_id');
+        $parentId = is_string($parentIdRaw) && $parentIdRaw !== ''
+            ? (int) $parentIdRaw
+            : null;
+
+        if ($parentId !== null) {
+            $parent = $this->findBlockOrDraft($parentId, $slug);
+            if ($parent === null) {
+                $session->flash('error', 'Parent block not found.');
+                return Response::redirect('/commerce/ca-admin/pages/' . $slug);
+            }
+            if (!\CorporateAid\Commerce\Support\Blocks\BlockTypeRegistry::acceptsChildren($parent->blockType)) {
+                $session->flash('error', 'That block does not accept children.');
+                return Response::redirect('/commerce/ca-admin/pages/' . $slug);
+            }
+        }
+
+        // Compute the sort within the destination parent's
+        // children (roots have their own sort space). The
+        // draft-aware next-sort counts pending_add siblings,
+        // which the old 'count(published) + 1' approach did not.
+        $nextSort = $draftRepo->nextDraftSortOrder($slug, $themeSlug, $parentId);
+
+        $draftRepo->addDraftBlockWithConfig($slug, $themeSlug, $type, $nextSort, [], $parentId);
 
         $session->flash('success', 'Block added (draft). Click Publish to go live.');
         return Response::redirect('/commerce/ca-admin/pages/' . $slug);

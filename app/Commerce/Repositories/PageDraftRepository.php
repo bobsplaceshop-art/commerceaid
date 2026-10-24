@@ -104,6 +104,45 @@ final class PageDraftRepository extends CommerceRepository
     }
 
     /**
+     * The next free sort_order for a new draft block.
+     *
+     * Scoped to the destination parent. Roots (parentId null)
+     * have their own sort space; each parent's children have
+     * their own. The query reads from commerce_page_drafts,
+     * so pending_add siblings are counted (a new sibling
+     * gets the position after the last pending_add).
+     *
+     * addBlock() uses this for both root additions and child
+     * additions. The old 'count($published) + 1' approach
+     * ignored pending_add siblings and computed sort across
+     * the whole page regardless of parent.
+     */
+    public function nextDraftSortOrder(
+        string $pageSlug,
+        string $themeSlug,
+        ?int $parentId
+    ): int {
+        if ($parentId === null) {
+            $max = $this->db->scalar(
+                "SELECT COALESCE(MAX(`sort_order`), 0) + 1
+                 FROM `commerce_page_drafts`
+                 WHERE `store_id` = ? AND `page_slug` = ? AND `theme_slug` = ?
+                   AND `parent_id` IS NULL",
+                [$this->storeId(), $pageSlug, $themeSlug]
+            );
+        } else {
+            $max = $this->db->scalar(
+                "SELECT COALESCE(MAX(`sort_order`), 0) + 1
+                 FROM `commerce_page_drafts`
+                 WHERE `store_id` = ? AND `page_slug` = ? AND `theme_slug` = ?
+                   AND `parent_id` = ?",
+                [$this->storeId(), $pageSlug, $themeSlug, $parentId]
+            );
+        }
+        return $max !== false && $max !== null ? (int) $max : 1;
+    }
+
+    /**
      * Mark an existing block for deletion.
      */
     public function markDelete(int $blockId, string $pageSlug, string $themeSlug): void
