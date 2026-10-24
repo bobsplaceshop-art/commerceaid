@@ -123,8 +123,35 @@ final class PageBlockRepository extends CommerceRepository
      *
      * @param array<string,mixed> $config
      */
-    public function update(int $id, array $config): void
+    /**
+     * Update a block's config. When $sortOrder is passed,
+     * the block's sort_order is written in the same statement.
+     *
+     * The optional $sortOrder exists so DraftPublisher can
+     * apply a draft's pending sort_order at publish time
+     * without a second round trip. Every other caller
+     * (there is exactly one, DraftPublisher) passes no
+     * third argument and keeps the config-only behavior.
+     *
+     * @param array<string,mixed> $config
+     */
+    public function update(int $id, array $config, ?int $sortOrder = null): void
     {
+        if ($sortOrder !== null) {
+            $this->db->execute(
+                "UPDATE `commerce_page_blocks`
+                 SET `config_json` = ?, `sort_order` = ?
+                 WHERE `store_id` = ? AND `id` = ?",
+                [
+                    json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                    $sortOrder,
+                    $this->storeId(),
+                    $id,
+                ]
+            );
+            return;
+        }
+
         $this->db->execute(
             "UPDATE `commerce_page_blocks`
              SET `config_json` = ?

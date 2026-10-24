@@ -31,10 +31,18 @@ final class DraftPublisher
                     $existing = $this->blocks->findById((int) $row['block_id']);
                     if ($existing) {
                         $draftConfig = json_decode($row['config_json'], true) ?: [];
-                        // If sort_order was set in the draft, apply it
-                        $existing->sortOrder = (int) $row['sort_order'];
-                        $this->blocks->update((int) $row['block_id'], array_merge($existing->config, $draftConfig));
-                        // We'd also need a method to update sortOrder if it changed, but for now rely on reorder logic
+                        // The draft carries the merchant's current
+                        // config AND the current sort_order (written
+                        // by PageDraftRepository::saveReorder() when
+                        // the merchant drags a block). Both must land
+                        // on the published row at publish time, or a
+                        // reordered block publishes at its old
+                        // position.
+                        $this->blocks->update(
+                            (int) $row['block_id'],
+                            array_merge($existing->config, $draftConfig),
+                            (int) $row['sort_order']
+                        );
                     }
                 } elseif ($row['status'] === 'pending_add') {
                     $draftConfig = json_decode($row['config_json'], true) ?: [];

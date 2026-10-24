@@ -219,10 +219,26 @@
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()
-            }).then(function () {
-                if (iframe && iframe.contentWindow) {
-                    iframe.contentWindow.location.reload();
+            }).then(function (res) {
+                if (!res.ok) {
+                    console.error('[customizer] reorder failed: ' + res.status);
+                    return;
                 }
+                // Use the same message channel the config-save
+                // preview uses. The bridge (preview-bridge.js)
+                // handles { action: 'updateBlock', reload: true }
+                // by reloading the iframe document. Calling
+                // iframe.contentWindow.location.reload() from
+                // the parent is unreliable across browsers and
+                // is what made the reorder silently no-op.
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage(
+                        { action: 'updateBlock', reload: true },
+                        '*'
+                    );
+                }
+            }).catch(function (err) {
+                console.error('[customizer] reorder network error:', err);
             });
         });
     }
