@@ -312,15 +312,43 @@
 
         list.addEventListener('drop', function (e) {
             e.preventDefault();
+
+            // Phase 4: build the tree map from window.__builderTree
+            // and send it as `tree[id][parent_id]` and
+            // `tree[id][sort_order]`. The server's saveTree()
+            // writes both fields. The legacy `ids` payload is
+            // still sent alongside for older servers; a new server
+            // reads `tree` first and ignores `ids`.
+            var tree = window.__builderTree;
+            var body = new URLSearchParams();
+            body.append('_csrf', csrf);
+
+            // Flatten the tree into {id: {parent_id, sort_order}}.
+            // Sort order is scoped per parent: roots get 1..N,
+            // each parent's children get 1..M.
+            var flatten = function (nodes, parentId) {
+                nodes.forEach(function (node, idx) {
+                    body.append('tree[' + node.id + '][parent_id]', String(parentId));
+                    body.append('tree[' + node.id + '][sort_order]', String(idx + 1));
+                    if (node.children && node.children.length) {
+                        flatten(node.children, node.id);
+                    }
+                });
+            };
+            if (tree && tree.roots) {
+                flatten(tree.roots, 0);
+            }
+
+            // Legacy ids array (flat order). Kept for older server
+            // code; the new saveTree branch runs first.
             var ids = [];
             list.querySelectorAll('.ra-customizer-block').forEach(function (t) {
                 ids.push(parseInt(t.getAttribute('data-block-id'), 10));
             });
-            var body = new URLSearchParams();
-            body.append('_csrf', csrf);
             ids.forEach(function (id, i) {
                 body.append('ids[' + i + ']', String(id));
             });
+
             fetch(list.getAttribute('data-reorder-url'), {
                 method: 'POST',
                 credentials: 'same-origin',
