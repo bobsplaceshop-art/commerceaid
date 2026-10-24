@@ -151,11 +151,39 @@ final class BlockConfigRegistry
                 'type'    => 'int',
                 'default' => 4,
             ],
-            'columns' => [
-                'label'   => 'Columns',
-                'type'    => 'int',
-                'default' => 4,
-                'hint'    => 'How many product cards fit in one row.',
+            'columns_desktop' => [
+                'label'   => 'Desktop columns',
+                'type'    => 'select',
+                'default' => '4',
+                'options' => [
+                    '3' => '3 columns',
+                    '4' => '4 columns',
+                    '5' => '5 columns',
+                    '6' => '6 columns',
+                    '7' => '7 columns',
+                    '8' => '8 columns',
+                ],
+            ],
+            'columns_mobile' => [
+                'label'   => 'Mobile columns',
+                'type'    => 'select',
+                'default' => '2',
+                'options' => [
+                    '1' => '1 column',
+                    '2' => '2 columns',
+                ],
+            ],
+            'grid_alignment' => [
+                'label'   => 'Grid item alignment',
+                'type'    => 'select',
+                'default' => 'justify',
+                'options' => [
+                    'left'    => 'Left',
+                    'center'  => 'Center',
+                    'right'   => 'Right',
+                    'justify' => 'Justified (spread)',
+                ],
+                'hint'    => 'Left / Center / Right cluster the cards when there are fewer items than columns. Justified spreads them to fill the row.',
             ],
             'show_view_all' => [
                 'label'   => 'Show "View all" link',

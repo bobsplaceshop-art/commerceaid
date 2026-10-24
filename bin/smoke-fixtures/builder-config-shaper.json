@@ -20,17 +20,21 @@
             "limit": 42,
             "title": "shaper-title",
             "source": "newest",
-            "columns": 42,
             "category_slug": "children",
-            "show_view_all": true
+            "show_view_all": true,
+            "columns_desktop": "3",
+            "columns_mobile": "1",
+            "grid_alignment": "left"
         },
         "pass_2": {
             "limit": 42,
             "title": "shaper-title",
             "source": "newest",
-            "columns": 42,
             "category_slug": "children",
-            "show_view_all": false
+            "show_view_all": false,
+            "columns_desktop": "3",
+            "columns_mobile": "1",
+            "grid_alignment": "left"
         }
     },
     "category-grid": {

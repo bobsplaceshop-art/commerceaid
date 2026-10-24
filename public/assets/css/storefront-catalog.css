@@ -1667,26 +1667,44 @@ select.sf-filter-input {
 
 /* Base: 1 column on mobile */
 .sf-block-grid {
+    /* Mobile-first: base uses --sf-block-grid-cols-mobile.
+       At 900px and above, the desktop column count takes
+       over via the media query below. Matches the shape
+       the category grid uses (the media-query direction
+       is inverted, but the rendered result is identical). */
     display: grid;
-    gap: 1.5rem;
-    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    grid-template-columns:
+        repeat(var(--sf-block-grid-cols-mobile, 2), minmax(0, 1fr));
+    justify-content: var(--sf-block-grid-justify, space-between);
 }
 
-/* Tablet: cap at 2 columns, regardless of merchant choice. */
-@media (min-width: 768px) {
+@media (min-width: 900px) {
     .sf-block-grid {
-        grid-template-columns: repeat(2, 1fr);
+        /* auto-fit + calc gives fixed-width tracks. The
+           tracks leave empty space in the container when
+           there are fewer cards than --sf-block-grid-cols.
+           justify-content can then cluster or spread them. */
+        grid-template-columns:
+            repeat(
+                auto-fit,
+                calc(100% / var(--sf-block-grid-cols, 4) - 1rem)
+            );
     }
 }
 
-/* Desktop: respect the merchant's choice, capped at 6
-   to keep cards readable. Anything above 6 falls back
-   to 6. */
-@media (min-width: 992px) {
-    .sf-block-grid {
-        grid-template-columns: repeat(var(--sf-block-grid-cols, 4), 1fr);
-    }
-    }
+.sf-block-grid.sf-block-grid-align-left {
+    --sf-block-grid-justify: start;
+}
+.sf-block-grid.sf-block-grid-align-center {
+    --sf-block-grid-justify: center;
+}
+.sf-block-grid.sf-block-grid-align-right {
+    --sf-block-grid-justify: end;
+}
+.sf-block-grid.sf-block-grid-align-justify {
+    --sf-block-grid-justify: space-between;
+}
 
 /* Responsive Hero Block */
 .sf-hero {
