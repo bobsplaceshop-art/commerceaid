@@ -22,32 +22,43 @@
     // on both the Page Builder ([data-block-media-open]) and
     // the Settings page ([data-settings-media-open]). One modal,
     // one handler, both entry points.
-    document.querySelectorAll('[data-block-media-open], [data-settings-media-open]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            activeTargetId = btn.getAttribute('data-block-media-open')
-                         || btn.getAttribute('data-settings-media-open');
-            var modal = new bootstrap.Modal(modalEl);
-            modal.show();
-        });
+    // Event delegation: the Page Builder injects each block's
+    // settings form from a <template> when the block is clicked
+    // (see openSettingsFor in page-builder-customizer-v3.js).
+    // A direct querySelectorAll on load finds nothing, because
+    // the "Choose image" button does not exist yet.
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-block-media-open], [data-settings-media-open]');
+        if (!btn) return;
+        activeTargetId = btn.getAttribute('data-block-media-open')
+                     || btn.getAttribute('data-settings-media-open');
+        var modal = new bootstrap.Modal(modalEl);
+        modal.show();
     });
 
     // Clear button handlers.
-    document.querySelectorAll('[data-settings-media-clear]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var targetId = btn.getAttribute('data-settings-media-clear');
-            var input = document.getElementById(targetId);
-            if (input) input.value = '';
+    // Event delegation: same reason as the open handler.
+    // The clear button lives inside the injected settings
+    // form; direct querySelectorAll on load misses it.
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-settings-media-clear], [data-block-media-clear]');
+        if (!btn) return;
+        var targetId = btn.getAttribute('data-settings-media-clear')
+                    || btn.getAttribute('data-block-media-clear');
+        var input = document.getElementById(targetId);
+        if (input) {
+            input.value = '';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
 
-            // Clear the preview and hide the Remove button.
-            var field = input ? input.closest('.ra-file-field') : null;
-            if (field) {
-                var preview = field.querySelector('.ra-file-preview');
-                if (preview) {
-                    preview.innerHTML = '<div style="width:80px; height:80px; background:#0f172a; border:1px dashed #2d3748; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#64748b;"><i class="bi bi-image"></i></div>';
-                }
-                btn.style.display = 'none';
+        var field = input ? input.closest('.ra-file-field') : null;
+        if (field) {
+            var preview = field.querySelector('.ra-file-preview');
+            if (preview) {
+                preview.innerHTML = '<div style="width:80px; height:80px; background:#0f172a; border:1px dashed #2d3748; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#64748b;"><i class="bi bi-image"></i></div>';
             }
-        });
+            btn.style.display = 'none';
+        }
     });
 
     // Pick handler. One listener on the modal body handles
@@ -62,6 +73,13 @@
         var input = document.getElementById(activeTargetId);
         if (input) {
             input.value = fileId;
+
+            // bindLiveForm (page-builder-customizer-v3.js:174)
+            // listens for 'input' and 'change' on the form.
+            // Setting .value programmatically does not fire
+            // those events. Dispatch an input event so the
+            // save + preview cycle runs.
+            input.dispatchEvent(new Event('input', { bubbles: true }));
 
             // Update the preview image in place.
             var field = input.closest('.ra-file-field');

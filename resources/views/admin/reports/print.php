@@ -44,8 +44,8 @@ $statusLabels = [
         .legend-row { display: flex; justify-content: space-between; font-size: 9pt; padding: 3pt 0; border-bottom: 1px solid #f3f4f6; }
         .swatch { display: inline-block; width: 8pt; height: 8pt; border-radius: 2pt; margin-right: 6pt; vertical-align: middle; }
         .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16pt; }
-        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     </style>
+    <link rel="stylesheet" href="/assets/css/print.css" media="print">
     <script>
         // Auto-trigger the browser's print dialog on load.
         // The user saves it as a PDF via the print dialog.

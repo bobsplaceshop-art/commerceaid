@@ -1,8 +1,9 @@
 <?php
 /**
  * @var array<string,mixed> $config
+ * @var string|null $bg_url
  */
-$bgUrl = !empty($config['image_file_id']) ? '/media/' . $config['image_file_id'] . '/lg.jpg' : '';
+$bgUrl = $bg_url ?? '';
 $style = $bgUrl ? "background-image: url('{$bgUrl}');" : "background-color: var(--sf-surface-2);";
 ?>
 <section class="sf-hero" style="<?= e($style) ?> background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; text-align: center;">

@@ -1,0 +1,15 @@
+/* Print stylesheet for reports, invoices, and any
+ * document rendered as a standalone HTML page for
+ * browser print or PDF export.
+ *
+ * Loaded via <link media="print">. The @media print
+ * wrapper around body color-adjust is here because a
+ * standalone print page does not share main-v2.css.
+ */
+
+@media print {
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

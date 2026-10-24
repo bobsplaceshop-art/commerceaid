@@ -50,6 +50,7 @@ final class BlockRenderer
         private ProductRepository $products,
         private CategoryRepository $categories,
         private \CorporateAid\Commerce\Repositories\ReportRepository $reports,
+        private \CorporateAid\Commerce\Repositories\MediaRepository $media,
     ) {}
 
     public function render(PageBlock $block): string
@@ -111,6 +112,16 @@ final class BlockRenderer
     private function prepareViewData(PageBlock $block): array
     {
         $viewData = ['config' => $block->config];
+
+        // Resolve numeric file ids to UUID-based URLs for any
+        // block that renders a single background/image file.
+        // The partial receives a ready-to-use bg_url.
+        if (!empty($block->config['image_file_id'])) {
+            $mediaItem = $this->media->findById((int) $block->config['image_file_id']);
+            if ($mediaItem !== null) {
+                $viewData['bg_url'] = $mediaItem->variantUrl('lg', 'jpg');
+            }
+        }
 
         if ($block->blockType === 'product-grid') {
             $limit = max(1, (int) ($block->config['limit'] ?? 4));

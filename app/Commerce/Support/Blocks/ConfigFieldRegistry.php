@@ -226,8 +226,8 @@ final class ConfigFieldRegistry
             'file' => [
                 'render' => static function (array $c): string {
                     $fileId = is_numeric($c['value']) ? (int) $c['value'] : 0;
-                    $previewUrl = $fileId > 0 ? '/media/' . $fileId . '/md.jpg' : '';
-                    $html = '<div style="display:flex; align-items:center; gap:.75rem;">';
+                    $previewUrl = (string) ($c['previewUrl'] ?? '');
+                    $html = '<div class="ra-file-field" style="display:flex; align-items:center; gap:.75rem;">';
                     if ($previewUrl !== '') {
                         $html .= '<img src="' . e($previewUrl) . '"'
                             . ' alt="Selected image"'
@@ -252,7 +252,8 @@ final class ConfigFieldRegistry
                             . ' class="ra-btn ra-btn-sm"'
                             . ' style="background:transparent;border:1px solid'
                             . ' var(--ra-danger);color:var(--ra-danger);"'
-                            . ' data-block-media-clear="' . e($c['fieldId']) . '">'
+                            . ' data-block-media-clear="' . e($c['fieldId']) . '"'
+                            . ' data-settings-media-clear="' . e($c['fieldId']) . '">'
                             . 'Remove</button>';
                     }
                     return $html . '</div>';

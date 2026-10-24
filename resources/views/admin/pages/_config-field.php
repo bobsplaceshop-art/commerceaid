@@ -23,6 +23,18 @@ $required = !empty($meta['required']);
 $fieldId = 'bc-' . preg_replace('/[^a-z0-9_-]+/i', '-', $name);
 
 $definition = \CorporateAid\Commerce\Support\Blocks\ConfigFieldRegistry::get($type);
+
+// For the 'file' field, resolve the numeric file id to
+// its UUID-based URL before the registry renders it. The
+// registry only receives scalars; it cannot run a query.
+$previewUrl = '';
+if ($type === 'file' && is_numeric($value) && (int) $value > 0) {
+    $mediaRepo = app(\CorporateAid\Commerce\Repositories\MediaRepository::class);
+    $mediaItem = $mediaRepo->findById((int) $value);
+    if ($mediaItem !== null) {
+        $previewUrl = $mediaItem->variantUrl('md', 'jpg');
+    }
+}
 ?>
 <div class="mb-3">
     <label class="form-label" for="<?= e($fieldId) ?>">
@@ -38,6 +50,7 @@ $definition = \CorporateAid\Commerce\Support\Blocks\ConfigFieldRegistry::get($ty
             'fieldId'    => $fieldId,
             'categories' => $categories,
             'required'   => $required,
+            'previewUrl' => $previewUrl,
         ]) ?>
     <?php else: ?>
         <div class="form-text" style="color:var(--ra-danger);">
