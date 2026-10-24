@@ -46,6 +46,15 @@ final class DraftManager
                     if (!empty($row['sort_order'])) {
                         $block->sortOrder = (int) $row['sort_order'];
                     }
+                    // Overlay parent_id when the draft row has a
+                    // non-null value. Null means "keep the
+                    // published parent." A non-null value means
+                    // "reparent" — the current UI does not
+                    // trigger reparenting but the merge is
+                    // prepared for it.
+                    if (array_key_exists('parent_id', $row) && $row['parent_id'] !== null) {
+                        $block->parentId = (int) $row['parent_id'];
+                    }
                 }
             }
             $merged[] = $block;
@@ -61,6 +70,13 @@ final class DraftManager
                 $block->sortOrder = (int) $row['sort_order'];
                 $block->config = json_decode($row['config_json'], true) ?: [];
                 $block->isEnabled = true;
+                // parent_id: positive for a published parent,
+                // negative for a pending_add parent. Stored
+                // as-is; getMergedTree() resolves against the
+                // merged id space.
+                if (array_key_exists('parent_id', $row) && $row['parent_id'] !== null) {
+                    $block->parentId = (int) $row['parent_id'];
+                }
                 $merged[] = $block;
             }
         }
@@ -72,6 +88,57 @@ final class DraftManager
     }
 
     /**
+     * Return the page as a tree: roots (parentId null) with
+     * their direct children in $block->children.
+     *
+     * Children whose parentId names an id not in the merged
+     * set (a parent that was deleted while its children
+     * survived, or a stale draft) attach to a synthetic
+     * '__orphaned__' root so the tree never loses content
+     * silently. The caller can inspect the child's parentId
+     * to see the missing id.
+     *
+     * @return array<int, \CorporateAid\Commerce\Models\PageBlock>
+     */
+    public function getMergedTree(string $pageSlug, string $themeSlug): array
+    {
+        $flat = $this->getMergedBlocks($pageSlug, $themeSlug);
+
+        $byId = [];
+        foreach ($flat as $block) {
+            $byId[$block->id] = $block;
+        }
+
+        $roots = [];
+        $orphans = [];
+
+        foreach ($flat as $block) {
+            if ($block->parentId === null) {
+                $roots[] = $block;
+                continue;
+            }
+
+            if (isset($byId[$block->parentId])) {
+                $byId[$block->parentId]->children[] = $block;
+            } else {
+                $orphans[] = $block;
+            }
+        }
+
+        if ($orphans !== []) {
+            $synthetic = new \CorporateAid\Commerce\Models\PageBlock();
+            $synthetic->id        = 0;
+            $synthetic->pageSlug  = $pageSlug;
+            $synthetic->blockType = '__orphaned__';
+            $synthetic->config    = ['reason' => 'parent block missing'];
+            $synthetic->children  = $orphans;
+            $roots[] = $synthetic;
+        }
+
+        return $roots;
+    }
+
+    /**
      * Duplicate a block. Works for both published blocks (positive
      * ID) and pending_add drafts (negative ID). The copy is always
      * created as a new pending_add so it shows up immediately in
@@ -79,13 +146,31 @@ final class DraftManager
      */
     public function duplicateBlock(int $blockId, string $pageSlug, string $themeSlug): void
     {
-        // Resolve the source block's type and config, whether it
-        // lives in commerce_page_blocks or commerce_page_drafts.
+        $this->duplicateSubtree($blockId, $pageSlug, $themeSlug, null);
+    }
+
+    /**
+     * Duplicate one block and, if it has children, recurse.
+     *
+     * The new draft row carries $newParentId as its parent_id
+     * — null when the source is a root, the new draft parent
+     * id (negative) when the source is a child. Children of
+     * the source are found by scanning the merged flat list
+     * for blocks whose parentId matches the source's id.
+     *
+     * Sort order within the destination parent: count the
+     * siblings already at that parent, add one.
+     */
+    private function duplicateSubtree(
+        int $blockId,
+        string $pageSlug,
+        string $themeSlug,
+        ?int $newParentId
+    ): void {
         $sourceType   = '';
-        $sourceConfig = [];
+        $sourceConfig = '';
 
         if ($blockId < 0) {
-            // Pending add.
             $drafts = $this->drafts->getDraftsForPage($pageSlug, $themeSlug);
             foreach ($drafts as $d) {
                 if ((int) $d['id'] === abs($blockId) && $d['status'] === 'pending_add') {
@@ -95,7 +180,6 @@ final class DraftManager
                 }
             }
         } else {
-            // Published block.
             $published = $this->blocks->findById($blockId);
             if ($published === null) {
                 return;
@@ -108,19 +192,38 @@ final class DraftManager
             return;
         }
 
-        // Compute the next sort_order. Use the merged block count
-        // so a duplicate lands at the bottom regardless of which
-        // table the source lives in.
+        // Sibling count under the destination parent.
         $merged = $this->getMergedBlocks($pageSlug, $themeSlug);
-        $nextSort = count($merged) + 1;
+        $siblingCount = 0;
+        foreach ($merged as $m) {
+            if ($m->parentId === $newParentId) {
+                $siblingCount++;
+            }
+        }
+        $nextSort = $siblingCount + 1;
 
-        $this->drafts->addDraftBlockWithConfig(
+        $newDraftId = $this->drafts->addDraftBlockWithConfig(
             $pageSlug,
             $themeSlug,
             $sourceType,
             $nextSort,
-            $sourceConfig
+            $sourceConfig,
+            $newParentId
         );
+
+        // Recurse into children. A child is a block whose
+        // parentId matches the source's id (positive for
+        // published, negative for pending_add).
+        foreach ($merged as $candidate) {
+            if ($candidate->parentId === $blockId) {
+                $this->duplicateSubtree(
+                    $candidate->id,
+                    $pageSlug,
+                    $themeSlug,
+                    $newDraftId
+                );
+            }
+        }
     }
 
     public function hasDrafts(string $pageSlug, string $themeSlug): bool

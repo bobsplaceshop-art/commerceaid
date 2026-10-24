@@ -47,16 +47,22 @@ final class PageDraftRepository extends CommerceRepository
         string $themeSlug,
         string $blockType,
         int $sortOrder,
-        array $config
+        array $config,
+        ?int $parentId = null
     ): int {
+        // The parentId may be a published id (positive) or a
+        // pending_add draft id (negative). Both are stored as-
+        // is; DraftPublisher::publish() resolves negative ids
+        // to their new published id in two passes.
         $draftId = $this->db->insert(
             "INSERT INTO `commerce_page_drafts`
-                (`store_id`, `theme_slug`, `page_slug`, `block_id`, `block_type`, `sort_order`, `config_json`, `status`)
-             VALUES (?, ?, ?, NULL, ?, ?, ?, 'pending_add')",
+                (`store_id`, `theme_slug`, `page_slug`, `block_id`, `parent_id`, `block_type`, `sort_order`, `config_json`, `status`)
+             VALUES (?, ?, ?, NULL, ?, ?, ?, ?, 'pending_add')",
             [
                 $this->storeId(),
                 $themeSlug,
                 $pageSlug,
+                $parentId,
                 $blockType,
                 $sortOrder,
                 json_encode($config),
