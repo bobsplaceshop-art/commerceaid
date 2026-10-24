@@ -173,6 +173,16 @@
     border-color: #d4af37;
 }
 
+/* Child block row (rendered under a Section or Container).
+   Indented by the depth of its parent. Border-left
+   communicates the nesting relationship at a glance. */
+.ra-customizer-block--child {
+    margin-left: 1.25rem;
+    border-left: 3px solid #d4af37;
+    padding-left: 0.5rem;
+    background: #141d2f;
+}
+
 .ra-customizer-preview {
     flex-grow: 1;
     background: #e2e8f0;

@@ -66,11 +66,22 @@
                     <?php if (empty($blocks)): ?>
                         <p class="text-muted small text-center py-3">No blocks yet. Click + to add one.</p>
                     <?php else: ?>
-                        <?php foreach ($blocks as $block): ?>
-                            <div class="ra-customizer-block" data-block-id="<?= (int) $block->id ?>" draggable="true">
+                        <?php
+                        // Recursive row renderer. Handles arbitrary
+                        // nesting: a Section may contain a Container,
+                        // which may contain leaf blocks. Depth drives
+                        // the visual indent and the child row class.
+                        $renderBlockRow = function ($block, $slug, int $depth = 0) use (&$renderBlockRow): void {
+                            $isChild      = $depth > 0;
+                            $isStructural = \CorporateAid\Commerce\Support\Blocks\BlockTypeRegistry::acceptsChildren($block->blockType);
+                            ?>
+                            <div class="ra-customizer-block<?= $isChild ? ' ra-customizer-block--child' : '' ?>" data-block-id="<?= (int) $block->id ?>" draggable="true">
                                 <i class="bi bi-grip-vertical drag-handle"></i>
                                 <span class="fw-bold ms-2"><?= e($block->typeLabel()) ?></span>
                                 <div class="ms-auto d-flex gap-1">
+                                    <?php if ($isStructural): ?>
+                                        <a href="?add_under=<?= (int) $block->id ?>" class="ra-icon-btn" title="Add a child inside this block"><i class="bi bi-plus-lg"></i></a>
+                                    <?php endif; ?>
                                     <button type="button" class="ra-icon-btn ra-open-settings" data-block-id="<?= (int) $block->id ?>"><i class="bi bi-pencil"></i></button>
                                     <form method="POST" action="/commerce/ca-admin/pages/<?= e($slug) ?>/blocks/<?= (int) $block->id ?>/duplicate" class="m-0" onsubmit="return confirm('Duplicate this block?');">
                                         <?= csrf_field() ?>
@@ -82,7 +93,15 @@
                                     </form>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
+                            <?php
+                            foreach ($block->children as $child) {
+                                $renderBlockRow($child, $slug, $depth + 1);
+                            }
+                        };
+                        foreach ($blocks as $block) {
+                            $renderBlockRow($block, $slug, 0);
+                        }
+                        ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -121,7 +140,12 @@
     </div>
 </div>
 
-<?php foreach ($blocks as $block): ?>
+<?php
+// Recursive template emitter. Every node in the tree (root
+// or child at any depth) gets a tpl-settings-<id> template
+// so the sidebar's edit button can find its config form.
+$emitSettingsTemplate = function ($block, $slug, $categories) use (&$emitSettingsTemplate): void {
+    ?>
     <template id="tpl-settings-<?= (int) $block->id ?>">
         <form class="ra-live-config-form"
               data-block-id="<?= (int) $block->id ?>"
@@ -144,7 +168,15 @@
             ?>
         </form>
     </template>
-<?php endforeach; ?>
+    <?php
+    foreach ($block->children as $child) {
+        $emitSettingsTemplate($child, $slug, $categories);
+    }
+};
+foreach ($blocks as $block) {
+    $emitSettingsTemplate($block, $slug, $categories);
+}
+?>
 
 <div class="modal fade" id="ra-page-settings-modal" tabindex="-1" aria-labelledby="ra-page-settings-label" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -190,6 +222,6 @@
     </div>
 </div>
 
-<?= view_partial('admin/pages/_block-picker', ['slug' => $slug]) ?>
+<?= view_partial('admin/pages/_block-picker', ['slug' => $slug, 'addUnder' => $addUnder ?? null]) ?>
 <?= view_partial('admin/pages/_block-media-picker', ['mediaLibrary' => $mediaLibrary]) ?>
 <script src="<?= versioned_asset('js/page-builder-customizer-v3.js') ?>"></script>

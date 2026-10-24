@@ -185,6 +185,16 @@ final class AdminPageController extends AdminController
         // only appear when there is something to act on.
         $hasDraft = $draftManager->hasDrafts($slug, $themeSlug);
 
+        // When the merchant clicks a Section's "+" button, the
+        // sidebar row links to ?add_under=<section_id>. That
+        // query param opens the block picker with the section
+        // pre-selected as the parent. Null means the picker
+        // adds a root block.
+        $addUnder = $request->query('add_under');
+        $addUnder = is_string($addUnder) && $addUnder !== ''
+            ? (int) $addUnder
+            : null;
+
         // Load (or auto-create) the store_pages metadata row.
         // A legacy block-only page opened for the first time
         // gets a row so the merchant can edit its metadata.
@@ -200,6 +210,7 @@ final class AdminPageController extends AdminController
             'categories'     => $categories,
             'mediaLibrary'   => $mediaLibrary,
             'hasDraft'       => $hasDraft,
+            'addUnder'       => $addUnder,
             'page'           => $page,
         ]);
         $html = $view->render('layouts.customizer', [
