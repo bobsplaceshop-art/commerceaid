@@ -451,6 +451,52 @@ That was written before the category grid controls shipped;
 eight existing types, one new. Corrected here so the plan
 matches reality.
 
+### Amendment — Tier 0 is not complete (2026-10-24)
+
+The audit's tier list under-weighted the document model. It
+put `parent_id`, `children()`, and tree rendering in Tier 1,
+behind three registry/dispatcher tasks. That sequencing was
+wrong.
+
+Sections and containers — the master prompt's Phase 3 — are
+impossible without `parent_id` and a tree traversal. The
+registries (ConfigFieldRegistry, BlockTypeRegistry,
+BlockRenderer) are useful, and they shipped, but they are
+the schema layer. The document model is the frame. Without
+the frame, no amount of schema work makes a Section possible.
+
+**The corrected Tier 0, in build order:**
+
+  0.1  ConfigFieldRegistry      — shipped (Session A)
+  0.2  BlockTypeRegistry        — next
+  0.3  BlockRenderer            — after 0.2
+  0.4  parent_id on blocks + drafts       — migration 0354
+  0.5  children() traversal on PageBlock
+       and DraftManager
+  0.6  DraftPublisher two-pass publish
+       (parents before children)
+  0.7  tree-aware BlockRenderer
+       (Section/Container accept children)
+  0.8  section and container block types
+
+0.1-0.3 were built first because the schema layer is small
+and self-contained. 0.4-0.8 are the document model. Tier 1
+becomes "editor commands and history"; Tier 2 "sections,
+containers, layout"; Tier 3 "drag-into-canvas, responsive
+overrides, migration engine"; Tier 4 "the JSON document";
+Tier 5 "menu/footer builder + Customisations sidebar tab".
+
+The Session A block above is now complete for 0.1. Session B
+opens with 0.2 (BlockTypeRegistry). Session C opens with
+0.4 (parent_id). Section and Container arrive at 0.8, and
+Divider/Spacer become draggable elements at that point —
+they are leaf element types the merchant drops into a
+Section, not block-level controls.
+
+The correction is on the record so that Session C does not
+open with the same plan that produced three registries and
+no tree.
+
 ### Session B — Tier 0.2
 
 - Create `app/Commerce/Support/Blocks/BlockTypeRegistry.php`.
@@ -543,6 +589,51 @@ The document is the reference. The sessions are the
 deliverables.
 
 ---
+
+## 10. Menu/footer builder and Customisations tab
+
+The build closes with three additions that the master prompt
+implies but does not name explicitly:
+
+**Menu builder** — a new admin surface for editing the header
+and footer navigation menus. Each menu is a list of items,
+each item has a label, a URL (internal slug or external),
+an optional parent for one level of nesting, and an order.
+The items render through the same BlockRenderer-style
+dispatch the blocks use, so the header nav and the footer
+nav consume the same data.
+
+  - Tables: `commerce_navigation_menus`,
+    `commerce_navigation_items`.
+  - Admin: `/commerce/ca-admin/customisations/menus`.
+  - Storefront: `sf-header` and `sf-footer` partials read
+    the menus instead of the hardcoded nav list.
+
+**Footer builder** — a configurable footer that uses the
+same widget vocabulary as the page builder. Columns, a
+newsletter block, social links, a copyright line. Not a
+full page builder, but a small set of blocks with the same
+schema/config/render contract.
+
+  - Config: `commerce_store_settings` under a `footer.*`
+    namespace, or its own `commerce_footer_blocks` table
+    if the footer needs the same sort/order/edit path the
+    page blocks do. Decision at Session C.
+
+**Customisations sidebar tab** — one new sidebar group
+collecting Menus, Footer, Theme (font/colour), and Global
+Styles. The group is a UI shell; the underlying features
+ship across Sessions C through I and the tab becomes
+complete when the last of them lands.
+
+**Estimated effort:** three sessions after the document
+model (0.4-0.8). Two for the builder surfaces, one for the
+sidebar tab and the storefront consumer changes.
+
+**Tier assignment:** the menu/footer builder is Tier 3.5.
+The Customisations tab is Tier 5 (closing). Sections,
+containers, and layout are Tier 2. The document model is
+Tier 0.4-0.8.
 
 ## 9. See also
 
