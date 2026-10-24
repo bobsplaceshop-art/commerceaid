@@ -510,20 +510,24 @@ final class AdminPageController extends AdminController
             $required = !empty($meta['required']);
             $raw     = $posted[$name] ?? null;
 
-            // Checkbox absent = unchecked. Everything else:
-            // missing = use the default.
-            if ($type === 'boolean') {
-                $config[$name] = ($raw === '1' || $raw === 'on' || $raw === true);
-                continue;
-            }
+            // Boolean and category_multi_select short-circuit
+            // before the required/empty check. A boolean checkbox
+            // posted unchecked is null; the field must resolve to
+            // false, not the schema default. An empty multi-select
+            // must resolve to [], not the default. Every other
+            // type falls through to the required/empty check.
+            //
+            // The sanitisation operation itself lives in
+            // ConfigFieldRegistry. The two short-circuits stay
+            // here because their ORDER (before the required/empty
+            // check) is the contract. The registry reproduces the
+            // operation, this loop reproduces the order.
+            $definition = \CorporateAid\Commerce\Support\Blocks\ConfigFieldRegistry::get($type);
 
-            // Multi-select posts an array of ids. Empty = show
-            // the default list (top N by product count) — do
-            // not fall through to the scalar default which is
-            // the empty string.
-            if ($type === 'category_multi_select') {
-                $values = is_array($raw) ? $raw : [];
-                $config[$name] = array_values(array_map('intval', $values));
+            if ($type === 'boolean' || $type === 'category_multi_select') {
+                if ($definition !== null) {
+                    $config[$name] = ($definition['sanitize'])($raw, $meta);
+                }
                 continue;
             }
 
@@ -535,11 +539,15 @@ final class AdminPageController extends AdminController
                 continue;
             }
 
-            $config[$name] = match ($type) {
-                'int'   => (int) $raw,
-                'file'  => is_numeric($raw) ? (int) $raw : null,
-                default => trim((string) $raw),
-            };
+            if ($definition !== null) {
+                $config[$name] = ($definition['sanitize'])($raw, $meta);
+                continue;
+            }
+
+            // Unknown type: preserve raw. This should not happen
+            // for a schema-declared field, but the fail-safe
+            // matches the prior default arm.
+            $config[$name] = $raw;
         }
 
         if ($errors !== []) {
