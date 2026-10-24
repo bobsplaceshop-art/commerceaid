@@ -4,42 +4,15 @@
  */
 ?>
 <?php if (!empty($blocks)): ?>
+    <?php
+    $renderer = app(\CorporateAid\Commerce\Services\Builder\BlockRenderer::class);
+    ?>
     <?php foreach ($blocks as $block): ?>
         <?php
-        // Render the block partial
-        $viewData = ['config' => $block->config];
-        
-        // Fetch data needed by specific blocks
-        if ($block->blockType === 'product-grid') {
-            $productRepo = app(\CorporateAid\Commerce\Repositories\ProductRepository::class);
-            $result = $productRepo->paginatePublished([], 1, (int)($block->config['limit'] ?? 4));
-            $viewData['products'] = $result['items'];
-        } elseif ($block->blockType === 'category-grid') {
-            $catRepo = app(\CorporateAid\Commerce\Repositories\CategoryRepository::class);
-            $all = $catRepo->listAll(false);
-
-            // Filter to selected categories when set. Empty
-            // selection means "top N by product count" —
-            // listAll() returns them ordered by sort_order
-            // which is the merchant's manual order and is a
-            // better default than product count.
-            $selectedIds = (array) ($block->config['category_ids'] ?? []);
-            if ($selectedIds !== []) {
-                $selectedIds = array_map('intval', $selectedIds);
-                $all = array_values(array_filter(
-                    $all,
-                    static fn ($c) => in_array((int) $c->id, $selectedIds, true)
-                ));
-            }
-
-            $limit = max(1, min(12, (int) ($block->config['limit'] ?? 5)));
-            $viewData['categories'] = array_slice($all, 0, $limit);
-        }
-        
         if (isset($_GET['customize_preview'])) {
             echo '<div data-block-id="' . (int) $block->id . '" class="ra-preview-block">';
         }
-        echo view_partial('storefront/blocks/' . $block->blockType, $viewData);
+        echo $renderer->render($block);
         if (isset($_GET['customize_preview'])) {
             echo '</div>';
         }

@@ -634,35 +634,17 @@ final class AdminPageController extends AdminController
             $config = array_merge($config, $postedConfig);
         }
 
-        $html = $this->renderBlockPartial($block->blockType, $config);
+        $block->config = $config;
+        $html = $this->renderBlockPartial($block);
 
         return Response::json(['html' => $html]);
     }
 
-    /**
-     * @param array<string,mixed> $config
-     */
-    private function renderBlockPartial(string $type, array $config): string
+    private function renderBlockPartial(PageBlock $block): string
     {
-        $viewData = ['config' => $config];
-
-        // Fetch the data the block needs to render
-        if ($type === 'product-grid') {
-            $productRepo = $this->container->get(ProductRepository::class);
-            // Simplified fetch for preview: 8 newest products
-            $result = $productRepo->paginatePublished([], 1, 8);
-            $viewData['products'] = $result['items'];
-        } elseif ($type === 'category-grid') {
-            $catRepo = $this->container->get(CategoryRepository::class);
-            $viewData['categories'] = $catRepo->listAll(false);
-        }
-
-        // Render the partial into a string
-        try {
-            return view_partial('storefront/blocks/' . $type, $viewData);
-        } catch (\Throwable $e) {
-            return '<div style="padding:2rem;text-align:center;color:red;">Error rendering block: ' . e($e->getMessage()) . '</div>';
-        }
+        return $this->container->get(
+            \CorporateAid\Commerce\Services\Builder\BlockRenderer::class
+        )->render($block);
     }
 
     /**
@@ -771,7 +753,7 @@ final class AdminPageController extends AdminController
         $html .= '</head><body>';
 
         foreach ($blocks as $block) {
-            $html .= $this->renderBlockPartial($block->blockType, $block->config);
+            $html .= $this->renderBlockPartial($block);
         }
 
         $html .= '<script src="/assets/js/preview-bridge.js"></script></body></html>';
