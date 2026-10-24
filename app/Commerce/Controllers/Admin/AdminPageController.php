@@ -517,6 +517,16 @@ final class AdminPageController extends AdminController
                 continue;
             }
 
+            // Multi-select posts an array of ids. Empty = show
+            // the default list (top N by product count) — do
+            // not fall through to the scalar default which is
+            // the empty string.
+            if ($type === 'category_multi_select') {
+                $values = is_array($raw) ? $raw : [];
+                $config[$name] = array_values(array_map('intval', $values));
+                continue;
+            }
+
             if ($raw === null || $raw === '') {
                 if ($required) {
                     $errors[] = ($meta['label'] ?? $name) . ' is required.';

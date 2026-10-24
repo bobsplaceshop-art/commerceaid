@@ -253,6 +253,89 @@ final class BlockConfigRegistry
                 'type'    => 'string',
                 'default' => 'Shop by Category',
             ],
+            'category_ids' => [
+                'label'   => 'Categories',
+                'type'    => 'category_multi_select',
+                'default' => [],
+                'hint'    => 'Leave empty to show the top categories by product count.',
+            ],
+            'limit' => [
+                'label'   => 'Maximum categories',
+                'type'    => 'int',
+                'default' => 5,
+                'hint'    => 'Between 1 and 12.',
+            ],
+            'columns_desktop' => [
+                'label'   => 'Desktop columns',
+                'type'    => 'select',
+                'default' => '5',
+                'options' => [
+                    '3' => '3 columns',
+                    '4' => '4 columns',
+                    '5' => '5 columns',
+                    '6' => '6 columns',
+                ],
+            ],
+            'columns_mobile' => [
+                'label'   => 'Mobile columns',
+                'type'    => 'select',
+                'default' => '2',
+                'options' => [
+                    '1' => '1 column',
+                    '2' => '2 columns',
+                ],
+            ],
+            'alignment' => [
+                'label'   => 'Heading alignment',
+                'type'    => 'select',
+                'default' => 'center',
+                'options' => [
+                    'left'   => 'Left',
+                    'center' => 'Center',
+                    'right'  => 'Right',
+                ],
+            ],
+            'padding_top' => [
+                'label'   => 'Top padding',
+                'type'    => 'select',
+                'default' => 'md',
+                'options' => [
+                    'none' => 'None',
+                    'sm'   => 'Small',
+                    'md'   => 'Medium (default)',
+                    'lg'   => 'Large',
+                    'xl'   => 'Extra large',
+                ],
+            ],
+            'padding_bottom' => [
+                'label'   => 'Bottom padding',
+                'type'    => 'select',
+                'default' => 'md',
+                'options' => [
+                    'none' => 'None',
+                    'sm'   => 'Small',
+                    'md'   => 'Medium (default)',
+                    'lg'   => 'Large',
+                    'xl'   => 'Extra large',
+                ],
+            ],
+            'divider' => [
+                'label'   => 'Show divider',
+                'type'    => 'boolean',
+                'default' => false,
+                'hint'    => 'A thin horizontal line above the section.',
+            ],
+            'spacer_above' => [
+                'label'   => 'Spacer above',
+                'type'    => 'select',
+                'default' => 'none',
+                'options' => [
+                    'none' => 'None',
+                    'sm'   => 'Small (1rem)',
+                    'md'   => 'Medium (2rem)',
+                    'lg'   => 'Large (4rem)',
+                ],
+            ],
         ];
     }
 }

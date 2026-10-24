@@ -84,6 +84,28 @@ $fieldId = 'bc-' . preg_replace('/[^a-z0-9_-]+/i', '-', $name);
             <?php endforeach; ?>
         </select>
 
+    <?php elseif ($type === 'category_multi_select'): ?>
+        <?php
+        // Multiple selection. Value is an array of category ids.
+        // Native <select multiple> is the industry standard at
+        // this scale (tens of categories). No custom JS.
+        $selectedIds = is_array($value)
+            ? array_map('intval', $value)
+            : [];
+        ?>
+        <select id="<?= e($fieldId) ?>"
+                name="<?= e($name) ?>[]"
+                class="form-select"
+                multiple
+                size="8">
+            <?php foreach ($categories as $cat): ?>
+                <option value="<?= (int) $cat->id ?>"
+                    <?= in_array((int) $cat->id, $selectedIds, true) ? 'selected' : '' ?>>
+                    <?= e((string) $cat->name) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+
     <?php elseif ($type === 'file'): ?>
         <?php
         // Hidden file ID + preview + "Choose" button. The

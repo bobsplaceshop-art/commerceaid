@@ -625,24 +625,35 @@ select.sf-filter-input {
 
 .sf-category-grid {
     display: grid;
-    /* The card is an image (4:5 aspect) plus a footer with a
-       category name and a 24px arrow button. Below 165px the
-       footer name column is too narrow for an 18-character
-       name ("Bags & Accessories") to wrap cleanly. 165px is
-       the minimum width at which the card reads without
-       looking cramped.
+    /* Config-driven grid. The block partial sets
+       --sf-cat-cols (desktop, 3-6) and
+       --sf-cat-cols-mobile (1-2) as inline variables on
+       the .sf-category-grid element. The default 5 / 2
+       matches the pre-config layout at desktop widths and
+       the mobile two-column layout at narrow widths.
 
-       With auto-fill, the column count follows the container:
-         320    1 col  ~280px
-         400    2 cols ~170px
-         640    3 cols ~178px
-         900    4 cols ~194px
-         1024   5 cols ~176px
-         1280   6 cols ~182px
-         1360+  7 cols ~168px
-       The card never falls below 165px. */
-    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+       The old rule used auto-fill + minmax(165px, 1fr),
+       which made the column count follow the container
+       width. That was the right answer when every block
+       rendered the same way. It is the wrong answer now
+       that the merchant can pick 3, 4, 5, or 6 columns
+       from the block config.
+
+       minmax(0, 1fr) instead of minmax(165px, 1fr) is
+       deliberate. The column count is config-driven, not
+       container-driven. At 5 columns the container is
+       wide enough; at 6 columns the merchant has chosen
+       a tighter grid and the cards are narrower. If a
+       specific card is too narrow at some viewport, the
+       column count is the merchant's knob, not the CSS. */
+    grid-template-columns: repeat(var(--sf-cat-cols, 5), minmax(0, 1fr));
     gap: 1.25rem;
+}
+
+@media (max-width: 899px) {
+    .sf-category-grid {
+        grid-template-columns: repeat(var(--sf-cat-cols-mobile, 2), minmax(0, 1fr));
+    }
 }
 
 .sf-category-card {
@@ -1656,4 +1667,64 @@ select.sf-filter-input {
 }
 @media (min-width: 768px) {
     .sf-hero-content { padding: 3rem; }
+}
+
+
+/* ------------------------------------------------------------------
+   Home page Category Grid block controls (Stage 023)
+
+   The block partial applies wrapper classes on
+   .sf-category-grid-section. Every rule below is scoped
+   to that wrapper, so the standalone category index page
+   (which uses .sf-category-grid directly, without the
+   section wrapper) is unaffected.
+
+   Alignment, padding, divider, and spacer are applied via
+   wrapper classes. Column count is applied via inline
+   CSS variables on the .sf-category-grid element itself.
+   ------------------------------------------------------------------ */
+
+/* Alignment ---------------------------------------------------- */
+.sf-category-grid-section.sf-cat-align-left .sf-home-section-heading {
+    justify-content: flex-start;
+    text-align: left;
+}
+.sf-category-grid-section.sf-cat-align-left .sf-home-heading-line {
+    display: none;
+}
+
+.sf-category-grid-section.sf-cat-align-right .sf-home-section-heading {
+    justify-content: flex-end;
+    text-align: right;
+}
+.sf-category-grid-section.sf-cat-align-right .sf-home-heading-line {
+    display: none;
+}
+
+/* Padding scale ------------------------------------------------- */
+.sf-category-grid-section.sf-cat-pt-none { padding-top: 0; }
+.sf-category-grid-section.sf-cat-pt-sm   { padding-top: 1rem; }
+.sf-category-grid-section.sf-cat-pt-md   { padding-top: 4rem; }
+.sf-category-grid-section.sf-cat-pt-lg   { padding-top: 6rem; }
+.sf-category-grid-section.sf-cat-pt-xl   { padding-top: 8rem; }
+
+.sf-category-grid-section.sf-cat-pb-none { padding-bottom: 0; }
+.sf-category-grid-section.sf-cat-pb-sm   { padding-bottom: 1rem; }
+.sf-category-grid-section.sf-cat-pb-md   { padding-bottom: 4rem; }
+.sf-category-grid-section.sf-cat-pb-lg   { padding-bottom: 6rem; }
+.sf-category-grid-section.sf-cat-pb-xl   { padding-bottom: 8rem; }
+
+/* Spacer above -------------------------------------------------- */
+.sf-category-grid-section.sf-cat-spacer-sm { margin-top: 1rem; }
+.sf-category-grid-section.sf-cat-spacer-md { margin-top: 2rem; }
+.sf-category-grid-section.sf-cat-spacer-lg { margin-top: 4rem; }
+
+/* Divider ------------------------------------------------------- */
+.sf-category-grid-section.sf-cat-has-divider::before {
+    content: '';
+    display: block;
+    width: min(1200px, calc(100% - 4rem));
+    height: 1px;
+    margin: 0 auto 2rem;
+    background: var(--sf-border, #e5e0d5);
 }
