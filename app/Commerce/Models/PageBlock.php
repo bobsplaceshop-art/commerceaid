@@ -49,6 +49,7 @@ final class PageBlock
     public int $id = 0;
     public int $storeId = 0;
     public string $pageSlug = 'home';
+    public ?int $parentId = null;
     public string $blockType = '';
     public int $sortOrder = 0;
     /** @var array<string,mixed> */
@@ -56,6 +57,15 @@ final class PageBlock
     public bool $isEnabled = true;
     public ?string $createdAt = null;
     public ?string $updatedAt = null;
+    /**
+     * Direct children, populated by DraftManager::getMergedTree()
+     * for block types that accept children (Section, Container).
+     * Empty for leaf blocks (Hero, Category Grid, Divider, etc.)
+     * and for any block whose tree has not yet been built.
+     *
+     * @var array<int, PageBlock>
+     */
+    public array $children = [];
 
     /** @param array<string,mixed> $row */
     public static function fromRow(array $row): self
@@ -64,6 +74,9 @@ final class PageBlock
         $b->id        = (int) $row['id'];
         $b->storeId   = (int) $row['store_id'];
         $b->pageSlug  = (string) $row['page_slug'];
+        $b->parentId  = isset($row['parent_id']) && $row['parent_id'] !== null
+            ? (int) $row['parent_id']
+            : null;
         $b->blockType = (string) $row['block_type'];
         $b->sortOrder = (int) $row['sort_order'];
 
