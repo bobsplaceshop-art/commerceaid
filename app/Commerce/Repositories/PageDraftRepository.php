@@ -189,6 +189,89 @@ final class PageDraftRepository extends CommerceRepository
     }
 
     /**
+     * Save a tree (parent-child relationships + order) in one pass.
+     *
+     * Accepts a flat map of id => {parent_id, sort_order} per node.
+     * The tree walker on the client has already flattened its
+     * roots/children structure into this map with the correct
+     * parent_id and sort_order values.
+     *
+     * Negative IDs are pending_add drafts. The UPDATE targets
+     * `commerce_page_drafts` by `id` and also sets `parent_id`.
+     * Positive IDs are published blocks: a pending_update draft
+     * row is created (or updated) with both `parent_id` and
+     * `sort_order`.
+     *
+     * Parent IDs stored as-is (negative for pending_add parents,
+     * positive for published parents). DraftPublisher resolves
+     * negative parents in two passes at publish time.
+     *
+     * @param array<int,array{parent_id:int,sort_order:int}> $nodes
+     */
+    public function saveTree(string $pageSlug, string $themeSlug, array $nodes): void
+    {
+        foreach ($nodes as $id => $row) {
+            $parentId   = (int) ($row['parent_id'] ?? 0);
+            $sortOrder  = (int) ($row['sort_order'] ?? 1);
+
+            if ($id < 0) {
+                // pending_add: update the draft row by primary id.
+                $this->db->execute(
+                    "UPDATE `commerce_page_drafts`
+                        SET `parent_id` = ?, `sort_order` = ?
+                      WHERE `store_id` = ? AND `id` = ? AND `status` = 'pending_add'",
+                    [
+                        $parentId === 0 ? null : $parentId,
+                        $sortOrder,
+                        $this->storeId(),
+                        abs($id),
+                    ]
+                );
+            } else {
+                // published: upsert a pending_update draft row.
+                $exists = $this->db->scalar(
+                    "SELECT COUNT(*) FROM `commerce_page_drafts`
+                      WHERE `store_id` = ? AND `page_slug` = ? AND `theme_slug` = ?
+                        AND `block_id` = ? AND `status` = 'pending_update'",
+                    [$this->storeId(), $pageSlug, $themeSlug, $id]
+                );
+
+                if ((int) $exists > 0) {
+                    $this->db->execute(
+                        "UPDATE `commerce_page_drafts`
+                            SET `parent_id` = ?, `sort_order` = ?
+                          WHERE `store_id` = ? AND `page_slug` = ? AND `theme_slug` = ?
+                            AND `block_id` = ? AND `status` = 'pending_update'",
+                        [
+                            $parentId === 0 ? null : $parentId,
+                            $sortOrder,
+                            $this->storeId(),
+                            $pageSlug,
+                            $themeSlug,
+                            $id,
+                        ]
+                    );
+                } else {
+                    $this->db->execute(
+                        "INSERT INTO `commerce_page_drafts`
+                            (`store_id`, `theme_slug`, `page_slug`, `block_id`,
+                             `parent_id`, `block_type`, `sort_order`, `config_json`, `status`)
+                         VALUES (?, ?, ?, ?, ?, 'unknown', ?, '{}', 'pending_update')",
+                        [
+                            $this->storeId(),
+                            $themeSlug,
+                            $pageSlug,
+                            $id,
+                            $parentId === 0 ? null : $parentId,
+                            $sortOrder,
+                        ]
+                    );
+                }
+            }
+        }
+    }
+
+    /**
      * Remove a pending addition draft row (for when the merchant
      * deletes a block that was only just added).
      */

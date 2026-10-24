@@ -394,6 +394,32 @@ final class AdminPageController extends AdminController
             return Response::json(['ok' => false, 'error' => 'Missing page slug.'], 400);
         }
 
+        // Phase 3: accept a tree (map of id => {parent_id, sort_order})
+        // from the client. The tree includes parent-child relationships
+        // and per-node sort_order. When present, saveTree() writes
+        // both parent_id and sort_order.
+        $tree = $request->input('tree');
+        if (is_array($tree) && $tree !== []) {
+            $cleanTree = [];
+            foreach ($tree as $id => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $cleanTree[(int) $id] = [
+                    'parent_id'  => (int) ($row['parent_id']  ?? 0),
+                    'sort_order' => (int) ($row['sort_order'] ?? 1),
+                ];
+            }
+            if ($cleanTree === []) {
+                return Response::json(['ok' => false, 'error' => 'Empty tree.'], 400);
+            }
+            $draftRepo = $this->container->get(PageDraftRepository::class);
+            $draftRepo->saveTree($slug, $this->activeThemeSlug(), $cleanTree);
+            return Response::json(['ok' => true, 'count' => count($cleanTree)]);
+        }
+
+        // Fall back to the legacy flat `ids` payload. Preserved for
+        // backward compatibility with older page-builder JS.
         $ids = $request->input('ids', []);
         if (!is_array($ids) || $ids === []) {
             return Response::json(['ok' => false, 'error' => 'No block ids provided.'], 400);
