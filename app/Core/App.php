@@ -168,6 +168,22 @@ final class App
     {
         $c = $this->container;
 
+        // Self-binding: any class that takes Container in its
+        // constructor receives THIS container, not a fresh one.
+        // Without it, $container->get(SomeClassTakingContainer::class)
+        // calls build(), reflects on the constructor, calls
+        // get(Container::class), which was not registered — which
+        // built a fresh empty Container with no bindings. Any
+        // subsequent $this->container->get(X) in the resolved
+        // class threw "cannot auto-construct" for any X that
+        // needs captured configuration (Database, EmailService).
+        //
+        // The bug is latent in the web app because Router::invoke
+        // uses new $class($this->container) rather than get($class).
+        // It surfaced in the smoke harness, which resolves
+        // AdminPageController through get().
+        $c->instance(Container::class, $c);
+
         $c->singleton(Database::class, fn() => new Database((array) $c->get('config')->get('database', [])));
         $c->singleton(View::class,     fn() => new View(
             $this->basePath . '/resources/views',
