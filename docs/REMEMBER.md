@@ -3052,3 +3052,50 @@ expected to know every provider-specific pairing.
 
 ---
 
+
+### Pattern 45 - Never propose patches or predict code before the read
+
+**Problem:** The developer writes a Python patch script
+based on what they *remember* the code looked like, or what
+they *expect* it to look like based on a prior read, without
+actually reading the current bytes of the file they are
+about to modify.
+
+The script runs. The `old` anchor in the `replace()` call
+does not match the current bytes because the file was
+modified in the interim, or because the developer's memory
+of the whitespace was slightly off. The script aborts
+(missing the change), or worse, succeeds but patches the
+wrong part of the file because the anchor matched something
+unintended.
+
+**The tell:** A patch script is proposed with an "assuming
+the current method is X" preamble. The output shows an
+`ABORT` or a `OK` followed by PHPStan complaining about an
+arity mismatch on a method the patch was not supposed to
+touch.
+
+**The rule:** The "read before patch" discipline (Pattern
+1, Pattern 23) is absolute. No code is proposed, no patch
+script is written, and no structure is predicted until the
+`cat -A` or `sed -n` output for the exact target file is
+present in the current context.
+
+This applies even when the file was read five turns ago.
+Context windows shift. Commits happen. The file on disk at
+the moment of patching is the only source of truth.
+
+If the developer needs to see the shape of a method to
+write the patch, they ask for the read. They do not write
+"the patch will look like this" and wait for the read to
+arrive.
+
+**Where we hit it:** During Stage 023, Tier 0.7 (Block
+Renderer recursion). The agent proposed a patch modifying
+`HomeController` and `AdminPageController` based on a
+memory of their structure, rather than waiting for the
+`sed` output of the current bytes. The fix required
+multiple back-and-forth corrections.
+
+**Related:** Pattern 1 (silent Python patch failures),
+Pattern 23 (cascade check before every patch).
