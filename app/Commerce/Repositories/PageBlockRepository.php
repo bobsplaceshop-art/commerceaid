@@ -54,6 +54,54 @@ final class PageBlockRepository extends CommerceRepository
     }
 
     /**
+     * Every root block on the page (parent_id IS NULL), ordered
+     * by sort_order. The children are not loaded; use
+     * listChildren() to fetch a specific parent's direct
+     * children. The recursive tree walker is
+     * DraftManager::getMergedTree().
+     *
+     * @return array<int, PageBlock>
+     */
+    public function listRoots(string $pageSlug, bool $enabledOnly = false): array
+    {
+        $sql = "SELECT * FROM `commerce_page_blocks`
+                WHERE `store_id` = ? AND `page_slug` = ? AND `parent_id` IS NULL";
+        $params = [$this->storeId(), $pageSlug];
+
+        if ($enabledOnly) {
+            $sql .= " AND `is_enabled` = 1";
+        }
+
+        $sql .= " ORDER BY `sort_order` ASC, `id` ASC";
+
+        $rows = $this->db->select($sql, $params);
+        return array_map([PageBlock::class, 'fromRow'], $rows);
+    }
+
+    /**
+     * Direct children of one parent block, ordered by
+     * sort_order. Does not recurse; grandchildren live under
+     * their own parent's id.
+     *
+     * @return array<int, PageBlock>
+     */
+    public function listChildren(int $parentId, bool $enabledOnly = false): array
+    {
+        $sql = "SELECT * FROM `commerce_page_blocks`
+                WHERE `store_id` = ? AND `parent_id` = ?";
+        $params = [$this->storeId(), $parentId];
+
+        if ($enabledOnly) {
+            $sql .= " AND `is_enabled` = 1";
+        }
+
+        $sql .= " ORDER BY `sort_order` ASC, `id` ASC";
+
+        $rows = $this->db->select($sql, $params);
+        return array_map([PageBlock::class, 'fromRow'], $rows);
+    }
+
+    /**
      * Distinct page slugs in use at this store, for the admin
      * page-list view.
      *
@@ -96,20 +144,22 @@ final class PageBlockRepository extends CommerceRepository
         string $pageSlug,
         string $blockType,
         array $config,
-        int $sortOrder = 0
+        int $sortOrder = 0,
+        ?int $parentId = null
     ): int {
         if ($sortOrder <= 0) {
-            $sortOrder = $this->nextSortOrder($pageSlug);
+            $sortOrder = $this->nextSortOrder($pageSlug, $parentId);
         }
 
         return $this->db->insert(
             "INSERT INTO `commerce_page_blocks`
-                (`store_id`, `page_slug`, `block_type`,
+                (`store_id`, `page_slug`, `parent_id`, `block_type`,
                  `sort_order`, `config_json`, `is_enabled`)
-             VALUES (?, ?, ?, ?, ?, 1)",
+             VALUES (?, ?, ?, ?, ?, ?, 1)",
             [
                 $this->storeId(),
                 $pageSlug,
+                $parentId,
                 $blockType,
                 $sortOrder,
                 json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
@@ -135,8 +185,39 @@ final class PageBlockRepository extends CommerceRepository
      *
      * @param array<string,mixed> $config
      */
-    public function update(int $id, array $config, ?int $sortOrder = null): void
+    public function update(int $id, array $config, ?int $sortOrder = null, ?int $parentId = null): void
     {
+        if ($parentId !== null) {
+            if ($sortOrder !== null) {
+                $this->db->execute(
+                    "UPDATE `commerce_page_blocks`
+                     SET `config_json` = ?, `sort_order` = ?, `parent_id` = ?
+                     WHERE `store_id` = ? AND `id` = ?",
+                    [
+                        json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                        $sortOrder,
+                        $parentId,
+                        $this->storeId(),
+                        $id,
+                    ]
+                );
+                return;
+            }
+
+            $this->db->execute(
+                "UPDATE `commerce_page_blocks`
+                 SET `config_json` = ?, `parent_id` = ?
+                 WHERE `store_id` = ? AND `id` = ?",
+                [
+                    json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                    $parentId,
+                    $this->storeId(),
+                    $id,
+                ]
+            );
+            return;
+        }
+
         if ($sortOrder !== null) {
             $this->db->execute(
                 "UPDATE `commerce_page_blocks`
@@ -215,14 +296,23 @@ final class PageBlockRepository extends CommerceRepository
      * The next free sort_order on a page. Used by create()
      * to append a block to the end.
      */
-    public function nextSortOrder(string $pageSlug): int
+    public function nextSortOrder(string $pageSlug, ?int $parentId = null): int
     {
-        $max = $this->db->scalar(
-            "SELECT COALESCE(MAX(`sort_order`), 0) + 1
-             FROM `commerce_page_blocks`
-             WHERE `store_id` = ? AND `page_slug` = ?",
-            [$this->storeId(), $pageSlug]
-        );
+        if ($parentId === null) {
+            $max = $this->db->scalar(
+                "SELECT COALESCE(MAX(`sort_order`), 0) + 1
+                 FROM `commerce_page_blocks`
+                 WHERE `store_id` = ? AND `page_slug` = ? AND `parent_id` IS NULL",
+                [$this->storeId(), $pageSlug]
+            );
+        } else {
+            $max = $this->db->scalar(
+                "SELECT COALESCE(MAX(`sort_order`), 0) + 1
+                 FROM `commerce_page_blocks`
+                 WHERE `store_id` = ? AND `page_slug` = ? AND `parent_id` = ?",
+                [$this->storeId(), $pageSlug, $parentId]
+            );
+        }
         return $max !== false && $max !== null ? (int) $max : 1;
     }
 

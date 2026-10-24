@@ -74,7 +74,7 @@ final class PageBlock
         $b->id        = (int) $row['id'];
         $b->storeId   = (int) $row['store_id'];
         $b->pageSlug  = (string) $row['page_slug'];
-        $b->parentId  = isset($row['parent_id']) && $row['parent_id'] !== null
+        $b->parentId  = isset($row['parent_id'])
             ? (int) $row['parent_id']
             : null;
         $b->blockType = (string) $row['block_type'];
