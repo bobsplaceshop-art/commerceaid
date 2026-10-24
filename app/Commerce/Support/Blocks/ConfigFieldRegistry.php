@@ -183,16 +183,39 @@ final class ConfigFieldRegistry
                     $selectedIds = is_array($c['value'])
                         ? array_map('intval', $c['value'])
                         : [];
-                    $html = '<select id="' . e($c['fieldId']) . '"'
-                        . ' name="' . e($c['name']) . '[]"'
-                        . ' class="form-select"'
-                        . ' multiple size="8">';
-                    foreach ($c['categories'] as $cat) {
-                        $sel = in_array((int) $cat->id, $selectedIds, true) ? ' selected' : '';
-                        $html .= '<option value="' . (int) $cat->id . '"' . $sel . '>'
-                            . e((string) $cat->name) . '</option>';
+
+                    // Checkbox list rather than native <select multiple>.
+                    // Easier to use, and consistent with how the
+                    // product editor's category picker works. Name
+                    // attribute is name[] so POST delivers an array
+                    // of checked ids — the sanitize closure below
+                    // expects exactly that shape.
+                    $html = '<div id="' . e($c['fieldId']) . '"'
+                        . ' style="max-height:240px; overflow-y:auto;'
+                        . ' border:1px solid var(--ra-border,#2d3748);'
+                        . ' border-radius:6px; padding:.5rem .75rem;'
+                        . ' background:var(--ra-surface-1,#0f172a);">';
+                    if ($c['categories'] === []) {
+                        $html .= '<div class="text-muted small">'
+                            . 'No categories yet.</div>';
                     }
-                    return $html . '</select>';
+                    foreach ($c['categories'] as $cat) {
+                        $id = (int) $cat->id;
+                        $checked = in_array($id, $selectedIds, true) ? ' checked' : '';
+                        $html .= '<div class="form-check" style="margin-bottom:.15rem;">'
+                            . '<input type="checkbox"'
+                            . ' class="form-check-input"'
+                            . ' id="' . e($c['fieldId']) . '-' . $id . '"'
+                            . ' name="' . e($c['name']) . '[]"'
+                            . ' value="' . $id . '"' . $checked . '>'
+                            . '<label class="form-check-label"'
+                            . ' for="' . e($c['fieldId']) . '-' . $id . '"'
+                            . ' style="cursor:pointer;">'
+                            . e((string) $cat->name)
+                            . '</label>'
+                            . '</div>';
+                    }
+                    return $html . '</div>';
                 },
                 'sanitize' => static function (mixed $raw, array $meta): mixed {
                     $values = is_array($raw) ? $raw : [];
