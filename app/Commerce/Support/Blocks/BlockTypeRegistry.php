@@ -137,6 +137,22 @@ final class BlockTypeRegistry
                 'accepts_children' => false,
                 'partial'          => 'storefront/blocks/spacer',
             ],
+            'section' => [
+                'label'            => 'Section',
+                'icon'             => 'bi-layout-three-columns',
+                'hint'             => 'A full-width container. Drop elements inside it to build a layout.',
+                'group'            => 'structural',
+                'accepts_children' => true,
+                'partial'          => 'storefront/blocks/section',
+            ],
+            'container' => [
+                'label'            => 'Container',
+                'icon'             => 'bi-box',
+                'hint'             => 'A nested wrapper. Use inside a Section to group related elements.',
+                'group'            => 'structural',
+                'accepts_children' => true,
+                'partial'          => 'storefront/blocks/container',
+            ],
         ];
 
         return $types;

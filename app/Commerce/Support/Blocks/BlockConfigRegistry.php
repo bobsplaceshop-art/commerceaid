@@ -34,8 +34,36 @@ final class BlockConfigRegistry
             'newsletter'    => self::newsletter(),
             'promo-panel'   => self::promoPanel(),
             'spacer'        => self::spacer(),
+            'section'       => self::section(),
+            'container'     => self::container(),
             default         => [],
         };
+    }
+
+    /**
+     * Section has no per-instance config yet. It is a
+     * structural wrapper; its only state is parent/child
+     * relationships, which live in the row, not the config.
+     * Config fields (padding, background, container width)
+     * ship in a later sub-stage once the layout engine
+     * needs them.
+     *
+     * @return array<string, array<string,mixed>>
+     */
+    private static function section(): array
+    {
+        return [];
+    }
+
+    /**
+     * Container, like Section, is structural. No per-instance
+     * config yet.
+     *
+     * @return array<string, array<string,mixed>>
+     */
+    private static function container(): array
+    {
+        return [];
     }
 
     /**
