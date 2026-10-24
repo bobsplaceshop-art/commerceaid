@@ -252,12 +252,7 @@ final class AdminPageController extends AdminController
             return Response::redirect('/commerce/ca-admin/pages');
         }
 
-        $allowedTypes = [
-            'hero', 'product-grid', 'category-grid',
-            'promo-panel', 'banner', 'rich-text', 'newsletter',
-            'spacer',
-        ];
-        if (!in_array($type, $allowedTypes, true)) {
+        if (!\CorporateAid\Commerce\Support\Blocks\BlockTypeRegistry::has($type)) {
             $session->flash('error', 'Unknown block type.');
             return Response::redirect('/commerce/ca-admin/pages/' . $slug);
         }

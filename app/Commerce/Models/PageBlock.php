@@ -96,15 +96,9 @@ final class PageBlock
      */
     public function typeLabel(): string
     {
-        $labels = [
-            'hero'          => 'Hero',
-            'product-grid'  => 'Product Grid',
-            'category-grid' => 'Category Grid',
-            'promo-panel'   => 'Promo Panel',
-            'banner'        => 'Banner',
-            'rich-text'     => 'Rich Text',
-            'newsletter'    => 'Newsletter',
-        ];
-        return $labels[$this->blockType] ?? ucfirst(str_replace('-', ' ', $this->blockType));
+        if (!\CorporateAid\Commerce\Support\Blocks\BlockTypeRegistry::has($this->blockType)) {
+            return 'Unknown (' . $this->blockType . ')';
+        }
+        return \CorporateAid\Commerce\Support\Blocks\BlockTypeRegistry::label($this->blockType);
     }
 }

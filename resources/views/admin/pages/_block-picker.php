@@ -6,16 +6,7 @@
  *
  * @var string $slug
  */
-$types = [
-    'hero'          => ['label' => 'Hero',          'icon' => 'bi-image',        'hint' => 'A big banner with headline and CTA.'],
-    'product-grid'  => ['label' => 'Product Grid',  'icon' => 'bi-grid-3x3-gap', 'hint' => 'A row of products (new arrivals, best sellers, category).'],
-    'category-grid' => ['label' => 'Category Grid', 'icon' => 'bi-grid',         'hint' => 'The "Shop by Category" row.'],
-    'promo-panel'   => ['label' => 'Promo Panel',   'icon' => 'bi-tag',          'hint' => 'A single promotional tile with image and CTA.'],
-    'banner'        => ['label' => 'Banner',        'icon' => 'bi-rectangle-wide','hint' => 'A full-width banner with text overlay.'],
-    'rich-text'     => ['label' => 'Rich Text',     'icon' => 'bi-text-paragraph','hint' => 'A block of copy (headings, paragraphs, links).'],
-    'newsletter'    => ['label' => 'Newsletter',    'icon' => 'bi-envelope',     'hint' => 'A subscribe form.'],
-    'spacer'        => ['label' => 'Spacer',        'icon' => 'bi-arrows-expand', 'hint' => 'Empty vertical space. Useful between two similar blocks.'],
-];
+$types = \CorporateAid\Commerce\Support\Blocks\BlockTypeRegistry::all();
 ?>
 <div class="modal fade" id="ra-block-picker-modal" tabindex="-1" aria-labelledby="ra-block-picker-label" aria-hidden="true">
     <div class="modal-dialog modal-lg">
