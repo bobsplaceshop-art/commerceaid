@@ -101,6 +101,45 @@ final class ReportRepository
     }
 
     /**
+     * Best-selling products for the storefront.
+     * Returns full Product models, scoped by category.
+     *
+     * @return array<int, \CorporateAid\Commerce\Models\Product>
+     */
+    public function listBestSellers(?int $categoryId, int $limit): array
+    {
+        $sql = "SELECT p.*,
+                       SUM(oi.`quantity`) AS units_sold
+                FROM `commerce_products` p
+                JOIN `commerce_order_items` oi ON oi.`product_id` = p.`id`
+                JOIN `commerce_orders` o ON o.`id` = oi.`order_id`
+                WHERE p.`store_id` = ?
+                  AND p.`status` = 'published'
+                  AND p.`deleted_at` IS NULL
+                  AND o.`paid_at` IS NOT NULL
+                  AND o.`status` NOT IN ('cancelled', 'failed')";
+
+        $params = [$this->storeId()];
+
+        if ($categoryId !== null && $categoryId > 0) {
+            $sql .= " AND EXISTS (
+                        SELECT 1 FROM `commerce_product_categories` pc
+                        WHERE pc.`product_id` = p.`id`
+                          AND pc.`category_id` = ?
+                      )";
+            $params[] = $categoryId;
+        }
+
+        $sql .= " GROUP BY p.`id`
+                  ORDER BY units_sold DESC, p.`id` DESC
+                  LIMIT ?";
+        $params[] = $limit;
+
+        $rows = $this->db->select($sql, $params);
+        return array_map(fn($r) => \CorporateAid\Commerce\Models\Product::fromRow($r), $rows);
+    }
+
+    /**
      * Revenue split by category. A product can belong to multiple
      * categories; we use the primary category (via the
      * commerce_product_categories pivot).

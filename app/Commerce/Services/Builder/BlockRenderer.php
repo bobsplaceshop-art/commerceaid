@@ -49,6 +49,7 @@ final class BlockRenderer
         private View $view,
         private ProductRepository $products,
         private CategoryRepository $categories,
+        private \CorporateAid\Commerce\Repositories\ReportRepository $reports,
     ) {}
 
     public function render(PageBlock $block): string
@@ -113,22 +114,33 @@ final class BlockRenderer
 
         if ($block->blockType === 'product-grid') {
             $limit = max(1, (int) ($block->config['limit'] ?? 4));
-            $filters = [
-                'sort' => $block->config['source'] ?? 'newest',
-            ];
+            $source = $block->config['source'] ?? 'newest';
 
+            $categoryId = null;
             if (!empty($block->config['category_slug'])) {
                 $cat = $this->categories->findBySlug((string) $block->config['category_slug']);
                 if ($cat !== null) {
-                    $filters['category_id'] = (int) $cat->id;
+                    $categoryId = (int) $cat->id;
                 } else {
                     // Slug doesn't exist (deleted). Force empty result.
-                    $filters['category_id'] = -1;
+                    $categoryId = -1;
                 }
             }
 
-            $result = $this->products->paginatePublished($filters, 1, $limit);
-            $viewData['products'] = $result['items'];
+            if ($source === 'best_sellers') {
+                if ($categoryId === -1) {
+                    $viewData['products'] = [];
+                } else {
+                    $viewData['products'] = $this->reports->listBestSellers($categoryId, $limit);
+                }
+            } else {
+                $filters = ['sort' => $source];
+                if ($categoryId !== null) {
+                    $filters['category_id'] = $categoryId;
+                }
+                $result = $this->products->paginatePublished($filters, 1, $limit);
+                $viewData['products'] = $result['items'];
+            }
         } elseif ($block->blockType === 'category-grid') {
             $all = $this->categories->listAll(false);
 
