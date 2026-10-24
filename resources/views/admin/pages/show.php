@@ -75,7 +75,7 @@
                             $isChild      = $depth > 0;
                             $isStructural = \CorporateAid\Commerce\Support\Blocks\BlockTypeRegistry::acceptsChildren($block->blockType);
                             ?>
-                            <div class="ra-customizer-block<?= $isChild ? ' ra-customizer-block--child' : '' ?>" data-block-id="<?= (int) $block->id ?>" draggable="true">
+                            <div class="ra-customizer-block<?= $isChild ? ' ra-customizer-block--child' : '' ?>" data-block-id="<?= (int) $block->id ?>" data-parent-id="<?= (int) ($block->parentId ?? 0) ?>" draggable="true">
                                 <i class="bi bi-grip-vertical drag-handle"></i>
                                 <span class="fw-bold ms-2"><?= e($block->typeLabel()) ?></span>
                                 <div class="ms-auto d-flex gap-1">

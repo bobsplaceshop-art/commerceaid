@@ -179,6 +179,46 @@
     var list = document.getElementById('ra-blocks-list');
     var dragged = null;
 
+    // ============================================================
+    // Phase 1: Client-side tree. Built once on load from the DOM
+    // rows. Every row carries data-block-id and data-parent-id.
+    // The tree is the source of truth for phases 2-5; the DOM is a
+    // rendering of the tree, not the other way around.
+    // ============================================================
+    function buildTree() {
+        if (!list) return { byId: {}, roots: [] };
+        var rows = list.querySelectorAll('.ra-customizer-block');
+        var byId = {};
+        var roots = [];
+
+        rows.forEach(function (row) {
+            var id       = parseInt(row.getAttribute('data-block-id'), 10);
+            var parentId = parseInt(row.getAttribute('data-parent-id'), 10) || 0;
+            byId[id] = {
+                id: id,
+                parentId: parentId,
+                children: []
+            };
+        });
+
+        rows.forEach(function (row) {
+            var id       = parseInt(row.getAttribute('data-block-id'), 10);
+            var parentId = parseInt(row.getAttribute('data-parent-id'), 10) || 0;
+            if (parentId === 0) {
+                roots.push(byId[id]);
+            } else if (byId[parentId]) {
+                byId[parentId].children.push(byId[id]);
+            }
+        });
+
+        return { byId: byId, roots: roots };
+    }
+
+    if (list) {
+        window.__builderTree = buildTree();
+        console.log('[customizer] tree built:', window.__builderTree);
+    }
+
     if (list) {
         list.querySelectorAll('.ra-customizer-block').forEach(function (tile) {
             tile.addEventListener('dragstart', function (e) {
