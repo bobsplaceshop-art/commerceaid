@@ -64,6 +64,30 @@ final class BlockRenderer
         $partial  = BlockTypeRegistry::partial($block->blockType);
         $viewData = $this->prepareViewData($block);
 
+        // Requirement: "It can be set but does not appear if
+        // products to be displayed is zero." A block that
+        // produced no data on the live storefront collapses
+        // entirely. The admin preview (?customize_preview=1)
+        // still renders the wrapper so the merchant sees
+        // what they configured.
+        //
+        // This is the single dispatch rule for the whole
+        // builder. Every block type that exposes a data
+        // array (products, categories) gets the same
+        // collapse-on-empty behavior without any
+        // per-partial code.
+        $isPreview = isset($_GET['customize_preview']);
+        if (!$isPreview) {
+            foreach (['products', 'categories'] as $dataKey) {
+                if (array_key_exists($dataKey, $viewData)
+                    && is_array($viewData[$dataKey])
+                    && $viewData[$dataKey] === []
+                ) {
+                    return '';
+                }
+            }
+        }
+
         // Tree-aware render. Child-capable block types (Section,
         // Container — added in Tier 0.8) receive the rendered
         // HTML of their children in $viewData['children_html'].
