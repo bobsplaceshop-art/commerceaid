@@ -1,0 +1,123 @@
+{
+    "hero": {
+        "pass_1": {
+            "cta_url": "shaper-cta_url",
+            "cta_text": "shaper-cta_text",
+            "headline": "shaper-headline",
+            "subheadline": "shaper-subheadline",
+            "image_file_id": 99
+        },
+        "pass_2": {
+            "cta_url": "shaper-cta_url",
+            "cta_text": "shaper-cta_text",
+            "headline": "shaper-headline",
+            "subheadline": "shaper-subheadline",
+            "image_file_id": null
+        }
+    },
+    "product-grid": {
+        "pass_1": {
+            "limit": 42,
+            "title": "shaper-title",
+            "source": "newest",
+            "columns": 42,
+            "category_slug": "children",
+            "show_view_all": true
+        },
+        "pass_2": {
+            "limit": 42,
+            "title": "shaper-title",
+            "source": "newest",
+            "columns": 42,
+            "category_slug": "children",
+            "show_view_all": false
+        }
+    },
+    "category-grid": {
+        "pass_1": {
+            "limit": 42,
+            "title": "shaper-title",
+            "divider": true,
+            "alignment": "left",
+            "padding_top": "none",
+            "category_ids": [
+                1,
+                2
+            ],
+            "spacer_above": "none",
+            "columns_mobile": "1",
+            "padding_bottom": "none",
+            "columns_desktop": "3"
+        },
+        "pass_2": {
+            "limit": 42,
+            "title": "shaper-title",
+            "divider": false,
+            "alignment": "left",
+            "padding_top": "none",
+            "category_ids": [],
+            "spacer_above": "none",
+            "columns_mobile": "1",
+            "padding_bottom": "none",
+            "columns_desktop": "3"
+        }
+    },
+    "banner": {
+        "pass_1": {
+            "cta_url": "shaper-cta_url",
+            "cta_text": "shaper-cta_text",
+            "headline": "shaper-headline",
+            "subheadline": "shaper-subheadline",
+            "image_file_id": 99
+        },
+        "pass_2": {
+            "cta_url": "shaper-cta_url",
+            "cta_text": "shaper-cta_text",
+            "headline": "shaper-headline",
+            "subheadline": "shaper-subheadline",
+            "image_file_id": null
+        }
+    },
+    "rich-text": {
+        "pass_1": {
+            "content": "shaper-content"
+        },
+        "pass_2": {
+            "content": "shaper-content"
+        }
+    },
+    "newsletter": {
+        "pass_1": {
+            "headline": "shaper-headline",
+            "button_text": "shaper-button_text",
+            "subheadline": "shaper-subheadline"
+        },
+        "pass_2": {
+            "headline": "shaper-headline",
+            "button_text": "shaper-button_text",
+            "subheadline": "shaper-subheadline"
+        }
+    },
+    "promo-panel": {
+        "pass_1": {
+            "title": "shaper-title",
+            "cta_url": "shaper-cta_url",
+            "cta_text": "shaper-cta_text",
+            "image_file_id": 99
+        },
+        "pass_2": {
+            "title": "shaper-title",
+            "cta_url": "shaper-cta_url",
+            "cta_text": "shaper-cta_text",
+            "image_file_id": null
+        }
+    },
+    "spacer": {
+        "pass_1": {
+            "height": 42
+        },
+        "pass_2": {
+            "height": 42
+        }
+    }
+}
