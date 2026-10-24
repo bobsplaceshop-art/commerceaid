@@ -6,6 +6,7 @@ namespace CorporateAid\Commerce\Controllers\Admin;
 use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\Session;
+use CorporateAid\Commerce\Models\PageBlock;
 use CorporateAid\Commerce\Repositories\PageBlockRepository;
 use CorporateAid\Commerce\Repositories\PageDraftRepository;
 use CorporateAid\Commerce\Repositories\StorePageRepository;
