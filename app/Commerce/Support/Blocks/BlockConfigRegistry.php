@@ -302,7 +302,21 @@ final class BlockConfigRegistry
                     '4' => '4 columns',
                     '5' => '5 columns',
                     '6' => '6 columns',
+                    '7' => '7 columns',
+                    '8' => '8 columns',
                 ],
+            ],
+            'grid_alignment' => [
+                'label'   => 'Grid item alignment',
+                'type'    => 'select',
+                'default' => 'justify',
+                'options' => [
+                    'left'    => 'Left',
+                    'center'  => 'Center',
+                    'right'   => 'Right',
+                    'justify' => 'Justified (spread)',
+                ],
+                'hint'    => 'Left / Center / Right cluster the cards when there are fewer items than columns. Justified spreads them to fill the row.',
             ],
             'columns_mobile' => [
                 'label'   => 'Mobile columns',

@@ -626,28 +626,62 @@ select.sf-filter-input {
 .sf-category-grid {
     display: grid;
     /* Config-driven grid. The block partial sets
-       --sf-cat-cols (desktop, 3-6) and
+       --sf-cat-cols (desktop, 3-8) and
        --sf-cat-cols-mobile (1-2) as inline variables on
        the .sf-category-grid element. The default 5 / 2
        matches the pre-config layout at desktop widths and
        the mobile two-column layout at narrow widths.
 
-       The old rule used auto-fill + minmax(165px, 1fr),
-       which made the column count follow the container
-       width. That was the right answer when every block
-       rendered the same way. It is the wrong answer now
-       that the merchant can pick 3, 4, 5, or 6 columns
-       from the block config.
+       auto-fit + minmax(min(100%, calc(100% / N - gap)), 1fr)
+       makes two things work:
 
-       minmax(0, 1fr) instead of minmax(165px, 1fr) is
-       deliberate. The column count is config-driven, not
-       container-driven. At 5 columns the container is
-       wide enough; at 6 columns the merchant has chosen
-       a tighter grid and the cards are narrower. If a
-       specific card is too narrow at some viewport, the
-       column count is the merchant's knob, not the CSS. */
-    grid-template-columns: repeat(var(--sf-cat-cols, 5), minmax(0, 1fr));
+       1. When the merchant picks N columns and has N or more
+          items, every track fills equally. The grid looks like
+          a fixed N-column layout.
+
+       2. When the merchant picks N columns and has fewer than
+          N items, the empty tracks collapse (that is auto-fit's
+          job). What remains is a block of M tracks, and
+          justify-content can cluster them left / center / right
+          or spread them (space-between). Without auto-fit,
+          repeat(N, 1fr) keeps all N tracks present and
+          justify-content has nothing to move.
+
+       The min(100%, ...) inner expression guards against the
+       calc going below the container width on very wide viewports
+       with high N (e.g. 8 columns on a 1000px container makes each
+       track 110px, still usable). If the calc would exceed 100%
+       the min() clamps it to 100% so the grid stays one column
+       rather than overflowing.
+
+       --sf-cat-grid-justify is set by the .sf-cat-grid-align-*
+       classes below. It defaults to space-between, which is what
+       the "Justified" option maps to. */
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            calc(100% / var(--sf-cat-cols, 5) - 1rem)
+        );
+    justify-content: var(--sf-cat-grid-justify, space-between);
     gap: 1.25rem;
+}
+
+/* Grid item alignment. These set --sf-cat-grid-justify, which
+   the .sf-category-grid rule above reads. Left / Center / Right
+   cluster the tracks when the item count is below --sf-cat-cols.
+   Justified uses space-between so the remaining tracks spread to
+   fill the row. */
+.sf-category-grid.sf-cat-grid-align-left {
+    --sf-cat-grid-justify: start;
+}
+.sf-category-grid.sf-cat-grid-align-center {
+    --sf-cat-grid-justify: center;
+}
+.sf-category-grid.sf-cat-grid-align-right {
+    --sf-cat-grid-justify: end;
+}
+.sf-category-grid.sf-cat-grid-align-justify {
+    --sf-cat-grid-justify: space-between;
 }
 
 @media (max-width: 899px) {
