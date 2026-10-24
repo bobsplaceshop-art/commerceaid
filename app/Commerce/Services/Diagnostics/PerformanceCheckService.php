@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CorporateAid\Commerce\Services\Diagnostics;
 
 use CorporateAid\Core\Database;
+use CorporateAid\Platform\Support\HttpClient;
 
 /**
  * Performance check — hits every GET route in the app, twice
@@ -18,7 +19,10 @@ final class PerformanceCheckService
     /** @var array<int, array{path:string, warm:int, cold:int}> */
     private array $routes = [];
 
-    public function __construct(private Database $db) {}
+    public function __construct(
+        private Database $db,
+        private HttpClient $http
+    ) {}
 
     /**
      * Run the check against a base URL. Returns a summary array
@@ -161,63 +165,48 @@ final class PerformanceCheckService
     private function login(string $baseUrl, string $cookieJar): void
     {
         // 1. Fetch the login page to grab a fresh CSRF token.
-        $ch = curl_init(rtrim($baseUrl, '/') . '/login');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_COOKIEJAR      => $cookieJar,
-            CURLOPT_COOKIEFILE     => $cookieJar,
-            CURLOPT_TIMEOUT        => 10,
-        ]);
-        $html = curl_exec($ch);
-        curl_close($ch);
-
-        if (!is_string($html)) return;
-        if (!preg_match('/name="_csrf"\s+value="([^"]+)"/', $html, $m)) return;
+        $first = $this->http->get(
+            rtrim($baseUrl, '/') . '/login',
+            [],
+            10,
+            $cookieJar
+        );
+        if ($first['error'] !== null) {
+            return;
+        }
+        if (!preg_match('/name="_csrf"\s+value="([^"]+)"/', $first['raw'], $m)) {
+            return;
+        }
 
         // 2. Post the login form.
-        $ch = curl_init(rtrim($baseUrl, '/') . '/login');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => http_build_query([
+        $this->http->post(
+            rtrim($baseUrl, '/') . '/login',
+            http_build_query([
                 '_csrf'    => $m[1],
                 'email'    => 'admin@anayaglobal.test',
                 'password' => 'ChangeMe!2026',
             ]),
-            CURLOPT_COOKIEJAR      => $cookieJar,
-            CURLOPT_COOKIEFILE     => $cookieJar,
-            CURLOPT_TIMEOUT        => 10,
-        ]);
-        curl_exec($ch);
-        curl_close($ch);
+            ['Content-Type: application/x-www-form-urlencoded'],
+            10,
+            $cookieJar
+        );
     }
 
     /** @return array{status:int, ms:int, error:?string} */
     private function measure(string $url, string $cookieJar): array
     {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_TIMEOUT        => 180,
-            CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_COOKIEJAR      => $cookieJar,
-            CURLOPT_COOKIEFILE     => $cookieJar,
-            CURLOPT_USERAGENT      => 'Anaya-Perf/1.0',
-        ]);
+        $start = microtime(true);
+        $response = $this->http->get($url, [], 180, $cookieJar);
+        $ms = (int) round((microtime(true) - $start) * 1000);
 
-        $start  = microtime(true);
-        $body   = curl_exec($ch);
-        $ms     = (int) round((microtime(true) - $start) * 1000);
-        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error  = curl_error($ch);
-        curl_close($ch);
-
-        if ($body === false || $error !== '') {
-            return ['status' => 0, 'ms' => 0, 'error' => $error];
+        if ($response['error'] !== null) {
+            return ['status' => 0, 'ms' => 0, 'error' => $response['error']];
         }
-        return ['status' => $status, 'ms' => $ms, 'error' => null];
+        return [
+            'status' => $response['status'],
+            'ms'     => $ms,
+            'error'  => null,
+        ];
     }
 
     /** @return array<string, string> */

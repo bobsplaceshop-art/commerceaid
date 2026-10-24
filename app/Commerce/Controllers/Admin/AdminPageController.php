@@ -7,6 +7,7 @@ use CorporateAid\Core\Request;
 use CorporateAid\Core\Response;
 use CorporateAid\Core\Session;
 use CorporateAid\Commerce\Repositories\PageBlockRepository;
+use CorporateAid\Commerce\Repositories\PageDraftRepository;
 use CorporateAid\Commerce\Repositories\StorePageRepository;
 use CorporateAid\Commerce\Repositories\ProductRepository;
 use CorporateAid\Commerce\Repositories\CategoryRepository;
@@ -372,8 +373,21 @@ final class AdminPageController extends AdminController
             return Response::json(['ok' => false, 'error' => 'No valid block ids.'], 400);
         }
 
-        $repo = $this->container->get(PageBlockRepository::class);
-        $repo->reorder($slug, $cleanIds);
+        // Reordering is a draft edit, same as add, delete, and
+        // config save. Write to the draft layer, not the published
+        // table. DraftManager::getMergedBlocks() reads published
+        // and overlays the draft; a reorder written only to
+        // commerce_page_blocks would be overridden by any
+        // existing pending_update draft row's stale sort_order,
+        // which is why the preview showed the pre-reorder order
+        // after a successful drag. saveReorder() handles both
+        // pending_add rows (negative id) and pending_update rows
+        // (creates the row if it does not exist yet). The published
+        // table gets its sort_order at Publish time, when the
+        // draft manager applies the drafts. Discard reverts the
+        // reorder with the rest of the drafts.
+        $draftRepo = $this->container->get(PageDraftRepository::class);
+        $draftRepo->saveReorder($slug, $this->activeThemeSlug(), $cleanIds);
 
         return Response::json(['ok' => true, 'count' => count($cleanIds)]);
     }

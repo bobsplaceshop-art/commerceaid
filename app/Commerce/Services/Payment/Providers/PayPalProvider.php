@@ -7,7 +7,7 @@ use CorporateAid\Commerce\Context\StoreContext;
 use CorporateAid\Commerce\Models\Order;
 use CorporateAid\Commerce\Repositories\OrderRepository;
 use CorporateAid\Commerce\Repositories\StoreSettingsRepository;
-use CorporateAid\Commerce\Services\Payment\HttpClient;
+use CorporateAid\Platform\Support\HttpClient;
 use CorporateAid\Commerce\Services\Payment\PaymentProvider;
 
 /**

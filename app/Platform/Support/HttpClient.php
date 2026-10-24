@@ -1,41 +1,40 @@
 <?php
 declare(strict_types=1);
 
-namespace CorporateAid\Commerce\Services\Payment;
+namespace CorporateAid\Platform\Support;
 
 use CorporateAid\Platform\Support\Logger;
 
 /**
- * Hand-rolled HTTP client for payment provider APIs.
+ * Platform-level HTTP client.
  *
- * No Composer dependency. Uses curl_* directly, matching
- * the pattern FontDownloader established for the only
- * other outbound HTTP call in the codebase.
+ * No Composer dependency. Uses curl_* directly.
  *
- * Diverges from FontDownloader in two deliberate ways:
+ * Generic by design. Used by the payment providers
+ * (Stage 010) and by the performance diagnostics
+ * service. It is not a payment-specific class; it
+ * lives in Platform\Support because HTTP is shared
+ * infrastructure, per ARCHITECTURE.md section 3.2.
  *
- *   - CURLOPT_FAILONERROR is false. A 4xx response from a
- *     payment provider carries a JSON error body that the
- *     caller needs to read and log. Failing on HTTP status
- *     would throw that body away.
+ * Two deliberate defaults:
  *
- *   - CURLOPT_FOLLOWLOCATION is false. Payment APIs do not
- *     redirect. A 3xx from a provider is a bug or a
- *     misconfiguration, and the caller should see it.
+ *   - CURLOPT_FAILONERROR is false. A 4xx response
+ *     from an API carries a JSON error body that the
+ *     caller needs to read and log.
+ *
+ *   - CURLOPT_FOLLOWLOCATION is false. APIs do not
+ *     redirect. A 3xx is a bug or a misconfiguration.
  *
  * Every response is returned as a normalised array:
  *   { status: int, body: array, raw: string, error: ?string }
  *
- * The `body` key is the JSON-decoded body. When the body is
- * not valid JSON, `body` is empty and `raw` carries the
- * bytes.
- *
- * Logging is at info level, one line per request. The line
- * carries the method, URL, status, and elapsed milliseconds.
- * It never carries the payload or the headers — those hold
- * API keys and customer data.
- *
- * Stage 010.
+ * Cookie-jar support (optional, opt-in per call): when
+ * a caller passes a cookie-jar path, curl persists
+ * cookies there and reads them back on the next call.
+ * Used by PerformanceCheckService to log in once and
+ * reuse the session cookie for every timed request.
+ * Payment providers do not use cookies and pass
+ * nothing.
  */
 final class HttpClient
 {
@@ -61,7 +60,7 @@ final class HttpClient
      * @return array{status: int, body: array<string,mixed>,
      *               raw: string, error: ?string}
      */
-    public function postJson(string $url, array|\stdClass $payload, array $headers = [], int $timeout = self::DEFAULT_TIMEOUT): array
+    public function postJson(string $url, array|\stdClass $payload, array $headers = [], int $timeout = self::DEFAULT_TIMEOUT, ?string $cookieJar = null): array
     {
         $json = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         if ($json === false) {
@@ -74,7 +73,7 @@ final class HttpClient
         }
 
         $headers = array_merge(['Content-Type: application/json'], $headers);
-        return $this->request('POST', $url, $json, $headers, $timeout);
+        return $this->request('POST', $url, $json, $headers, $timeout, $cookieJar);
     }
 
     /**
@@ -86,9 +85,9 @@ final class HttpClient
      * @return array{status: int, body: array<string,mixed>,
      *               raw: string, error: ?string}
      */
-    public function post(string $url, string $body, array $headers = [], int $timeout = self::DEFAULT_TIMEOUT): array
+    public function post(string $url, string $body, array $headers = [], int $timeout = self::DEFAULT_TIMEOUT, ?string $cookieJar = null): array
     {
-        return $this->request('POST', $url, $body, $headers, $timeout);
+        return $this->request('POST', $url, $body, $headers, $timeout, $cookieJar);
     }
 
     /**
@@ -99,9 +98,9 @@ final class HttpClient
      * @return array{status: int, body: array<string,mixed>,
      *               raw: string, error: ?string}
      */
-    public function get(string $url, array $headers = [], int $timeout = self::DEFAULT_TIMEOUT): array
+    public function get(string $url, array $headers = [], int $timeout = self::DEFAULT_TIMEOUT, ?string $cookieJar = null): array
     {
-        return $this->request('GET', $url, null, $headers, $timeout);
+        return $this->request('GET', $url, null, $headers, $timeout, $cookieJar);
     }
 
     /**
@@ -113,7 +112,7 @@ final class HttpClient
      * @return array{status: int, body: array<string,mixed>,
      *               raw: string, error: ?string}
      */
-    private function request(string $method, string $url, ?string $body, array $headers, int $timeout): array
+    private function request(string $method, string $url, ?string $body, array $headers, int $timeout, ?string $cookieJar = null): array
     {
         if (!function_exists('curl_init')) {
             return [
@@ -147,6 +146,11 @@ final class HttpClient
             CURLOPT_FAILONERROR    => false,
             CURLOPT_HTTPHEADER     => $headers,
         ];
+
+        if ($cookieJar !== null && $cookieJar !== '') {
+            $options[CURLOPT_COOKIEJAR]  = $cookieJar;
+            $options[CURLOPT_COOKIEFILE] = $cookieJar;
+        }
 
         if ($method === 'POST') {
             $options[CURLOPT_POST] = true;

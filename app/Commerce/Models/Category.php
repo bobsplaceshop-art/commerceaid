@@ -43,7 +43,7 @@ final class Category
         $c->name           = (string) $row['name'];
         $c->description    = $row['description'] ?? null;
         $c->imageFileId    = isset($row['image_file_id']) ? (int) $row['image_file_id'] : null;
-        $c->cardImageFileId = isset($row['card_image_file_id']) && $row['card_image_file_id'] !== null
+        $c->cardImageFileId = isset($row['card_image_file_id'])
             ? (int) $row['card_image_file_id']
             : null;
         $c->sortOrder      = (int) ($row['sort_order'] ?? 0);
