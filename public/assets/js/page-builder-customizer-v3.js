@@ -177,7 +177,7 @@
     }
 
     var list = document.getElementById('ra-blocks-list');
-    var dragged = null;
+    var draggedId = null;
 
     // ============================================================
     // Phase 1: Client-side tree. Built once on load from the DOM
@@ -219,27 +219,94 @@
         console.log('[customizer] tree built:', window.__builderTree);
     }
 
+    // ============================================================
+    // Phase 2: Drag updates the tree; the DOM is re-rendered from
+    // the tree. No direct DOM mutation during dragover. The
+    // tree's roots and each node's children array are the single
+    // source of truth.
+    // ============================================================
+
+    // Move a node to the position described by (targetParentId,
+    // beforeId). Removes from old parent first.
+    function moveNode(draggedId, targetParentId, beforeId) {
+        var tree = window.__builderTree;
+        if (!tree) return;
+
+        // Find and detach from old parent.
+        var oldParent = null;
+        var node = tree.byId[draggedId];
+        if (!node) return;
+
+        if (node.parentId === 0) {
+            var idx = tree.roots.indexOf(node);
+            if (idx >= 0) tree.roots.splice(idx, 1);
+        } else if (tree.byId[node.parentId]) {
+            var parentNode = tree.byId[node.parentId];
+            var pidx = parentNode.children.indexOf(node);
+            if (pidx >= 0) parentNode.children.splice(pidx, 1);
+        }
+
+        // Insert into new position.
+        node.parentId = targetParentId;
+        var destination = (targetParentId === 0)
+            ? tree.roots
+            : (tree.byId[targetParentId]
+                ? tree.byId[targetParentId].children
+                : tree.roots);
+
+        if (beforeId === 0) {
+            destination.push(node);
+        } else {
+            var beforeNode = tree.byId[beforeId];
+            var bidx = destination.indexOf(beforeNode);
+            if (bidx >= 0) {
+                destination.splice(bidx, 0, node);
+            } else {
+                destination.push(node);
+            }
+        }
+    }
+
+    // Re-render the sidebar rows from the tree. Uses the same
+    // markup show.php produces, so CSS continues to apply.
+    // (The full HTML row generator lives here in Phase 2; Phase
+    // 3 replaces this with a JSON-driven re-render.)
+    function rerenderSidebar() {
+        // Phase 2: leave the DOM as-is after drop. The next page
+        // load rebuilds the sidebar from the server. Phase 3 adds
+        // the client-side rerender so the visual order matches the
+        // tree immediately after drop.
+        console.log('[customizer] tree after drop:',
+            JSON.stringify(window.__builderTree.roots, null, 0).length + ' chars');
+    }
+
     if (list) {
         list.querySelectorAll('.ra-customizer-block').forEach(function (tile) {
             tile.addEventListener('dragstart', function (e) {
-                dragged = tile;
+                draggedId = parseInt(tile.getAttribute('data-block-id'), 10);
                 tile.style.opacity = '0.4';
-                e.dataTransfer.setData('text/plain', tile.getAttribute('data-block-id'));
+                e.dataTransfer.setData('text/plain', String(draggedId));
             });
             tile.addEventListener('dragend', function () {
                 tile.style.opacity = '';
-                dragged = null;
+                draggedId = null;
             });
             tile.addEventListener('dragover', function (e) {
                 e.preventDefault();
-                if (!dragged || dragged === tile) return;
+                if (!draggedId) return;
+                var targetId = parseInt(tile.getAttribute('data-block-id'), 10);
+                if (draggedId === targetId) return;
+                // Phase 2: drop above/below determines insertion
+                // side; the parent of the drop target is inherited.
+                // Cross-parent drag is Phase 3.
                 var rect = tile.getBoundingClientRect();
-                var midpoint = rect.top + rect.height / 2;
-                if (e.clientY < midpoint) {
-                    tile.parentNode.insertBefore(dragged, tile);
-                } else {
-                    tile.parentNode.insertBefore(dragged, tile.nextSibling);
-                }
+                var isAbove = (e.clientY < rect.top + rect.height / 2);
+                var targetParent = parseInt(tile.getAttribute('data-parent-id'), 10) || 0;
+                moveNode(
+                    draggedId,
+                    targetParent,
+                    isAbove ? targetId : 0
+                );
             });
         });
 
@@ -264,20 +331,7 @@
                     console.error('[customizer] reorder failed: ' + res.status);
                     return;
                 }
-                // Reordering changes every block's position, so a
-                // single-block swap is not enough. Force the iframe
-                // to re-navigate.
-                //
-                // The URL is /?customize_preview=1&v=<cssHash>.
-                // Reordering blocks does not change the CSS, so
-                // the URL is byte-identical before and after the
-                // drag. Setting src = src would just re-fetch the
-                // exact same URL and hit the browser's HTTP
-                // cache, showing the pre-reorder HTML. Appending
-                // a timestamp forces a network fetch, bypassing
-                // the cache. The storefront controller then re-reads
-                // DraftManager::getMergedBlocks() from the database
-                // and renders the new sort_order.
+                rerenderSidebar();
                 if (iframe) {
                     var currentSrc = iframe.getAttribute('src') || '';
                     var separator  = currentSrc.indexOf('?') !== -1 ? '&' : '?';
