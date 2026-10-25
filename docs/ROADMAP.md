@@ -872,6 +872,97 @@ nothing renders. Shipping the Theme Engine alone produces
 templates with no editable source. They ship as adjacent
 stages with a shared data model.
 
+### Stage 023 - Page Builder (Tier 0.8 complete)
+
+**Status:** Tier 0.8 complete 2026-10-25. Tier 3 next.
+
+**Goal:** A merchant-editable page builder. The
+merchant composes storefront pages by dragging block
+types into a tree. The tree persists across reloads
+and renders identically in the admin preview and on
+the storefront.
+
+**Shipped (2026-10-24, 2026-10-25):**
+
+Tier 0 foundation — the registries, the dispatcher,
+the tree model:
+
+- `58df9c0` ConfigFieldRegistry — shared field types.
+- `dc9f74d` parent_id on `commerce_page_blocks` and
+  `commerce_page_drafts`.
+- `850817c` PageBlock `$parentId`, `$children`.
+- `32677a7` PageBlockRepository parent-aware.
+- `84bb976` DraftManager::getMergedTree(); DraftPublisher
+  two-pass publish.
+- `0be9240` BlockRenderer recursion + client tree Phase 1.
+
+Drag rewrite, Phases 1-5 — the client tree becomes
+the source of truth for drag:
+
+- `0be9240` Phase 1: client tree on load.
+- `92031d0` Phase 2: `moveNode()` updates the tree.
+- `0b5fe1f` Phase 3: `saveTree()` persists
+  `parent_id` + `sort_order`.
+- `229dc89` Phase 4: client sends the tree.
+- `645e596` Phase 5: sidebar re-renders from
+  `<template id="tpl-block-row">`.
+
+Companion fixes:
+
+- `28ff776` Product grid 3-8 columns + 4 alignment
+  options.
+- `127a1ea` Product grid respects category_slug and
+  source; legacy home sections removed.
+- `ac274e3` `best_sellers` source uses
+  `ReportRepository`.
+- `c39922f` Config save double-wrap, Hero bg UUID,
+  print CSS contract.
+- `264165d` Empty product grid blocks collapse on the
+  live storefront.
+- `e4d4377` Media URL resolution across 7 files +
+  `bin/check-media-urls.php` prevenger.
+- `2a361af` Event delegation for settings and
+  mobile-close.
+- `1038be6` Product `og:image` is absolute.
+- `574f559` Pattern 46 in `docs/REMEMBER.md`.
+
+**What is complete:**
+
+- Product grid: 3-8 columns, 4 alignment options,
+  category and source filters, `best_sellers` wired.
+- Drag-and-drop: reorder within parent, drag child
+  to root, drag root into Section/Container.
+- Sidebar re-renders after drop. Settings pencil
+  works after any drag (delegation).
+- Row markup has one source (`tpl-block-row`).
+  Tree has one source (`window.__builderTree`).
+  Click handling has one source (`document`
+  delegation).
+- Media URL bug class closed. No numeric id in any
+  `/media/` URL in `app/` or `resources/`.
+
+**Tier 3 next (three items):**
+
+1. **Section and Container configuration fields** —
+   padding, background, column count. The layout
+   primitives exist as empty wrappers; the config
+   fields make them useful.
+2. **Drag-into-canvas** — dropping a block onto the
+   preview iframe. Resolves drop coordinates to a
+   target block and insertion side. Needs a plan
+   document.
+3. **Menu and footer builder** — header and footer
+   nav read from `commerce_navigation_menus` and
+   `commerce_navigation_items` instead of the
+   hardcoded arrays in `layouts/main.php`.
+
+**Depends on:** Stage 008 (storefront shell),
+Stage 012 (section registry — deferred until the
+page builder needs to read its data).
+
+**See also:** `docs/stages/023_page-builder-architecture.md`
+for the tier plan and the dependency graph.
+
 ---
 
 ## Backlog (Not Yet Scheduled)
