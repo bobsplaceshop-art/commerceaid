@@ -22,6 +22,12 @@ $hint    = (string) ($meta['hint'] ?? '');
 $required = !empty($meta['required']);
 $fieldId = 'bc-' . preg_replace('/[^a-z0-9_-]+/i', '-', $name);
 
+// Some fields source their options from a live data source
+// rather than a static array. text_font uses FontCatalog.
+if (!empty($meta['font_options'])) {
+    $meta['options'] = \CorporateAid\Commerce\Support\Blocks\BlockConfigRegistry::fontOptions();
+}
+
 $definition = \CorporateAid\Commerce\Support\Blocks\ConfigFieldRegistry::get($type);
 
 // For the 'file' field, resolve the numeric file id to

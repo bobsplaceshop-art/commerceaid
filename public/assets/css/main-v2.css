@@ -2624,3 +2624,13 @@ body.modal-open .modal {
 body.modal-open .modal-backdrop {
     z-index: 9999 !important;
 }
+
+
+/* The preview wrapper must not participate in layout.
+   BlockRenderer wraps every block in a .ra-preview-block div
+   in preview mode. Without display: contents, a flex-row
+   Container treats the wrapper as an extra flex item,
+   collapsing the row. */
+.ra-preview-block {
+    display: contents;
+}

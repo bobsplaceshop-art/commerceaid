@@ -89,8 +89,23 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
     // has not overridden the defaults, the block is empty and
     // the platform default stack (defined in storefront.css)
     // is used as-is. No external request to Google Fonts, ever.
+    // Collect extra font slugs referenced by any page block.
+    // $blocks is populated by HomeController for the home page,
+    // by PageController for custom pages, and empty elsewhere.
+    // Each block's config may carry a text_font that names a
+    // FontCatalog slug. The unique set goes to the font-face
+    // helper so its @font-face rules are emitted here.
+    $__extraFontSlugs = [];
+    foreach (($blocks ?? []) as $__b) {
+        $__tf = (string) (($__b->config['text_font'] ?? '') ?: '');
+        if ($__tf !== '' && $__tf !== 'inherit') {
+            $__extraFontSlugs[$__tf] = true;
+        }
+    }
+    $__extraFontSlugs = array_keys($__extraFontSlugs);
+
     $__fontSelections = store_font_selections($store ?? null);
-    $__fontFaceCss    = store_font_face_css($store ?? null);
+    $__fontFaceCss    = store_font_face_css($store ?? null, $__extraFontSlugs);
 
     $__fontFallback = [
         'body'    => "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",

@@ -77,6 +77,16 @@ final class BlockConfigRegistry
     private static function section(): array
     {
         return [
+            'layout_direction' => [
+                'label'   => 'Layout direction',
+                'type'    => 'select',
+                'default' => 'column',
+                'options' => [
+                    'column' => 'Column (stack vertically)',
+                    'row'    => 'Row (side by side)',
+                    'wrap'   => 'Wrap (side by side, wraps to next line)',
+                ],
+            ],
             'padding_top' => [
                 'label'   => 'Padding top',
                 'type'    => 'select',
@@ -117,6 +127,32 @@ final class BlockConfigRegistry
                     'narrow' => 'Narrow (800px)',
                 ],
             ],
+            'align_items' => [
+                'label'   => 'Cross-axis alignment',
+                'type'    => 'select',
+                'default' => 'stretch',
+                'options' => [
+                    'stretch' => 'Stretch',
+                    'left'    => 'Start',
+                    'center'  => 'Center',
+                    'right'   => 'End',
+                ],
+                'hint'    => 'In column layout, this is horizontal. In row layout, this is vertical.',
+            ],
+            'justify_content' => [
+                'label'   => 'Main-axis alignment',
+                'type'    => 'select',
+                'default' => 'start',
+                'options' => [
+                    'start'         => 'Start',
+                    'center'        => 'Center',
+                    'end'           => 'End',
+                    'space-between' => 'Space between',
+                    'space-around'  => 'Space around',
+                    'space-evenly'  => 'Space evenly',
+                ],
+                'hint'    => 'In column layout, this is vertical. In row layout, this is horizontal.',
+            ],
         ];
     }
 
@@ -130,6 +166,16 @@ final class BlockConfigRegistry
     private static function container(): array
     {
         return [
+            'layout_direction' => [
+                'label'   => 'Layout direction',
+                'type'    => 'select',
+                'default' => 'column',
+                'options' => [
+                    'column' => 'Column (stack vertically)',
+                    'row'    => 'Row (side by side)',
+                    'wrap'   => 'Wrap (side by side, wraps to next line)',
+                ],
+            ],
             'padding_x' => [
                 'label'   => 'Horizontal padding',
                 'type'    => 'select',
@@ -161,6 +207,32 @@ final class BlockConfigRegistry
                     'md'   => 'Medium',
                     'lg'   => 'Large',
                 ],
+            ],
+            'align_items' => [
+                'label'   => 'Cross-axis alignment',
+                'type'    => 'select',
+                'default' => 'stretch',
+                'options' => [
+                    'stretch' => 'Stretch',
+                    'left'    => 'Start',
+                    'center'  => 'Center',
+                    'right'   => 'End',
+                ],
+                'hint'    => 'In column layout, this is horizontal. In row layout, this is vertical.',
+            ],
+            'justify_content' => [
+                'label'   => 'Main-axis alignment',
+                'type'    => 'select',
+                'default' => 'start',
+                'options' => [
+                    'start'         => 'Start',
+                    'center'        => 'Center',
+                    'end'           => 'End',
+                    'space-between' => 'Space between',
+                    'space-around'  => 'Space around',
+                    'space-evenly'  => 'Space evenly',
+                ],
+                'hint'    => 'In column layout, this is vertical. In row layout, this is horizontal.',
             ],
         ];
     }

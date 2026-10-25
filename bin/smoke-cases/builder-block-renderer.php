@@ -57,6 +57,9 @@ return function ($container, PDO $pdo): bool|string {
         'rich-text'     => 'sf-section',
         'newsletter'    => 'sf-section',
         'spacer'        => 'height:',                  // inline style, no class
+        'section'       => 'sf-section-block',
+        'container'     => 'sf-container-block',
+        'columns'       => 'sf-columns',
     ];
 
     foreach (BlockTypeRegistry::all() as $type => $meta) {

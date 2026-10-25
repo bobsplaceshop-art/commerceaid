@@ -34,13 +34,34 @@ $padBottom = $padMap[$config['padding_bottom'] ?? 'md'] ?? '2rem';
 $maxWidth  = $maxMap[$config['max_width']      ?? 'wide'] ?? '1200px';
 $bg        = (string) ($config['background_color'] ?? '');
 
+$alignMap = [
+    'stretch' => 'stretch',
+    'left'    => 'flex-start',
+    'center'  => 'center',
+    'right'   => 'flex-end',
+];
+$justifyMap = [
+    'start'         => 'flex-start',
+    'center'        => 'center',
+    'end'           => 'flex-end',
+    'space-between' => 'space-between',
+    'space-around'  => 'space-around',
+    'space-evenly'  => 'space-evenly',
+];
+$alignItems     = $alignMap[$config['align_items']         ?? 'stretch'] ?? 'stretch';
+$justifyContent = $justifyMap[$config['justify_content']   ?? 'start']   ?? 'flex-start';
+
+$direction = (string) ($config['layout_direction'] ?? 'column');
+$flexDirection = $direction === 'row' ? 'row' : 'column';
+$flexWrap      = $direction === 'wrap' ? 'wrap' : 'nowrap';
+
 $style = "padding-top: {$padTop}; padding-bottom: {$padBottom};";
 if ($bg !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $bg)) {
     $style .= " background-color: {$bg};";
 }
 ?>
 <section class="sf-section-block" style="<?= e($style) ?>">
-    <div class="sf-section-inner" style="max-width: <?= e($maxWidth) ?>; margin: 0 auto; padding-left: 1rem; padding-right: 1rem;">
+    <div class="sf-section-inner" style="max-width: <?= e($maxWidth) ?>; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; display: flex; flex-direction: <?= e($flexDirection) ?>; flex-wrap: <?= e($flexWrap) ?>; gap: 1rem; align-items: <?= e($alignItems) ?>; justify-content: <?= e($justifyContent) ?>;">
         <?= $childrenHtml ?>
     </div>
 </section>

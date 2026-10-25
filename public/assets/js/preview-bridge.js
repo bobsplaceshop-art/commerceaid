@@ -34,6 +34,16 @@
         if (!block) return;
         if (typeof data.html === 'string') {
             block.innerHTML = data.html;
+            
+            // Replacing innerHTML on a flex container can cause
+            // the browser's layout engine to leave the new
+            // children at zero height until the next full page
+            // load. Force a reflow on the next animation frame
+            // so the children are fully parsed before we
+            // calculate their layout.
+            window.requestAnimationFrame(function () {
+                void block.offsetHeight;
+            });
         }
         if (data.reload === true) {
             window.location.reload();

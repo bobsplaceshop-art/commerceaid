@@ -108,7 +108,7 @@ final class BlockRenderer
         }
 
         try {
-            return $this->view->render($partial, $viewData);
+            $html = $this->view->render($partial, $viewData);
         } catch (\Throwable $e) {
             throw new \RuntimeException(
                 "Failed to render block #{$block->id} "
@@ -118,6 +118,25 @@ final class BlockRenderer
                 $e
             );
         }
+
+        // In preview mode, wrap every rendered block (root or
+        // child) in a data-block-id anchor. The preview-bridge
+        // swaps innerHTML on these wrappers when the editor
+        // sends an updateBlock message. Without this wrap,
+        // child blocks (inside a Section, Container, or
+        // Columns) have no anchor and the swap silently fails.
+        if (isset($_GET['customize_preview'])) {
+            // display: contents removes the wrapper from the
+            // layout tree so the block's own markup participates
+            // in flex/grid layouts directly. Inline style, not
+            // a CSS class, because the iframe can be running a
+            // cached stylesheet after a live update.
+            return '<div class="ra-preview-block" data-block-id="'
+                . (int) $block->id . '" style="display: contents;">'
+                . $html . '</div>';
+        }
+
+        return $html;
     }
 
     /**

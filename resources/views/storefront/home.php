@@ -8,15 +8,7 @@
     $renderer = app(\CorporateAid\Commerce\Services\Builder\BlockRenderer::class);
     ?>
     <?php foreach ($blocks as $block): ?>
-        <?php
-        if (isset($_GET['customize_preview'])) {
-            echo '<div data-block-id="' . (int) $block->id . '" class="ra-preview-block">';
-        }
-        echo $renderer->render($block);
-        if (isset($_GET['customize_preview'])) {
-            echo '</div>';
-        }
-        ?>
+        <?php echo $renderer->render($block); ?>
     <?php endforeach; ?>
     
     <?php if (isset($_GET['customize_preview'])): ?>

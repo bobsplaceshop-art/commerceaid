@@ -43,7 +43,7 @@ return function ($container, PDO $pdo): bool|string {
     // --- Assertion 1: ten types ---
     // Eight leaf types plus Section and Container (Tier 0.8).
     $all = BlockTypeRegistry::all();
-    $expectedCount = 10;
+    $expectedCount = 11;
     if (count($all) !== $expectedCount) {
         $failures[] = 'all() returned ' . count($all)
             . ' types, expected ' . $expectedCount;
