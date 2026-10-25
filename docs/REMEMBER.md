@@ -3099,3 +3099,82 @@ multiple back-and-forth corrections.
 
 **Related:** Pattern 1 (silent Python patch failures),
 Pattern 23 (cascade check before every patch).
+
+---
+
+### Pattern 46 - Image URLs use MediaItem::variantUrl or a helper, never a numeric id
+
+**Problem:** The media route is `/media/{uuid}/{variant}.{format}`.
+The route key is the UUID, not the numeric `commerce_files.id`.
+Any code that builds a URL from a numeric file id produces a
+404 and the image silently fails to render. There is no error
+page, no log entry, no console warning. The image is just a
+broken placeholder.
+
+**The tell:** An image renders as a broken image icon, or is
+missing entirely, in a context where the file id is present
+and the file exists. Fetch the URL in the browser: the 404 is
+in the Network tab, not in the page source.
+
+**The two canonical ways to produce a media URL:**
+
+1. A helper from `app/Helpers/functions.php`:
+   - `store_logo_url($store)`
+   - `store_favicon_url($store)`
+   - `product_image_url($product, $variant, $format)`
+   - `product_picture_url($product, ...)`
+   - `category_image_url($category, ...)`
+   - `category_picture_url($category, ...)`
+
+2. `MediaItem::variantUrl($name, $format)` — the method
+   every helper calls. Requires a `MediaItem` from
+   `MediaRepository::findById()` or `findByIds()`.
+
+Plus, for page-builder blocks: `BlockRenderer::prepareViewData()`
+resolves `image_file_id` to a `variantUrl()` URL and passes it
+as `$bg_url` to the partial. Partials use `$bg_url`, never
+build a URL themselves.
+
+**Where we hit it:**
+
+The session that shipped 008G.4a.2, 008G.4a.3, and the SEO
+stage had this bug in seven places, undetected until the media
+URL checker was added:
+
+- `hero.php`              (fixed c39922f)
+- `banner.php`            (fixed in the same session)
+- `promo-panel.php`       (fixed in the same session)
+- `MerchantFeedService`   (Google Merchant image URLs)
+- `SocialMetaService`     (og:image for pages)
+- `SocialMetaService`     (og:image for products — this one
+                           had a second bug: even after the
+                           UUID fix, it returned a relative
+                           URL, which scrapers silently ignore)
+- `StructuredDataService` (JSON-LD Product.image)
+
+All seven are now fixed. Six use the helper or
+`MediaItem::variantUrl()`. The seventh (SocialMetaService og
+for products) also now wraps the URL in `absoluteUrl()`.
+
+**Prevention checklist when adding an image field:**
+
+1. The view uses a helper, `$bg_url`, or `MediaItem::variantUrl()`.
+   Never `/media/' . $fileId . '/...`.
+2. `composer prevenger` runs `bin/check-media-urls.php` which
+   greps the codebase for the exact bug shape
+   (`'/media/' . $var`). Any match fails the build.
+3. If the URL will be consumed by an external service
+   (scrapers, feeds, JSON-LD), wrap it in `absoluteUrl()`.
+   Relative paths are valid for in-page rendering, not for
+   external consumers.
+
+**Related:**
+
+- Pattern 32 (contract drift between producer and consumer
+  shapes). Pattern 46 is the media-layer analogue: two URL
+  schemes for the same resource, and every caller has to
+  pick the right one.
+- Pattern 40 (the cascade check has four directions). The
+  media URL checker is the "upstream" direction made
+  permanent: every consumer of the media route is checked
+  at commit time, not just at the moment of the patch.
