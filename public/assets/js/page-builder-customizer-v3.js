@@ -43,14 +43,16 @@
         });
 
         // Tapping a block on mobile closes the drawer so the
-        // preview is visible immediately.
-        document.querySelectorAll('.ra-open-settings').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                if (window.innerWidth < 768) {
-                    sidebar.classList.remove('is-open');
-                    sidebarToggle.setAttribute('aria-expanded', 'false');
-                }
-            });
+        // preview is visible immediately. Bound via delegation so
+        // the handler survives a rerenderSidebar() that replaces
+        // the buttons.
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.ra-open-settings');
+            if (!btn) return;
+            if (window.innerWidth < 768 && sidebar) {
+                sidebar.classList.remove('is-open');
+                sidebarToggle.setAttribute('aria-expanded', 'false');
+            }
         });
     }
 
@@ -97,11 +99,15 @@
         });
     });
 
-    document.querySelectorAll('.ra-open-settings').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            openSettingsFor(btn.getAttribute('data-block-id'));
-        });
+    // Event delegation: the pencil buttons are replaced on every
+    // rerenderSidebar() (Phase 5), so a per-element binding is
+    // lost after every drag. One delegated listener on document
+    // survives any DOM rebuild.
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.ra-open-settings');
+        if (!btn) return;
+        e.preventDefault();
+        openSettingsFor(btn.getAttribute('data-block-id'));
     });
 
     window.addEventListener('message', function (event) {
@@ -197,6 +203,9 @@
             byId[id] = {
                 id: id,
                 parentId: parentId,
+                blockType: row.getAttribute('data-block-type') || '',
+                typeLabel: row.getAttribute('data-type-label') || '',
+                isStructural: row.getAttribute('data-is-structural') === '1',
                 children: []
             };
         });
@@ -267,17 +276,107 @@
         }
     }
 
-    // Re-render the sidebar rows from the tree. Uses the same
-    // markup show.php produces, so CSS continues to apply.
-    // (The full HTML row generator lives here in Phase 2; Phase
-    // 3 replaces this with a JSON-driven re-render.)
+    // Re-render the sidebar rows from the tree. Mirrors the
+    // markup $renderBlockRow in show.php produces. If that
+    // markup changes, this function changes too. A future
+    // Phase 5b will replace both with a shared <template>.
+    // Clone the shared row template and fill its placeholders.
+    // Uses window.__builderFillRow, defined by the inline script
+    // in show.php. The template is the single source of the row
+    // markup; PHP and JS both use it, so drift is impossible.
+    function renderRow(node, depth) {
+        if (typeof window.__builderFillRow !== 'function') {
+            console.error('[customizer] __builderFillRow missing');
+            return document.createElement('div');
+        }
+        // The fill function takes a marker-shaped object with
+        // getAttribute(). A plain object works.
+        var pseudo = {
+            getAttribute: function (name) {
+                switch (name) {
+                    case 'data-block-id': return String(node.id);
+                    case 'data-parent-id': return String(node.parentId);
+                    case 'data-block-type': return node.blockType || '';
+                    case 'data-type-label': return node.typeLabel || '';
+                    case 'data-is-structural': return node.isStructural ? '1' : '0';
+                    case 'data-depth': return String(depth);
+                    default: return null;
+                }
+            }
+        };
+        return window.__builderFillRow(pseudo);
+    }
+
+    // Rebind all drag handlers on the current DOM. Called once on
+    // load and once after every rerenderSidebar so the handlers
+    // follow the new DOM nodes.
+    function bindDragHandlers() {
+        list.querySelectorAll('.ra-customizer-block').forEach(function (tile) {
+            tile.addEventListener('dragstart', function (e) {
+                draggedId = parseInt(tile.getAttribute('data-block-id'), 10);
+                tile.style.opacity = '0.4';
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', String(draggedId));
+                }
+            });
+            tile.addEventListener('dragend', function () {
+                tile.style.opacity = '';
+                draggedId = null;
+                list.querySelectorAll('.ra-customizer-block').forEach(function (t) {
+                    t.style.borderTop = '';
+                    t.style.borderBottom = '';
+                });
+            });
+            tile.addEventListener('dragenter', function (e) {
+                e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+            });
+            tile.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                if (!draggedId) return;
+                var targetId = parseInt(tile.getAttribute('data-block-id'), 10);
+                if (draggedId === targetId) return;
+                list.querySelectorAll('.ra-customizer-block').forEach(function (t) {
+                    t.style.borderTop = '';
+                    t.style.borderBottom = '';
+                });
+                var rect = tile.getBoundingClientRect();
+                var isAbove = (e.clientY < rect.top + rect.height / 2);
+                if (isAbove) {
+                    tile.style.borderTop = '2px solid #d4af37';
+                } else {
+                    tile.style.borderBottom = '2px solid #d4af37';
+                }
+                var targetParent = parseInt(tile.getAttribute('data-parent-id'), 10) || 0;
+                moveNode(draggedId, targetParent, isAbove ? targetId : 0);
+            });
+        });
+    }
+
+    // Rebuild the sidebar from window.__builderTree.
     function rerenderSidebar() {
-        // Phase 2: leave the DOM as-is after drop. The next page
-        // load rebuilds the sidebar from the server. Phase 3 adds
-        // the client-side rerender so the visual order matches the
-        // tree immediately after drop.
-        console.log('[customizer] tree after drop:',
-            JSON.stringify(window.__builderTree.roots, null, 0).length + ' chars');
+        if (!list) return;
+        var tree = window.__builderTree;
+        if (!tree) return;
+
+        // Clear existing rows but preserve the empty-state message.
+        list.querySelectorAll('.ra-customizer-block').forEach(function (el) {
+            el.remove();
+        });
+
+        var appendNodes = function (nodes, depth) {
+            nodes.forEach(function (node) {
+                list.appendChild(renderRow(node, depth));
+                if (node.children && node.children.length) {
+                    appendNodes(node.children, depth + 1);
+                }
+            });
+        };
+        appendNodes(tree.roots, 0);
+
+        bindDragHandlers();
     }
 
     if (list) {
@@ -285,22 +384,46 @@
             tile.addEventListener('dragstart', function (e) {
                 draggedId = parseInt(tile.getAttribute('data-block-id'), 10);
                 tile.style.opacity = '0.4';
-                e.dataTransfer.setData('text/plain', String(draggedId));
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', String(draggedId));
+                }
             });
             tile.addEventListener('dragend', function () {
                 tile.style.opacity = '';
                 draggedId = null;
+                // Clear any hover indicator.
+                list.querySelectorAll('.ra-customizer-block').forEach(function (t) {
+                    t.style.borderTop = '';
+                    t.style.borderBottom = '';
+                });
+            });
+            // dragenter: required by Chrome to accept the drop.
+            tile.addEventListener('dragenter', function (e) {
+                e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
             });
             tile.addEventListener('dragover', function (e) {
                 e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
                 if (!draggedId) return;
                 var targetId = parseInt(tile.getAttribute('data-block-id'), 10);
                 if (draggedId === targetId) return;
-                // Phase 2: drop above/below determines insertion
-                // side; the parent of the drop target is inherited.
-                // Cross-parent drag is Phase 3.
+
+                // Visual indicator: gold line above or below the
+                // hovered row. Cleared on dragend.
+                list.querySelectorAll('.ra-customizer-block').forEach(function (t) {
+                    t.style.borderTop = '';
+                    t.style.borderBottom = '';
+                });
                 var rect = tile.getBoundingClientRect();
                 var isAbove = (e.clientY < rect.top + rect.height / 2);
+                if (isAbove) {
+                    tile.style.borderTop = '2px solid #d4af37';
+                } else {
+                    tile.style.borderBottom = '2px solid #d4af37';
+                }
+
                 var targetParent = parseInt(tile.getAttribute('data-parent-id'), 10) || 0;
                 moveNode(
                     draggedId,
