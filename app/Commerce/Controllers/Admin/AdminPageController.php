@@ -653,6 +653,26 @@ final class AdminPageController extends AdminController
             return Response::redirect('/commerce/ca-admin/pages/' . $slug);
         }
 
+        // If the block declares a custom font, ensure it is
+        // downloaded to public/assets/fonts/{slug}/. The
+        // downloader is idempotent: an already-downloaded font
+        // is a fast no-op. Failure is non-blocking — the
+        // merchant keeps the selection and sees the platform
+        // fallback font until the download succeeds.
+        if (!empty($config['text_font']) && $config['text_font'] !== 'inherit') {
+            $slug = (string) $config['text_font'];
+            if (\CorporateAid\Commerce\Support\Fonts\FontCatalog::find($slug) !== null) {
+                try {
+                    $downloader = $this->container->get(
+                        \CorporateAid\Commerce\Services\Fonts\FontDownloader::class
+                    );
+                    $downloader->download($slug);
+                } catch (\Throwable $e) {
+                    // Non-fatal: the storefront falls back.
+                }
+            }
+        }
+
         // Save to the database draft table.
         $themeSlug = $this->activeThemeSlug();
         $draftRepo = $this->container->get(\CorporateAid\Commerce\Repositories\PageDraftRepository::class);
@@ -740,7 +760,18 @@ final class AdminPageController extends AdminController
         $block->config = $config;
         $html = $this->renderBlockPartial($block);
 
-        return Response::json(['html' => $html]);
+        // If the block's layout changed (like a Container
+        // switching between column and row), the browser's
+        // layout engine may fail to repaint the flex children
+        // correctly after an innerHTML swap. Force the iframe
+        // to reload if the block type is structural (Section,
+        // Container, Columns).
+        $isStructural = in_array($block->blockType, ['section', 'container', 'columns'], true);
+
+        return Response::json([
+            'html' => $html,
+            'reload' => $isStructural
+        ]);
     }
 
     private function renderBlockPartial(PageBlock $block): string

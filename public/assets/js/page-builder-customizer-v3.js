@@ -176,6 +176,18 @@
                 })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
+                    // For structural blocks (Section, Container, Columns),
+                    // the server returns reload: true. The browser's
+                    // layout engine fails to recalculate nested flex
+                    // children after an innerHTML swap. Force a full
+                    // iframe reload to fix the layout.
+                    if (data && data.reload === true && iframe) {
+                        var currentSrc = iframe.getAttribute('src') || '';
+                        var separator  = currentSrc.indexOf('?') !== -1 ? '&' : '?';
+                        iframe.src = currentSrc + separator + 't=' + Date.now();
+                        return;
+                    }
+
                     if (data && typeof data.html === 'string' && iframe.contentWindow) {
                         iframe.contentWindow.postMessage({
                             action:  'updateBlock',
