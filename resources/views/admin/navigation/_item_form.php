@@ -28,8 +28,17 @@ $isEdit = $mode === 'edit' && $item !== null;
 <div class="row mb-3">
     <div class="col-md-6">
         <label class="form-label">Icon Class (optional)</label>
-        <input type="text" name="icon" class="form-control" placeholder="e.g. bi-star"
-               value="<?= $isEdit ? e($item->icon ?? '') : '' ?>">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="<?= $isEdit && !empty($item->icon) ? e($item->icon) : 'bi bi-star' ?>" id="icon-preview-<?= $isEdit ? $item->id : 'new' ?>"></i>
+            </span>
+            <input type="text" name="icon" class="form-control" placeholder="e.g. bi-star"
+                   value="<?= $isEdit ? e($item->icon ?? '') : '' ?>"
+                   id="icon-input-<?= $isEdit ? $item->id : 'new' ?>">
+            <button class="ra-btn ra-btn-outline" type="button" onclick="RA_IconPicker.open('icon-input-<?= $isEdit ? $item->id : 'new' ?>')">
+                Pick
+            </button>
+        </div>
     </div>
     <div class="col-md-6">
         <label class="form-label">Subtitle (optional)</label>

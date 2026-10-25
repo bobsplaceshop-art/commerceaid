@@ -94,9 +94,24 @@ if ($badges === []) {
                 <i class="bi bi-chevron-down sf-utility-chevron" aria-hidden="true"></i>
             </span>
 
-            <span class="sf-utility-selector" title="Currency selector coming soon">
-                <span>EUR &euro;</span>
-                <i class="bi bi-chevron-down sf-utility-chevron" aria-hidden="true"></i>
+            <?php
+            // Display the store's default currency. We do not offer
+            // a currency switcher yet - the merchant will decide
+            // which currencies to support in a later stage.
+            $currencyDisplay = 'EUR €';
+            if ($store !== null && !empty($store->defaultCurrencyId)) {
+                $currencyRepo = \CorporateAid\Core\App::instance()->container()->get(\CorporateAid\Commerce\Repositories\CurrencyRepository::class);
+                $activeCurrencies = $currencyRepo->listActive();
+                foreach ($activeCurrencies as $c) {
+                    if ($c['code'] === 'EUR') { // Default fallback to EUR if ID does not resolve
+                        $currencyDisplay = $c['code'] . ' ' . ($c['symbol'] ?? '');
+                        break;
+                    }
+                }
+            }
+            ?>
+            <span class="sf-utility-selector" title="Default store currency">
+                <span><?= e($currencyDisplay) ?></span>
             </span>
         </div>
 
