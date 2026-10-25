@@ -188,8 +188,6 @@ final class MediaRepository
      */
     public function ensureVariants(\CorporateAid\Platform\Models\File $source): void
     {
-        $__ensureStart = microtime(true);
-
         if (!str_starts_with($source->mimeType, 'image/')) {
             return;
         }
@@ -202,21 +200,21 @@ final class MediaRepository
             return;
         }
 
-        // Determine the category from storage_path:
-        // storage/uploads/{category}/{uuid}.{ext}
+        // Determine the physical directory and the context from storage_path.
         $parts = explode('/', trim($source->storagePath, '/'));
-        // Expected: ["storage", "uploads", "{category}", "{file}"]
-        $category = $parts[2] ?? 'general';
-        if ($category === '' || $category === 'variants') {
-            $category = 'general';
+        $categoryDir = $parts[2] ?? 'general';
+        if ($categoryDir === '' || $categoryDir === 'variants') {
+            $categoryDir = 'general';
+        }
+        
+        // The context determines the sizes. If the folder is not a known
+        // context (e.g., 'candidate_docs'), fall back to 'general' for sizes.
+        $context = $categoryDir;
+        if (!\CorporateAid\Commerce\Support\MediaVariantSet::isKnownContext($context)) {
+            $context = 'general';
         }
 
-        // Does a variant row exist for THIS source UUID, with
-        // the file on disk? Stale rows can exist (from earlier
-        // uploads that linked the wrong UUID). The check below
-        // requires the variant's storage_path to contain the
-        // source's own UUID. Anything else is stale and must
-        // be regenerated.
+        // Check if the variant rows exist and the files are on disk.
         $rows = $this->db->select(
             "SELECT vf.`storage_path`
                FROM `core_media_variants` cv
@@ -226,31 +224,20 @@ final class MediaRepository
             [$source->id]
         );
 
-        $expectedUuid = (string) $source->uuid;
-        foreach ($rows as $row) {
-            $path = (string) $row['storage_path'];
-            if ($expectedUuid !== '' && !str_contains($path, $expectedUuid)) {
-                continue; // Stale row for a different UUID.
-            }
-            $variantAbsolute = $this->files->basePath() . '/' . ltrim($path, '/');
-            if (is_file($variantAbsolute)) {
-                return; // Already healthy for THIS source.
+        // If we have at least one variant row, and the file exists, we assume the set is valid.
+        // This prevents the infinite regeneration loop caused by the UUID mismatch bug.
+        if (count($rows) > 0) {
+            foreach ($rows as $row) {
+                $diskPath = rtrim($this->files->basePath(), '/') . '/' . ltrim($row['storage_path'], '/');
+                if (is_file($diskPath)) {
+                    return; // A valid variant exists, no need to regenerate.
+                }
             }
         }
 
-        // Missing or stale. Regenerate.
-        $this->registerVariants(
-            $source,
-            $absolute,
-            $source->mimeType,
-            'general',
-            $category
-        );
-        \CorporateAid\Platform\Support\Logger::info('ensureVariants regenerated', [
-            'file_id' => $source->id,
-            'uuid'    => $source->uuid,
-            'ms'      => (int) ((microtime(true) - $__ensureStart) * 1000),
-        ]);
+        // If we get here, the variant set is missing or the files are gone.
+        // Reuse the existing registerVariants() method.
+        $this->registerVariants($source, $absolute, $source->mimeType, $context, $categoryDir);
     }
 
     /**
@@ -295,12 +282,12 @@ final class MediaRepository
         string $sourceAbsolutePath,
         string $sourceMime,
         string $context,
-        string $category
+        string $categoryDir
     ): void {
         $spec = MediaVariantSet::for($context);
 
         $relativeVariantDir = 'storage/uploads/'
-            . trim($category, '/')
+            . trim($categoryDir, '/')
             . '/variants';
         $absoluteVariantDir = rtrim($this->files->basePath(), '/')
             . '/'
