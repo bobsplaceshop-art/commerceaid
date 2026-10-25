@@ -160,14 +160,16 @@ final class NavigationRepository extends CommerceRepository
     {
         return $this->db->insert(
             'INSERT INTO `commerce_navigation_items`
-                (`menu_id`, `column_id`, `parent_id`, `label`, `url`,
-                 `resource_type`, `resource_id`, `sort_order`, `is_highlight`)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                (`menu_id`, `column_id`, `parent_id`, `label`, `icon`, `subtitle`,
+                 `url`, `resource_type`, `resource_id`, `sort_order`, `is_highlight`)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $item->menuId,
                 $item->columnId,
                 $item->parentId,
                 $item->label,
+                $item->icon,
+                $item->subtitle,
                 $item->url,
                 $item->resourceType,
                 $item->resourceId,
@@ -181,11 +183,14 @@ final class NavigationRepository extends CommerceRepository
     {
         $this->db->execute(
             'UPDATE `commerce_navigation_items`
-                SET `label` = ?, `url` = ?, `resource_type` = ?, `resource_id` = ?,
+                SET `label` = ?, `icon` = ?, `subtitle` = ?, `url` = ?,
+                    `resource_type` = ?, `resource_id` = ?,
                     `sort_order` = ?, `is_highlight` = ?
               WHERE `id` = ? AND `menu_id` = ?',
             [
                 $item->label,
+                $item->icon,
+                $item->subtitle,
                 $item->url,
                 $item->resourceType,
                 $item->resourceId,

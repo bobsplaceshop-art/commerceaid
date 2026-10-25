@@ -19,6 +19,8 @@ final class NavigationItem
     public ?int $columnId = null;
     public ?int $parentId = null;
     public string $label = '';
+    public ?string $icon = null;
+    public ?string $subtitle = null;
     public ?string $url = null;
     public ?string $resourceType = null;
     public ?int $resourceId = null;
@@ -39,6 +41,8 @@ final class NavigationItem
         $i->columnId     = isset($row['column_id']) ? (int) $row['column_id'] : null;
         $i->parentId     = isset($row['parent_id']) ? (int) $row['parent_id'] : null;
         $i->label        = (string) $row['label'];
+        $i->icon         = $row['icon'] ?? null;
+        $i->subtitle     = $row['subtitle'] ?? null;
         $i->url          = $row['url'] ?? null;
         $i->resourceType = $row['resource_type'] ?? null;
         $i->resourceId   = isset($row['resource_id']) ? (int) $row['resource_id'] : null;
