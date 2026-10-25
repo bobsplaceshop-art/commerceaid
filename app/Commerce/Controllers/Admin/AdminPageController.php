@@ -320,7 +320,32 @@ final class AdminPageController extends AdminController
         // types that do not have fields today.
         $defaults = \CorporateAid\Commerce\Support\Blocks\BlockConfigRegistry::defaults($type);
 
-        $draftRepo->addDraftBlockWithConfig($slug, $themeSlug, $type, $nextSort, $defaults, $parentId);
+        $newId = $draftRepo->addDraftBlockWithConfig(
+            $slug,
+            $themeSlug,
+            $type,
+            $nextSort,
+            $defaults,
+            $parentId
+        );
+
+        // Direct-create path: the page builder's + button
+        // calls this endpoint via XHR and expects the new
+        // node's identity so it can insert into the client
+        // tree without a page reload.
+        if ($request->header('X-Requested-With') === 'XMLHttpRequest') {
+            $meta = \CorporateAid\Commerce\Support\Blocks\BlockTypeRegistry::get($type);
+            return Response::json([
+                'ok'          => true,
+                'id'          => $newId,
+                'block_type'  => $type,
+                'parent_id'   => $parentId ?? 0,
+                'sort_order'  => $nextSort,
+                'type_label'  => $meta['label'] ?? $type,
+                'is_structural' => !empty($meta['accepts_children']),
+                'config'      => $defaults,
+            ]);
+        }
 
         $session->flash('success', 'Block added (draft). Click Publish to go live.');
         return Response::redirect('/commerce/ca-admin/pages/' . $slug);

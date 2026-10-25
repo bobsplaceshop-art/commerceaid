@@ -97,7 +97,16 @@ if (!function_exists('versioned_asset')) {
         try {
             $file = public_path('assets/' . ltrim($path, '/'));
             if (is_file($file)) {
-                $url .= '?v=' . filemtime($file);
+                // Use the file's content hash, not its mtime.
+                // WSL writes to /mnt/c do not always update the
+                // metadata that Apache sees, so filemtime() can
+                // return a stale value and the browser serves a
+                // cached copy. md5_file() reads the bytes on
+                // disk every request, so the ?v= changes when
+                // the content changes. See Pattern 38 in
+                // docs/REMEMBER.md.
+                $hash = md5_file($file);
+                $url .= '?v=' . ($hash !== false ? substr($hash, 0, 12) : (string) time());
             }
         } catch (\Throwable) {
             // App not booted (rare). Fall through with unversioned URL.

@@ -50,20 +50,103 @@ final class BlockConfigRegistry
      *
      * @return array<string, array<string,mixed>>
      */
+    /**
+     * Section: a full-width structural block. Config covers
+     * vertical rhythm (padding top/bottom), color (background
+     * for the full-bleed band), and content width (constrains
+     * the inner container).
+     *
+     * @return array<string, array<string,mixed>>
+     */
     private static function section(): array
     {
-        return [];
+        return [
+            'padding_top' => [
+                'label'   => 'Padding top',
+                'type'    => 'select',
+                'default' => 'md',
+                'options' => [
+                    'none' => 'None',
+                    'sm'   => 'Small',
+                    'md'   => 'Medium',
+                    'lg'   => 'Large',
+                    'xl'   => 'Extra large',
+                ],
+            ],
+            'padding_bottom' => [
+                'label'   => 'Padding bottom',
+                'type'    => 'select',
+                'default' => 'md',
+                'options' => [
+                    'none' => 'None',
+                    'sm'   => 'Small',
+                    'md'   => 'Medium',
+                    'lg'   => 'Large',
+                    'xl'   => 'Extra large',
+                ],
+            ],
+            'background_color' => [
+                'label'   => 'Background color',
+                'type'    => 'color',
+                'default' => null,
+                'hint'    => 'Leave empty for the storefront default surface color.',
+            ],
+            'max_width' => [
+                'label'   => 'Content width',
+                'type'    => 'select',
+                'default' => 'wide',
+                'options' => [
+                    'full'   => 'Full width',
+                    'wide'   => 'Wide (1200px)',
+                    'narrow' => 'Narrow (800px)',
+                ],
+            ],
+        ];
     }
 
     /**
-     * Container, like Section, is structural. No per-instance
-     * config yet.
+     * Container: a nested wrapper inside a Section. Config
+     * covers horizontal padding (inner breathing room), content
+     * width, and gap between children.
      *
      * @return array<string, array<string,mixed>>
      */
     private static function container(): array
     {
-        return [];
+        return [
+            'padding_x' => [
+                'label'   => 'Horizontal padding',
+                'type'    => 'select',
+                'default' => 'md',
+                'options' => [
+                    'none' => 'None',
+                    'sm'   => 'Small',
+                    'md'   => 'Medium',
+                    'lg'   => 'Large',
+                ],
+            ],
+            'max_width' => [
+                'label'   => 'Content width',
+                'type'    => 'select',
+                'default' => 'wide',
+                'options' => [
+                    'full'   => 'Full width',
+                    'wide'   => 'Wide (1200px)',
+                    'narrow' => 'Narrow (800px)',
+                ],
+            ],
+            'gap' => [
+                'label'   => 'Gap between children',
+                'type'    => 'select',
+                'default' => 'md',
+                'options' => [
+                    'none' => 'None',
+                    'sm'   => 'Small',
+                    'md'   => 'Medium',
+                    'lg'   => 'Large',
+                ],
+            ],
+        ];
     }
 
     /**

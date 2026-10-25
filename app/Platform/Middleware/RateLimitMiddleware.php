@@ -51,7 +51,7 @@ final class RateLimitMiddleware
         $html = '<!doctype html><html><head><meta charset="utf-8"><title>Too many attempts</title>'
               . '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">'
               . '<link href="/assets/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">'
-              . '<link href="/assets/css/app.css" rel="stylesheet"></head>'
+              . '<link href="' . versioned_asset('css/app-v2.css') . '" rel="stylesheet"></head>'
               . '<body style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;">'
               . '<div class="ra-card" style="max-width:520px;width:100%;text-align:center;padding:2.5rem;">'
               . '<div style="font-size:3rem;color:var(--ra-warn-fg);"><i class="bi bi-hourglass-split"></i></div>'

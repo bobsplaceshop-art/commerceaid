@@ -65,3 +65,39 @@ foreach ($types as $key => $meta) {
         </div>
     </div>
 </div>
+
+
+<script>
+(function () {
+    'use strict';
+    var modal = document.getElementById('ra-block-picker-modal');
+    if (!modal) return;
+
+    var titleEl = document.getElementById('ra-block-picker-label');
+
+    // The picker is opened from two places:
+    //   1. The header "+" button (no data-add-under). Adds a root block.
+    //   2. A Section or Container row's "+" button (data-add-under set).
+    //      Adds a child of that block.
+    // The event fires before the modal is shown. Read the
+    // triggering element, set the title, and set every parent_id
+    // hidden input in the modal (one per tile's form) to the
+    // add-under value.
+    modal.addEventListener('show.bs.modal', function (event) {
+        var trigger = event.relatedTarget;
+        var parentId = trigger ? trigger.getAttribute('data-add-under') : null;
+
+        if (parentId !== null && parentId !== '') {
+            if (titleEl) titleEl.textContent = 'Add a block inside';
+        } else {
+            if (titleEl) titleEl.textContent = 'Add a block';
+            parentId = '';
+        }
+
+        // Every tile form has a parent_id input. Update all of them.
+        modal.querySelectorAll('input[name="parent_id"]').forEach(function (input) {
+            input.value = parentId;
+        });
+    });
+})();
+</script>

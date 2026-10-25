@@ -121,6 +121,18 @@
         if (!tpl) return;
         settingsContent.innerHTML = '';
         settingsContent.appendChild(tpl.content.cloneNode(true));
+
+        // Show which block is being edited. The label comes from
+        // the block's row in the sidebar, so it works for every
+        // type (including the synthetic 'Blocks without a parent'
+        // group). Falls back to a generic label if the row cannot
+        // be found (e.g., a block that is not in the current
+        // sidebar state).
+        var row = document.querySelector('.ra-customizer-block[data-block-id="' + blockId + '"]');
+        var label = row ? row.getAttribute('data-type-label') : 'Block';
+        var titleEl = document.getElementById('settings-title');
+        if (titleEl) titleEl.textContent = 'Editing: ' + label;
+
         panelBlocks.style.display = 'none';
         panelSettings.style.display = 'block';
         bindLiveForm(settingsContent.querySelector('form'));
@@ -184,6 +196,7 @@
 
     var list = document.getElementById('ra-blocks-list');
     var draggedId = null;
+    var activeAddParentId = 0;
 
     // ============================================================
     // Phase 1: Client-side tree. Built once on load from the DOM
@@ -355,6 +368,68 @@
         });
     }
 
+    // Direct-create: add a block as a child of a given parent
+    // (or as a root when parentId is 0). POSTs to the server,
+    // parses the JSON response, inserts a node into the tree,
+    // rerenders the sidebar, and opens the new block's
+    // settings. On failure, logs and does nothing - the tree
+    // stays in its current state.
+    function addChildBlock(parentId, blockType) {
+        if (!list) return;
+        var slug = list.getAttribute('data-page-slug') || '';
+        if (!slug) return;
+
+        var fd = new FormData();
+        fd.append('_csrf', csrf);
+        fd.append('block_type', blockType);
+        if (parentId) fd.append('parent_id', String(parentId));
+
+        fetch('/commerce/ca-admin/pages/' + slug + '/blocks', {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (res) {
+            if (!res.ok) {
+                console.error('[customizer] addChild failed:', res.status);
+                return null;
+            }
+            return res.json();
+        }).then(function (data) {
+            if (!data || !data.ok) return;
+
+            var tree = window.__builderTree;
+            if (!tree) return;
+
+            var newNode = {
+                id: data.id,
+                parentId: data.parent_id || 0,
+                blockType: data.block_type,
+                typeLabel: data.type_label,
+                isStructural: !!data.is_structural,
+                children: []
+            };
+            tree.byId[data.id] = newNode;
+
+            if (newNode.parentId === 0) {
+                tree.roots.push(newNode);
+            } else {
+                var parent = tree.byId[newNode.parentId];
+                if (parent) {
+                    parent.children.push(newNode);
+                } else {
+                    tree.roots.push(newNode);
+                }
+            }
+
+            rerenderSidebar();
+            openSettingsFor(data.id);
+        }).catch(function (err) {
+            console.error('[customizer] addChild network error:', err);
+        });
+    }
+    window.__builderAddChild = addChildBlock;
+
     // Rebuild the sidebar from window.__builderTree.
     function rerenderSidebar() {
         if (!list) return;
@@ -431,6 +506,110 @@
                     isAbove ? targetId : 0
                 );
             });
+        });
+
+        // Direct-create dropdown. The menu is built lazily
+        // and appended to document.body. This is required
+        // because .ra-customizer has position: fixed, which
+        // creates a stacking context that clips anything
+        // inside it. The menu must be a sibling of the
+        // customizer, not a descendant.
+        var addMenu = null;
+
+        function getOrBuildAddMenu() {
+            if (addMenu) return addMenu;
+
+            addMenu = document.createElement('ul');
+            addMenu.id = 'ra-block-add-menu';
+            addMenu.style.cssText =
+                'position:fixed; display:none; z-index:9999999; ' +
+                'background:#0f172a; border:1px solid #2d3748; ' +
+                'padding:.25rem 0; list-style:none; min-width:200px; ' +
+                'overflow-y:auto; ' +
+                'box-shadow:0 4px 12px rgba(0,0,0,.5);';
+
+            var types = window.__builderBlockTypes || [];
+            types.forEach(function (t) {
+                var li = document.createElement('li');
+                var a  = document.createElement('a');
+                a.className = 'ra-block-add-item';
+                a.href = '#';
+                a.setAttribute('data-block-type', t.slug);
+                a.style.cssText =
+                    'color:#e2e8f0; padding:.5rem .75rem; ' +
+                    'display:block; text-decoration:none; cursor:pointer;';
+                a.innerHTML =
+                    '<i class="bi ' + t.icon + ' me-2" style="color:#d4af37;"></i>'
+                    + t.label;
+                li.appendChild(a);
+                addMenu.appendChild(li);
+            });
+
+            document.body.appendChild(addMenu);
+            return addMenu;
+        }
+
+        function hideAddMenu() {
+            if (addMenu) addMenu.style.display = 'none';
+        }
+
+        function showAddMenu(trigger) {
+            var menu = getOrBuildAddMenu();
+            menu.style.display = 'block';
+            menu.style.maxHeight = 'none';
+
+            var triggerRect = trigger.getBoundingClientRect();
+            var menuRect = menu.getBoundingClientRect();
+            var viewportHeight = window.innerHeight;
+            var spaceBelow = viewportHeight - triggerRect.bottom;
+            var spaceAbove = triggerRect.top;
+
+            // If there is not enough room below the trigger, open
+            // the menu upward. If there is not enough room above
+            // either, open below and cap the height to the
+            // available space with a scrollbar.
+            if (spaceBelow < menuRect.height && spaceAbove > menuRect.height) {
+                menu.style.top = (triggerRect.top - menuRect.height - 4) + 'px';
+            } else if (spaceBelow < menuRect.height) {
+                menu.style.top = (triggerRect.bottom + 4) + 'px';
+                menu.style.maxHeight = (spaceBelow - 8) + 'px';
+            } else {
+                menu.style.top = (triggerRect.bottom + 4) + 'px';
+            }
+
+            menu.style.left = triggerRect.left + 'px';
+        }
+
+        document.addEventListener('click', function (e) {
+            // Click on the + trigger: toggle menu, capture parent.
+            var trigger = e.target.closest('[data-block-add-trigger]');
+            if (trigger) {
+                e.preventDefault();
+                e.stopPropagation();
+                activeAddParentId = parseInt(trigger.getAttribute('data-add-under'), 10) || 0;
+                if (addMenu && addMenu.style.display === 'block') {
+                    hideAddMenu();
+                } else {
+                    showAddMenu(trigger);
+                }
+                return;
+            }
+
+            // Click on a menu item: dispatch the add.
+            var item = e.target.closest('.ra-block-add-item');
+            if (item) {
+                e.preventDefault();
+                var type = item.getAttribute('data-block-type');
+                hideAddMenu();
+                if (type) addChildBlock(activeAddParentId, type);
+                activeAddParentId = 0;
+                return;
+            }
+
+            // Click anywhere else: close the menu if it is open.
+            if (addMenu && addMenu.style.display === 'block') {
+                hideAddMenu();
+            }
         });
 
         list.addEventListener('drop', function (e) {

@@ -18,6 +18,7 @@
     <link href="<?= versioned_asset('fontawesome/css/all.min.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/main-v2.css') ?>" rel="stylesheet">
     <link href="<?= versioned_asset('css/setup.css') ?>" rel="stylesheet">
+    <link href="<?= versioned_asset('css/app-v2.css') ?>" rel="stylesheet">
     <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
     <script>
         (function () {

@@ -213,12 +213,12 @@ foreach ($blocks as $block) {
 <?= view_partial('admin/pages/_block-picker', ['slug' => $slug, 'addUnder' => $addUnder ?? null]) ?>
 <?= view_partial('admin/pages/_block-media-picker', ['mediaLibrary' => $mediaLibrary]) ?>
 <template id="tpl-block-row">
-    <div class="ra-customizer-block" data-block-id="" data-parent-id="" data-block-type="" data-type-label="" data-is-structural="" draggable="true">
+    <div class="ra-customizer-block" data-block-id="" data-parent-id="" data-block-type="" data-type-label="" data-is-structural="" data-depth="" draggable="true">
         <i class="bi bi-grip-vertical drag-handle"></i>
         <span class="fw-bold ms-2" data-field="type-label"></span>
         <div class="ms-auto d-flex gap-1" data-field="actions">
-            <a href="#" class="ra-icon-btn" title="Add a child inside this block" data-field="add-child"><i class="bi bi-plus-lg"></i></a>
-            <button type="button" class="ra-icon-btn ra-open-settings" data-block-id=""><i class="bi bi-pencil"></i></button>
+            <a href="#" class="ra-icon-btn" title="Add a child inside this block" data-field="add-child" draggable="false"><i class="bi bi-plus-lg"></i></a>
+            <button type="button" class="ra-icon-btn ra-open-settings" data-block-id="" draggable="false"><i class="bi bi-pencil"></i></button>
             <form method="POST" action="" class="m-0" onsubmit="return confirm('Duplicate this block?');" data-field="duplicate-form">
                 <input type="hidden" name="_csrf" value="">
                 <button type="submit" class="ra-icon-btn" title="Duplicate"><i class="bi bi-files"></i></button>
@@ -257,7 +257,11 @@ foreach ($blocks as $block) {
         row.setAttribute('data-block-type', marker.getAttribute('data-block-type'));
         row.setAttribute('data-type-label', marker.getAttribute('data-type-label'));
         row.setAttribute('data-is-structural', isStruct ? '1' : '0');
+        row.setAttribute('data-depth', String(depth));
         if (depth > 0) row.classList.add('ra-customizer-block--child');
+        if (marker.getAttribute('data-block-type') === '__orphaned__') {
+            row.classList.add('ra-customizer-block--synthetic');
+        }
 
         row.querySelector('[data-field="type-label"]').textContent =
             marker.getAttribute('data-type-label');
@@ -265,8 +269,19 @@ foreach ($blocks as $block) {
         if (!isStruct) {
             row.querySelector('[data-field="add-child"]').remove();
         } else {
-            row.querySelector('[data-field="add-child"]').href =
-                '?add_under=' + id;
+            // + opens the shared block type dropdown. It uses
+            // our own click handler (not Bootstrap's data-api),
+            // because the shared menu is a single element at the
+            // bottom of the page, not a sibling of the button.
+            // Bootstrap's data-api assumes sibling markup and
+            // would throw on _isShown(null).
+            var addBtn = row.querySelector('[data-field="add-child"]');
+            addBtn.removeAttribute('href');
+            addBtn.setAttribute('role', 'button');
+            addBtn.setAttribute('tabindex', '0');
+            addBtn.setAttribute('draggable', 'false');
+            addBtn.setAttribute('data-block-add-trigger', '1');
+            addBtn.setAttribute('data-add-under', id);
         }
 
         row.querySelector('.ra-open-settings').setAttribute('data-block-id', id);
@@ -292,5 +307,26 @@ foreach ($blocks as $block) {
     // Expose the fill function for the JS to reuse on re-render.
     window.__builderFillRow = fillRow;
 })();
+</script>
+<?php
+// Block types for the + dropdown. The menu itself is built
+// dynamically in page-builder-customizer-v3.js and appended
+// to document.body so it escapes the .ra-customizer stacking
+// context (which has position: fixed and clips everything
+// inside it).
+$pickableTypes = \CorporateAid\Commerce\Support\Blocks\BlockTypeRegistry::all();
+?>
+<script>
+window.__builderBlockTypes = <?= json_encode(
+    array_map(
+        fn($key, $meta) => [
+            'slug'  => $key,
+            'label' => $meta['label'],
+            'icon'  => $meta['icon'],
+        ],
+        array_keys($pickableTypes),
+        $pickableTypes
+    )
+) ?>;
 </script>
 <script src="<?= versioned_asset('js/page-builder-customizer-v3.js') ?>"></script>

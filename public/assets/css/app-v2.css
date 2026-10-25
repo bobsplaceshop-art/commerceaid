@@ -176,11 +176,44 @@
 /* Child block row (rendered under a Section or Container).
    Indented by the depth of its parent. Border-left
    communicates the nesting relationship at a glance. */
-.ra-customizer-block--child {
-    margin-left: 1.25rem;
+/* Child block rows. Each depth indents further and carries
+   a connector line. The merchant sees the tree, not a flat
+   list. The border-left color matches the gold accent so
+   the connector is visible against the dark background. */
+.ra-customizer-block[data-depth="1"] {
+    margin-left: 1.5rem;
     border-left: 3px solid #d4af37;
     padding-left: 0.5rem;
     background: #141d2f;
+}
+.ra-customizer-block[data-depth="2"] {
+    margin-left: 3rem;
+    border-left: 3px solid #d4af37;
+    padding-left: 0.5rem;
+    background: #141d2f;
+}
+.ra-customizer-block[data-depth="3"] {
+    margin-left: 4.5rem;
+    border-left: 3px solid #d4af37;
+    padding-left: 0.5rem;
+    background: #141d2f;
+}
+/* Fallback for any depth beyond 3 (rare, but keeps the
+   rule future-proof without an explosion of selectors). */
+.ra-customizer-block.ra-customizer-block--child {
+    background: #141d2f;
+}
+
+/* Synthetic row: an orphaned group whose parent was deleted.
+   Warm border and background communicate "recovery state,
+   not a real block". The merchant can drag children out or
+   delete the group. Never shown as a pickable block type. */
+.ra-customizer-block--synthetic {
+    border-left: 3px solid #f59e0b;
+    background: #2a1f0f;
+}
+.ra-customizer-block--synthetic .fw-bold {
+    color: #fbbf24;
 }
 
 .ra-customizer-preview {
