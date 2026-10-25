@@ -62,44 +62,32 @@
                         <i class="bi bi-plus-lg"></i>
                     </button>
                 </div>
-                <div class="ra-builder-blocks p-2" id="ra-blocks-list" data-reorder-url="/commerce/ca-admin/pages/<?= e($slug) ?>/blocks/reorder" data-csrf="<?= e(csrf_token()) ?>">
+                <div class="ra-builder-blocks p-2" id="ra-blocks-list" data-reorder-url="/commerce/ca-admin/pages/<?= e($slug) ?>/blocks/reorder" data-csrf="<?= e(csrf_token()) ?>" data-page-slug="<?= e($slug) ?>">
                     <?php if (empty($blocks)): ?>
                         <p class="text-muted small text-center py-3">No blocks yet. Click + to add one.</p>
                     <?php else: ?>
                         <?php
-                        // Recursive row renderer. Handles arbitrary
-                        // nesting: a Section may contain a Container,
-                        // which may contain leaf blocks. Depth drives
-                        // the visual indent and the child row class.
-                        $renderBlockRow = function ($block, $slug, int $depth = 0) use (&$renderBlockRow): void {
-                            $isChild      = $depth > 0;
+                        // Emit one <template class="row-data"> per block
+                        // with the block's metadata. The row markup itself
+                        // comes from the single <template id="tpl-block-row">
+                        // below, so PHP and JS render identical rows.
+                        $emitRowData = function ($block, int $depth = 0) use (&$emitRowData): void {
                             $isStructural = \CorporateAid\Commerce\Support\Blocks\BlockTypeRegistry::acceptsChildren($block->blockType);
                             ?>
-                            <div class="ra-customizer-block<?= $isChild ? ' ra-customizer-block--child' : '' ?>" data-block-id="<?= (int) $block->id ?>" data-parent-id="<?= (int) ($block->parentId ?? 0) ?>" draggable="true">
-                                <i class="bi bi-grip-vertical drag-handle"></i>
-                                <span class="fw-bold ms-2"><?= e($block->typeLabel()) ?></span>
-                                <div class="ms-auto d-flex gap-1">
-                                    <?php if ($isStructural): ?>
-                                        <a href="?add_under=<?= (int) $block->id ?>" class="ra-icon-btn" title="Add a child inside this block"><i class="bi bi-plus-lg"></i></a>
-                                    <?php endif; ?>
-                                    <button type="button" class="ra-icon-btn ra-open-settings" data-block-id="<?= (int) $block->id ?>"><i class="bi bi-pencil"></i></button>
-                                    <form method="POST" action="/commerce/ca-admin/pages/<?= e($slug) ?>/blocks/<?= (int) $block->id ?>/duplicate" class="m-0" onsubmit="return confirm('Duplicate this block?');">
-                                        <?= csrf_field() ?>
-                                        <button type="submit" class="ra-icon-btn" title="Duplicate"><i class="bi bi-files"></i></button>
-                                    </form>
-                                    <form method="POST" action="/commerce/ca-admin/pages/<?= e($slug) ?>/blocks/<?= (int) $block->id ?>/delete" class="m-0" onsubmit="return confirm('Delete this block?');">
-                                        <?= csrf_field() ?>
-                                        <button type="submit" class="ra-icon-btn text-danger"><i class="bi bi-trash"></i></button>
-                                    </form>
-                                </div>
-                            </div>
+                            <template class="row-data"
+                                      data-block-id="<?= (int) $block->id ?>"
+                                      data-parent-id="<?= (int) ($block->parentId ?? 0) ?>"
+                                      data-block-type="<?= e($block->blockType) ?>"
+                                      data-type-label="<?= e($block->typeLabel()) ?>"
+                                      data-is-structural="<?= $isStructural ? '1' : '0' ?>"
+                                      data-depth="<?= $depth ?>"></template>
                             <?php
                             foreach ($block->children as $child) {
-                                $renderBlockRow($child, $slug, $depth + 1);
+                                $emitRowData($child, $depth + 1);
                             }
                         };
                         foreach ($blocks as $block) {
-                            $renderBlockRow($block, $slug, 0);
+                            $emitRowData($block, 0);
                         }
                         ?>
                     <?php endif; ?>
@@ -224,4 +212,85 @@ foreach ($blocks as $block) {
 
 <?= view_partial('admin/pages/_block-picker', ['slug' => $slug, 'addUnder' => $addUnder ?? null]) ?>
 <?= view_partial('admin/pages/_block-media-picker', ['mediaLibrary' => $mediaLibrary]) ?>
+<template id="tpl-block-row">
+    <div class="ra-customizer-block" data-block-id="" data-parent-id="" data-block-type="" data-type-label="" data-is-structural="" draggable="true">
+        <i class="bi bi-grip-vertical drag-handle"></i>
+        <span class="fw-bold ms-2" data-field="type-label"></span>
+        <div class="ms-auto d-flex gap-1" data-field="actions">
+            <a href="#" class="ra-icon-btn" title="Add a child inside this block" data-field="add-child"><i class="bi bi-plus-lg"></i></a>
+            <button type="button" class="ra-icon-btn ra-open-settings" data-block-id=""><i class="bi bi-pencil"></i></button>
+            <form method="POST" action="" class="m-0" onsubmit="return confirm('Duplicate this block?');" data-field="duplicate-form">
+                <input type="hidden" name="_csrf" value="">
+                <button type="submit" class="ra-icon-btn" title="Duplicate"><i class="bi bi-files"></i></button>
+            </form>
+            <form method="POST" action="" class="m-0" onsubmit="return confirm('Delete this block?');" data-field="delete-form">
+                <input type="hidden" name="_csrf" value="">
+                <button type="submit" class="ra-icon-btn text-danger"><i class="bi bi-trash"></i></button>
+            </form>
+        </div>
+    </div>
+</template>
+
+<script>
+(function () {
+    'use strict';
+    var list = document.getElementById('ra-blocks-list');
+    if (!list) return;
+
+    var slug    = list.getAttribute('data-page-slug') || '';
+    var csrf    = list.getAttribute('data-csrf') || '';
+    var tpl     = document.getElementById('tpl-block-row');
+    var markers = list.querySelectorAll('.row-data');
+
+    if (!tpl || markers.length === 0) return;
+
+    var fillRow = function (marker) {
+        var node = tpl.content.cloneNode(true);
+        var row = node.querySelector('.ra-customizer-block');
+        var id       = marker.getAttribute('data-block-id');
+        var parentId = marker.getAttribute('data-parent-id');
+        var isStruct = marker.getAttribute('data-is-structural') === '1';
+        var depth    = parseInt(marker.getAttribute('data-depth'), 10) || 0;
+
+        row.setAttribute('data-block-id', id);
+        row.setAttribute('data-parent-id', parentId);
+        row.setAttribute('data-block-type', marker.getAttribute('data-block-type'));
+        row.setAttribute('data-type-label', marker.getAttribute('data-type-label'));
+        row.setAttribute('data-is-structural', isStruct ? '1' : '0');
+        if (depth > 0) row.classList.add('ra-customizer-block--child');
+
+        row.querySelector('[data-field="type-label"]').textContent =
+            marker.getAttribute('data-type-label');
+
+        if (!isStruct) {
+            row.querySelector('[data-field="add-child"]').remove();
+        } else {
+            row.querySelector('[data-field="add-child"]').href =
+                '?add_under=' + id;
+        }
+
+        row.querySelector('.ra-open-settings').setAttribute('data-block-id', id);
+
+        var dup = row.querySelector('[data-field="duplicate-form"]');
+        dup.action = '/commerce/ca-admin/pages/' + slug + '/blocks/' + id + '/duplicate';
+        dup.querySelector('input[name="_csrf"]').value = csrf;
+
+        var del = row.querySelector('[data-field="delete-form"]');
+        del.action = '/commerce/ca-admin/pages/' + slug + '/blocks/' + id + '/delete';
+        del.querySelector('input[name="_csrf"]').value = csrf;
+
+        return row;
+    };
+
+    // Remove the empty-state paragraph if it exists and build rows.
+    var empty = list.querySelector('p');
+    markers.forEach(function (marker) {
+        list.appendChild(fillRow(marker));
+    });
+    if (empty && markers.length > 0) empty.remove();
+
+    // Expose the fill function for the JS to reuse on re-render.
+    window.__builderFillRow = fillRow;
+})();
+</script>
 <script src="<?= versioned_asset('js/page-builder-customizer-v3.js') ?>"></script>
