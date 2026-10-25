@@ -141,7 +141,7 @@ final class SocialMetaService
             if (empty($media)) {
                 return null;
             }
-            return $this->absoluteUrl('/media/' . $media[0]->file->uuid . '/lg.png');
+            return $this->absoluteUrl($media[0]->variantUrl('lg', 'png'));
         } catch (\Throwable) {
             return null;
         }
@@ -159,7 +159,7 @@ final class SocialMetaService
             return null;
         }
 
-        return '/media/' . $media[0]->file->uuid . '/lg.jpg';
+        return $media[0]->variantUrl('lg', 'jpg');
     }
 
     private function ogAvailability(string $stockStatus): string

@@ -302,7 +302,10 @@ final class MerchantFeedService
         if ($media === []) {
             return '';
         }
-        return $baseUrl . '/media/' . $media[0]->file->uuid . '/md.jpg';
+        // MediaItem::variantUrl() produces the root-relative
+        // path. Prefix with $baseUrl for the merchant feed,
+        // which requires absolute image URLs.
+        return $baseUrl . $media[0]->variantUrl('md', 'jpg');
     }
 
     private function availabilityLabel(string $stockStatus): string

@@ -68,6 +68,11 @@ $checkers = [
         'script' => 'bin/check-responsive.php',
         'description' => 'inline @media in views, hardcoded widths, unmarked tables',
     ],
+    'media-urls' => [
+        'label' => 'Media URL resolution contract',
+        'script' => 'bin/check-media-urls.php',
+        'description' => "no literal '/media/{id}' URLs; use a helper, \$bg_url, or MediaItem::variantUrl()",
+    ],
 ];
 
 /**

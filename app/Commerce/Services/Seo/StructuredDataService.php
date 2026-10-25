@@ -173,7 +173,7 @@ final class StructuredDataService
         foreach ($rows as $row) {
             $item = $byFile[$row->fileId] ?? null;
             if ($item !== null) {
-                $urls[] = '/media/' . $item->file->uuid . '/lg.jpg';
+                $urls[] = $item->variantUrl('lg', 'jpg');
             }
         }
         return $urls;

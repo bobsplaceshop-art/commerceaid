@@ -1,5 +1,9 @@
 <?php
-$bgUrl = !empty($config['image_file_id']) ? '/media/' . $config['image_file_id'] . '/lg.jpg' : '';
+/**
+ * @var array<string,mixed> $config
+ * @var string|null $bg_url
+ */
+$bgUrl = $bg_url ?? '';
 ?>
 <section class="sf-promo" style="padding: 4rem 2rem;">
     <div style="max-width: 1200px; margin: 0 auto; display: flex; background: var(--sf-surface-2); border-radius: 8px; overflow: hidden; min-height: 400px;">

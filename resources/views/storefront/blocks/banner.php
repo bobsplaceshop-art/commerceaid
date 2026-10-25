@@ -1,5 +1,9 @@
 <?php
-$bgUrl = !empty($config['image_file_id']) ? '/media/' . $config['image_file_id'] . '/lg.jpg' : '';
+/**
+ * @var array<string,mixed> $config
+ * @var string|null $bg_url
+ */
+$bgUrl = $bg_url ?? '';
 $style = $bgUrl ? "background-image: url('{$bgUrl}');" : "background-color: var(--sf-accent); color: white;";
 ?>
 <section class="sf-banner" style="<?= e($style) ?> background-size: cover; background-position: center; padding: 5rem 2rem; text-align: center;">
