@@ -365,648 +365,95 @@ the Setup hub.
 
 ---
 
-## Current Focus - Stage 010 complete, Stage 014 tail closed
+## Current Focus - Page Builder Tier 0.8 complete
+
+**Page Builder Tier 0.8 is functionally complete for the
+sidebar workflow.** Sessions 2026-10-24 and 2026-10-25
+shipped the final pieces of the builder's drag-and-drop
+flow, and closed the media URL bug class across the
+codebase.
+
+### Drag rewrite, Phases 1-5
+
+The page builder's drag-and-drop cannot move a block
+between parents without the client keeping a tree. The
+DOM is a flat list of rows; parent-child nesting is
+implied only by the `.ra-customizer-block--child` class,
+which is the same for a child and a grandchild. Two
+levels cannot be distinguished from the class alone.
+
+Phases 1-5 make the client tree the source of truth:
+
+- **Phase 1 (`0be9240`)** — client tree built once on
+  load from `data-block-id` and `data-parent-id`.
+  Exposed as `window.__builderTree`.
+- **Phase 2 (`92031d0`)** — `moveNode()` updates the
+  tree during dragover. No DOM mutation during drag.
+- **Phase 3 (`0b5fe1f`)** — `PageDraftRepository::saveTree()`
+  writes `parent_id` and `sort_order` in one pass.
+  `reorderBlocks` accepts a `tree` payload.
+- **Phase 4 (`229dc89`)** — the drop handler sends the
+  tree. The legacy `ids` payload is preserved for
+  backward compatibility.
+- **Phase 5 (`645e596`)** — the sidebar re-renders from
+  a shared `<template id="tpl-block-row">`.
+  `window.__builderFillRow` is the one cloner, used by
+  both the PHP initial render and the JS re-render.
+  Row markup has one source, not two.
+
+### Companion fixes in the same arc
+
+- **`c39922f`** — config field save
+  (`config[config[headline]]` double-wrap fixed),
+  Hero block background UUID resolved via
+  `BlockRenderer::$bg_url`, print CSS moved to
+  `public/assets/css/print.css`.
+- **`264165d`** — empty product grid blocks collapse on
+  the live storefront. Admin preview still shows the
+  empty state.
+- **`e4d4377`** — media URL resolution across seven
+  files (blocks, feed, social meta, structured data).
+  All fixed. `bin/check-media-urls.php` prevenger
+  checker added.
+- **`2a361af`** — event delegation for settings and
+  mobile-close handlers. Survives every `rerenderSidebar()`.
+- **`1038be6`** — product `og:image` is now absolute.
+- **`574f559`** — Pattern 46 in `docs/REMEMBER.md`.
+
+### What is complete
+
+- Product grid: 3-8 columns, four alignment options,
+  category and source filters, `best_sellers` wired to
+  `ReportRepository::listBestSellers()`.
+- Drag-and-drop: reorder within parent, drag child to
+  root, drag root into Section/Container.
+- Sidebar re-renders after drop; settings pencil works
+  after any drag; empty-state paragraphs preserved.
+- Media URL bug class closed by the prevenger. No
+  numeric id in any `/media/` URL anywhere in
+  `app/` or `resources/`.
+- Seven commit arc from `28ff776` to `645e596`, then
+  three docs commits (`cb35e37` and this one).
+
+### What remains
+
+Three items, all in
+`docs/stages/023_page-builder-architecture.md`:
+
+1. **Section and Container config fields** — padding,
+   background, column count. Tier 3. This is the next
+   session's focus.
+2. **Drag-into-canvas** — dropping a block onto the
+   preview iframe. Resolves the drop coordinates to a
+   target block and insertion side. Requires a plan
+   document. Tier 3.4.
+3. **Menu and footer builder** — the header nav and
+   footer nav read from `commerce_navigation_menus`
+   instead of hardcoded lists. Section 10 of the
+   stage doc.
+
+Tier 0.8 is closed. Tier 3 is open.
 
-**Stage 010 Sessions 1, 2, and 3 are complete.**
-
-Sessions 1 and 2 built the payment infrastructure
-and the refund wrapper. Session 3 built Stripe end
-to end.
-
-Session 3 (`4571f82`, `052ca4e`, `e8ea8f8`) shipped
-the first real payment provider:
-
-  - `StripeProvider` implements `PaymentProvider`.
-    Charge uses Stripe Checkout (hosted redirect).
-    Refund uses `POST /v1/refunds`. Webhook
-    verification uses HMAC-SHA256 over
-    "{timestamp}.{raw_body}".
-  - `ChargeResult` value object (redirected,
-    charged, offline, failed).
-  - `PaymentChargeService` - the charge wrapper.
-  - `WebhookController` - the codebase's first
-    webhook receiver.
-  - `WebhookEventRepository` - `commerce_webhook_events`
-    reads and writes. Idempotency via unique key
-    on (provider_key, event_id).
-  - `StripeReturnController` - the customer return
-    handler.
-  - Two webhook routes and one return route.
-  - `CheckoutService` payment-key validation is
-    registry-driven.
-  - `CheckoutController::place()` dispatches the
-    charge.
-  - `App::loadRoutes()` skips `Session->start()`
-    on CLI.
-  - Two smoke cases pass: `refund` and
-    `stripe-webhook`.
-
-**Stage 014 closed on 2026-10-14** (tag
-`stage-014-complete`).
-
-**Stage 010 Session 4 shipped** (11e00fb): PayPal
-end to end. The provider, the capture flow, the
-webhook handler, the return handler, and the
-checkout integration. Both Stripe and PayPal are
-production-ready.
-
-**Stage 010 Session 5 shipped** (42ffd2e): the
-admin configuration tab and a real connection
-test. Settings > Payments renders one row per
-provider with an enabled toggle, the provider key,
-and a Test connection button. The button makes a
-real outbound API call - Stripe checks the secret
-key against `/v1/balance`, PayPal runs the OAuth
-token handshake. Both are read-only. The button
-was previously wired to a local `isConfigured()`
-check that only confirmed the settings rows were
-populated; the label promised more than the
-implementation delivered. It now tells the truth.
-
-The `PaymentProvider` interface gained
-`testConnection()`. Both providers implement it.
-
-**The Stage 014 storefront audit tail is nearly
-closed** (session 2026-10-15-5). Four of the five
-named areas are verified:
-
-  - Product detail at 900 - verified in the browser.
-    Two-column layout activates at exactly 900,
-    stacks correctly below.
-  - Checkout at 900 - verified in the browser at
-    899 and 900. Both sides of the boundary render
-    correctly.
-  - Footer collapse - three-step collapse verified
-    (1 -> 2 -> 4 + wider newsletter).
-  - Error pages 403 and 404 - themed 404 verified
-    by screenshot. Themed 403 was broken; see below.
-
-**The 403 was not rendering through the themed
-path.** `PermissionMiddleware` short-circuited with
-a hand-rolled `new Response('<h1>Forbidden</h1>...',
-403)`. That bypassed `App::renderException()`, so
-`resources/views/errors/403.php` was never used. The
-browser rendered plain serif HTML. Two 4xx paths,
-one themed, one not.
-
-Fixed in commit 27db37b, one throw:
-`HttpException::forbidden()`. `App::run()` catches
-it the same way it catches the router's 404. Themed
-403 renders through the same door.
-
-`AuditLoggerMiddleware` gained a try/catch around
-`$next()`. Its post-response logging block only ran
-on the return path; a downstream throw meant no
-audit row. The baseline says "a rejected write is
-still a write attempt, and it must leave a trace."
-The catch calls a new `logAttempt()` that mirrors
-the normal path with the status read from the
-exception, then rethrows so the themed view still
-renders. The live POST-403 audit-path test is
-deferred to the customer's deployment.
-
-**The 500 error page is verified by pattern-match**
-against the 404. Same `renderException()` path,
-same view template shape.
-
-**The PWA offline page is verified.** The service
-worker's navigation fallback renders the themed
-`/offline` view when the network is unavailable.
-Tested by stopping Apache with the service worker
-active - the fetch handler's catch fires and the
-cached view renders. Verified at four widths
-(1440, 1024, 768, 375) and in both themes.
-
-The earlier browser test with DevTools offline
-mode enabled but Apache running rendered the
-storefront home page from the runtime cache
-rather than the `/offline` fallback. That is
-correct behaviour: the service worker serves
-browsed pages from cache before falling back to
-`/offline`. The fallback is only reached when
-the network is genuinely unreachable or the
-requested URL has no cached entry.
-
-**Stage 014 tail is closed.** Every named area
-is verified:
-
-  - Product detail at 900
-  - Checkout at 900
-  - Footer collapse (1 -> 2 -> 4 + newsletter)
-  - Error pages 403, 404, 500
-  - PWA offline page at four widths
-
-The storefront is light-only by design (see the
-layout docblock in `layouts/main.php`); the dark
-theme tail item was not applicable.
-
-**Two DevTools console warnings on the online
-storefront are logged for a future pass:**
-
-  - "Content Security Policy of your site blocks
-     some resources."
-  - "Verify stylesheet URLs."
-
-Neither is a PWA issue. The offline page renders
-with zero console issues. The warnings appear on
-online storefront pages and are worth their own
-small investigation.
-
-**Stage 010 is complete** (863c950). The PayPal round
-trip was verified end to end against the sandbox. The
-charge flow, the capture, the return controller, the
-webhook delivery, the signature verification, and the
-event row all fire correctly. Four bugs were found
-and fixed:
-
-  - PayPal's capture endpoint requires a JSON object
-    in the request body, not an empty array.
-  - The tunnel SSL handshake failed intermittently.
-    Fixed outside the code.
-  - `Request::header()` did a case-sensitive lookup,
-    which produced an empty headers array for the
-    webhook. Header names are case-insensitive per
-    RFC 7230.
-  - PayPal sends `event_type`, not `type`. The
-    webhook reader now reads both keys.
-
-Both Stripe and PayPal are production-proven. The
-`stage-010-complete` tag will land with the stage
-close docs.
-
-**The three offline payment providers shipped**
-(5bb5e76, 2026-10-16). Sub-stages 010.4 (Manual),
-010.5 (Cash on Delivery), and 010.6 (Bank
-Transfer) closed in one commit.
-
-Three new classes implement `PaymentProvider`:
-`CashOnDeliveryProvider`, `BankTransferProvider`,
-and `ManualProvider`. Each is small (~40 lines).
-No HTTP, no webhook, no signature. The charge and
-refund paths short-circuit on the keys via the
-`OFFLINE_KEYS` lists in `PaymentChargeService`
-and `PaymentRefundService`; the class methods
-exist to satisfy the interface.
-
-Migration 0342 backfilled three rows per store in
-`commerce_store_payment_methods`. `cod` and
-`bank_transfer` default to `is_enabled = 1`
-(they were always-on through a hardcoded pair in
-`CheckoutController::availablePaymentMethods()`
-before this change). `manual` defaults to `0`
-(it is a new provider; the merchant opts in via
-the Settings toggle). The migration is strictly
-additive - `ON DUPLICATE KEY UPDATE` is a
-self-assignment, so existing merchant state is
-preserved.
-
-The hardcoded pair in
-`CheckoutController::availablePaymentMethods()` is
-gone. The registry now supplies all five providers
-uniformly: `stripe`, `paypal`, `cod`,
-`bank_transfer`, `manual`.
-
-The cascade check's fourth direction - read the
-current state of what you are about to change -
-surfaced the regression that would have shipped
-without the migration: no row existed for `cod`
-or `bank_transfer`, so `enabledForStore()` would
-have returned them as absent and the checkout
-would have lost them. The migration is the fix.
-
-Verified in the browser: checkout payment step
-shows all five providers. Settings > Payments
-shows five toggle rows with the correct defaults.
-Toggling Manual on makes it appear at checkout;
-toggling COD off removes it.
-
-**M-Pesa (010.1) is production-proven** (581e802,
-2026-10-17). The STK push flow verified end to end
-against the Daraja sandbox: OAuth token, STK push,
-sandbox prompt on the phone, PIN entry, callback to
-`/webhooks/mpesa`, order flipped to paid, waiting
-page polling detects it and redirects to
-confirmation.
-
-M-Pesa is the first real non-card, non-PayPal
-provider. It exercises the direct-charge path (no
-`redirect_url`), the callback-by-lookup verification
-scheme (no signature header; the CheckoutRequestID
-is the security boundary), and the waiting page
-polling flow.
-
-Four issues surfaced during the test. Two were
-code and two were configuration:
-
-  - The order currency was hardcoded to EUR.
-    Fixed in `9b27bef` - the checkout now reads the
-    store's `default_currency_id`.
-
-  - The inventory reservation was not released on
-    charge failure. Fixed in `581e802` -
-    `CheckoutController::cancelFailedOrder()`.
-
-  - The Daraja app did not have the Lipa Na M-Pesa
-    Sandbox product enabled. No code change.
-
-  - The settings transaction type was
-    `CustomerBuyGoodsOnline` paired with the Paybill
-    shortcode `174379`. Changed to
-    `CustomerPayBillOnline`. No code change.
-
-The M-Pesa phone field is a payment-step field, not
-a shipping-address field: the payer can differ from
-the shipping recipient (gift orders, third-party
-payments).
-
-**Pesapal (010.2) is code-complete** (ea4096c,
-2026-10-17). The browser test against the Pesapal
-sandbox is pending the developer account. Three
-sessions shipped:
-
-  - Session 1 (f4140ee): migration 0344,
-    commerce_pesapal_requests, six settings
-    entries, PesapalRequestRepository.
-
-  - Session 2 (6bbc911): PesapalProvider (597
-    lines), registry entry, webhook route,
-    WebhookController::pesapal().
-
-  - Session 3 (ea4096c): PesapalReturnController,
-    PesapalProvider::readTransactionStatus(),
-    bin/cleanup-pesapal-requests.php.
-
-Pesapal differs from the four providers already
-shipped in two ways:
-
-  - The IPN carries query parameters, not a JSON
-    body. WebhookController::pesapal() builds a
-    synthetic JSON body from the query parameters
-    and delegates to the shared handle(). The
-    success response echoes the query parameters
-    with 200, per Pesapal's requirement.
-
-  - The access token expires after 5 minutes.
-    The provider fetches a fresh token on every
-    request. No caching.
-
-One bug the sub-stage surfaced:
-PaymentChargeService's returnUrl match had no
-'pesapal' branch, so Pesapal's callback_url fell
-through to the default confirmation page. The
-return controller never ran. Fixed in ea4096c.
-
-**Flutterwave (010.3) is code-complete** (f7b9fd8,
-2026-10-17). The browser test against the
-Flutterwave sandbox is pending the developer
-account. Three sessions shipped:
-
-  - Session 1 (eec5e75): migration 0345,
-    commerce_flutterwave_requests, six settings
-    entries, FlutterwaveRequestRepository.
-
-  - Session 2 (38c995d): FlutterwaveProvider
-    (592 lines), registry entry, webhook route,
-    WebhookController::flutterwave().
-
-  - Session 3 (f7b9fd8): FlutterwaveReturnController,
-    bin/cleanup-flutterwave-requests.php, the
-    PaymentChargeService 'flutterwave' branch.
-
-Flutterwave differs from the five providers
-already shipped in two ways:
-
-  - The webhook signature is a plain shared
-    secret in the verif-hash header, not an HMAC
-    of the payload. The provider compares the
-    header against the store's secret_hash
-    setting. The tx_ref lookup in
-    commerce_flutterwave_requests is the second
-    security layer.
-
-  - The webhook must return 200. The shared
-    handle() returns 204 on success; the
-    flutterwave() method overrides to 200.
-
-The PaymentChargeService 'flutterwave' branch
-was added in the same sub-stage. The Pesapal
-sub-stage had surfaced this as a missed step;
-Flutterwave's branch shipped with its Session 3
-rather than waiting to be found in the browser
-test.
-
-Eight providers now resolve: Stripe, PayPal,
-M-Pesa, Pesapal, Flutterwave, COD, Bank
-Transfer, Manual.
-
-The browser tests are the outstanding piece.
-Once the developer accounts are active, the
-tests prove the full flows against the live
-sandboxes. Until then, the code is structurally
-verified (PHPStan level 8, four prevenger
-checkers, five smoke cases) but not proven
-against the live APIs.
-
-**Checkout quality and services questionnaire shipped**
-(3d04b5b, 587baef): a broad pass on the checkout flow,
-plus the client services questionnaire.
-
-  - Stripe proven end to end. A real card payment
-    processed through Stripe Checkout, returned to the
-    return controller, and confirmed by webhook. Order
-    ORD-000014 paid with reference
-    `pi_3UQk23PjFXFgVsHR0XvYfKoc`. The first live
-    payment this platform has processed.
-
-  - The CSP `form-action` directive now allows the
-    payment provider origins. Without this the browser
-    silently refused the 302 from `/checkout/place` to
-    `checkout.stripe.com`. This was the root cause of
-    the "payment never reached Stripe" symptom.
-
-  - Per-field validation on the shipping step. Each
-    missing field shows its own error. First and last
-    name are now required. Old input persists across
-    a validation failure.
-
-  - A searchable country dropdown on the shipping
-    step. 249 ISO 3166-1 countries with self-hosted
-    SVG flags from Twemoji. Zero external requests.
-    Works identically on every operating system.
-
-  - Phone validation. Twenty markets have a length
-    band and a dial code. A mismatched international
-    prefix is refused.
-
-  - The AWALO GLOBAL Additional Services
-    Questionnaire is live at
-    `/forms/services-questionnaire`. Twenty-two fields
-    across four steps. Flights, Hotels, Cargo, then
-    cross-service questions. The client fills it in,
-    the merchant reads the answers in the admin, and
-    the form is deleted.
-
-**Checkout and message fixes shipped** (e4525cb,
-67c756a): two bugs found during the Stripe round
-trip and fixed the same day.
-
-  - The cart and the checkout wizard state now
-    survive an abandoned payment. They were being
-    cleared before the payment provider was called.
-    A customer who abandons at Stripe or PayPal and
-    returns later can retry. This matches the
-    industry standard: clear on confirmed, not on
-    created.
-
-  - A single notification click in the bell dropdown
-    now marks the row read. The dropdown items were
-    GET anchors; the mark-read endpoint is POST. The
-    items are now POST forms with a same-origin
-    redirect to the notification's own target.
-
-**Branding consolidation shipped** (cba256a): the
-store's name is now the single source of truth for
-every branded surface. Two helpers (`brand_name`,
-`brand_short`) read `commerce_stores.name` with
-config as the fallback. Renaming a store in Setup >
-Business propagates to every header, page title,
-error page, sidebar card, campaign preview, and
-email subject. The error-page render path is
-guarded so a bootstrap failure that unloads the
-helpers cannot make the error page itself fail.
-
-The Stage 014 Session 5 and Session 3 tail paragraphs
-below are historical and remain for the record.
-
-**Session 5 shipped** (2bec764): the enforcement
-script.
-
-  - `bin/check-responsive.php` is a new prevenger
-    checker. Three rules:
-      1. Inline `<style>` blocks in views must not
-         contain `@media` queries. Moved from
-         `check-css.php` Pass 3.
-      2. Views must not hardcode pixel widths above
-         375px on inline style attributes. New.
-      3. `<table>` elements in admin views must sit
-         inside a wrapper with a `data-responsive`
-         attribute. Moved from `check-html.php` W1,
-         flipped from warning to hard error.
-  - `check-css.php` and `check-html.php` lose the
-    rules that moved. `check.php` gains a fourth
-    entry in `$checkers`.
-  - `composer check` now runs lint, PHPStan level 8,
-    and four prevenger checkers. All pass.
-
-**Session 3 tail shipped** (e2ed540, 923aef3, 0454eec,
-f82aeaf, 235be2f): the admin tab strips, the view-local
-CSS moves, sixteen list tables, and eleven detail-page
-tables on the card treatment.
-
-  - Tab strips scroll instead of wrap. Four class
-    families: .ra-admin-tabs, .ra-content .nav-tabs,
-    .ra-setup-nav-list, .ra-settings-tabs. All scroll
-    horizontally with a hidden scrollbar below 899.
-  - Four view-local <style> blocks move to
-    main-v2.css. Dashboard, inventory, products Basic
-    tab, setup payments. One shared mobile fallback
-    for the four tile grids.
-  - Sixteen list tables convert from
-    data-responsive="scroll" to "cards":
-      Batch 1  categories, brands, users, roles, coupons
-      Batch 2  attributes, customer_groups,
-               customer_approvals, returns, forms
-      Batch 3  legal_pages, shipping, tax,
-               subscribers, subscriber_lists, campaigns
-  - Eleven detail-page tables convert:
-      customers/show, orders/show, returns/show,
-      inventory/item (via _variant-row partial),
-      inventory/movements, inventory/_movement-block,
-      coupons/edit, forms/edit, customer_groups/prices,
-      subscribers/show
-      The key-value settings table on settings/index
-      stays on scroll by design.
-      The variant quantity input moved from the
-      inert ra-form-control class to Bootstrap's
-      form-control.
-
-**Session 4 shipped** (dc4320c, 21ee520, d0c26ab,
-3aab0eb, aed259e): the storefront audit. Five
-findings, five fixes.
-
-  - Cart line media renders the product image.
-    The partial had carried a Bootstrap icon
-    placeholder since the cart shipped. The
-    media library landed in 008G.4a; the
-    placeholder was never replaced.
-  - Cart line 5-column layout activates at
-    1200 instead of 768. At 900-1199 the info
-    column was too narrow for product names.
-  - Account shell and chip strip both fire at
-    900. The shell collapsed at 900 and the
-    chip strip fired at 768; 769-899 was a
-    gap where neither applied.
-  - Product grid is 1 column below 481. The
-    base was 2 columns at any width.
-  - Category grid auto-fills at a 165px floor.
-    The 7-column rule at 1024 produced 120px
-    cards.
-
-**Session 1 shipped** (3d200e4): the four breakpoints,
-the component treatment matrix, the card grid rules
-in main-v2.css. No view changes.
-
-**Session 2 shipped** (937a78d, de967eb, 9ff8575,
-f927cce): every admin list table carries a declared
-treatment. `data-responsive="scroll"` or
-`data-responsive="cards"` on the wrapper. Products
-and five long-content tables on the card treatment.
-The general `ra-hide-sm` rule at 899px.
-
-**Session 3 shipped** (5265536, 94bee03):
-
-  - Filter bars on 17 admin list views. New JS module
-    public/assets/js/admin-filters.js. One script tag
-    in the admin layout. Toggle styling in the theme
-    contract.
-  - Modals verified at 390, 768, 1440, both themes.
-    Bottom sheet at mobile, centered at desktop. No
-    code changes needed.
-  - Sticky action bars verified at 390. Buttons stack
-    vertical, full width. No changes needed.
-  - Variants table moved from scroll to cards. The
-    leftmost column (the combination) was cut off at
-    mobile; the card treatment puts it full-width at
-    the top of each row.
-
-**What Session 3 did not do:** card grids were named
-in the plan's Session 3 scope and were not fixed.
-Four admin views carry `grid-template-columns` with
-`auto-fit`/`auto-fill` and a `minmax()` value without
-a media-query fallback: dashboard.php, inventory/index.php,
-products/_tab_basic.php, setup/payments.php. Deferred
-to Session 5 alongside the enforcement script that
-will flag the same pattern.
-
-**Session 4 shipped.** The storefront audit. Home,
-catalog, category, product detail, cart, checkout,
-account, plus the standalone error pages and the PWA
-offline page. Test at 375, 768, 1024, 1440 in dark
-and light. Five storefront fixes.
-
-**Session 5 shipped.** `bin/check-responsive.php`
-is a fourth prevenger checker. Three rules:
-inline `@media` in views, hardcoded widths above
-375px, and admin tables without a `data-responsive`
-wrapper. The two rules it absorbed were removed
-from `check-css.php` and `check-html.php`.
-
-**Stage 014 is complete.** The responsive layout
-system shipped across six sessions: foundations,
-admin list tables, admin forms and modals, the
-storefront audit, the enforcement script, and the
-tail walk.
-
-**The tail was walked in the same day's second
-session** (`6515e85`, session file
-`2026-10-14-2.md`):
-
-  - Checkout at 900 verified passing. The
-    speculative `min-width: 0` guard from the
-    previous session reverted.
-  - Error pages 403/404/500 verified theme-aware.
-    All three use the same pattern the offline
-    page now does.
-  - PWA offline page rewritten to match the
-    sibling error pages. `main-v2.css` precached
-    by the service worker. `CACHE_VERSION` bumped
-    from `v3` to `v4`.
-  - Storefront dark theme: not applicable. The
-    storefront is light-only by design (see the
-    layout docblock in
-    `resources/views/storefront/layouts/main.php`,
-    line 34).
-
-The prevenger's CSS structural checker caught a
-multi-line declaration in the first draft of the
-offline page rewrite. Fixed in the same session
-before commit. `composer check` passes (lint,
-PHPStan level 8, four prevenger checkers).
-
-**008K.5 status:** Complete. Code on disk, admin
-surfaces live (Coupons, Tax, Shipping), storefront
-integration live, browser test passed end to end.
-Tagged stage-008k.5-complete on 2026-10-11.
-
-**008I status:** Complete. Sessions 1-4 plus 008I.1
-hygiene shipped. No outstanding follow-ups.
-
-**008H status:** Complete. The admin returns queue
-shipped at d10b39d. COMPLIANCE-DE entry 8 (the 14-day
-Widerrufsrecht window) moved from Deferred to Done at
-the stage close. The Widerrufsbutton (entry 22) remains
-open with a 19 June 2026 deadline.
-
-**Next 3 stages:**
-
-  - **PayPal round trip** (next): save the four
-    PayPal sandbox credentials in Settings >
-    Payments. Register the webhook endpoint at
-    `https://test.awaloglobal.com/webhooks/paypal`.
-    Enable the toggle. Run the checkout round trip.
-    The `.htaccess` allowlist already covers
-    `paypal.com` and `sandbox.paypal.com`, so the
-    CSP fix from today applies to PayPal too.
-  - **Services questionnaire** (pending): the client
-    fills in `/forms/services-questionnaire`. The
-    answers determine the tier per service. Pricing
-    follows from the tier. See the ROADMAP entry
-    below.
-  - **010 Sessions 6-7**: the stage close. Session
-    file, ROADMAP, COMPLIANCE-DE entries for Stripe
-    and PayPal as DSGVO Art. 28 processors.
-  - **Responsive render harness** (backlog):
-    Chrome headless via CDP. Iterates every route
-    at four viewports and checks for horizontal
-    overflow. The static checker cannot catch
-    rendered layout problems. This can. Its own
-    stage, not part of Stage 014.
-
-**Permission vocabulary:** 67 across 17 modules. The
-seeders build it in layers: 0012 (the original 49),
-0013 (pricing: coupons, tax, shipping - 8 new),
-0014 (returns - 2), 0016 (newsletter - 4), and
-0017 (forms - 4). Counted in the database:
-`SELECT COUNT(*) FROM core_permissions` returns 67.
-The coupons.*, tax.*, and shipping.* families were
-added by the pricing engine; the newsletter.* family
-by 008I; the forms.* family by 009 sessions 1-2b.
-
-**Tooling:** composer check now runs four layers -
-syntax linter, PHPStan level 8, and the prevenger
-(theme contract, CSS structure, HTML structure).
-
-**Error pipeline:** five commits shipped the
-structured error logging pipeline:
-  - Logger::log() falls through three tiers (file,
-    error_log, STDERR) with a candidate-directory
-    walk. No path returns without writing.
-  - Every HTTP request gets a 12-hex request ID
-    exposed as the X-Request-ID response header.
-  - Logger::exception() carries file, line, trace,
-    request_method, request_uri, user_agent,
-    session_id, and user_id alongside the reference.
-  - The admin dev overlay fetches the last 60
-    seconds of exceptions from
-    /commerce/ca-admin/_debug/recent-errors and
-    displays them in the browser.
-
-The pipeline is the foundation every future
-debugging session builds on. A 500 that used to take
-two hours to trace now lands in the browser overlay
-with the file and line within one second.
-
----
 
 ## Database State
 
@@ -1122,23 +569,26 @@ new code.
 
 ## Next 3 Stages
 
-- **009** (now): Forms & Submissions. Sessions 3 and 4
-  remain. The public form surface and the submissions
-  admin with filters and CSV export.
-- **014**: Responsive Layout System. The four
-  breakpoints, the component treatment matrix, the
-  admin list table audit, the storefront audit, and
-  the enforcement script. Prerequisite for every stage
-  that ships a view.
-- **010**: Payments (Deep). Wires refunds from the
-  returns workflow to the payment provider.
+- **Page Builder Tier 3** (now): Section and Container
+  config fields (padding, background, column count).
+  The layout primitives exist as empty wrappers today;
+  the config fields make them useful.
+- **Drag-into-canvas**: the plan document for dropping
+  a block onto the storefront preview iframe.
+  Coordinates resolve to a target block and insertion
+  side. The sidebar drag flow is the foundation.
+- **Menu and footer builder**: the header and footer
+  nav read from `commerce_navigation_menus` and
+  `commerce_navigation_items` instead of the hardcoded
+  arrays in `layouts/main.php`.
 
-The platform has completed the commerce loop end to end:
-browse, cart, checkout, order, return; and on the
-merchant side: products, orders, customers, returns,
-users, roles, coupons, tax, shipping, newsletter,
-forms. Every surface a merchant needs to operate the
-store is live.
+The commerce loop is complete end to end: browse,
+cart, checkout, order, return; and on the merchant
+side: products, orders, customers, returns, users,
+roles, coupons, tax, shipping, newsletter, forms,
+page builder. Every surface a merchant needs to
+operate the store is live, and the storefront layout
+is merchant-editable.
 
 ---
 
