@@ -51,21 +51,43 @@ $__unread = customer_unread_message_count();
 
 // Navigation items.
 //
-// The fixed items (Home, New In, Sale) always appear. The
-// category items are resolved from the store's active
-// categories by the StorefrontController. A store with no
-// categories shows only the fixed items.
-$navItems = [
-    ['label' => 'Home',   'href' => '/'],
-];
-foreach (($navCategories ?? []) as $cat) {
+// Sourced from the NavigationRepository (header menu). The
+// dynamic category links are interleaved after the first item
+// (which is usually 'Home').
+$navRepo = \CorporateAid\Core\App::instance()->container()->get(\CorporateAid\Commerce\Repositories\NavigationRepository::class);
+$dbNavItems = $navRepo->getHeaderTree('header');
+
+$navItems = [];
+$hasInsertedCategories = false;
+
+foreach ($dbNavItems as $dbItem) {
     $navItems[] = [
-        'label' => $cat->name,
-        'href'  => '/categories/' . $cat->slug,
+        'label' => $dbItem->label,
+        'href'  => $navRepo->resolveUrl($dbItem),
+        'highlight' => $dbItem->isHighlight,
     ];
+
+    // Inject categories right after the 'Home' link.
+    if (!$hasInsertedCategories && $dbItem->label === 'Home') {
+        foreach (($navCategories ?? []) as $cat) {
+            $navItems[] = [
+                'label' => $cat->name,
+                'href'  => '/categories/' . $cat->slug,
+            ];
+        }
+        $hasInsertedCategories = true;
+    }
 }
-$navItems[] = ['label' => 'New In', 'href' => '/products?sort=newest'];
-$navItems[] = ['label' => 'Sale',   'href' => '/products?filter=sale', 'highlight' => true];
+
+// If no 'Home' was found, append categories at the end just in case.
+if (!$hasInsertedCategories) {
+    foreach (($navCategories ?? []) as $cat) {
+        $navItems[] = [
+            'label' => $cat->name,
+            'href'  => '/categories/' . $cat->slug,
+        ];
+    }
+}
 
 // Active-state detection: current path prefix-matches an item href.
 // Dashboard-style exact-match rule from the sidebar does not apply

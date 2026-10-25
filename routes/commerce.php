@@ -1285,3 +1285,44 @@ $router->post('/webhooks/pesapal',
 $router->post('/webhooks/flutterwave',
     [WebhookController::class, 'flutterwave'],
     ['store']);
+
+// ---------------------------------------------------------------
+// Navigation Builder
+// ---------------------------------------------------------------
+$router->get('/commerce/ca-admin/navigation',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationController::class, 'index'],
+    ['store', 'auth', 'permission:navigation.view']);
+
+$router->get('/commerce/ca-admin/navigation/header',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationController::class, 'header'],
+    ['store', 'auth', 'permission:navigation.view']);
+
+$router->get('/commerce/ca-admin/navigation/footer',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationController::class, 'footer'],
+    ['store', 'auth', 'permission:navigation.view']);
+
+// Items
+$router->post('/commerce/ca-admin/navigation/items',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationItemController::class, 'store'],
+    ['store', 'auth', 'csrf', 'permission:navigation.manage']);
+
+$router->post('/commerce/ca-admin/navigation/items/{id}',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationItemController::class, 'update'],
+    ['store', 'auth', 'csrf', 'permission:navigation.manage']);
+
+$router->post('/commerce/ca-admin/navigation/items/{id}/delete',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationItemController::class, 'destroy'],
+    ['store', 'auth', 'csrf', 'permission:navigation.manage']);
+
+// Contact Details
+$router->post('/commerce/ca-admin/navigation/contact',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationItemController::class, 'storeContact'],
+    ['store', 'auth', 'csrf', 'permission:navigation.manage']);
+
+$router->post('/commerce/ca-admin/navigation/contact/{id}',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationItemController::class, 'updateContact'],
+    ['store', 'auth', 'csrf', 'permission:navigation.manage']);
+
+$router->post('/commerce/ca-admin/navigation/contact/{id}/delete',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationItemController::class, 'destroyContact'],
+    ['store', 'auth', 'csrf', 'permission:navigation.manage']);

@@ -48,5 +48,10 @@
         if (data.reload === true) {
             window.location.reload();
         }
+
+        // Added for Header/Footer builders
+        if (data.action === 'reloadLayout') {
+            window.location.reload();
+        }
     });
 })();

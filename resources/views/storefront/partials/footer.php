@@ -30,54 +30,37 @@ $brandName = $brandName ?? brand_name(null);
 $year = (int) date('Y');
 
 // Footer navigation columns.
-//
-// Contract: eventually populated from commerce_navigation_menu_items
-// where location = 'footer'. Today hardcoded.
-$footerColumns = [
-    [
-        'heading' => 'Quick Links',
-        'links'   => [
-            ['label' => 'Home',                'href' => '/'],
-            ['label' => 'Women',               'href' => '/categories/women'],
-            ['label' => 'Men',                 'href' => '/categories/men'],
-            ['label' => 'Kids',                'href' => '/categories/children'],
-            ['label' => 'Bags & Accessories',  'href' => '/categories/bags-accessories'],
-            ['label' => 'Beauty & Lifestyle',  'href' => '/categories/beauty-lifestyle'],
-            ['label' => 'Gifts',               'href' => '/categories/gifts'],
-            ['label' => 'Sale',                'href' => '/products?filter=sale', 'highlight' => true],
-        ],
-    ],
-    [
-        'heading' => 'Customer Service',
-        'links'   => [
-            ['label' => 'Contact Us',           'href' => '/pages/contact'],
-            ['label' => 'Shipping Policy',      'href' => '/pages/shipping'],
-            ['label' => 'Return & Refunds',     'href' => '/pages/returns'],
-            ['label' => 'FAQ',                  'href' => '/pages/faq'],
-            ['label' => 'Track Your Order',     'href' => '/account/orders'],
-            ['label' => 'Size Guide',           'href' => '/pages/size-guide'],
-        ],
-    ],
-    [
-        'heading' => 'Company',
-        'links'   => [
-            ['label' => 'About ANAYA GLOBAL',  'href' => '/pages/about'],
-            ['label' => 'Impressum',           'href' => '/legal/impressum'],
-            ['label' => 'Terms & Conditions',  'href' => '/legal/agb'],
-            ['label' => 'Withdrawal Policy',   'href' => '/legal/widerruf'],
-            ['label' => 'Privacy Policy',      'href' => '/legal/datenschutz'],
-            ['label' => 'Cookie Policy',       'href' => '/pages/cookies'],
-        ],
-    ],
-    [
-        'heading' => 'Contact',
-        'links'   => [
-            ['label' => 'hello@anayaglobal.com',  'href' => 'mailto:hello@anayaglobal.com'],
-            ['label' => '+254 700 000 000',       'href' => 'tel:+254700000000'],
-            ['label' => 'Nairobi, Kenya',         'href' => '#'],
-        ],
-    ],
-];
+// Sourced from the NavigationRepository.
+$navRepo = \CorporateAid\Core\App::instance()->container()->get(\CorporateAid\Commerce\Repositories\NavigationRepository::class);
+$dbColumns = $navRepo->getFooterColumns('footer');
+$dbContacts = $navRepo->getContactDetails();
+
+$footerColumns = [];
+foreach ($dbColumns as $col) {
+    $links = [];
+    foreach ($col->items as $item) {
+        $links[] = [
+            'label' => $item->label,
+            'href'  => $navRepo->resolveUrl($item),
+            'highlight' => $item->isHighlight,
+        ];
+    }
+    
+    // If this is the contact column, append structured contact details.
+    if ($col->columnKey === 'contact') {
+        foreach ($dbContacts as $contact) {
+            $links[] = [
+                'label' => $contact->value,
+                'href'  => $contact->href(),
+            ];
+        }
+    }
+
+    $footerColumns[] = [
+        'heading' => $col->heading,
+        'links'   => $links,
+    ];
+}
 
 // Social links. Stubs until the store builder provides real URLs.
 $socialLinks = [

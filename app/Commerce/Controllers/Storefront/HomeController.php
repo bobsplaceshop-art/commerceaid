@@ -120,6 +120,8 @@ final class HomeController extends StorefrontController
         );
         $productRatings = $this->ratingsForProducts($allProducts);
 
+        $previewTarget = $_GET['customize_preview'] ?? null;
+
         return $this->render('storefront.home', [
             'blocks'         => $blocks,
             'title'          => '',
@@ -128,6 +130,7 @@ final class HomeController extends StorefrontController
             'bestSellers'    => $bestSellers['items'],
             'topCategories'  => $topCategories,
             'productRatings' => $productRatings,
+            'previewTarget'  => $previewTarget,
         ]);
     }
 }

@@ -79,7 +79,6 @@ $groups = [
         'label' => null,
         'items' => [
             ['label' => 'Dashboard', 'href' => '/commerce/ca-admin', 'icon' => 'bi-speedometer2'],
-            ['label' => 'Pages',     'href' => '/commerce/ca-admin/pages', 'icon' => 'bi-layout-text-window-reverse', 'permission' => 'core.settings.manage'],
         ],
     ],
     [
@@ -87,6 +86,16 @@ $groups = [
         'label' => 'Business',
         'items' => [
             ['label' => 'Setup', 'href' => '/commerce/ca-admin/setup', 'icon' => 'bi-sliders'],
+        ],
+    ],
+    [
+        'id'    => 'navigation',
+        'label' => 'Design',
+        'items' => [
+            ['label' => 'Pages',          'href' => '/commerce/ca-admin/pages',              'icon' => 'bi-layout-text-window-reverse', 'permission' => 'core.settings.manage'],
+            ['label' => 'Header Builder', 'href' => '/commerce/ca-admin/navigation/header',  'icon' => 'bi-layout-text-window-reverse', 'permission' => 'navigation.view'],
+            ['label' => 'Footer Builder', 'href' => '/commerce/ca-admin/navigation/footer',  'icon' => 'bi-layout-text-window', 'permission' => 'navigation.view'],
+            ['label' => 'Menus',          'href' => '/commerce/ca-admin/navigation',         'icon' => 'bi-list-nested', 'permission' => 'navigation.view'],
         ],
     ],
     [
