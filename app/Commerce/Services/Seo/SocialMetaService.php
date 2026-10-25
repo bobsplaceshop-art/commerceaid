@@ -159,7 +159,12 @@ final class SocialMetaService
             return null;
         }
 
-        return $media[0]->variantUrl('lg', 'jpg');
+        // OG and Twitter Cards require absolute URLs; relative
+        // paths are silently ignored by every scraper. The
+        // page() method already wraps its og:image in
+        // absoluteUrl(). This method must do the same so
+        // product pages render a valid share preview.
+        return $this->absoluteUrl($media[0]->variantUrl('lg', 'jpg'));
     }
 
     private function ogAvailability(string $stockStatus): string
