@@ -21,6 +21,22 @@ namespace CorporateAid\Commerce\Support\Blocks;
 final class BlockConfigRegistry
 {
     /**
+     * Options for the text_font select field, built from the
+     * FontCatalog. Called by the config field renderer when
+     * the field declares font_options: true.
+     *
+     * @return array<string,string>  slug => family
+     */
+    public static function fontOptions(): array
+    {
+        $opts = ['inherit' => 'Inherit (store default)'];
+        foreach (\CorporateAid\Commerce\Support\Fonts\FontCatalog::all() as $font) {
+            $opts[$font['slug']] = $font['family'];
+        }
+        return $opts;
+    }
+
+    /**
      * @return array<string, array<string,mixed>>
      */
     public static function schema(string $blockType): array
@@ -201,51 +217,15 @@ final class BlockConfigRegistry
                 'default' => null,
                 'hint'    => 'Optional. Shown behind the headline.',
             ],
-            'text_font' => [
-                'label'   => 'Font',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit (store default)',
-                    'display' => 'Display (headings)',
-                    'body'    => 'Body (text)',
-                    'script'  => 'Script (accent)',
-                ],
+            'heading_typography' => [
+                'label'   => 'Heading typography',
+                'type'    => 'typography',
+                'default' => ['font' => 'inherit', 'size' => 'inherit', 'weight' => 'inherit', 'alignment' => 'inherit'],
             ],
-            'text_size' => [
-                'label'   => 'Font size',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit (default)',
-                    'sm'      => 'Small',
-                    'md'      => 'Medium',
-                    'lg'      => 'Large',
-                    'xl'      => 'Extra large',
-                    '2xl'     => 'Huge',
-                ],
-            ],
-            'text_weight' => [
-                'label'   => 'Font weight',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit',
-                    'normal'  => 'Normal',
-                    'medium'  => 'Medium',
-                    'bold'    => 'Bold',
-                ],
-            ],
-            'text_alignment' => [
-                'label'   => 'Text alignment',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit',
-                    'left'    => 'Left',
-                    'center'  => 'Center',
-                    'right'   => 'Right',
-                ],
+            'subheading_typography' => [
+                'label'   => 'Subheading typography',
+                'type'    => 'typography',
+                'default' => ['font' => 'inherit', 'size' => 'inherit', 'weight' => 'inherit', 'alignment' => 'inherit'],
             ],
         ];
     }
@@ -351,51 +331,15 @@ final class BlockConfigRegistry
                 'type'    => 'file',
                 'default' => null,
             ],
-            'text_font' => [
-                'label'   => 'Font',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit (store default)',
-                    'display' => 'Display (headings)',
-                    'body'    => 'Body (text)',
-                    'script'  => 'Script (accent)',
-                ],
+            'heading_typography' => [
+                'label'   => 'Heading typography',
+                'type'    => 'typography',
+                'default' => ['font' => 'inherit', 'size' => 'inherit', 'weight' => 'inherit', 'alignment' => 'inherit'],
             ],
-            'text_size' => [
-                'label'   => 'Font size',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit (default)',
-                    'sm'      => 'Small',
-                    'md'      => 'Medium',
-                    'lg'      => 'Large',
-                    'xl'      => 'Extra large',
-                    '2xl'     => 'Huge',
-                ],
-            ],
-            'text_weight' => [
-                'label'   => 'Font weight',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit',
-                    'normal'  => 'Normal',
-                    'medium'  => 'Medium',
-                    'bold'    => 'Bold',
-                ],
-            ],
-            'text_alignment' => [
-                'label'   => 'Text alignment',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit',
-                    'left'    => 'Left',
-                    'center'  => 'Center',
-                    'right'   => 'Right',
-                ],
+            'subheading_typography' => [
+                'label'   => 'Subheading typography',
+                'type'    => 'typography',
+                'default' => ['font' => 'inherit', 'size' => 'inherit', 'weight' => 'inherit', 'alignment' => 'inherit'],
             ],
         ];
     }
@@ -410,51 +354,10 @@ final class BlockConfigRegistry
                 'default' => '<h2>About Us</h2><p>We are a fashion brand...</p>',
                 'hint'    => 'Basic HTML is allowed (headings, paragraphs, links).',
             ],
-            'text_font' => [
-                'label'   => 'Font',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit (store default)',
-                    'display' => 'Display (headings)',
-                    'body'    => 'Body (text)',
-                    'script'  => 'Script (accent)',
-                ],
-            ],
-            'text_size' => [
-                'label'   => 'Font size',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit (default)',
-                    'sm'      => 'Small',
-                    'md'      => 'Medium',
-                    'lg'      => 'Large',
-                    'xl'      => 'Extra large',
-                    '2xl'     => 'Huge',
-                ],
-            ],
-            'text_weight' => [
-                'label'   => 'Font weight',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit',
-                    'normal'  => 'Normal',
-                    'medium'  => 'Medium',
-                    'bold'    => 'Bold',
-                ],
-            ],
-            'text_alignment' => [
-                'label'   => 'Text alignment',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit',
-                    'left'    => 'Left',
-                    'center'  => 'Center',
-                    'right'   => 'Right',
-                ],
+            'body_typography' => [
+                'label'   => 'Body typography',
+                'type'    => 'typography',
+                'default' => ['font' => 'inherit', 'size' => 'inherit', 'weight' => 'inherit', 'alignment' => 'inherit'],
             ],
         ];
     }
@@ -518,51 +421,10 @@ final class BlockConfigRegistry
                 'type'    => 'file',
                 'default' => null,
             ],
-            'text_font' => [
-                'label'   => 'Font',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit (store default)',
-                    'display' => 'Display (headings)',
-                    'body'    => 'Body (text)',
-                    'script'  => 'Script (accent)',
-                ],
-            ],
-            'text_size' => [
-                'label'   => 'Font size',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit (default)',
-                    'sm'      => 'Small',
-                    'md'      => 'Medium',
-                    'lg'      => 'Large',
-                    'xl'      => 'Extra large',
-                    '2xl'     => 'Huge',
-                ],
-            ],
-            'text_weight' => [
-                'label'   => 'Font weight',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit',
-                    'normal'  => 'Normal',
-                    'medium'  => 'Medium',
-                    'bold'    => 'Bold',
-                ],
-            ],
-            'text_alignment' => [
-                'label'   => 'Text alignment',
-                'type'    => 'select',
-                'default' => 'inherit',
-                'options' => [
-                    'inherit' => 'Inherit',
-                    'left'    => 'Left',
-                    'center'  => 'Center',
-                    'right'   => 'Right',
-                ],
+            'heading_typography' => [
+                'label'   => 'Heading typography',
+                'type'    => 'typography',
+                'default' => ['font' => 'inherit', 'size' => 'inherit', 'weight' => 'inherit', 'alignment' => 'inherit'],
             ],
         ];
     }

@@ -263,6 +263,60 @@ final class ConfigFieldRegistry
                 },
             ],
 
+            'typography' => [
+                'render' => static function (array $c): string {
+                    $value = is_array($c['value']) ? $c['value'] : [];
+                    $font      = (string) ($value['font']      ?? 'inherit');
+                    $size      = (string) ($value['size']      ?? 'inherit');
+                    $weight    = (string) ($value['weight']    ?? 'inherit');
+                    $alignment = (string) ($value['alignment'] ?? 'inherit');
+
+                    $fontOptions   = \CorporateAid\Commerce\Support\Blocks\BlockConfigRegistry::fontOptions();
+                    $sizeOptions   = ['inherit' => 'Inherit', 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large', 'xl' => 'Extra large', '2xl' => 'Huge'];
+                    $weightOptions = ['inherit' => 'Inherit', 'normal' => 'Normal', 'medium' => 'Medium', 'bold' => 'Bold'];
+                    $alignOptions  = ['inherit' => 'Inherit', 'left' => 'Left', 'center' => 'Center', 'right' => 'Right'];
+
+                    $select = function (string $sub, array $options, string $current) use ($c): string {
+                        $html = '<select name="' . e($c['name']) . '[' . $sub . ']" class="form-select form-select-sm">';
+                        foreach ($options as $val => $label) {
+                            $sel = (string) $val === $current ? ' selected' : '';
+                            $html .= '<option value="' . e((string) $val) . '"' . $sel . '>'
+                                . e((string) $label) . '</option>';
+                        }
+                        return $html . '</select>';
+                    };
+
+                    $html  = '<div class="ra-typography-panel" style="border:1px solid var(--ra-border); border-radius:6px; padding:.75rem;">';
+                    $html .= '<div class="row g-2">';
+                    $html .= '<div class="col-6"><label class="form-label small mb-1">Font</label>'      . $select('font', $fontOptions, $font)           . '</div>';
+                    $html .= '<div class="col-6"><label class="form-label small mb-1">Size</label>'      . $select('size', $sizeOptions, $size)           . '</div>';
+                    $html .= '<div class="col-6"><label class="form-label small mb-1">Weight</label>'    . $select('weight', $weightOptions, $weight)     . '</div>';
+                    $html .= '<div class="col-6"><label class="form-label small mb-1">Alignment</label>' . $select('alignment', $alignOptions, $alignment) . '</div>';
+                    $html .= '</div></div>';
+                    return $html;
+                },
+                'sanitize' => static function (mixed $raw, array $meta): mixed {
+                    $in = is_array($raw) ? $raw : [];
+
+                    $fontKeys   = array_keys(\CorporateAid\Commerce\Support\Blocks\BlockConfigRegistry::fontOptions());
+                    $sizeKeys   = ['inherit', 'sm', 'md', 'lg', 'xl', '2xl'];
+                    $weightKeys = ['inherit', 'normal', 'medium', 'bold'];
+                    $alignKeys  = ['inherit', 'left', 'center', 'right'];
+
+                    $font      = (string) ($in['font']      ?? 'inherit');
+                    $size      = (string) ($in['size']      ?? 'inherit');
+                    $weight    = (string) ($in['weight']    ?? 'inherit');
+                    $alignment = (string) ($in['alignment'] ?? 'inherit');
+
+                    return [
+                        'font'      => in_array($font, $fontKeys, true)        ? $font      : 'inherit',
+                        'size'      => in_array($size, $sizeKeys, true)        ? $size      : 'inherit',
+                        'weight'    => in_array($weight, $weightKeys, true)    ? $weight    : 'inherit',
+                        'alignment' => in_array($alignment, $alignKeys, true)  ? $alignment : 'inherit',
+                    ];
+                },
+            ],
+
             'color' => [
                 'render' => static function (array $c): string {
                     $hex = preg_match('/^#[0-9a-fA-F]{6}$/', (string) $c['value'])

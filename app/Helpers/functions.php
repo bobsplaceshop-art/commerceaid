@@ -1280,11 +1280,16 @@ if (!function_exists('store_font_face_css')) {
      * FontCatalog are emitted - the downloader wrote exactly
      * those files at save time.
      */
+    /**
+     * @param array<int,string> $extraFontSlugs
+     */
     function store_font_face_css(
-        ?\CorporateAid\Commerce\Models\Store $store = null
+        ?\CorporateAid\Commerce\Models\Store $store = null,
+        array $extraFontSlugs = []
     ): string {
         $selections = store_font_selections($store);
         $blocks = [];
+        $seenSlugs = [];
 
         foreach ($selections as $slot => $font) {
             if ($font === null) {
@@ -1299,6 +1304,7 @@ if (!function_exists('store_font_face_css')) {
                 continue;
             }
 
+            $seenSlugs[$slug] = true;
             $safeFamily = addcslashes($family, "'\\");
 
             foreach ($weights as $weight) {
@@ -1306,6 +1312,45 @@ if (!function_exists('store_font_face_css')) {
                 $url = '/assets/fonts/'
                     . rawurlencode($slug) . '/'
                     . rawurlencode($slug . '-' . $weightStr . '.woff2');
+
+                $blocks[] = "@font-face {"
+                    . "font-family: '{$safeFamily}';"
+                    . "font-style: normal;"
+                    . "font-weight: {$weightStr};"
+                    . "font-display: swap;"
+                    . "src: url('{$url}') format('woff2');"
+                    . "}";
+            }
+        }
+
+        // Additional fonts referenced by page-builder blocks.
+        // Same @font-face shape as the slot fonts. We only emit
+        // once per slug (a block and a slot can name the same
+        // font; two @font-face rules for the same family cause
+        // duplicate downloads and inconsistent weight selection).
+        foreach ($extraFontSlugs as $extraSlug) {
+            $extraSlug = (string) $extraSlug;
+            if ($extraSlug === '' || isset($seenSlugs[$extraSlug])) {
+                continue;
+            }
+            $font = \CorporateAid\Commerce\Support\Fonts\FontCatalog::find($extraSlug);
+            if ($font === null) {
+                continue;
+            }
+            $seenSlugs[$extraSlug] = true;
+
+            $family  = (string) ($font['family']  ?? '');
+            $weights = (array)  ($font['weights'] ?? []);
+            if ($family === '') {
+                continue;
+            }
+            $safeFamily = addcslashes($family, "'\\");
+
+            foreach ($weights as $weight) {
+                $weightStr = (string) $weight;
+                $url = '/assets/fonts/'
+                    . rawurlencode($extraSlug) . '/'
+                    . rawurlencode($extraSlug . '-' . $weightStr . '.woff2');
 
                 $blocks[] = "@font-face {"
                     . "font-family: '{$safeFamily}';"
