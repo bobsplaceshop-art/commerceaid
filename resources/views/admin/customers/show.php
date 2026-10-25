@@ -102,12 +102,12 @@ $fmtDate = function (?string $dt): string {
             </a>
 
             <button type="button" class="ra-btn ra-btn-outline"
-                    data-bs-toggle="modal" data-bs-target="#ra-customer-group-modal">
+                    onclick="RA_NavModal.open('ra-customer-group-modal')">
                 <i class="bi bi-people me-1"></i> Change group
             </button>
 
             <button type="button" class="ra-btn ra-btn-outline"
-                    data-bs-toggle="modal" data-bs-target="#ra-customer-status-modal">
+                    onclick="RA_NavModal.open('ra-customer-status-modal')">
                 <i class="bi bi-sliders me-1"></i>
                 <?= $customer->status === 'active' ? 'Change account state' : 'Enable account' ?>
             </button>
@@ -192,7 +192,7 @@ $fmtDate = function (?string $dt): string {
         <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
             <h2 class="h6 mb-0">Group</h2>
             <button type="button" class="ra-btn ra-btn-outline ra-btn-sm"
-                    data-bs-toggle="modal" data-bs-target="#ra-customer-group-modal">
+                    onclick="RA_NavModal.open('ra-customer-group-modal')">
                 <i class="bi bi-arrow-left-right me-1"></i> Change
             </button>
         </div>
@@ -398,3 +398,28 @@ $fmtDate = function (?string $dt): string {
 <?= view_partial('admin/customers/_status-modal', [
     'customer' => $customer,
 ]) ?>
+
+
+<script>
+window.RA_NavModal = window.RA_NavModal || {
+    open: function(id) {
+        var el = document.getElementById(id);
+        if (el) { el.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    },
+    close: function(id) {
+        var el = document.getElementById(id);
+        if (el) { el.style.display = 'none'; document.body.style.overflow = ''; }
+    }
+};
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.ra-modal').forEach(function(m) {
+            if (m.style.display === 'flex') {
+                m.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        });
+    }
+});
+</script>
+

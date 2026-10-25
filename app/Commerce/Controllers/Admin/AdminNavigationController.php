@@ -11,11 +11,12 @@ use CorporateAid\Core\Session;
 
 final class AdminNavigationController extends AdminController
 {
-    private function previewUrl(): string
+    private function previewUrl(string $target = '1'): string
     {
-        // The admin and storefront share the same host.
-        // A relative path to the root is the safest way to load the preview.
-        return '/?customize_preview=1';
+        // Use the configured base URL so the iframe loads the correct
+        // host/port, regardless of where the admin is mounted.
+        $base = rtrim((string) config('app.url'), '/');
+        return $base . '/?customize_preview=' . urlencode($target);
     }
 
     /** @param array<string,string> $params */
@@ -48,7 +49,7 @@ final class AdminNavigationController extends AdminController
             'items'      => $tree,
             'trustItems' => $trustItems,
             'resources'  => $resources,
-            'previewUrl' => $this->previewUrl(),
+            'previewUrl' => $this->previewUrl('header'),
         ]);
     }
 
@@ -69,7 +70,7 @@ final class AdminNavigationController extends AdminController
             'columns'    => $columns,
             'contacts'   => $contacts,
             'resources'  => $resources,
-            'previewUrl' => $this->previewUrl(),
+            'previewUrl' => $this->previewUrl('footer'),
         ]);
     }
 }
