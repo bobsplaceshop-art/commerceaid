@@ -340,6 +340,8 @@ below it exists.
 
 ### Tier 0 — foundations
 
+**Status: complete as of 2026-10-25.**
+
 **0.1 `ConfigFieldRegistry`** — the shared property-type
 registry. One class. Each field type is a definition
 (label, control, validation, default). `_config-field.php`
@@ -359,6 +361,8 @@ throws on missing. `home.php` calls it once.
 
 ### Tier 1 — document model
 
+**Status:** 1.2 and 1.3 shipped with the Tier 0 work. 1.1 and 1.4 deferred.
+
 **1.1 `schema_version` column** on both block tables. Default 1.
 Nothing reads it yet.
 
@@ -374,6 +378,8 @@ Default NULL. Nothing reads it yet.
 
 ### Tier 2 — editor infrastructure
 
+**Status: not started.** The current drag handler updates the tree in memory; no formal command layer or undo/redo.
+
 **2.1 command layer** in `page-builder-customizer-v3.js` — a
 `Builder` object with `addNode`, `updateNode`, `moveNode`,
 `deleteNode`. Each routes to the existing controller methods.
@@ -388,6 +394,8 @@ Consumes `responsive_json`. Posts to `saveBlockConfig` with a
 `device` key. Empty until a value is overridden.
 
 ### Tier 3 — feature work
+
+**Status:** 3.1 shipped with the Tier 0 work. 3.2 through 3.5 remain.
 
 **3.1 `section` and `container` block types.** Nestable via
 `parent_id`. `BlockRenderer` supports children rendering.
@@ -407,6 +415,8 @@ the block settings panel. One tab per field.
 `DocumentMigrator` in Services/Builder + `bin/migrate-documents.php`.
 
 ### Tier 4 — engine
+
+**Status: not scheduled.** The current merge-at-read-time works. The JSON document model ships when a feature requires it.
 
 **4.1 the JSON document.** A `commerce_store_pages.document_json`
 column, replacing the merge-at-read-time with a
@@ -468,8 +478,8 @@ the frame, no amount of schema work makes a Section possible.
 **The corrected Tier 0, in build order, with shipped status:**
 
   0.1  ConfigFieldRegistry      — shipped 58df9c0
-  0.2  BlockTypeRegistry        — next
-  0.3  BlockRenderer            — after 0.2
+  0.2  BlockTypeRegistry        — shipped (2026-10-24)
+  0.3  BlockRenderer            — shipped (2026-10-24)
   0.4  parent_id on blocks + drafts       — shipped dc9f74d
   0.5  children() traversal on PageBlock
        and DraftManager
@@ -478,22 +488,35 @@ the frame, no amount of schema work makes a Section possible.
          5b  repository parent-aware
                                   — shipped 32677a7
          5c  DraftManager::getMergedTree()
-                                  — after 0.2, 0.3
+                                  — shipped 84bb976
   0.6  DraftPublisher two-pass publish
-       (parents before children)  — after 5c
+       (parents before children)  — shipped 84bb976
   0.7  tree-aware BlockRenderer
        (Section/Container accept children)
-                                  — after 0.3, 5c
+                                  — shipped 0be9240
   0.8  section and container block types
-                                  — after 0.7
+                                  — shipped (2026-10-24)
 
-**Status at 2026-10-24 session close:** 0.1, 0.4, 5a,
-5b shipped. 0.2 and 0.3 are open. 5c, 0.6, 0.7, 0.8
-remain. The tree is at 5b: the schema and model carry
-parent_id, but nothing reads children yet, and home.php
-still renders a flat list. The next session opens with
-0.2 (BlockTypeRegistry), not 5c — the tree traversal is
-only useful once BlockRenderer knows what block types
+**Status at 2026-10-25 session close:** 0.1 through
+0.8 are all shipped. Tier 0 is complete. The tree
+renders identically in the admin preview and on the
+storefront. The seven-commit drag rewrite (Phases
+1-5) landed on 2026-10-25, and the row markup is now
+driven by a single `<template id="tpl-block-row">`.
+
+Tier 3 next. The first item is Section/Container
+config fields (3.2). Drag-into-canvas (3.3) needs a
+plan document. Tier 4 (the JSON document) is not
+scheduled.
+
+**Prior snapshot (2026-10-24 session close):** 0.1, 0.4,
+5a, 5b shipped. 0.2 and 0.3 were open. 5c, 0.6, 0.7,
+0.8 remained. The tree was at 5b: the schema and model
+carried parent_id, but nothing read children yet, and
+home.php rendered a flat list. The prior session opened
+with 0.2 (BlockTypeRegistry), not 5c — the tree
+traversal is only useful once BlockRenderer knows what
+block types
 exist and can dispatch to a tree walker.
 
 0.1-0.3 were built first because the schema layer is small
