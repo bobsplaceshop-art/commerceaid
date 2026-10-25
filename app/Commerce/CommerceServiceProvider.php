@@ -39,6 +39,8 @@ use CorporateAid\Commerce\Repositories\CustomerGroupRepository;
 use CorporateAid\Commerce\Repositories\ProductVariantRepository;
 use CorporateAid\Commerce\Repositories\AttributeRepository;
 use CorporateAid\Commerce\Repositories\CategoryAttributeRepository;
+use CorporateAid\Commerce\Repositories\NavigationRepository;
+use CorporateAid\Commerce\Repositories\NavigationResourceRepository;
 use CorporateAid\Commerce\Services\CatalogService;
 use CorporateAid\Commerce\Services\CheckoutService;
 use CorporateAid\Commerce\Repositories\CouponRepository;
@@ -162,6 +164,18 @@ final class CommerceServiceProvider
 
         $c->singleton(CategoryAttributeRepository::class,
             fn() => new CategoryAttributeRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(NavigationRepository::class,
+            fn() => new NavigationRepository(
+                $c->get(Database::class),
+                $c->get(StoreContext::class)
+            ));
+
+        $c->singleton(NavigationResourceRepository::class,
+            fn() => new NavigationResourceRepository(
                 $c->get(Database::class),
                 $c->get(StoreContext::class)
             ));
