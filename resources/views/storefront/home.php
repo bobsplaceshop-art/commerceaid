@@ -130,12 +130,8 @@ $promoPanels = [
 ];
 
 // Trust row items (below hero).
-$trustRow = [
-    ['icon' => 'bi-award',           'title' => 'Premium Quality',  'sub' => 'Only the best for you'],
-    ['icon' => 'bi-truck',           'title' => 'Fast & Reliable',  'sub' => 'Delivery Always'],
-    ['icon' => 'bi-headset',         'title' => 'Dedicated Support', 'sub' => "We're here to help"],
-    ['icon' => 'bi-globe2',          'title' => 'Global Fashion',   'sub' => 'Local Love'],
-];
+$navRepo = \CorporateAid\Core\App::instance()->container()->get(\CorporateAid\Commerce\Repositories\NavigationRepository::class);
+$trustRow = $navRepo->getTrustBarItems('header');
 ?>
 
 <!-- ============================================================= -->
@@ -200,10 +196,10 @@ $trustRow = [
         <ul class="sf-home-trust-row-list">
             <?php foreach ($trustRow as $t): ?>
                 <li class="sf-home-trust-row-item">
-                    <i class="bi <?= e($t['icon']) ?>" aria-hidden="true"></i>
+                    <i class="bi <?= e($t->icon ?? 'bi-star') ?>" aria-hidden="true"></i>
                     <div class="sf-home-trust-row-text">
-                        <span class="sf-home-trust-row-title"><?= e($t['title']) ?></span>
-                        <span class="sf-home-trust-row-sub"><?= e($t['sub']) ?></span>
+                        <span class="sf-home-trust-row-title"><?= e($t->label) ?></span>
+                        <span class="sf-home-trust-row-sub"><?= e($t->subtitle ?? '') ?></span>
                     </div>
                 </li>
             <?php endforeach; ?>

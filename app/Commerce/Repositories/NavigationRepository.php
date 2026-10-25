@@ -156,6 +156,95 @@ final class NavigationRepository extends CommerceRepository
         return array_map(fn ($r) => StoreContactDetail::fromRow($r), $rows);
     }
 
+    public function createItem(NavigationItem $item): int
+    {
+        return $this->db->insert(
+            'INSERT INTO `commerce_navigation_items`
+                (`menu_id`, `column_id`, `parent_id`, `label`, `url`,
+                 `resource_type`, `resource_id`, `sort_order`, `is_highlight`)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                $item->menuId,
+                $item->columnId,
+                $item->parentId,
+                $item->label,
+                $item->url,
+                $item->resourceType,
+                $item->resourceId,
+                $item->sortOrder,
+                $item->isHighlight ? 1 : 0,
+            ]
+        );
+    }
+
+    public function updateItem(NavigationItem $item): void
+    {
+        $this->db->execute(
+            'UPDATE `commerce_navigation_items`
+                SET `label` = ?, `url` = ?, `resource_type` = ?, `resource_id` = ?,
+                    `sort_order` = ?, `is_highlight` = ?
+              WHERE `id` = ? AND `menu_id` = ?',
+            [
+                $item->label,
+                $item->url,
+                $item->resourceType,
+                $item->resourceId,
+                $item->sortOrder,
+                $item->isHighlight ? 1 : 0,
+                $item->id,
+                $item->menuId,
+            ]
+        );
+    }
+
+    public function deleteItem(int $itemId, int $menuId): void
+    {
+        $this->db->execute(
+            'DELETE FROM `commerce_navigation_items` WHERE `id` = ? AND `menu_id` = ?',
+            [$itemId, $menuId]
+        );
+    }
+
+    public function createContact(StoreContactDetail $detail): int
+    {
+        return $this->db->insert(
+            'INSERT INTO `commerce_store_contact_details`
+                (`store_id`, `type`, `label`, `value`, `sort_order`)
+             VALUES (?, ?, ?, ?, ?)',
+            [
+                $this->storeId(),
+                $detail->type,
+                $detail->label,
+                $detail->value,
+                $detail->sortOrder,
+            ]
+        );
+    }
+
+    public function updateContact(StoreContactDetail $detail): void
+    {
+        $this->db->execute(
+            'UPDATE `commerce_store_contact_details`
+                SET `type` = ?, `label` = ?, `value` = ?, `sort_order` = ?
+              WHERE `id` = ? AND `store_id` = ?',
+            [
+                $detail->type,
+                $detail->label,
+                $detail->value,
+                $detail->sortOrder,
+                $detail->id,
+                $this->storeId(),
+            ]
+        );
+    }
+
+    public function deleteContact(int $id): void
+    {
+        $this->db->execute(
+            'DELETE FROM `commerce_store_contact_details` WHERE `id` = ? AND `store_id` = ?',
+            [$id, $this->storeId()]
+        );
+    }
     /**
      * Resolve an item's destination to an href for rendering.
      *
@@ -163,6 +252,29 @@ final class NavigationRepository extends CommerceRepository
      * row is missing or the store does not own it, the item returns
      * '#'. This keeps a stale link from taking down the page.
      */
+    /**
+     * Fetches the trust bar items (icon + subtitle) from the header menu.
+     *
+     * @return array<int, NavigationItem>
+     */
+    public function getTrustBarItems(string $slug = 'header'): array
+    {
+        $menu = $this->findMenuBySlug($slug);
+        if ($menu === null) {
+            return [];
+        }
+
+        $rows = $this->db->select(
+            'SELECT i.* FROM `commerce_navigation_items` i
+             JOIN `commerce_navigation_columns` c ON c.id = i.column_id
+             WHERE i.menu_id = ? AND c.column_key = \'trust_bar\'
+             ORDER BY i.sort_order ASC',
+            [$menu->id]
+        );
+
+        return array_map(fn ($r) => NavigationItem::fromRow($r), $rows);
+    }
+
     public function resolveUrl(NavigationItem $item): string
     {
         if (!$item->isResource()) {
