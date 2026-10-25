@@ -143,6 +143,117 @@ final class PageDraftRepository extends CommerceRepository
     }
 
     /**
+     * Cascade delete: mark a block and every descendant for
+     * deletion. For a pending_add block (negative id), the
+     * deletion is immediate (DELETE from drafts). For a
+     * published block (positive id), the deletion is queued
+     * (INSERT a pending_delete draft row). Every child whose
+     * parent_id equals the block's id (in either the published
+     * table or the drafts table) is recursively marked. The
+     * children go with the parent; no orphan rows remain.
+     *
+     * Used by AdminPageController::deleteBlock().
+     */
+    public function cascadeDelete(
+        int $id,
+        string $pageSlug,
+        string $themeSlug
+    ): void {
+        if ($id < 0) {
+            $this->cascadeDeleteDraft(abs($id), -$id, $pageSlug, $themeSlug);
+        } else {
+            $this->cascadeDeletePublished($id, $pageSlug, $themeSlug);
+        }
+    }
+
+    private function cascadeDeleteDraft(
+        int $draftId,
+        int $negativeId,
+        string $pageSlug,
+        string $themeSlug
+    ): void {
+        // Recursive delete: first find child drafts whose
+        // parent_id is this draft's negative id, recurse, then
+        // delete this row.
+        $children = $this->db->select(
+            "SELECT `id` FROM `commerce_page_drafts`
+              WHERE `store_id` = ? AND `page_slug` = ? AND `theme_slug` = ?
+                AND `parent_id` = ? AND `status` = 'pending_add'",
+            [$this->storeId(), $pageSlug, $themeSlug, $negativeId]
+        );
+        foreach ($children as $child) {
+            $childDraftId = (int) $child['id'];
+            $this->cascadeDeleteDraft(
+                $childDraftId,
+                -$childDraftId,
+                $pageSlug,
+                $themeSlug
+            );
+        }
+        $this->db->execute(
+            "DELETE FROM `commerce_page_drafts`
+              WHERE `store_id` = ? AND `id` = ?",
+            [$this->storeId(), $draftId]
+        );
+    }
+
+    private function cascadeDeletePublished(
+        int $blockId,
+        string $pageSlug,
+        string $themeSlug
+    ): void {
+        // Recursively find draft children (parent_id = blockId)
+        // and published children (parent_id = blockId), then
+        // mark each for deletion. Children in drafts are
+        // pending_add or pending_update; published children
+        // get a new pending_delete draft row.
+
+        // Draft children.
+        $draftChildren = $this->db->select(
+            "SELECT `id`, `parent_id` FROM `commerce_page_drafts`
+              WHERE `store_id` = ? AND `page_slug` = ? AND `theme_slug` = ?
+                AND `parent_id` = ?",
+            [$this->storeId(), $pageSlug, $themeSlug, $blockId]
+        );
+        foreach ($draftChildren as $child) {
+            $childDraftId = (int) $child['id'];
+            if ($childDraftId < 0) {
+                $this->cascadeDeleteDraft(
+                    abs($childDraftId),
+                    $childDraftId,
+                    $pageSlug,
+                    $themeSlug
+                );
+            } else {
+                // Draft child with positive parent_id; treat as
+                // a block id and recurse.
+                $this->cascadeDeletePublished(
+                    (int) $child['parent_id'],
+                    $pageSlug,
+                    $themeSlug
+                );
+            }
+        }
+
+        // Published children.
+        $publishedChildren = $this->db->select(
+            "SELECT `id` FROM `commerce_page_blocks`
+              WHERE `store_id` = ? AND `parent_id` = ?",
+            [$this->storeId(), $blockId]
+        );
+        foreach ($publishedChildren as $child) {
+            $this->cascadeDeletePublished(
+                (int) $child['id'],
+                $pageSlug,
+                $themeSlug
+            );
+        }
+
+        // Mark this block for deletion.
+        $this->markDelete($blockId, $pageSlug, $themeSlug);
+    }
+
+    /**
      * Mark an existing block for deletion.
      */
     public function markDelete(int $blockId, string $pageSlug, string $themeSlug): void

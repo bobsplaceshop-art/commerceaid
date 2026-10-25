@@ -125,16 +125,12 @@ final class DraftManager
             }
         }
 
-        if ($orphans !== []) {
-            $synthetic = new \CorporateAid\Commerce\Models\PageBlock();
-            $synthetic->id        = 0;
-            $synthetic->pageSlug  = $pageSlug;
-            $synthetic->blockType = '__orphaned__';
-            $synthetic->config    = ['reason' => 'parent block missing'];
-            $synthetic->children  = $orphans;
-            $roots[] = $synthetic;
-        }
-
+        // Orphans whose parent no longer exists are silently
+        // dropped. The cascade delete means a parent takes its
+        // children with it, so the only way to have orphans
+        // after this change is stale data from before the
+        // change. The cleanup SQL removes them; the merge
+        // silently ignores any that survive.
         return $roots;
     }
 

@@ -305,7 +305,22 @@ final class AdminPageController extends AdminController
         // which the old 'count(published) + 1' approach did not.
         $nextSort = $draftRepo->nextDraftSortOrder($slug, $themeSlug, $parentId);
 
-        $draftRepo->addDraftBlockWithConfig($slug, $themeSlug, $type, $nextSort, [], $parentId);
+        // Seed the block's config_json with the schema defaults.
+        // Without this, a newly-added Section (or any block with a
+        // schema) would start with config_json = '{}' and the
+        // settings form would show its `select` fields as
+        // unselected, because the value is null and no option
+        // matches null. The partial would fall back to the default
+        // for rendering, but the merchant would see a blank form
+        // until they touched a field.
+        //
+        // defaults() walks the block type's schema and returns
+        // each field's declared default. A block type with no
+        // schema returns [], which is the previous behaviour for
+        // types that do not have fields today.
+        $defaults = \CorporateAid\Commerce\Support\Blocks\BlockConfigRegistry::defaults($type);
+
+        $draftRepo->addDraftBlockWithConfig($slug, $themeSlug, $type, $nextSort, $defaults, $parentId);
 
         $session->flash('success', 'Block added (draft). Click Publish to go live.');
         return Response::redirect('/commerce/ca-admin/pages/' . $slug);
@@ -360,14 +375,11 @@ final class AdminPageController extends AdminController
 
         $themeSlug = $this->activeThemeSlug();
         $draftRepo = $this->container->get(\CorporateAid\Commerce\Repositories\PageDraftRepository::class);
-        
-        if ($id < 0) {
-            // Deleting a pending addition: just remove the draft row entirely
-            $draftRepo->removePendingAdd(abs($id));
-        } else {
-            // Deleting an existing block: mark it for deletion
-            $draftRepo->markDelete($id, $slug, $themeSlug);
-        }
+
+        // Cascade delete: the block and every descendant go.
+        // A deleted Section takes its Container and its leaf
+        // children with it. No reparenting, no orphans.
+        $draftRepo->cascadeDelete($id, $slug, $themeSlug);
 
         $session->flash('success', 'Block removed (draft). Click Publish to go live.');
         return Response::redirect('/commerce/ca-admin/pages/' . $slug);
