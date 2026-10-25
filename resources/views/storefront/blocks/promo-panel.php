@@ -4,11 +4,50 @@
  * @var string|null $bg_url
  */
 $bgUrl = $bg_url ?? '';
+$eyebrow = trim((string) ($config['eyebrow'] ?? ''));
+$heightMap = ['sm' => '300px', 'md' => '400px', 'lg' => '500px', 'xl' => '600px'];
+$heightKey = (string) ($config['height'] ?? 'md');
+$minHeight = $heightMap[$heightKey] ?? '400px';
+
+$textFontFamily = match ((string) ($config['text_font'] ?? 'inherit')) {
+    'display' => 'var(--sf-font-display)',
+    'body'    => 'var(--sf-font-body)',
+    'script'  => 'var(--sf-font-script)',
+    default   => '',
+};
+$textSize = match ((string) ($config['text_size'] ?? 'inherit')) {
+    'sm'  => '1.5rem',
+    'md'  => '2rem',
+    'lg'  => '2.5rem',
+    'xl'  => '3rem',
+    '2xl' => '4rem',
+    default => '',
+};
+$textWeight = match ((string) ($config['text_weight'] ?? 'inherit')) {
+    'normal' => '400',
+    'medium' => '500',
+    'bold'   => '700',
+    default  => '',
+};
+$textAlign = in_array((string) ($config['text_alignment'] ?? 'inherit'), ['left', 'center', 'right'], true)
+    ? (string) $config['text_alignment']
+    : '';
+
+$typography = '';
+if ($textFontFamily !== '') $typography .= "font-family: {$textFontFamily}; ";
+if ($textSize !== '')      $typography .= "font-size: {$textSize}; ";
+if ($textWeight !== '')    $typography .= "font-weight: {$textWeight}; ";
+if ($textAlign !== '')     $typography .= "text-align: {$textAlign}; ";
 ?>
 <section class="sf-promo" style="padding: 4rem 2rem;">
-    <div style="max-width: 1200px; margin: 0 auto; display: flex; background: var(--sf-surface-2); border-radius: 8px; overflow: hidden; min-height: 400px;">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; background: var(--sf-surface-2); border-radius: 8px; overflow: hidden; min-height: <?= e($minHeight) ?>;">
         <div style="flex: 1; padding: 4rem; display: flex; flex-direction: column; justify-content: center;">
-            <h2 style="font-family: var(--sf-font-display); font-size: 2.5rem; margin-bottom: 2rem;"><?= e($config['title'] ?? '') ?></h2>
+            <?php if ($eyebrow !== ''): ?>
+                <span style="font-family: var(--sf-font-script); font-size: 1.5rem; color: var(--sf-accent); margin-bottom: .5rem;">
+                    <?= e($eyebrow) ?>
+                </span>
+            <?php endif; ?>
+            <h2 style="font-family: var(--sf-font-display); font-size: 2.5rem; margin-bottom: 2rem; <?= e($typography) ?>"><?= e($config['title'] ?? '') ?></h2>
             <a href="<?= e($config['cta_url'] ?? '#') ?>" class="sf-btn sf-btn-primary" style="align-self: flex-start;"><?= e($config['cta_text'] ?? 'Shop Now') ?></a>
         </div>
         <div style="flex: 1; background-image: url('<?= e($bgUrl) ?>'); background-size: cover; background-position: center;"></div>

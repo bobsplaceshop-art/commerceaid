@@ -201,6 +201,52 @@ final class BlockConfigRegistry
                 'default' => null,
                 'hint'    => 'Optional. Shown behind the headline.',
             ],
+            'text_font' => [
+                'label'   => 'Font',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit (store default)',
+                    'display' => 'Display (headings)',
+                    'body'    => 'Body (text)',
+                    'script'  => 'Script (accent)',
+                ],
+            ],
+            'text_size' => [
+                'label'   => 'Font size',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit (default)',
+                    'sm'      => 'Small',
+                    'md'      => 'Medium',
+                    'lg'      => 'Large',
+                    'xl'      => 'Extra large',
+                    '2xl'     => 'Huge',
+                ],
+            ],
+            'text_weight' => [
+                'label'   => 'Font weight',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit',
+                    'normal'  => 'Normal',
+                    'medium'  => 'Medium',
+                    'bold'    => 'Bold',
+                ],
+            ],
+            'text_alignment' => [
+                'label'   => 'Text alignment',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit',
+                    'left'    => 'Left',
+                    'center'  => 'Center',
+                    'right'   => 'Right',
+                ],
+            ],
         ];
     }
 
@@ -305,6 +351,52 @@ final class BlockConfigRegistry
                 'type'    => 'file',
                 'default' => null,
             ],
+            'text_font' => [
+                'label'   => 'Font',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit (store default)',
+                    'display' => 'Display (headings)',
+                    'body'    => 'Body (text)',
+                    'script'  => 'Script (accent)',
+                ],
+            ],
+            'text_size' => [
+                'label'   => 'Font size',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit (default)',
+                    'sm'      => 'Small',
+                    'md'      => 'Medium',
+                    'lg'      => 'Large',
+                    'xl'      => 'Extra large',
+                    '2xl'     => 'Huge',
+                ],
+            ],
+            'text_weight' => [
+                'label'   => 'Font weight',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit',
+                    'normal'  => 'Normal',
+                    'medium'  => 'Medium',
+                    'bold'    => 'Bold',
+                ],
+            ],
+            'text_alignment' => [
+                'label'   => 'Text alignment',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit',
+                    'left'    => 'Left',
+                    'center'  => 'Center',
+                    'right'   => 'Right',
+                ],
+            ],
         ];
     }
 
@@ -317,6 +409,52 @@ final class BlockConfigRegistry
                 'type'    => 'text',
                 'default' => '<h2>About Us</h2><p>We are a fashion brand...</p>',
                 'hint'    => 'Basic HTML is allowed (headings, paragraphs, links).',
+            ],
+            'text_font' => [
+                'label'   => 'Font',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit (store default)',
+                    'display' => 'Display (headings)',
+                    'body'    => 'Body (text)',
+                    'script'  => 'Script (accent)',
+                ],
+            ],
+            'text_size' => [
+                'label'   => 'Font size',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit (default)',
+                    'sm'      => 'Small',
+                    'md'      => 'Medium',
+                    'lg'      => 'Large',
+                    'xl'      => 'Extra large',
+                    '2xl'     => 'Huge',
+                ],
+            ],
+            'text_weight' => [
+                'label'   => 'Font weight',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit',
+                    'normal'  => 'Normal',
+                    'medium'  => 'Medium',
+                    'bold'    => 'Bold',
+                ],
+            ],
+            'text_alignment' => [
+                'label'   => 'Text alignment',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit',
+                    'left'    => 'Left',
+                    'center'  => 'Center',
+                    'right'   => 'Right',
+                ],
             ],
         ];
     }
@@ -379,6 +517,52 @@ final class BlockConfigRegistry
                 'label'   => 'Image',
                 'type'    => 'file',
                 'default' => null,
+            ],
+            'text_font' => [
+                'label'   => 'Font',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit (store default)',
+                    'display' => 'Display (headings)',
+                    'body'    => 'Body (text)',
+                    'script'  => 'Script (accent)',
+                ],
+            ],
+            'text_size' => [
+                'label'   => 'Font size',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit (default)',
+                    'sm'      => 'Small',
+                    'md'      => 'Medium',
+                    'lg'      => 'Large',
+                    'xl'      => 'Extra large',
+                    '2xl'     => 'Huge',
+                ],
+            ],
+            'text_weight' => [
+                'label'   => 'Font weight',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit',
+                    'normal'  => 'Normal',
+                    'medium'  => 'Medium',
+                    'bold'    => 'Bold',
+                ],
+            ],
+            'text_alignment' => [
+                'label'   => 'Text alignment',
+                'type'    => 'select',
+                'default' => 'inherit',
+                'options' => [
+                    'inherit' => 'Inherit',
+                    'left'    => 'Left',
+                    'center'  => 'Center',
+                    'right'   => 'Right',
+                ],
             ],
         ];
     }
