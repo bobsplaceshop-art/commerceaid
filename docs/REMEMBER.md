@@ -3178,3 +3178,33 @@ for products) also now wraps the URL in `absoluteUrl()`.
   media URL checker is the "upstream" direction made
   permanent: every consumer of the media route is checked
   at commit time, not just at the moment of the patch.
+
+---
+
+### Pattern 49 - Bootstrap modals do not inherit the admin's custom theme
+
+**Problem:** A modal rendered with Bootstrap's standard `.modal fade` and `.modal-content` classes has a white background, even when the admin is in dark mode. The text inside the modal header becomes invisible (white text on white background). The admin's `data-theme="dark"` attribute is ignored.
+
+**The tell:** The admin shell is dark (sidebar, topbar, cards render correctly). Clicking a button that opens a modal shows a white modal. Comparing it to a modal that works (like `_history-modal.php`) shows the working modal uses the project's own `.ra-modal` classes, not Bootstrap's `.modal` classes.
+
+**The root cause:** Bootstrap 5.3 defines the modal background via `--bs-modal-bg`, which defaults to white. Bootstrap's dark mode (activated by `data-bs-theme="dark"` on `<html>`) overrides it. The admin uses a custom `data-theme="dark"` on `<html>` and defines its own `--ra-*` variables. There is no mapping from `--ra-*` to `--bs-modal-bg`, so Bootstrap modals fall back to white.
+
+**The correct fix:** Use the project's own modal classes. Any new admin modal should be built with `.ra-modal`, `.ra-modal-backdrop`, `.ra-modal-panel`, `.ra-modal-header`, `.ra-modal-body`, and `.ra-modal-footer`. These classes are defined in `setup.css` and use the `--ra-*` variables directly. They respect the theme automatically. The reference implementation is `resources/views/admin/customer_approvals/_history-modal.php`. The `RA_NavModal` JS helper (`window.RA_NavModal.open('modal-id')` / `close('modal-id')`) is the matching open/close logic.
+
+**Where we hit it:** Building the Header, Footer, and Menu builders during Stage 023 Tier 2. The modals were initially written with Bootstrap's `.modal` structure. Every attempt to fix them with per-modal CSS overrides failed. The solution was to rewrite the modals to use `.ra-modal`.
+
+**Prevention checklist for any new admin modal:**
+
+1. Open `resources/views/admin/customer_approvals/_history-modal.php` and copy its structure.
+2. Add the `RA_NavModal` open/close script to the page if not already loaded.
+3. Change the opening button from `data-bs-toggle="modal" data-bs-target="#id"` to `onclick="RA_NavModal.open('id')"`.
+4. Hard-refresh and verify the modal in both dark and light modes.
+
+**Related:**
+- Pattern 40 (cascade check has four directions). The upstream direction (what does `.modal-content` depend on?) was never checked.
+- Pattern 26 (shared partial guards must reflect the partial's own requirement). The requirement of `.modal` is "I render white unless `data-bs-theme='dark'`". The admin provides `data-theme='dark'`, not `data-bs-theme`.
+
+---
+
+End of Pattern 49.
+
