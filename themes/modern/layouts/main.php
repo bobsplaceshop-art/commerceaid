@@ -413,35 +413,11 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
         }
     })();
     </script>
-<script src="<?= versioned_asset('js/storefront-hero.js') ?>" defer></script>
-<script src="<?= versioned_asset('js/wishlist.js') ?>" defer></script>
-<script src="<?= versioned_asset('js/pwa-install.js') ?>" defer></script>
-<script src="<?= versioned_asset('js/storefront-forms.js') ?>" defer></script>
-<script src="<?= versioned_asset('js/country-select.js') ?>" defer></script>
-<script src="<?= versioned_asset('js/search-autocomplete-v3.js') ?>" defer></script>
-
-<?php if (!empty($cookieBannerEnabled)): ?>
-    <?= view_partial('storefront.partials._cookie-banner', ['store' => $store]) ?>
-    <link href="<?= versioned_asset('css/storefront-cookie-banner.css') ?>" rel="stylesheet">
-    <script src="<?= versioned_asset('js/cookie-consent.js') ?>" defer></script>
-<?php endif; ?>
-
-<?php if (!empty($popupEnabled)): ?>
-    <?= view_partial('storefront.partials._popup-modal', [
-        'settings' => app(\CorporateAid\Commerce\Repositories\StoreSettingsRepository::class),
-    ]) ?>
-    <script src="<?= versioned_asset('js/storefront-popup.js') ?>" defer></script>
-<?php endif; ?>
-
-<script>
-// Service worker registration. Silent on failure - the
-// page works fine without a service worker.
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js').catch(function () {});
-    });
-}
-</script>
+<?= view_partial('storefront.partials._scripts', [
+    'store'               => $store,
+    'cookieBannerEnabled' => $cookieBannerEnabled,
+    'popupEnabled'        => $popupEnabled,
+]) ?>
 
 </body>
 </html>
