@@ -2677,14 +2677,14 @@ body.modal-open .modal-backdrop {
     background: transparent;
     border: 0;
     color: var(--ra-text-strong);
-    font-family: var(--ra-font-body, inherit);
+    font-family: inherit;
     font-size: .82rem;
     font-weight: 600;
     letter-spacing: .1em;
     text-transform: uppercase;
     text-align: left;
     cursor: pointer;
-    transition: background var(--ra-t-base, 200ms) ease;
+    transition: background 200ms ease;
 }
 .ra-config-section-header:hover {
     background: var(--ra-surface-2);
