@@ -19,11 +19,13 @@ itself carries a hint below the field. Read those hints.
 2. Catalog
 3. Sales
 4. Marketing
-5. Settings
-6. Storefront
-7. Common Tasks
-8. Troubleshooting
-9. Glossary
+5. Design
+6. Page Builder
+7. Settings
+8. Storefront
+9. Common Tasks
+10. Troubleshooting
+11. Glossary
 
 ---
 
@@ -65,6 +67,7 @@ order:
     Customer Approvals, Returns, Coupons.
   - **Marketing** — Subscribers, Subscriber lists,
     Campaigns.
+  - **Design** — Pages, Header Builder, Footer Builder, Menus.
   - **Settings** — Store Settings, Legal Pages, Tax,
     Shipping, Users, Roles.
 
@@ -1053,7 +1056,46 @@ A merchant can create a custom role with any subset.
 
 ---
 
-## 5. Settings
+## 5. Design
+
+The Design group is where you shape the storefront without touching code. Four entry points: Pages, Header Builder, Footer Builder, Menus.
+
+### Pages (the page builder)
+`Design > Pages` lists every page the storefront can render. Click a page to open the page builder.
+
+### Header Builder
+Edits the storefront's top bar: the header menu and the trust bar items.
+
+### Footer Builder
+Controls the footer top, footer columns, and contact details.
+
+### Menus
+Lists every navigation menu in the store. Edit items, create new menus. Nesting is one level.
+
+---
+
+## 6. Page Builder
+
+The page builder is how the storefront's pages are composed. Every page is a list of blocks.
+
+### The block editor
+Three columns: Left (block list), Right (preview), Sidebar (config panel).
+
+### Adding a block
+Click **Add Block**. Choose from Layout, Content, or Products.
+
+### Configuring a block
+Panel shows four sections: Content, Layout, Style, Advanced. Save config.
+
+### Dragging blocks
+Drag a block by its row. Drop between, or onto a Section/Container.
+
+### Publishing
+Click **Publish** to make the draft live.
+
+---
+
+## 7. Settings
 
 ### Store Settings
 
@@ -1310,7 +1352,7 @@ Reassign the users first.
 
 ---
 
-## 6. Storefront
+## 8. Storefront
 
 ### What customers see
 
@@ -1358,7 +1400,7 @@ page.
 
 ---
 
-## 7. Common Tasks
+## 9. Common Tasks
 
 **"I want to change my logo."**
 Settings > Branding > Logo. Upload a new image. Save.
@@ -1446,7 +1488,7 @@ the change on their next page load.
 
 ---
 
-## 8. Troubleshooting
+## 10. Troubleshooting
 
 **Login problems.**
 Check that the email is correct. Use the password
@@ -1520,7 +1562,7 @@ without direct intervention from your developer.
 
 ---
 
-## 9. Glossary
+## 11. Glossary
 
 **Product.** A catalog item. Simple or variable.
 

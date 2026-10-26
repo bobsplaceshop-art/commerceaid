@@ -3208,3 +3208,23 @@ for products) also now wraps the URL in `absoluteUrl()`.
 
 End of Pattern 49.
 
+---
+
+### Pattern 50 - Two layouts, one render path
+
+**Problem:** A platform has two layouts that render the same surface.
+The base layout and the active theme layout both need to load the
+same script tags. A change to one does not reach the other.
+
+**The tell:** A script added to the base layout does not run on a
+theme that has its own layout.
+
+**Detection:** Grep both layouts for identical `<script src=` sequences.
+Any block that appears in both is a candidate for extraction.
+
+**Rule:** Shared content comes from one partial both layouts call.
+Keep layout-specific markup in the layouts.
+
+**Where we hit it:** 2026-10-26. The `_scripts.php` extraction.
+
+
