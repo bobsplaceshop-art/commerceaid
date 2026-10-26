@@ -56,7 +56,6 @@ $__unread = customer_unread_message_count();
 // (which is usually 'Home').
 $navRepo = \CorporateAid\Core\App::instance()->container()->get(\CorporateAid\Commerce\Repositories\NavigationRepository::class);
 $dbNavItems = $navRepo->getHeaderTree('header');
-$trustItems = $navRepo->getTrustBarItems('header');
 
 $navItems = [];
 $hasInsertedCategories = false;
@@ -363,23 +362,6 @@ $isNavActive = function (string $href) use ($currentPath): bool {
         </div>
     </nav>
 
-    <?php if (!empty($trustItems)): ?>
-    <div class="sf-home-trust-row" data-sf-section="trust-row" style="border-top: 1px solid var(--sf-border);">
-        <div class="sf-container">
-            <ul class="sf-home-trust-row-list">
-                <?php foreach ($trustItems as $t): ?>
-                    <li class="sf-home-trust-row-item">
-                        <i class="bi <?= e($t->icon ?? 'bi-star') ?>" aria-hidden="true"></i>
-                        <div class="sf-home-trust-row-text">
-                            <span class="sf-home-trust-row-title"><?= e($t->label) ?></span>
-                            <span class="sf-home-trust-row-sub"><?= e($t->subtitle ?? '') ?></span>
-                        </div>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    </div>
-    <?php endif; ?>
 </header>
 
 <script>

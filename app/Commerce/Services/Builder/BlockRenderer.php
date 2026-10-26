@@ -159,8 +159,14 @@ final class BlockRenderer
         // Resolve numeric file ids to UUID-based URLs for any
         // block that renders a single background/image file.
         // The partial receives a ready-to-use bg_url.
-        if (!empty($block->config['image_file_id'])) {
-            $mediaItem = $this->media->findById((int) $block->config['image_file_id']);
+        // Resolve the background image URL. Prefer the new
+        // background_image_file_id field, fall back to the
+        // legacy image_file_id for backward compat.
+        $bgFileId = $block->config['background_image_file_id']
+            ?? $block->config['image_file_id']
+            ?? null;
+        if (!empty($bgFileId)) {
+            $mediaItem = $this->media->findById((int) $bgFileId);
             if ($mediaItem !== null) {
                 $viewData['bg_url'] = $mediaItem->variantUrl('lg', 'jpg');
             }

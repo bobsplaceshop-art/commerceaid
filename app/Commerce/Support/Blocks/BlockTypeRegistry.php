@@ -129,6 +129,14 @@ final class BlockTypeRegistry
                 'accepts_children' => false,
                 'partial'          => 'storefront/blocks/newsletter',
             ],
+            'trust-row' => [
+                'label'            => 'Trust Bar',
+                'icon'             => 'bi-patch-check',
+                'hint'             => 'The trust bar (shipping, payment, delivery, support). Items are edited from Design > Header Builder.',
+                'group'            => 'element',
+                'accepts_children' => false,
+                'partial'          => 'storefront/blocks/trust-row',
+            ],
             'spacer' => [
                 'label'            => 'Spacer',
                 'icon'             => 'bi-arrows-expand',
