@@ -7,6 +7,7 @@ use CorporateAid\Commerce\Repositories\CustomerRepository;
 use CorporateAid\Commerce\Repositories\OrderItemRepository;
 use CorporateAid\Commerce\Repositories\OrderNoteRepository;
 use CorporateAid\Commerce\Repositories\OrderRepository;
+use CorporateAid\Commerce\Services\AbandonedOrderService;
 use CorporateAid\Commerce\Repositories\OrderStatusHistoryRepository;
 use CorporateAid\Core\Auth;
 use CorporateAid\Core\Request;
@@ -203,6 +204,16 @@ final class AdminOrderController extends AdminController
         }
 
         $userId = $this->currentUserId();
+
+        // If the new status is cancelled or failed, release the
+        // reserved inventory before changing the status. This is
+        // the same release path the abandoned-order cleanup uses,
+        // so the ledger is consistent whether the cancel came from
+        // an admin or a cron.
+        if (in_array($newStatus, ['cancelled', 'failed'], true)) {
+            $this->container->get(AbandonedOrderService::class)
+                ->releaseStockForOrder($order);
+        }
 
         $orders->transitionStatus(
             $order->id,

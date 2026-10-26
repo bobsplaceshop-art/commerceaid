@@ -43,6 +43,7 @@ use CorporateAid\Commerce\Repositories\NavigationRepository;
 use CorporateAid\Commerce\Repositories\NavigationResourceRepository;
 use CorporateAid\Commerce\Services\CatalogService;
 use CorporateAid\Commerce\Services\CheckoutService;
+use CorporateAid\Commerce\Services\AbandonedOrderService;
 use CorporateAid\Commerce\Repositories\CouponRepository;
 use CorporateAid\Commerce\Repositories\CouponRedemptionRepository;
 use CorporateAid\Commerce\Repositories\TaxRepository;
@@ -309,6 +310,13 @@ final class CommerceServiceProvider
         // computes order totals.
         //
         // See docs/stages/008k.5_order-pricing-engine-plan.md.
+
+        $c->singleton(AbandonedOrderService::class,
+            fn() => new AbandonedOrderService(
+                $c->get(OrderRepository::class),
+                $c->get(OrderItemRepository::class),
+                $c->get(InventoryRepository::class)
+            ));
 
         $c->singleton(CouponRepository::class,
             fn() => new CouponRepository(
