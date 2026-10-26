@@ -172,13 +172,20 @@ final class PageDraftRepository extends CommerceRepository
         string $pageSlug,
         string $themeSlug
     ): void {
-        // Recursive delete: first find child drafts whose
-        // parent_id is this draft's negative id, recurse, then
-        // delete this row.
+        // Recursive delete: find EVERY child draft whose
+        // parent_id is this draft's negative id (regardless of
+        // status — pending_add, pending_edit, pending_delete
+        // all must go), recurse, then delete this row.
+        //
+        // The previous version filtered to status='pending_add',
+        // which left pending_edit and pending_delete children
+        // orphaned. The publish flow (DraftPublisher) then
+        // refused to publish with 'child draft #X references
+        // missing parent draft #Y'. Removed the filter.
         $children = $this->db->select(
             "SELECT `id` FROM `commerce_page_drafts`
               WHERE `store_id` = ? AND `page_slug` = ? AND `theme_slug` = ?
-                AND `parent_id` = ? AND `status` = 'pending_add'",
+                AND `parent_id` = ?",
             [$this->storeId(), $pageSlug, $themeSlug, $negativeId]
         );
         foreach ($children as $child) {
