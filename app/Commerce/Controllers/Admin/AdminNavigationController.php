@@ -13,10 +13,12 @@ final class AdminNavigationController extends AdminController
 {
     private function previewUrl(string $target = '1'): string
     {
-        // Use the configured base URL so the iframe loads the correct
-        // host/port, regardless of where the admin is mounted.
-        $base = rtrim((string) config('app.url'), '/');
-        return $base . '/?customize_preview=' . urlencode($target);
+        // Relative path so the iframe stays same-origin with the
+        // admin. Matches the Pages builder pattern (AdminPageController
+        // line 121). The admin's CSP default-src 'self' allows it,
+        // and the .htaccess exception allows framing for
+        // ?customize_preview=*.
+        return '/?customize_preview=' . urlencode($target);
     }
 
     /** @param array<string,string> $params */

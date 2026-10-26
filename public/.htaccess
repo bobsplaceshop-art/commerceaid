@@ -133,7 +133,7 @@ DirectoryIndex index.php
     # Scope: only requests with ?customize_preview=1. Live
     # storefront keeps frame-ancestors 'none'.
     # ----------------------------------------------------------
-    <If "%{THE_REQUEST} =~ m#^GET /.*\?.*customize_preview=1(&|\s)#">
+    <If "%{THE_REQUEST} =~ m#^GET /.*\?.*customize_preview=(1|header|footer)(&|\s)#">
         Header always unset X-Frame-Options
         Header always set X-Frame-Options "SAMEORIGIN"
         Header always unset Content-Security-Policy
@@ -159,7 +159,7 @@ DirectoryIndex index.php
     # the query string receive the exemption. The live
     # storefront keeps frame-ancestors 'none'.
     # ----------------------------------------------------------
-    <If "%{THE_REQUEST} =~ m#^GET /.*\?.*customize_preview=1(&|\s)#">
+    <If "%{THE_REQUEST} =~ m#^GET /.*\?.*customize_preview=(1|header|footer)(&|\s)#">
         Header always unset X-Frame-Options
         Header always set X-Frame-Options "SAMEORIGIN"
         Header always unset Content-Security-Policy

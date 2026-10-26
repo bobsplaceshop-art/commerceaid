@@ -129,9 +129,6 @@ $promoPanels = [
     ],
 ];
 
-// Trust row items (below hero).
-$navRepo = \CorporateAid\Core\App::instance()->container()->get(\CorporateAid\Commerce\Repositories\NavigationRepository::class);
-$trustRow = $navRepo->getTrustBarItems('header');
 ?>
 
 <!-- ============================================================= -->
@@ -185,25 +182,6 @@ $trustRow = $navRepo->getTrustBarItems('header');
             Lifestyle<br>
             For a better you &hearts;
         </span>
-    </div>
-</section>
-
-<!-- ============================================================= -->
-<!-- TRUST ROW (always renders)                                    -->
-<!-- ============================================================= -->
-<section class="sf-home-trust-row" data-sf-section="trust-row">
-    <div class="sf-container">
-        <ul class="sf-home-trust-row-list">
-            <?php foreach ($trustRow as $t): ?>
-                <li class="sf-home-trust-row-item">
-                    <i class="bi <?= e($t->icon ?? 'bi-star') ?>" aria-hidden="true"></i>
-                    <div class="sf-home-trust-row-text">
-                        <span class="sf-home-trust-row-title"><?= e($t->label) ?></span>
-                        <span class="sf-home-trust-row-sub"><?= e($t->subtitle ?? '') ?></span>
-                    </div>
-                </li>
-            <?php endforeach; ?>
-        </ul>
     </div>
 </section>
 
