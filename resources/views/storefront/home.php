@@ -2,6 +2,11 @@
 /**
  * @var array $blocks
  */
+$previewTarget = $_GET['customize_preview'] ?? null;
+if ($previewTarget === 'header' || $previewTarget === 'footer') {
+    // Only the layout's header/footer will render.
+    return;
+}
 ?>
 <?php if (!empty($blocks)): ?>
     <?php

@@ -37,6 +37,12 @@ $dbContacts = $navRepo->getContactDetails();
 
 $footerColumns = [];
 foreach ($dbColumns as $col) {
+    // Skip the footer_top column. Its items (tagline lines and
+    // social links) are rendered in the black bar above the grid.
+    if ($col->columnKey === 'footer_top') {
+        continue;
+    }
+
     $links = [];
     foreach ($col->items as $item) {
         $links[] = [
@@ -62,15 +68,32 @@ foreach ($dbColumns as $col) {
     ];
 }
 
-// Social links. Stubs until the store builder provides real URLs.
-$socialLinks = [
-    ['icon' => 'bi-facebook',  'label' => 'Facebook',   'href' => '#'],
-    ['icon' => 'bi-instagram', 'label' => 'Instagram',  'href' => '#'],
-    ['icon' => 'bi-tiktok',    'label' => 'TikTok',     'href' => '#'],
-    ['icon' => 'bi-pinterest', 'label' => 'Pinterest',  'href' => '#'],
-    ['icon' => 'bi-youtube',   'label' => 'YouTube',    'href' => '#'],
-    ['icon' => 'bi-whatsapp',  'label' => 'WhatsApp',   'href' => '#'],
-];
+// Footer top items (tagline lines + social links).
+$footerTopItems = [];
+$footerTopColumn = null;
+foreach ($dbColumns as $col) {
+    if ($col->columnKey === 'footer_top') {
+        $footerTopColumn = $col;
+        break;
+    }
+}
+if ($footerTopColumn !== null) {
+    $footerTopItems = $footerTopColumn->items;
+}
+
+$socialLinks = [];
+$taglineLines = [];
+foreach ($footerTopItems as $item) {
+    if (!empty($item->icon)) {
+        $socialLinks[] = [
+            'icon'  => $item->icon,
+            'label' => $item->label,
+            'href'  => $item->url ?? '#',
+        ];
+    } else {
+        $taglineLines[] = $item->label;
+    }
+}
 
 // Payment method badges. Simplified SVG recreations - not official
 // brand assets. Real logos land with Stage 010 (payments).
@@ -107,11 +130,9 @@ $paymentMethods = [
             </div>
 
             <div class="sf-footer-slogan">
-                <span class="sf-footer-slogan-line">Shop the World,</span>
-                <span class="sf-footer-slogan-line">
-                    Love Your Style
-                    <span class="sf-footer-slogan-heart" aria-hidden="true">&hearts;</span>
-                </span>
+                <?php foreach ($taglineLines as $line): ?>
+                    <span class="sf-footer-slogan-line"><?= e($line) ?></span>
+                <?php endforeach; ?>
             </div>
 
             <div class="sf-footer-socials" data-sf-section="footer-socials">

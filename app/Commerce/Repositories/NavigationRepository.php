@@ -313,4 +313,28 @@ final class NavigationRepository extends CommerceRepository
             'legal_page' => '/legal/' . $slug,
         };
     }
+
+    public function createColumn(int $menuId, string $columnKey, string $heading, int $sortOrder = 0): int
+    {
+        return $this->db->insert(
+            'INSERT INTO `commerce_navigation_columns` (`menu_id`, `column_key`, `heading`, `sort_order`) VALUES (?, ?, ?, ?)',
+            [$menuId, $columnKey, $heading, $sortOrder]
+        );
+    }
+
+    public function updateColumn(int $columnId, int $menuId, string $heading, int $sortOrder): void
+    {
+        $this->db->execute(
+            'UPDATE `commerce_navigation_columns` SET `heading` = ?, `sort_order` = ? WHERE `id` = ? AND `menu_id` = ?',
+            [$heading, $sortOrder, $columnId, $menuId]
+        );
+    }
+
+    public function deleteColumn(int $columnId, int $menuId): void
+    {
+        $this->db->execute(
+            'DELETE FROM `commerce_navigation_columns` WHERE `id` = ? AND `menu_id` = ?',
+            [$columnId, $menuId]
+        );
+    }
 }

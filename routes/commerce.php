@@ -1326,3 +1326,15 @@ $router->post('/commerce/ca-admin/navigation/contact/{id}',
 $router->post('/commerce/ca-admin/navigation/contact/{id}/delete',
     [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationItemController::class, 'destroyContact'],
     ['store', 'auth', 'csrf', 'permission:navigation.manage']);
+
+$router->post('/commerce/ca-admin/navigation/columns',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationController::class, 'storeColumn'],
+    ['store', 'auth', 'csrf', 'permission:navigation.manage']);
+
+$router->post('/commerce/ca-admin/navigation/columns/{id}',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationController::class, 'updateColumn'],
+    ['store', 'auth', 'csrf', 'permission:navigation.manage']);
+
+$router->post('/commerce/ca-admin/navigation/columns/{id}/delete',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationController::class, 'destroyColumn'],
+    ['store', 'auth', 'csrf', 'permission:navigation.manage']);

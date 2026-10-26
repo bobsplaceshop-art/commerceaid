@@ -8,181 +8,148 @@
  */
 ?>
 
-<div class="d-flex flex-column gap-4">
+<div class="ra-customizer">
 
-    <!-- Top: Editor -->
-    <div>
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h4 mb-0">Header Builder</h1>
-            <button class="ra-btn ra-btn-primary btn-sm" onclick="RA_NavModal.open('createItemModal')">
-                <i class="bi bi-plus-lg"></i> Add Link
-            </button>
-        </div>
-
-        <div class="row g-4">
-            <!-- Main Nav Items -->
-            <div class="col-lg-6">
-                <div class="ra-card">
-                    <div class="ra-card-header">
-                        <h3 class="h6 mb-0">Navigation Links</h3>
-                    </div>
-                    <div class="ra-table-responsive-wrap">
-                        <table class="ra-table">
-                            <thead>
-                                <tr>
-                                    <th>Label</th>
-                                    <th>Order</th>
-                                    <th class="text-end">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php
-                                $renderItems = function ($items, $depth = 0) use (&$renderItems, $menu, $resources) {
-                                    foreach ($items as $item) {
-                                        ?>
-                                        <tr>
-                                            <td>
-                                                <div style="padding-left:<?= $depth * 1.5 ?>rem;">
-                                                    <?= e($item->label) ?>
-                                                    <?php if ($item->isHighlight): ?>
-                                                        <span class="ra-badge ra-badge-warning ms-1" style="font-size:.6rem;">Highlight</span>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </td>
-                                            <td><?= (int) $item->sortOrder ?></td>
-                                            <td class="text-end">
-                                                <button type="button" class="ra-icon-btn" onclick="RA_NavModal.open('editItemModal<?= $item->id ?>')">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <form method="POST" action="/commerce/ca-admin/navigation/items/<?= (int) $item->id ?>/delete" class="d-inline" onsubmit="return confirm('Delete?')">
-                                                    <?= csrf_field() ?>
-                                                    <input type="hidden" name="menu_id" value="<?= (int) $menu->id ?>">
-                                                    <input type="hidden" name="menu_location" value="header">
-                                                    <button type="submit" class="ra-icon-btn text-danger">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                        <div class="ra-modal" id="editItemModal<?= $item->id ?>" style="display:none;">
-                                            <div class="ra-modal-backdrop" onclick="RA_NavModal.close('editItemModal<?= $item->id ?>')"></div>
-                                            <div class="ra-modal-panel" role="dialog">
-                                                <form method="POST" action="/commerce/ca-admin/navigation/items/<?= (int) $item->id ?>">
-                                                    <?= csrf_field() ?>
-                                                    <div class="ra-modal-header">
-                                                        <h2 class="h6 mb-0">Edit Item</h2>
-                                                        <button type="button" class="ra-icon-btn" onclick="RA_NavModal.close('editItemModal<?= $item->id ?>')"><i class="bi bi-x-lg"></i></button>
-                                                    </div>
-                                                    <div class="ra-modal-body">
-                                                        <?php $mode = 'edit'; require __DIR__ . '/_item_form.php'; ?>
-                                                    </div>
-                                                    <div class="ra-modal-footer">
-                                                        <button type="button" class="ra-btn ra-btn-outline" onclick="RA_NavModal.close('editItemModal<?= $item->id ?>')">Cancel</button>
-                                                        <button type="submit" class="ra-btn ra-btn-primary">Save Item</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                        <?php
-                                        if ($item->hasChildren()) {
-                                            $renderItems($item->children, $depth + 1);
-                                        }
-                                    }
-                                };
-
-                                if (empty($items)): ?>
-                                    <tr><td colspan="3" class="text-center text-muted py-4">No header items yet.</td></tr>
-                                <?php else:
-                                    $renderItems($items);
-                                endif;
-                                ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+    <!-- Topbar -->
+    <div class="ra-customizer-topbar d-flex justify-content-between align-items-center px-3 w-100">
+        <div class="d-flex align-items-center gap-2">
+            <div class="ra-customizer-brand fw-bold d-flex align-items-center">
+                <i class="bi bi-layout-text-window-reverse me-2"></i> Header Builder
             </div>
+        </div>
+        <div class="ra-customizer-actions d-flex gap-2 align-items-center">
+            <a href="/commerce/ca-admin/navigation" class="ra-btn ra-btn-outline ra-btn-sm">Close</a>
+        </div>
+    </div>
 
-            <!-- Trust Bar Items -->
-            <div class="col-lg-6">
-                <div class="ra-card">
-                    <div class="ra-card-header d-flex justify-content-between align-items-center">
-                        <h3 class="h6 mb-0">Trust Bar Items</h3>
-                    </div>
-                    <div class="ra-table-responsive-wrap">
-                        <table class="ra-table">
-                            <thead>
-                                <tr>
-                                    <th>Icon &amp; Label</th>
-                                    <th>Subtitle</th>
-                                    <th class="text-end">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($trustItems as $tItem): ?>
-                                    <tr>
-                                        <td>
-                                            <i class="bi <?= e($tItem->icon ?? 'bi-star') ?> me-2"></i>
-                                            <?= e($tItem->label) ?>
-                                        </td>
-                                        <td><?= e($tItem->subtitle ?? '') ?></td>
-                                        <td class="text-end">
-                                            <button type="button" class="ra-icon-btn" onclick="RA_NavModal.open('editItemModal<?= $tItem->id ?>')">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <form method="POST" action="/commerce/ca-admin/navigation/items/<?= (int) $tItem->id ?>/delete" class="d-inline" onsubmit="return confirm('Delete?')">
-                                                <?= csrf_field() ?>
-                                                <input type="hidden" name="menu_id" value="<?= (int) $menu->id ?>">
-                                                <input type="hidden" name="menu_location" value="header">
-                                                <button type="submit" class="ra-icon-btn text-danger">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    <div class="ra-modal" id="editItemModal<?= $tItem->id ?>" style="display:none;">
-                                        <div class="ra-modal-backdrop" onclick="RA_NavModal.close('editItemModal<?= $tItem->id ?>')"></div>
-                                        <div class="ra-modal-panel" role="dialog">
-                                            <form method="POST" action="/commerce/ca-admin/navigation/items/<?= (int) $tItem->id ?>">
-                                                <?= csrf_field() ?>
-                                                <div class="ra-modal-header">
-                                                    <h2 class="h6 mb-0">Edit Trust Item</h2>
-                                                    <button type="button" class="ra-icon-btn" onclick="RA_NavModal.close('editItemModal<?= $tItem->id ?>')"><i class="bi bi-x-lg"></i></button>
-                                                </div>
-                                                <div class="ra-modal-body">
-                                                    <?php $mode = 'edit'; $item = $tItem; require __DIR__ . '/_item_form.php'; ?>
-                                                </div>
-                                                <div class="ra-modal-footer">
-                                                    <button type="button" class="ra-btn ra-btn-outline" onclick="RA_NavModal.close('editItemModal<?= $tItem->id ?>')">Cancel</button>
-                                                    <button type="submit" class="ra-btn ra-btn-primary">Save Item</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                                <?php if (empty($trustItems)): ?>
-                                    <tr><td colspan="3" class="text-center text-muted py-4">No trust bar items.</td></tr>
+    <!-- Body: Sidebar + Preview -->
+    <div class="ra-customizer-body">
+
+        <!-- Sidebar -->
+        <div class="ra-customizer-sidebar">
+            <div class="p-3 ra-nav-separator d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">Navigation</h6>
+                <button class="ra-btn ra-btn-primary ra-btn-sm" onclick="RA_NavModal.open('createItemModal')">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+            </div>
+            <div class="p-2">
+                <?php
+                $renderItems = function ($items, $depth = 0) use (&$renderItems, $menu, $resources) {
+                    foreach ($items as $item) {
+                        ?>
+                        <div class="d-flex justify-content-between align-items-center py-2 px-2 rounded mb-1 ra-nav-item">
+                            <span style="font-size: 0.85rem; padding-left: <?= $depth * 1 ?>rem;">
+                                <?= e($item->label) ?>
+                                <?php if ($item->isHighlight): ?>
+                                    <span class="ra-badge ra-badge-warning ms-1" style="font-size:.6rem;">H</span>
                                 <?php endif; ?>
-                            </tbody>
-                        </table>
+                            </span>
+                            <div class="d-flex gap-1">
+                                <button type="button" class="ra-icon-btn btn-sm py-0 px-1" onclick="RA_NavModal.open('editItemModal<?= $item->id ?>')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="POST" action="/commerce/ca-admin/navigation/items/<?= (int) $item->id ?>/delete" class="d-inline" onsubmit="return confirm('Delete?')">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="menu_id" value="<?= (int) $menu->id ?>">
+                                    <input type="hidden" name="menu_location" value="header">
+                                    <button type="submit" class="ra-icon-btn text-danger btn-sm py-0 px-1">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="ra-modal" id="editItemModal<?= $item->id ?>" style="display:none;">
+                            <div class="ra-modal-backdrop" onclick="RA_NavModal.close('editItemModal<?= $item->id ?>')"></div>
+                            <div class="ra-modal-panel" role="dialog">
+                                <form method="POST" action="/commerce/ca-admin/navigation/items/<?= (int) $item->id ?>">
+                                    <?= csrf_field() ?>
+                                    <div class="ra-modal-header">
+                                        <h2 class="h6 mb-0">Edit Item</h2>
+                                        <button type="button" class="ra-icon-btn" onclick="RA_NavModal.close('editItemModal<?= $item->id ?>')"><i class="bi bi-x-lg"></i></button>
+                                    </div>
+                                    <div class="ra-modal-body">
+                                        <?php $mode = 'edit'; require __DIR__ . '/_item_form.php'; ?>
+                                    </div>
+                                    <div class="ra-modal-footer">
+                                        <button type="button" class="ra-btn ra-btn-outline" onclick="RA_NavModal.close('editItemModal<?= $item->id ?>')">Cancel</button>
+                                        <button type="submit" class="ra-btn ra-btn-primary">Save Item</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <?php
+                        if ($item->hasChildren()) {
+                            $renderItems($item->children, $depth + 1);
+                        }
+                    }
+                };
+
+                if (empty($items)): ?>
+                    <p class="text-muted small text-center py-3">No header items yet.</p>
+                <?php else:
+                    $renderItems($items);
+                endif;
+                ?>
+            </div>
+
+            <div class="p-3 ra-nav-separator d-flex justify-content-between align-items-center mt-2">
+                <h6 class="mb-0 fw-bold">Trust Bar</h6>
+            </div>
+            <div class="p-2">
+                <?php foreach ($trustItems as $tItem): ?>
+                    <div class="d-flex justify-content-between align-items-center py-2 px-2 rounded mb-1 ra-nav-item">
+                        <span style="font-size: 0.85rem;">
+                            <i class="bi <?= e($tItem->icon ?? 'bi-star') ?> me-1"></i>
+                            <?= e($tItem->label) ?>
+                        </span>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="ra-icon-btn btn-sm py-0 px-1" onclick="RA_NavModal.open('editItemModal<?= $tItem->id ?>')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="POST" action="/commerce/ca-admin/navigation/items/<?= (int) $tItem->id ?>/delete" class="d-inline" onsubmit="return confirm('Delete?')">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="menu_id" value="<?= (int) $menu->id ?>">
+                                <input type="hidden" name="menu_location" value="header">
+                                <button type="submit" class="ra-icon-btn text-danger btn-sm py-0 px-1">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                </div>
+                    <div class="ra-modal" id="editItemModal<?= $tItem->id ?>" style="display:none;">
+                        <div class="ra-modal-backdrop" onclick="RA_NavModal.close('editItemModal<?= $tItem->id ?>')"></div>
+                        <div class="ra-modal-panel" role="dialog">
+                            <form method="POST" action="/commerce/ca-admin/navigation/items/<?= (int) $tItem->id ?>">
+                                <?= csrf_field() ?>
+                                <div class="ra-modal-header">
+                                    <h2 class="h6 mb-0">Edit Trust Item</h2>
+                                    <button type="button" class="ra-icon-btn" onclick="RA_NavModal.close('editItemModal<?= $tItem->id ?>')"><i class="bi bi-x-lg"></i></button>
+                                </div>
+                                <div class="ra-modal-body">
+                                    <?php $mode = 'edit'; $item = $tItem; require __DIR__ . '/_item_form.php'; ?>
+                                </div>
+                                <div class="ra-modal-footer">
+                                    <button type="button" class="ra-btn ra-btn-outline" onclick="RA_NavModal.close('editItemModal<?= $tItem->id ?>')">Cancel</button>
+                                    <button type="submit" class="ra-btn ra-btn-primary">Save Item</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                <?php if (empty($trustItems)): ?>
+                    <p class="text-muted small text-center py-3">No trust items.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="ra-customizer-preview">
+            <div class="ra-preview-frame-wrapper">
+                <iframe src="<?= e($previewUrl) ?>" id="preview-iframe" title="Storefront preview"></iframe>
             </div>
         </div>
     </div>
-
-    <!-- Bottom: Live Preview (Full Width) -->
-    <div>
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h3 class="h6 mb-0">Live Preview</h3>
-            <button class="ra-btn ra-btn-outline btn-sm" onclick="document.getElementById('preview-iframe').contentWindow.location.reload()">
-                <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
-        </div>
-        <div class="ra-card p-0 overflow-hidden" style="height: 80vh; min-height: 600px;">
-            <iframe src="<?= e($previewUrl) ?>" id="preview-iframe" title="Storefront preview" style="width: 100%; height: 100%; border: 0; display: block;"></iframe>
-        </div>
-    </div>
-
 </div>
 
 <!-- Create Modal -->
@@ -256,7 +223,6 @@ window.RA_IconPicker = (function () {
     var targetInputId = null;
     var allIcons = [];
     var grid = document.getElementById('ra-icon-grid');
-    var search = document.getElementById('ra-icon-search');
 
     function open(inputId) {
         targetInputId = inputId;
@@ -287,7 +253,6 @@ window.RA_IconPicker = (function () {
             grid.innerHTML = '<div class="text-center text-muted py-4">No icons found.</div>';
             return;
         }
-        // Limit to first 200 for performance
         var limited = icons.slice(0, 200);
         var html = '';
         for (var i = 0; i < limited.length; i++) {
@@ -315,7 +280,6 @@ window.RA_IconPicker = (function () {
             var input = document.getElementById(targetInputId);
             if (input) {
                 input.value = cls;
-                // Update the preview icon
                 var previewId = targetInputId.replace('icon-input-', 'icon-preview-');
                 var preview = document.getElementById(previewId);
                 if (preview) {

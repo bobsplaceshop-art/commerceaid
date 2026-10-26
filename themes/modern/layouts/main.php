@@ -50,6 +50,14 @@ $hasFlash     = ($flashSuccess !== null || $flashError !== null);
 // shell and every partial it renders.
 $brandName = brand_name($store);
 
+// Preview isolation flags. When the admin builder
+// loads this page in an iframe with ?customize_preview=header
+// or ?customize_preview=footer, we only render the
+// requested component, skipping the main page content.
+$previewTarget = $previewTarget ?? ($_GET['customize_preview'] ?? null);
+$isHeaderPreview = ($previewTarget === 'header');
+$isFooterPreview = ($previewTarget === 'footer');
+
 $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
 ?>
 <!doctype html>
@@ -209,6 +217,7 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
         </div>
     <?php endif; ?>
 
+    <?php if (!$isFooterPreview): ?>
     <?= view_partial('storefront/partials/header', [
         'store'         => $store,
         'brandName'     => $brandName,
@@ -226,15 +235,18 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
             <?php endif; ?>
         </div>
     <?php endif; ?>
+    <?php endif; ?>
 
     <main class="sf-main">
-        <?= $content ?>
+        <?= ($isHeaderPreview || $isFooterPreview) ? '' : $content ?>
     </main>
 
+    <?php if (!$isHeaderPreview): ?>
     <?= view_partial('storefront/partials/footer', [
         'store'     => $store,
         'brandName' => $brandName,
     ]) ?>
+    <?php endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
