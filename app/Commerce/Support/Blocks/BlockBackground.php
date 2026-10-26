@@ -68,6 +68,8 @@ final class BlockBackground
      * Returns the CSS for the overlay pseudo-element, or '' if
      * no overlay is configured. The partial inlines this in a
      * <style> block scoped to the block's wrapper class.
+     *
+     * @param array<string,mixed> $config
      */
     public static function overlayStyle(array $config, string $wrapperClass): string
     {

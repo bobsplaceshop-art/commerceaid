@@ -21,7 +21,10 @@ final class ConfigGroup
      *     title: string,
      *     icon: string,
      *     count: int,
-     *     fields: array<int, array{name:string, meta:array<string,mixed>, value:mixed}>
+     *     fields: array<int,
+     *         array{name:string, meta:array<string,mixed>, value:mixed}
+     *         | array{pair:string, fields:array<int, array{name:string, meta:array<string,mixed>, value:mixed}>}
+     *     >
      * }>
      */
     public static function group(array $schema, array $config, array $categories = []): array

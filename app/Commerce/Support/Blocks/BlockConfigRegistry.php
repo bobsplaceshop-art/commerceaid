@@ -1056,6 +1056,7 @@ final class BlockConfigRegistry
         ];
     }
 
+    /** @return array<string, array<string,mixed>> */
     private static function trustRow(): array
     {
         return [

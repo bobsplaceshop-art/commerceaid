@@ -82,6 +82,8 @@ final class AbandonedOrderService
      *
      * Returns a summary array for the CLI to print:
      *   ['cancelled' => int, 'released' => int, 'order_ids' => int[]]
+     *
+     * @return array{cancelled:int, released:int, order_ids:array<int,int>}
      */
     public function cancelStale(int $minutes): array
     {
