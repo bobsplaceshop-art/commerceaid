@@ -916,31 +916,34 @@ h1, h2, h3, h4 {
 }
 
 .sf-footer-columns-inner {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-wrap: wrap;
     gap: 2rem;
-    justify-items: stretch;
     text-align: center;
 }
 
+.sf-footer-columns-inner > .sf-footer-column {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.sf-footer-columns-inner > .sf-footer-newsletter {
+    flex: 2 1 300px;
+    min-width: 0;
+}
+
 @media (min-width: 576px) and (max-width: 767px) {
-    .sf-footer-columns-inner {
-        grid-template-columns: repeat(2, 1fr);
+    .sf-footer-columns-inner > .sf-footer-column {
+        flex-basis: calc(50% - 1rem);
     }
 
-    /* In the two-column range, the newsletter needs full
-     * width for its input + button row. In the one-column
-     * range (below 640px) it already spans. In the 5-column
-     * range (900px+) it fills its own track. */
-    .sf-footer-newsletter {
-        grid-column: 1 / -1;
+    .sf-footer-columns-inner > .sf-footer-newsletter {
+        flex-basis: 100%;
     }
 }
 
 @media (min-width: 768px) {
     .sf-footer-columns-inner {
-        grid-template-columns: repeat(4, 1fr) 1.5fr;
-        justify-items: start;
         text-align: left;
     }
 }

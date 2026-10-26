@@ -595,6 +595,25 @@ a:hover { color: var(--ra-link-hover); }
 }
 .ra-card + .ra-card { margin-top: 1.25rem; }
 
+/* Builder sidebar item card. Uses theme variables so it
+   follows dark/light/system. Replaces the hardcoded
+   bg-dark border border-secondary Bootstrap utility. */
+.ra-nav-item {
+    background: var(--ra-surface);
+    border: 1px solid var(--ra-border);
+    color: var(--ra-text);
+    border-radius: var(--ra-radius-md, 8px);
+    transition: background-color .15s ease, border-color .15s ease;
+}
+.ra-nav-item:hover {
+    background: var(--ra-hover-nav, var(--ra-surface-2));
+}
+
+/* Builder sidebar section divider. */
+.ra-nav-separator {
+    border-bottom: 1px solid var(--ra-border);
+}
+
 /* Light theme: give cards a shadow so they float */
 html[data-theme="light"] .ra-card,
 html[data-theme="light"] .ra-table-card,
@@ -2433,7 +2452,7 @@ html[data-theme="light"] .ra-table-wrap {
     inset: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    background: #0f172a;
+    background: var(--ra-bg);
     display: flex;
     flex-direction: column;
     z-index: 9999;
@@ -2444,8 +2463,8 @@ html[data-theme="light"] .ra-table-wrap {
    rule only supplies visual chrome (background, border,
    fixed height) so the flexbox has a defined container. */
 .ra-customizer-topbar {
-    background: #0b1220;
-    border-bottom: 1px solid #2d3748;
+    background: var(--ra-surface);
+    border-bottom: 1px solid var(--ra-border);
     min-height: 60px;
     flex-shrink: 0;
     gap: 1rem;
@@ -2505,8 +2524,8 @@ html[data-theme="light"] .ra-table-wrap {
 .ra-customizer-sidebar {
     width: 340px;
     flex-shrink: 0;
-    background: #1a2235;
-    border-right: 1px solid #2d3748;
+    background: var(--ra-surface-2);
+    border-right: 1px solid var(--ra-border);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
@@ -2517,7 +2536,7 @@ html[data-theme="light"] .ra-table-wrap {
    The wrapper is the flex child. It has the device width. */
 .ra-customizer-preview {
     flex: 1 1 auto;
-    background: #e2e8f0;
+    background: var(--ra-surface-3);
     display: flex;
     justify-content: center;
     align-items: flex-start;
