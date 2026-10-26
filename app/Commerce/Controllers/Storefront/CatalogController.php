@@ -163,4 +163,42 @@ final class CatalogController extends StorefrontController
             'productRatings'   => $productRatings,
         ]);
     }
+
+    /**
+     * Autocomplete endpoint. Returns up to 10 product name + URL
+     * suggestions matching the q parameter. Called by the header
+     * search input's JS on every keystroke (debounced).
+     *
+     * @param array<string,string> $params
+     */
+    public function searchSuggest(Request $request, array $params = []): Response
+    {
+        $q = trim((string) $request->query('q', ''));
+        if ($q === '') {
+            return Response::json(['suggestions' => []]);
+        }
+
+        $products = $this->container->get(ProductRepository::class);
+        $result   = $products->paginatePublished(
+            array_merge(['q' => $q, 'sort' => 'featured'], $this->hideOutOfStockFilter()),
+            1,
+            10
+        );
+
+        $suggestions = [];
+        foreach ($result['items'] as $product) {
+            $suggestions[] = [
+                'label'     => $product->name,
+                'url'       => '/products/' . $product->slug,
+                'price'     => $product->price,
+                'image_url' => product_image_url($product, 'thumb', 'webp'),
+            ];
+        }
+
+        return Response::json([
+            'suggestions' => $suggestions,
+            'total'       => (int) $result['total'],
+            'query'       => $q,
+        ]);
+    }
 }

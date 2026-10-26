@@ -418,6 +418,7 @@ $pageTitle = $title !== '' ? ($title . ' - ' . $brandName) : $brandName;
 <script src="<?= versioned_asset('js/pwa-install.js') ?>" defer></script>
 <script src="<?= versioned_asset('js/storefront-forms.js') ?>" defer></script>
 <script src="<?= versioned_asset('js/country-select.js') ?>" defer></script>
+<script src="<?= versioned_asset('js/search-autocomplete-v3.js') ?>" defer></script>
 
 <?php if (!empty($cookieBannerEnabled)): ?>
     <?= view_partial('storefront.partials._cookie-banner', ['store' => $store]) ?>

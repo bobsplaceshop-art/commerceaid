@@ -108,6 +108,16 @@ $router->get('/offline', function (Request $req, array $params): Response {
 // (/products/{slug}) so /products matches the listing and not
 // a product named "products".
 $router->get('/products',        [CatalogController::class,  'index'], ['store', 'maintenance']);
+
+// /search is the same catalog index with the q filter pre-filled.
+// The header search form posts to /search?q=..., and the catalog
+// controller already handles q, category, brand, sort, page, etc.
+// Reusing the controller keeps filters, pagination, chips, and
+// the empty state identical between search and the catalog.
+$router->get('/search',          [CatalogController::class,  'index'], ['store', 'maintenance']);
+
+// Autocomplete endpoint. Returns JSON: {suggestions: [...]}.
+$router->get('/search/suggest',  [CatalogController::class,  'searchSuggest'], ['store', 'maintenance']);
 // ---------------------------------------------------------------------
 // Product reviews
 // ---------------------------------------------------------------------

@@ -605,12 +605,33 @@ final class ProductRepository extends CommerceRepository
         $params = [$this->storeId()];
 
         if (!empty($filters['q'])) {
-            $like = '%' . $filters['q'] . '%';
-            $where[] = "(p.`name` LIKE ? OR p.`short_description` LIKE ? OR p.`description` LIKE ? OR p.`sku` LIKE ?)";
-            $params[] = $like;
-            $params[] = $like;
-            $params[] = $like;
-            $params[] = $like;
+            // Boolean-mode full-text search for prefix matching. Each
+            // word is suffixed with * so "comb" matches "combs" and
+            // "combing". Each word is prefixed with + so all terms
+            // must be present (AND semantics). The FULLTEXT index
+            // covers name, short_description, and description.
+            //
+            // SKU is not in the FULLTEXT index, so we add a LIKE
+            // fallback so a SKU search still works.
+            $words = preg_split('/\s+/', trim($filters['q'])) ?: [];
+            $boolean = '';
+            foreach ($words as $word) {
+                $word = preg_replace('/[+\-<>()~*"@]/', '', $word);
+                if ($word !== '') {
+                    $boolean .= '+' . $word . '* ';
+                }
+            }
+            $boolean = trim($boolean);
+            $like    = '%' . $filters['q'] . '%';
+
+            if ($boolean === '') {
+                $where[] = "p.`sku` LIKE ?";
+                $params[] = $like;
+            } else {
+                $where[] = "(MATCH(p.`name`, p.`short_description`, p.`description`) AGAINST (? IN BOOLEAN MODE) OR p.`sku` LIKE ?)";
+                $params[] = $boolean;
+                $params[] = $like;
+            }
         }
 
         if (!empty($filters['category_id'])) {
