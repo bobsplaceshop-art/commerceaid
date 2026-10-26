@@ -1061,37 +1061,145 @@ A merchant can create a custom role with any subset.
 The Design group is where you shape the storefront without touching code. Four entry points: Pages, Header Builder, Footer Builder, Menus.
 
 ### Pages (the page builder)
-`Design > Pages` lists every page the storefront can render. Click a page to open the page builder.
+
+`Design > Pages` lists every page the storefront can render: home, category pages, CMS pages. Clicking a page opens the page builder for that page.
+
+See **6. Page Builder** for the block editor.
 
 ### Header Builder
-Edits the storefront's top bar: the header menu and the trust bar items.
+
+`Design > Header Builder` controls the storefront's top bar. It edits two things:
+
+  - **The header menu.** The nav links across the top of the site. Add, remove, reorder, nest one level deep.
+  - **The trust bar items.** The small icon + label + subtitle items that render on the homepage's trust bar block and (for older installs) in the header. The items are shared: editing here updates both surfaces.
+
+**To add a nav item**, click Add Item in the header menu panel. Fields: label, link, icon (optional), parent (leave empty for a top-level item), sort order.
+
+**To make a nav item into a dropdown**, set another item as its parent. The header renders two levels: a top-level item with children becomes a dropdown.
+
+**To add a trust bar item**, scroll to the Trust Bar panel at the bottom. Fields: icon (Bootstrap Icon class), label, subtitle. Save. The item appears on the homepage's trust bar block immediately, and in the header's trust row on installs that predate the block migration.
+
+**To preview**, the panel on the right shows the live storefront with the header in a preview-isolated mode. Changes appear after save.
 
 ### Footer Builder
-Controls the footer top, footer columns, and contact details.
+
+`Design > Footer Builder` controls the storefront's footer. Three sections:
+
+  - **The footer top.** The tagline and social icons that sit above the footer columns.
+  - **The footer columns.** Named columns (Quick Links, Customer Service, Company, Contact). Each column has a heading and a list of items.
+  - **The contact details.** Address, phone, email. These render in the Contact column by default.
+
+**To add a footer column**, click Add Column. Fields: column key (a lowercase identifier, e.g. `quick-links`), heading, sort order. Save.
+
+**To add an item to a column**, open the column and click Add Item. Fields: label, link, sort order.
+
+**To delete a column**, click the trash on the column header. All items in the column are deleted with it. The delete is permanent — there is no undo.
+
+**Preview.** Same live preview as the header builder.
 
 ### Menus
-Lists every navigation menu in the store. Edit items, create new menus. Nesting is one level.
+
+`Design > Menus` lists every navigation menu in the store. There are three by default: Header, Footer, Trust Bar. The list shows each menu with its location and its item count.
+
+**To edit a menu's items**, click the menu. The custom menu editor opens. It shows the menu's items as a tree. Add, remove, reorder, and nest items.
+
+**To create a new menu**, click New Menu at the top. Give it a name and a location key. The menu is available to any surface that reads from that location, but the standard surfaces (Header, Footer) use their fixed menus. Custom menus are for future surfaces.
+
+**Nesting is one level.** A menu item can have a parent, making it a child. A child cannot have a child. The header renders two levels. This is deliberate: three-level menus are a usability failure on mobile.
+
+**Deleting a menu removes everything.** The menu, its columns, and its items are all removed in one operation (the database cascades the delete). If you want to keep the items but not the menu, move the items first.
 
 ---
 
 ## 6. Page Builder
 
-The page builder is how the storefront's pages are composed. Every page is a list of blocks.
+The page builder is how the storefront's pages are composed. Every page is a list of blocks. Each block has a type (Hero, Product Grid, Newsletter, …) and a config (colors, text, alignment, which products, …).
+
+### The Pages list
+
+`Design > Pages` shows every page with its block count. Home is the storefront's homepage. The other pages are category and CMS pages that use the page builder.
+
+Click a page to open its editor.
 
 ### The block editor
-Three columns: Left (block list), Right (preview), Sidebar (config panel).
+
+The editor has three columns:
+
+  - **Left:** the block list. Every block on the page, in order. Each row shows the block type, a pencil, a duplicate icon, and a trash.
+  - **Right:** the preview. A live rendering of the page as it will appear on the storefront.
+  - **Sidebar:** the settings panel. Opens when you click the pencil on a block.
 
 ### Adding a block
-Click **Add Block**. Choose from Layout, Content, or Products.
+
+Click **Add Block** at the bottom of the block list. A menu appears grouped by category:
+
+  - **Layout:** Section, Container, Spacer.
+  - **Content:** Hero, Banner, Rich Text, Newsletter, Promo Panel, Trust Bar.
+  - **Products:** Product Grid, Category Grid.
+
+Pick a block type. The block is added to the page at the selected position. Click the pencil to configure it.
 
 ### Configuring a block
-Panel shows four sections: Content, Layout, Style, Advanced. Save config.
+
+The block config panel shows the block's settings grouped into four collapsible sections:
+
+  - **Content** — the text, the CTA label, the CTA link, the image assignment.
+  - **Layout** — padding top and bottom, alignment, column count.
+  - **Style** — text colors, background color or gradient, background image, background overlay.
+  - **Advanced** — fields that do not fit the other three.
+
+Each section shows a count of its fields. Click a section header to expand or collapse it. The collapsed state is remembered per block type on this browser.
+
+**Saving.** Click **Save config** at the bottom of the panel. The block's config is stored. The preview updates.
+
+**Color pairs.** Where two colors belong side by side (text color and secondary text color, for example), they render in one row. The left field is the primary, the right field is the secondary.
+
+**Background image.** The Style section offers a Background Image field that opens the media library. Pick an image and it renders as the block's background, scaled to cover. Overlay (dark or light) sits above the image to keep text readable.
 
 ### Dragging blocks
-Drag a block by its row. Drop between, or onto a Section/Container.
+
+Drag a block by its row in the left list. Drop it anywhere in the list. The client tree updates during the drag; on release, the new parent and sort order are saved.
+
+Three drop positions:
+
+  - **Between two root blocks** — the block becomes a root sibling.
+  - **Onto a Section or Container block** — the block becomes a child of the Section.
+  - **Between two children of a Section** — the block becomes a sibling of the two.
+
+A block that does not accept children cannot be dropped onto. Drop next to it instead.
+
+If a drag does not register (the block snaps back), retry. A drop outside the drop zone is ignored.
+
+### Duplicating and deleting
+
+Click the duplicate icon on a block row to clone it. The clone is added directly below the original. The config is copied exactly.
+
+Click the trash on a block row to delete it. Children of the block are deleted with it (the database cascades the delete). The confirmation modal appears. There is no undo after confirmation.
 
 ### Publishing
-Click **Publish** to make the draft live.
+
+The page builder saves drafts. Drafts are visible in the preview but not on the storefront. Click **Publish** at the top of the editor to make the draft live. The storefront reflects the change after publish.
+
+If publish refuses with "child draft #X references missing parent draft #Y," the draft tree has orphaned rows. This was a bug in older versions. On an install that predates the fix, run:
+
+    php bin/cleanup-orphan-drafts.php --dry-run
+    php bin/cleanup-orphan-drafts.php
+
+The script repairs the orphaned rows and publish works again.
+
+### The block types
+
+  - **Hero** — the top-of-page large text + CTA block. Headline, subheadline, CTA, optional image, background.
+  - **Product Grid** — a grid of products. Configure source (new arrivals, best sellers, category), limit, columns (3-8), alignment.
+  - **Category Grid** — a grid of categories. Configure which categories, limit, columns, alignment.
+  - **Banner** — a wide banner with text and CTA over a background.
+  - **Rich Text** — a formatted text block. Use for editorial copy, FAQs, terms.
+  - **Newsletter** — the email signup band. Headline, subheadline, button text, background.
+  - **Promo Panel** — the editorial two-column band. Left image, right caption, or the reverse.
+  - **Trust Bar** — the icon + label trust strip. The items are edited in Design > Header Builder.
+  - **Section** — a wrapper that groups child blocks. Configure padding, background, alignment.
+  - **Container** — like Section, but with fixed max width. Use to constrain a child block's width.
+  - **Spacer** — vertical whitespace. Configure height.
 
 ---
 
@@ -1481,6 +1589,27 @@ Two steps:
   data, use the data request workflow (future
   feature) or contact your data protection officer.
 
+**"How do I change my storefront navigation?"**
+Design > Header Builder edits the top bar's menu. Add, remove, reorder, nest items one level deep. Design > Footer Builder edits the footer columns. Changes take effect after Save; the header preview shows the result live.
+
+**"How do I change the trust bar items?"**
+Design > Header Builder, scroll to the Trust Bar panel. Add, edit, or delete items there. The items render on the homepage's Trust Bar block and (on older installs) in the header. New installs render them only in the block.
+
+**"How do I change the homepage layout?"**
+Design > Pages > Home. The page builder opens. Reorder blocks by dragging. Add or remove blocks with Add Block and the trash icon. Configure each block by clicking its pencil. Publish when the draft looks right.
+
+**"How do I add a block to the homepage?"**
+Design > Pages > Home, click **Add Block** at the bottom of the block list. Choose a block type. Click its pencil to configure. Save. Publish.
+
+**"Why is my block not showing on the storefront?"**
+Three checks:
+  - Is the block enabled? The block row has an eye icon if it can be toggled. Disabled blocks do not render.
+  - Is the page published? Drafts are visible in the preview but not on the storefront. Click Publish.
+  - Is the block empty? Some blocks (Product Grid) render nothing when their configured source has no products. The block is on the page but has nothing to draw.
+
+**"Why does the page builder refuse to publish?"**
+The error "child draft #X references missing parent draft #Y" means the draft tree has orphaned rows. Older versions left orphans on delete. Run `php bin/cleanup-orphan-drafts.php --dry-run` then without the flag. Publish works after.
+
 **"How do I change who can see what in the admin?"**
 Settings > Roles. Open the role, check or uncheck
 permissions, save. Users assigned to that role see
@@ -1550,6 +1679,18 @@ immediately, but sends only when the cron worker
 installed, the queue fills but no email leaves.
 Ask your hosting provider to confirm the crontab
 entry exists.
+
+**A navigation item is missing from the storefront.**
+Open Design > Header Builder. Find the item in the list. Check three things: is the item enabled? is its menu the Header menu (not a custom menu that is not rendered)? is its parent item present and enabled? A child whose parent is deleted no longer renders. The database cascade removes children when their parent is deleted, so this should not happen on an item you deleted — it can happen on an item whose parent was deleted by a different admin action.
+
+**A block's config is not saving.**
+The config panel submits one form. If Save does nothing, check the browser console. A common cause is a browser extension intercepting the form. Disable extensions and retry. If the save appears to succeed but the field is unchanged after refresh, the block was saved but the page was not republished. Click Publish.
+
+**The trust bar shows twice on the storefront.**
+This happens on installs that predate the trust bar block migration. The trust bar renders once from the header partial (old behaviour) and once from the homepage's trust-row block (new behaviour). Update to the latest code or remove the trust-row block from the page builder.
+
+**A page builder block is present but renders nothing.**
+The block is on the page but its source is empty. A Product Grid block whose `source=category` and whose category has no products renders nothing. A Category Grid block whose `category_ids` are all deleted renders nothing. Configure the block with a source that has content, or remove the block.
 
 **A subscriber is not receiving campaigns.**
 Check their status in Marketing > Subscribers. If
@@ -1688,6 +1829,26 @@ name for GDPR.
 **TTDSG.** Telekommunikation-Telemedien-Datenschutz-Gesetz
 — the German law on consent for cookies and similar
 technologies.
+
+**Block.** A unit of storefront content on a page — a Hero, a Product Grid, a Newsletter. Pages are composed of blocks. Each block has a type and a config.
+
+**Page Builder.** The editor at Design > Pages that composes pages from blocks. Dragging, adding, configuring, publishing.
+
+**Block Config Panel.** The settings panel that opens when you click a block's pencil. Grouped into Content, Layout, Style, Advanced sections.
+
+**Hero Block.** The top-of-page large text + CTA block. Headline, subheadline, CTA, optional image.
+
+**Product Grid Block.** A block that renders a grid of products. Configurable source, limit, columns, alignment.
+
+**Trust Bar Block.** The icon + label strip on the homepage. Items are edited in Design > Header Builder.
+
+**Navigation Menu.** The list of links in a surface — header, footer, trust bar. Edited at Design > Menus.
+
+**Header Builder.** The editor at Design > Header Builder. Controls the header nav and the trust bar items.
+
+**Footer Builder.** The editor at Design > Footer Builder. Controls the footer top, columns, and contact details.
+
+**Menu Builder.** The generic editor at Design > Menus for any navigation menu. The header and footer builders are specialized views of the same data.
 
 ---
 
