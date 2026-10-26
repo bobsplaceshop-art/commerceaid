@@ -685,3 +685,57 @@
         });
     }
 })();
+
+/* =====================================================================
+ * Block Config Sections — collapse, persist, search.
+ * ===================================================================== */
+window.RA_ConfigSections = (function () {
+    'use strict';
+
+    var KEY = 'ra-config-sections-collapsed';
+
+    function loadState() {
+        try {
+            return JSON.parse(localStorage.getItem(KEY) || '{}') || {};
+        } catch (e) {
+            return {};
+        }
+    }
+    function saveState(state) {
+        try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    }
+
+    function applyStoredState(root) {
+        var state = loadState();
+        root.querySelectorAll('.ra-config-section').forEach(function (sec) {
+            var key = sec.getAttribute('data-section');
+            if (state[key]) {
+                sec.classList.add('is-collapsed');
+            }
+        });
+    }
+
+    function toggle(headerEl) {
+        var section = headerEl.closest('.ra-config-section');
+        if (!section) return;
+        var key = section.getAttribute('data-section');
+        var isCollapsed = section.classList.toggle('is-collapsed');
+        var state = loadState();
+        state[key] = isCollapsed;
+        saveState(state);
+    }
+
+    // Apply stored state on page load and after every sidebar rerender.
+    function init() {
+        applyStoredState(document);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // Expose the toggle for the partial's onclick.
+    return { toggle: toggle, init: init };
+})();

@@ -4,7 +4,10 @@
  * @var string|null $bg_url
  */
 $bgUrl = $bg_url ?? '';
-$style = $bgUrl ? "background-image: url('{$bgUrl}');" : "background-color: var(--sf-accent); color: white;";
+$bgStyle = \CorporateAid\Commerce\Support\Blocks\BlockBackground::style($config, $bgUrl);
+if ($bgStyle === '') {
+    $bgStyle = $bgUrl !== '' ? "background-image: url('{$bgUrl}');" : "background-color: var(--sf-accent); color: white;";
+}
 
 $__typographyStyle = function (array $t): string {
     $s = '';
@@ -39,8 +42,13 @@ $subheadingT = is_array($config['subheading_typography'] ?? null) ? $config['sub
 $typography = $__typographyStyle($headingT);
 $subheadingTypography = $__typographyStyle($subheadingT);
 ?>
-<section class="sf-banner" style="<?= e($style) ?> background-size: cover; background-position: center; padding: 5rem 2rem; text-align: center;">
-    <div style="max-width: 800px; margin: 0 auto;">
+<section class="sf-banner" style="<?= e($bgStyle) ?> background-size: cover; background-position: center; padding: 5rem 2rem; text-align: center;">
+    <?= \CorporateAid\Commerce\Support\Blocks\BlockBackground::overlayStyle($config, 'sf-banner') ?>
+    <?php
+$textColor = (string) ($config['text_color'] ?? '');
+$textColorStyle = preg_match('/^#[0-9a-fA-F]{6}$/', $textColor) ? "color: {$textColor};" : '';
+?>
+    <div style="max-width: 800px; margin: 0 auto; <?= e($textColorStyle) ?>">
         <h2 style="font-family: var(--sf-font-display); font-size: 2.5rem; margin-bottom: 1rem; <?= e($typography) ?>"><?= e($config['headline'] ?? '') ?></h2>
         <p style="font-size: 1.2rem; margin-bottom: 2rem; <?= e($subheadingTypography) ?>"><?= e($config['subheadline'] ?? '') ?></p>
         <?php if (!empty($config['cta_text'])): ?>

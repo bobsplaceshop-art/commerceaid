@@ -145,12 +145,41 @@ $emitSettingsTemplate = function ($block, $slug, $categories) use (&$emitSetting
             $config = $block->config;
             $draft  = $_SESSION['builder_draft'][$slug][$block->id] ?? [];
             $config = array_merge($config, $draft);
-            foreach ($schema as $name => $meta):
-                echo view_partial('admin/pages/_config-field', [
-                    'name'       => 'config[' . $name . ']',
-                    'meta'       => $meta,
-                    'value'      => $config[$name] ?? ($meta['default'] ?? ''),
-                    'categories' => $categories,
+
+            $sections = \CorporateAid\Commerce\Support\Blocks\ConfigGroup::group($schema, $config, $categories);
+
+            foreach ($sections as $section):
+                $bodyHtml = '';
+                foreach ($section['fields'] as $item):
+                    if (isset($item['pair'])):
+                        $pairHtml = '<div class="ra-config-pair">';
+                        foreach ($item['fields'] as $pf):
+                            $pairHtml .= '<div class="ra-config-pair-cell">'
+                                . view_partial('admin/pages/_config-field', [
+                                    'name'       => 'config[' . $pf['name'] . ']',
+                                    'meta'       => $pf['meta'],
+                                    'value'      => $pf['value'],
+                                    'categories' => $categories,
+                                ])
+                                . '</div>';
+                        endforeach;
+                        $pairHtml .= '</div>';
+                        $bodyHtml .= $pairHtml;
+                    else:
+                        $bodyHtml .= view_partial('admin/pages/_config-field', [
+                            'name'       => 'config[' . $item['name'] . ']',
+                            'meta'       => $item['meta'],
+                            'value'      => $item['value'],
+                            'categories' => $categories,
+                        ]);
+                    endif;
+                endforeach;
+                echo view_partial('admin/pages/_config-section', [
+                    'sectionKey' => $section['section'],
+                    'title'      => $section['title'],
+                    'icon'       => $section['icon'],
+                    'bodyHtml'   => $bodyHtml,
+                    'count'      => $section['count'],
                 ]);
             endforeach;
             ?>

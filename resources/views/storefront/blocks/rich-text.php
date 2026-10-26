@@ -38,7 +38,11 @@ $bodyT = is_array($config['body_typography'] ?? null) ? $config['body_typography
 $typography = $__typographyStyle($bodyT);
 ?>
 <section class="sf-section" style="padding: 4rem 2rem;">
-    <div style="max-width: <?= e($maxWidth) ?>; margin: 0 auto; line-height: 1.8; <?= e($typography) ?>">
+<?php
+$textColor = (string) ($config['text_color'] ?? '');
+$textColorStyle = preg_match('/^#[0-9a-fA-F]{6}$/', $textColor) ? "color: {$textColor};" : '';
+?>
+    <div style="max-width: <?= e($maxWidth) ?>; margin: 0 auto; line-height: 1.8; <?= e($typography) ?> <?= e($textColorStyle) ?>">
         <?= $config['content'] ?? '' ?>
     </div>
 </section>

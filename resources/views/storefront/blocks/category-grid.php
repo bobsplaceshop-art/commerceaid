@@ -38,6 +38,12 @@ if (!in_array($spacerAbove, $validSpacer, true)) { $spacerAbove = 'none'; }
 if (!in_array($columnsDesktop, [3, 4, 5, 6, 7, 8], true)) { $columnsDesktop = 5; }
 if (!in_array($columnsMobile, [1, 2], true)) { $columnsMobile = 2; }
 
+$textColor = (string) ($config['text_color'] ?? '');
+$textColorStyle = preg_match('/^#[0-9a-fA-F]{6}$/', $textColor) ? "color: {$textColor};" : '';
+
+$subColor = (string) ($config['secondary_text_color'] ?? '');
+$subColorStyle = preg_match('/^#[0-9a-fA-F]{6}$/', $subColor) ? "color: {$subColor};" : '';
+
 $sectionClasses = [
     'sf-section',
     'sf-category-grid-section',
@@ -56,7 +62,7 @@ if ($divider) {
     <div class="sf-container">
         <header class="sf-home-section-heading">
             <span class="sf-home-heading-line" aria-hidden="true"></span>
-            <h2 class="sf-home-heading-text"><?= e($title) ?></h2>
+            <h2 class="sf-home-heading-text" style="<?= e($textColorStyle) ?>"><?= e($title) ?></h2>
             <span class="sf-home-heading-line" aria-hidden="true"></span>
         </header>
         <div class="sf-category-grid sf-cat-grid-align-<?= e($gridAlignment) ?>"
@@ -76,7 +82,7 @@ if ($divider) {
                     </div>
 
                     <div class="sf-category-card-footer">
-                        <span class="sf-category-card-name"><?= e($cat->name) ?></span>
+                        <span class="sf-category-card-name" style="<?= e($subColorStyle) ?>"><?= e($cat->name) ?></span>
                         <span class="sf-category-card-arrow" aria-hidden="true">
                             <i class="bi bi-arrow-right"></i>
                         </span>

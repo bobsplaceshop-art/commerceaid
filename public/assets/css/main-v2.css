@@ -2653,3 +2653,99 @@ body.modal-open .modal-backdrop {
 .ra-preview-block {
     display: contents;
 }
+
+/* =====================================================================
+ * Block Config Panel — Modernized
+ *
+ * Collapsible sections, icon headers, pair rendering.
+ * Used by block-config.php and the inline settings sidebar.
+ * ===================================================================== */
+
+.ra-config-section {
+    border-bottom: 1px solid var(--ra-border);
+    padding: 0;
+}
+.ra-config-section:last-child {
+    border-bottom: 0;
+}
+
+.ra-config-section-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: .9rem 1.25rem;
+    background: transparent;
+    border: 0;
+    color: var(--ra-text-strong);
+    font-family: var(--ra-font-body, inherit);
+    font-size: .82rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--ra-t-base, 200ms) ease;
+}
+.ra-config-section-header:hover {
+    background: var(--ra-surface-2);
+}
+
+.ra-config-section-title {
+    flex-grow: 1;
+}
+
+.ra-config-section-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 .4rem;
+    margin-left: .5rem;
+    background: var(--ra-surface-3);
+    color: var(--ra-muted);
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    border-radius: 11px;
+}
+
+.ra-config-section-chevron {
+    margin-left: .75rem;
+    transition: transform 200ms ease;
+}
+
+.ra-config-section.is-collapsed .ra-config-section-chevron {
+    transform: rotate(-90deg);
+}
+
+.ra-config-section.is-collapsed .ra-config-section-body {
+    display: none;
+}
+
+.ra-config-section-body {
+    padding: .25rem 1.25rem 1rem;
+}
+
+/* Pair rendering: two fields in one row. */
+.ra-config-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.ra-config-pair .ra-config-pair-cell {
+    min-width: 0;
+}
+@media (max-width: 767px) {
+    .ra-config-pair {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Wider config panel on desktop. Gives the typography and
+   color pairs room to breathe. Mobile drawer stays 100%. */
+@media (min-width: 1200px) {
+    .ra-customizer-sidebar {
+        width: 420px;
+    }
+}

@@ -2,17 +2,14 @@
 /**
  * Standalone config page for a single block.
  *
- * The normal path is the inline modal on the page editor.
- * This full-page route exists as a fallback: if the modal
- * fails to open, the merchant can navigate here directly.
- *
  * @var string $slug
  * @var \CorporateAid\Commerce\Models\PageBlock $block
  * @var array<int, \CorporateAid\Commerce\Models\Category> $categories
  * @var array<int, \CorporateAid\Commerce\Models\MediaItem> $mediaLibrary
  */
-$schema = \CorporateAid\Commerce\Support\Blocks\BlockConfigRegistry::schema($block->blockType);
-$config = $block->config;
+$schema     = \CorporateAid\Commerce\Support\Blocks\BlockConfigRegistry::schema($block->blockType);
+$config     = $block->config;
+$sections   = \CorporateAid\Commerce\Support\Blocks\ConfigGroup::group($schema, $config, $categories);
 ?>
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
@@ -31,12 +28,41 @@ $config = $block->config;
             <?php if (empty($schema)): ?>
                 <p class="text-muted mb-0">This block type has no configuration fields yet.</p>
             <?php else: ?>
-                <?php foreach ($schema as $name => $meta): ?>
-                    <?= view_partial('admin/pages/_config-field', [
-                        'name'       => $name,
-                        'meta'       => $meta,
-                        'value'      => $config[$name] ?? ($meta['default'] ?? ''),
-                        'categories' => $categories,
+                <?php foreach ($sections as $section): ?>
+                    <?php
+                    // Build the body HTML for this section.
+                    $bodyHtml = '';
+                    foreach ($section['fields'] as $item) {
+                        if (isset($item['pair'])) {
+                            $pairHtml = '<div class="ra-config-pair">';
+                            foreach ($item['fields'] as $pf) {
+                                $pairHtml .= '<div class="ra-config-pair-cell">'
+                                    . view_partial('admin/pages/_config-field', [
+                                        'name'       => 'config[' . $pf['name'] . ']',
+                                        'meta'       => $pf['meta'],
+                                        'value'      => $pf['value'],
+                                        'categories' => $categories,
+                                    ])
+                                    . '</div>';
+                            }
+                            $pairHtml .= '</div>';
+                            $bodyHtml .= $pairHtml;
+                        } else {
+                            $bodyHtml .= view_partial('admin/pages/_config-field', [
+                                'name'       => 'config[' . $item['name'] . ']',
+                                'meta'       => $item['meta'],
+                                'value'      => $item['value'],
+                                'categories' => $categories,
+                            ]);
+                        }
+                    }
+                    ?>
+                    <?= view_partial('admin/pages/_config-section', [
+                        'sectionKey' => $section['section'],
+                        'title'      => $section['title'],
+                        'icon'       => $section['icon'],
+                        'bodyHtml'   => $bodyHtml,
+                        'count'      => $section['count'],
                     ]) ?>
                 <?php endforeach; ?>
             <?php endif; ?>
