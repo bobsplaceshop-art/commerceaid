@@ -213,6 +213,15 @@ final class NavigationRepository extends CommerceRepository
         );
     }
 
+    /**
+     * Delete a single navigation item.
+     *
+     * Child items are removed by the self-referencing
+     * commerce_navigation_items.parent_id foreign key
+     * (ON DELETE CASCADE, migration 0356 lines 82-83). Do
+     * NOT add manual recursion here; the database already
+     * deletes the subtree. Manual recursion would double-delete.
+     */
     public function deleteItem(int $itemId, int $menuId): void
     {
         $this->db->execute(
@@ -341,6 +350,14 @@ final class NavigationRepository extends CommerceRepository
         );
     }
 
+    /**
+     * Delete a footer column.
+     *
+     * Items in the column are removed by the
+     * commerce_navigation_items.column_id foreign key
+     * (ON DELETE CASCADE, migration 0356 lines 79-80).
+     * No manual recursion needed.
+     */
     public function deleteColumn(int $columnId, int $menuId): void
     {
         $this->db->execute(
@@ -395,6 +412,15 @@ final class NavigationRepository extends CommerceRepository
         return $roots;
     }
 
+    /**
+     * Delete a navigation menu.
+     *
+     * Columns and items are removed by the
+     * commerce_navigation_columns.menu_id and
+     * commerce_navigation_items.menu_id foreign keys
+     * (both ON DELETE CASCADE, migration 0356 lines
+     * 52-53 and 76-77). No manual cascade needed.
+     */
     public function deleteMenu(int $menuId): void
     {
         $this->db->execute(
