@@ -1780,3 +1780,232 @@ select.sf-filter-input {
     margin: 0 auto 2rem;
     background: var(--sf-border, #e5e0d5);
 }
+
+/* =====================================================================
+ * Product card — premium editorial redesign
+ *
+ * Overrides the small card style with a larger, cleaner
+ * layout that matches the reference. Same class names, new
+ * values. Every existing interactive hook (wishlist heart,
+ * add-to-cart form, rating block) keeps its data attributes.
+ * ===================================================================== */
+
+.sf-product-card {
+    background: var(--sf-white);
+    border: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: box-shadow var(--sf-t-base) var(--sf-ease);
+}
+
+.sf-product-card:hover {
+    border-color: transparent;
+    box-shadow: 0 8px 24px rgba(26, 26, 26, 0.08);
+}
+
+.sf-product-card-media {
+    aspect-ratio: 3 / 4;
+    max-height: none;
+    background: var(--sf-cream);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: .85rem;
+}
+
+.sf-product-card-image {
+    transition: transform var(--sf-t-slow) var(--sf-ease);
+}
+
+.sf-product-card:hover .sf-product-card-image {
+    transform: scale(1.04);
+}
+
+/* Always-visible wishlist heart in the top-right. */
+.sf-product-card-action {
+    position: absolute;
+    top: .75rem;
+    right: .75rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    border: 0;
+    color: var(--sf-ink);
+    opacity: 1;
+    transform: none;
+    z-index: 3;
+    transition: background var(--sf-t-base) var(--sf-ease),
+                color var(--sf-t-base) var(--sf-ease);
+}
+
+.sf-product-card-action:hover:not(:disabled) {
+    background: var(--sf-white);
+    color: var(--sf-gold-dark);
+    border-color: transparent;
+}
+
+.sf-product-card-action.is-active {
+    background: var(--sf-white);
+    color: #e63946;
+    border: 0;
+}
+
+.sf-product-card-action.is-active:hover:not(:disabled) {
+    background: var(--sf-white);
+    color: #e63946;
+}
+
+.sf-product-card-action.is-active i {
+    color: #e63946;
+}
+
+/* Badge with a slightly softer corner. */
+.sf-product-card-badge {
+    top: .75rem;
+    left: .75rem;
+    padding: .35rem .6rem;
+    font-size: .65rem;
+    letter-spacing: .1em;
+    border-radius: 4px;
+}
+
+/* Body: no top padding on the media, name is the first
+   text line, price comes right after. No stock label. */
+.sf-product-card-body {
+    padding: 0 .25rem .5rem;
+    gap: .35rem;
+}
+
+.sf-product-card-name {
+    font-size: .9rem;
+    font-weight: 500;
+    line-height: 1.4;
+    -webkit-line-clamp: 2;
+}
+
+.sf-product-card-rating {
+    font-size: .72rem;
+}
+
+.sf-product-card-pricing {
+    margin-top: .1rem;
+}
+
+.sf-product-card-price {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--sf-ink);
+}
+
+.sf-product-card-compare {
+    font-size: .82rem;
+    color: var(--sf-ink-muted);
+}
+
+/* Add-to-cart: wide, uppercase, gold on hover. */
+.sf-product-card-add {
+    padding: .7rem .8rem;
+    border: 1px solid var(--sf-gold);
+    background: var(--sf-gold);
+    color: var(--sf-white);
+    font-size: .72rem;
+    letter-spacing: .12em;
+    border-radius: 4px;
+    margin-top: .55rem;
+}
+
+.sf-product-card-add:hover:not(:disabled) {
+    background: var(--sf-gold-dark);
+    color: var(--sf-white);
+    border-color: var(--sf-gold-dark);
+}
+
+.sf-product-card-add-out {
+    background: transparent;
+    color: var(--sf-ink);
+    border-color: var(--sf-ink);
+}
+
+.sf-product-card-add-out:hover {
+    background: var(--sf-ink);
+    color: var(--sf-white);
+}
+
+/* Hide the legacy stock label and category label from the
+   redesigned card (they still exist in the partial for
+   future use, but the visible card does not show them). */
+.sf-product-card .sf-product-card-stock,
+.sf-product-card .sf-product-card-category {
+    display: none;
+}
+
+.sf-product-card .sf-product-card-add-form {
+    margin: 0;
+}
+
+/* =====================================================================
+ * Autofill grids
+ *
+ * Both the homepage product grid (.sf-block-grid) and the
+ * catalog grid (.sf-product-grid) now grow their cards to
+ * fill the row when there are fewer products than the
+ * configured column count, and wrap to multiple rows when
+ * there are more. The minimum card width is
+ * --sf-block-grid-min (set by the block partial from
+ * columns_desktop). The catalog grid uses 220px as its
+ * default minimum.
+ * ===================================================================== */
+
+@media (min-width: 900px) {
+    .sf-block-grid {
+        grid-template-columns:
+            repeat(
+                auto-fill,
+                minmax(min(100%, var(--sf-block-grid-min, 220px)), 1fr)
+            );
+        justify-content: stretch;
+    }
+}
+
+.sf-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 576px) {
+    .sf-product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (min-width: 992px) {
+    .sf-product-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+@media (min-width: 1200px) {
+    .sf-product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        justify-content: stretch;
+    }
+}
+
+/* =====================================================================
+ * Band blocks (newsletter, promo-panel).
+ *
+ * Base appearance is inline in each partial because the padding,
+ * background, and colors are per-block. These are the responsive
+ * collapse rules for narrow viewports. The !important flags override
+ * the inline grid-template-columns on the outer wrapper.
+ * ===================================================================== */
+
+@media (max-width: 900px) {
+    .sf-newsletter-band > div,
+    .sf-promo-band > div {
+        grid-template-columns: 1fr !important;
+        text-align: center;
+    }
+    .sf-newsletter-band > div > div:last-child,
+    .sf-promo-band > div > div:last-child {
+        align-items: center !important;
+        text-align: center !important;
+    }
+}

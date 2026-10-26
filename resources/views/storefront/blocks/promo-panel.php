@@ -69,16 +69,3 @@ if ($__promoBgStyle === '') { $__promoBgStyle = 'background: #0f0f0f;'; }
 
     </div>
 </section>
-
-<style>
-@media (max-width: 900px) {
-    .sf-promo-band > div {
-        grid-template-columns: 1fr !important;
-        text-align: center;
-    }
-    .sf-promo-band > div > div:last-child {
-        align-items: center !important;
-        text-align: center !important;
-    }
-}
-</style>

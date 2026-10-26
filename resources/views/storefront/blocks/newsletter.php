@@ -78,16 +78,3 @@ if ($__newsBgStyle === '') { $__newsBgStyle = 'background: #1a2b23;'; }
 
     </div>
 </section>
-
-<style>
-@media (max-width: 900px) {
-    .sf-newsletter-band > div {
-        grid-template-columns: 1fr !important;
-        text-align: center;
-    }
-    .sf-newsletter-band > div > div:last-child {
-        align-items: center !important;
-        text-align: center !important;
-    }
-}
-</style>
