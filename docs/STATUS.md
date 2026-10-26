@@ -350,16 +350,16 @@ the Setup hub.
 
 ## What Doesn't Work Yet
 
-- Order lifecycle customer view (008F)
-- Search, PWA, attribute facets, category-hiding polish (008G)
-- Payment capture (010)
-- Shipping rate engine (010)
-- Tax engine (010)
-- Forms builder (009)
-- Store builder admin UI (011)
+Corrected against git during the 2026-10-26 session. Rows that no
+longer apply were removed: 008F, 010 payments, 008K.5 shipping,
+008K.5 tax, 008G search and PWA, 008G.1 wishlist, 008G.5 reviews.
+These shipped earlier and the list had not been updated.
+
+- Category-hiding polish (008G tail)
+- Form submissions viewer (009 Session 4)
+- Page Builder Tier 3: drag-into-canvas, menu/footer builder cleanup
+- Draft/publish for navigation builders (they save straight to live)
 - Theme engine + 20 themes (012)
-- Product reviews
-- Wishlist
 - Real product / category / hero photography
 - Real rating aggregates
 

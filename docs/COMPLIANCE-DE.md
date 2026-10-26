@@ -49,7 +49,7 @@ Status values:
 | 5 | Cookie consent banner (TTDSG § 25) | Done | 008E.1 |
 | 6 | Cookie consent API for third-party scripts | Done | 008E.1 |
 | 7 | Country-driven compliance gate | Done | 008E.1 |
-| 8 | Widerrufsrecht 14-day window enforcement | Deferred | 008H |
+| 8 | Widerrufsrecht 14-day window enforcement | Done | 008H |
 | 9 | Google Fonts self-hosting (DSGVO) | Done | 008G.4c |
 | 10 | EXIF stripping on image upload (DSGVO) | Partial | 008G.4a |
 | 11 | Service worker consent exemption (TTDSG § 25) | Done | 008G.4b plan |
@@ -352,7 +352,11 @@ and the customer-facing submission do not.
 
 **Stage:** 008H
 
-**Status:** Done. Stage 008H Session 3 at commit `d10b39d`.
+**Status:** Done. Stage 008H Sessions 1 and 3 at commits
+`50f77b6` (service with `isWithinWindow()` and `windowClosesAt()`)
+and `b2a3dae` (admin queue). The previously cited `d10b39d` does
+not exist in this repository's history; it was corrected against
+git during the 2026-10-26 session.
 
 **Note:** the Widerrufsbutton (a separate mechanism
 required from 19 June 2026) is tracked as entry 22 and

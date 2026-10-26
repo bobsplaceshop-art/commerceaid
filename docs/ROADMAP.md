@@ -926,6 +926,37 @@ Companion fixes:
 - `1038be6` Product `og:image` is absolute.
 - `574f559` Pattern 46 in `docs/REMEMBER.md`.
 
+Navigation builders, trust bar as a block, block config
+modernization (2026-10-26):
+
+- `cd1fc13` Navigation data layer (Tier 1).
+- `4293261` Trust bar moved into the database.
+- `3bd302a` Trust bar items edited from the header builder.
+- `f31e357` Navigation, trust bar, and modal theming.
+- `919a6a5` Storefront header, footer, preview flip to navigation db.
+- `57aad20` Visual icon picker for navigation items.
+- `b80e81c` Footer top, column management, preview isolation.
+- `33bef2f` Theme-aware builder shell.
+- `2d6f056` Menu builder with custom menu edit page.
+- `104bb78` Pattern 49 - Bootstrap modals do not inherit theme.
+- `ab997c8` Section/container fields, direct-create dropdown,
+  depth tree.
+- `85d39ce` Typography fields on text blocks.
+- `6d22113` Composite typography panels per text role.
+- `32fad95` Live preview reloads structural blocks.
+- `5fc72a3` Live preview and container layout fix.
+- `ada72ca` Media variant generation loop and directory fix.
+- `34c5a4d` Full-text search + premium autocomplete.
+- `da7ffc5` Abandoned-cart cleanup + admin stock release.
+- `fc8a161` Block config panel modernization (sections, pairs,
+  BlockBackground, 420px sidebar).
+- `c637fb1` deleteDraftTree removes children of every status.
+- `9b5a6bf` Drop guarded var() references to undefined tokens.
+- `a9917f0` Move band media queries to shared stylesheet.
+- `d40e5b5` Correct four docblocks fc8a161 shipped with errors.
+- `b890638` Shared scripts partial + product card redesign.
+- `106dd53` Complete trust bar block migration.
+
 **What is complete:**
 
 - Product grid: 3-8 columns, 4 alignment options,
