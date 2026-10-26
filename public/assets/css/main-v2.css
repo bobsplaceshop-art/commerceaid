@@ -602,7 +602,7 @@ a:hover { color: var(--ra-link-hover); }
     background: var(--ra-surface);
     border: 1px solid var(--ra-border);
     color: var(--ra-text);
-    border-radius: var(--ra-radius-md, 8px);
+    border-radius: var(--ra-radius);
     transition: background-color .15s ease, border-color .15s ease;
 }
 .ra-nav-item:hover {

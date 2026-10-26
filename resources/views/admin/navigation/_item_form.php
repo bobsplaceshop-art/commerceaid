@@ -28,8 +28,8 @@ $isEdit = $mode === 'edit' && $item !== null;
 <div class="row mb-3">
     <div class="col-md-6">
         <label class="form-label">Icon Class (optional)</label>
-        <div class="input-group">
-            <span class="input-group-text">
+        <div class="d-flex align-items-center gap-2">
+            <span class="ra-icon-preview" style="display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: var(--ra-surface); border: 1px solid var(--ra-border); border-radius: var(--ra-radius); color: var(--ra-text);">
                 <i class="<?= $isEdit && !empty($item->icon) ? e($item->icon) : 'bi bi-star' ?>" id="icon-preview-<?= $isEdit ? $item->id : 'new' ?>"></i>
             </span>
             <input type="text" name="icon" class="form-control" placeholder="e.g. bi-star"

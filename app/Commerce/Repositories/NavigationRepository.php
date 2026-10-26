@@ -46,6 +46,17 @@ final class NavigationRepository extends CommerceRepository
         return $row ? NavigationMenu::fromRow($row) : null;
     }
 
+    public function findMenuById(int $id): ?NavigationMenu
+    {
+        $row = $this->db->selectOne(
+            'SELECT * FROM `commerce_navigation_menus`
+              WHERE `store_id` = ? AND `id` = ? AND `is_active` = 1
+              LIMIT 1',
+            [$this->storeId(), $id]
+        );
+        return $row ? NavigationMenu::fromRow($row) : null;
+    }
+
     public function findMenuByLocation(string $location): ?NavigationMenu
     {
         $row = $this->db->selectOne(
@@ -335,6 +346,60 @@ final class NavigationRepository extends CommerceRepository
         $this->db->execute(
             'DELETE FROM `commerce_navigation_columns` WHERE `id` = ? AND `menu_id` = ?',
             [$columnId, $menuId]
+        );
+    }
+
+    public function createMenu(string $name, string $slug, string $location = 'custom'): int
+    {
+        return $this->db->insert(
+            'INSERT INTO `commerce_navigation_menus` (`store_id`, `name`, `slug`, `location`, `is_active`) VALUES (?, ?, ?, ?, 1)',
+            [$this->storeId(), $name, $slug, $location]
+        );
+    }
+
+    /**
+     * Returns the tree of items for any menu, ordered by sort_order.
+     * Items with column_id are excluded (those belong to footer columns).
+     *
+     * @return array<int, NavigationItem>
+     */
+    public function getMenuTree(string $slug): array
+    {
+        $menu = $this->findMenuBySlug($slug);
+        if ($menu === null) {
+            return [];
+        }
+
+        $rows = $this->db->select(
+            'SELECT * FROM `commerce_navigation_items`
+              WHERE `menu_id` = ? AND `column_id` IS NULL
+              ORDER BY `sort_order` ASC, `id` ASC',
+            [$menu->id]
+        );
+
+        /** @var array<int, NavigationItem> $items */
+        $items = [];
+        foreach ($rows as $row) {
+            $items[(int) $row['id']] = NavigationItem::fromRow($row);
+        }
+
+        $roots = [];
+        foreach ($items as $id => $item) {
+            if ($item->parentId !== null && isset($items[$item->parentId])) {
+                $items[$item->parentId]->children[] = $item;
+            } else {
+                $roots[] = $item;
+            }
+        }
+
+        return $roots;
+    }
+
+    public function deleteMenu(int $menuId): void
+    {
+        $this->db->execute(
+            'DELETE FROM `commerce_navigation_menus` WHERE `id` = ? AND `store_id` = ?',
+            [$menuId, $this->storeId()]
         );
     }
 }

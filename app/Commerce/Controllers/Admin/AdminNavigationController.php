@@ -137,4 +137,67 @@ final class AdminNavigationController extends AdminController
 
         return Response::redirect('/commerce/ca-admin/navigation/' . $location);
     }
+
+    /** @param array<string,string> $params */
+    public function storeMenu(Request $request, array $params = []): Response
+    {
+        $session = $this->container->get(Session::class);
+        $repo    = $this->container->get(NavigationRepository::class);
+
+        $name = trim((string) $request->input('name'));
+        $slug = trim((string) $request->input('slug'));
+
+        if ($name === '' || $slug === '') {
+            $session->flash('error', 'Name and slug are required.');
+            return Response::redirect('/commerce/ca-admin/navigation');
+        }
+
+        $slug = strtolower((string) preg_replace('/[^a-z0-9-]+/i', '-', $slug));
+        $existing = $repo->findMenuBySlug($slug);
+        if ($existing !== null) {
+            $session->flash('error', 'A menu with that slug already exists.');
+            return Response::redirect('/commerce/ca-admin/navigation');
+        }
+
+        $repo->createMenu($name, $slug, 'custom');
+        $session->flash('success', 'Menu created.');
+        return Response::redirect('/commerce/ca-admin/navigation');
+    }
+
+    /** @param array<string,string> $params */
+    public function destroyMenu(Request $request, array $params = []): Response
+    {
+        $session = $this->container->get(Session::class);
+        $repo    = $this->container->get(NavigationRepository::class);
+
+        $menuId = (int) ($params['id'] ?? 0);
+        $repo->deleteMenu($menuId);
+
+        $session->flash('success', 'Menu deleted.');
+        return Response::redirect('/commerce/ca-admin/navigation');
+    }
+
+    /** @param array<string,string> $params */
+    public function customMenu(Request $request, array $params = []): Response
+    {
+        $repo = $this->container->get(NavigationRepository::class);
+        $slug = (string) ($params['slug'] ?? '');
+        $menu = $repo->findMenuBySlug($slug);
+
+        if ($menu === null || $menu->location !== 'custom') {
+            return Response::redirect('/commerce/ca-admin/navigation');
+        }
+
+        $tree = $repo->getMenuTree($slug);
+
+        $res = $this->container->get(\CorporateAid\Commerce\Repositories\NavigationResourceRepository::class);
+        $resources = $res->allGrouped();
+
+        return $this->render('admin.navigation.menu', [
+            'title'     => $menu->name,
+            'menu'      => $menu,
+            'items'     => $tree,
+            'resources' => $resources,
+        ]);
+    }
 }

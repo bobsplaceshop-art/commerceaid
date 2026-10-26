@@ -1338,3 +1338,15 @@ $router->post('/commerce/ca-admin/navigation/columns/{id}',
 $router->post('/commerce/ca-admin/navigation/columns/{id}/delete',
     [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationController::class, 'destroyColumn'],
     ['store', 'auth', 'csrf', 'permission:navigation.manage']);
+
+$router->post('/commerce/ca-admin/navigation/menus',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationController::class, 'storeMenu'],
+    ['store', 'auth', 'csrf', 'permission:navigation.manage']);
+
+$router->post('/commerce/ca-admin/navigation/menus/{id}/delete',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationController::class, 'destroyMenu'],
+    ['store', 'auth', 'csrf', 'permission:navigation.manage']);
+
+$router->get('/commerce/ca-admin/navigation/menu/{slug}',
+    [\CorporateAid\Commerce\Controllers\Admin\AdminNavigationController::class, 'customMenu'],
+    ['store', 'auth', 'permission:navigation.view']);

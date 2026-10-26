@@ -17,14 +17,18 @@ final class AdminNavigationItemController extends AdminController
     {
         $session = $this->container->get(Session::class);
         $repo    = $this->container->get(NavigationRepository::class);
-        
+
         $menuId = (int) $request->input('menu_id');
-        $menu = $repo->findMenuByLocation($request->input('menu_location', 'header'));
-        
-        if (!$menu || $menu->id !== $menuId) {
+        $menu = $repo->findMenuById($menuId);
+
+        if (!$menu) {
             $session->flash('error', 'Invalid menu.');
             return Response::redirect('/commerce/ca-admin/navigation');
         }
+
+        $redirect = $menu->location === 'custom'
+            ? '/commerce/ca-admin/navigation/menu/' . $menu->slug
+            : '/commerce/ca-admin/navigation/' . $menu->location;
 
         $item = new NavigationItem();
         $item->menuId       = $menuId;
@@ -41,7 +45,7 @@ final class AdminNavigationItemController extends AdminController
 
         if ($item->label === '') {
             $session->flash('error', 'Label is required.');
-            return Response::redirect('/commerce/ca-admin/navigation/' . $menu->location);
+            return Response::redirect($redirect);
         }
 
         // Ensure exactly one destination is set.
@@ -54,8 +58,8 @@ final class AdminNavigationItemController extends AdminController
 
         $repo->createItem($item);
         $session->flash('success', 'Item added.');
-        
-        return Response::redirect('/commerce/ca-admin/navigation/' . $menu->location);
+
+        return Response::redirect($redirect);
     }
 
     /** @param array<string,string> $params */
@@ -64,15 +68,18 @@ final class AdminNavigationItemController extends AdminController
         $session = $this->container->get(Session::class);
         $repo    = $this->container->get(NavigationRepository::class);
         $id      = (int) ($params['id'] ?? 0);
-        
-        // We need the menu to know where to redirect.
+
         $menuId = (int) $request->input('menu_id');
-        $menu = $repo->findMenuByLocation($request->input('menu_location', 'header'));
-        
-        if (!$menu || $menu->id !== $menuId) {
+        $menu = $repo->findMenuById($menuId);
+
+        if (!$menu) {
             $session->flash('error', 'Invalid menu.');
             return Response::redirect('/commerce/ca-admin/navigation');
         }
+
+        $redirect = $menu->location === 'custom'
+            ? '/commerce/ca-admin/navigation/menu/' . $menu->slug
+            : '/commerce/ca-admin/navigation/' . $menu->location;
 
         $item = new NavigationItem();
         $item->id           = $id;
@@ -95,8 +102,8 @@ final class AdminNavigationItemController extends AdminController
 
         $repo->updateItem($item);
         $session->flash('success', 'Item updated.');
-        
-        return Response::redirect('/commerce/ca-admin/navigation/' . $menu->location);
+
+        return Response::redirect($redirect);
     }
 
     /** @param array<string,string> $params */
@@ -106,12 +113,18 @@ final class AdminNavigationItemController extends AdminController
         $repo    = $this->container->get(NavigationRepository::class);
         $id      = (int) ($params['id'] ?? 0);
         $menuId  = (int) $request->input('menu_id');
-        
+
         $repo->deleteItem($id, $menuId);
         $session->flash('success', 'Item deleted.');
-        
-        $menu = $repo->findMenuByLocation($request->input('menu_location', 'header'));
-        return Response::redirect('/commerce/ca-admin/navigation/' . ($menu ? $menu->location : ''));
+
+        $menu = $repo->findMenuById($menuId);
+        $redirect = '/commerce/ca-admin/navigation';
+        if ($menu !== null) {
+            $redirect = $menu->location === 'custom'
+                ? '/commerce/ca-admin/navigation/menu/' . $menu->slug
+                : '/commerce/ca-admin/navigation/' . $menu->location;
+        }
+        return Response::redirect($redirect);
     }
 
     /** @param array<string,string> $params */
@@ -133,7 +146,7 @@ final class AdminNavigationItemController extends AdminController
 
         $repo->createContact($contact);
         $session->flash('success', 'Contact detail added.');
-        
+
         return Response::redirect('/commerce/ca-admin/navigation/footer');
     }
 
@@ -152,7 +165,7 @@ final class AdminNavigationItemController extends AdminController
 
         $repo->updateContact($contact);
         $session->flash('success', 'Contact detail updated.');
-        
+
         return Response::redirect('/commerce/ca-admin/navigation/footer');
     }
 
@@ -162,10 +175,10 @@ final class AdminNavigationItemController extends AdminController
         $session = $this->container->get(Session::class);
         $repo    = $this->container->get(NavigationRepository::class);
         $id      = (int) ($params['id'] ?? 0);
-        
+
         $repo->deleteContact($id);
         $session->flash('success', 'Contact detail deleted.');
-        
+
         return Response::redirect('/commerce/ca-admin/navigation/footer');
     }
 }
